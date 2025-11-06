@@ -7,9 +7,9 @@ TalentHive is a comprehensive freelancing platform that connects clients with sk
 ## Glossary
 
 - **TalentHive_Platform**: The complete freelancing web application system
-- **Admin_User**: Platform administrator with system management privileges
-- **Freelancer_User**: Service provider who creates profiles and submits proposals
-- **Client_User**: Service seeker who posts projects and hires freelancers
+- **Admin_User**: Platform administrator with comprehensive system management, user moderation, financial oversight, analytics access, and platform configuration privileges
+- **Freelancer_User**: Service provider who creates detailed profiles, manages portfolios, submits proposals, tracks time, manages availability, offers service packages, and collaborates on projects
+- **Client_User**: Service seeker who posts projects, manages teams, handles budgets, creates project templates, maintains vendor relationships, and tracks project ROI
 - **Project_Posting**: A job listing created by clients describing work requirements
 - **Proposal_Submission**: A freelancer's response to a project posting with bid details
 - **Contract_Agreement**: A formal work arrangement between client and freelancer
@@ -166,3 +166,75 @@ TalentHive is a comprehensive freelancing platform that connects clients with sk
 3. THE TalentHive_Platform SHALL allow users to customize notification preferences by category and delivery method
 4. WHEN critical account actions occur, THE TalentHive_Platform SHALL send email notifications regardless of user preferences
 5. THE TalentHive_Platform SHALL display notification history in the user Dashboard_Interface
+
+### Requirement 13
+
+**User Story:** As a freelancer, I want to manage my availability and offer structured service packages, so that I can better organize my work and attract clients with clear offerings.
+
+#### Acceptance Criteria
+
+1. THE TalentHive_Platform SHALL provide Freelancer_User with a calendar interface to set availability schedules and time zones
+2. WHEN a Freelancer_User creates service packages, THE TalentHive_Platform SHALL allow predefined scope, pricing, and delivery timelines
+3. THE TalentHive_Platform SHALL enable Freelancer_User to set different hourly rates for different skill categories
+4. WHEN a Freelancer_User updates availability status, THE TalentHive_Platform SHALL reflect changes in search results immediately
+5. THE TalentHive_Platform SHALL allow Freelancer_User to create team profiles for collaborative projects with defined member roles
+
+### Requirement 14
+
+**User Story:** As a freelancer, I want to track my work time and manage multiple projects efficiently, so that I can maintain productivity and provide accurate billing.
+
+#### Acceptance Criteria
+
+1. THE TalentHive_Platform SHALL provide Freelancer_User with integrated time tracking tools for active contracts
+2. WHEN a Freelancer_User starts time tracking, THE TalentHive_Platform SHALL record work sessions with optional screenshots and activity monitoring
+3. THE TalentHive_Platform SHALL allow Freelancer_User to categorize work time by project milestones and task types
+4. WHEN time entries are submitted, THE TalentHive_Platform SHALL require work descriptions and allow Client_User review
+5. THE TalentHive_Platform SHALL generate detailed time reports and productivity analytics for Freelancer_User review
+
+### Requirement 15
+
+**User Story:** As a client, I want to manage my organization's team and budget approvals, so that I can efficiently handle multiple projects and maintain financial control.
+
+#### Acceptance Criteria
+
+1. THE TalentHive_Platform SHALL allow Client_User to create organization accounts with multiple team member access levels
+2. WHEN a Client_User sets up budget approval workflows, THE TalentHive_Platform SHALL require designated approvers for spending thresholds
+3. THE TalentHive_Platform SHALL provide Client_User with team member invitation and role assignment capabilities
+4. WHEN team members create projects, THE TalentHive_Platform SHALL enforce approval workflows based on budget and project scope
+5. THE TalentHive_Platform SHALL generate consolidated billing and expense reports for organization-level Client_User accounts
+
+### Requirement 16
+
+**User Story:** As a client, I want to create project templates and maintain preferred vendor relationships, so that I can streamline recurring work and build long-term partnerships.
+
+#### Acceptance Criteria
+
+1. THE TalentHive_Platform SHALL allow Client_User to save project configurations as reusable templates with predefined requirements
+2. WHEN a Client_User creates a preferred vendor list, THE TalentHive_Platform SHALL provide priority invitation capabilities for new projects
+3. THE TalentHive_Platform SHALL enable Client_User to set up recurring project schedules with automatic posting
+4. WHEN using project templates, THE TalentHive_Platform SHALL pre-populate all saved fields while allowing customization
+5. THE TalentHive_Platform SHALL provide Client_User with vendor performance analytics and relationship management tools
+
+### Requirement 17
+
+**User Story:** As an admin, I want comprehensive platform oversight and configuration capabilities, so that I can ensure platform quality, manage business operations, and optimize performance.
+
+#### Acceptance Criteria
+
+1. THE TalentHive_Platform SHALL provide Admin_User with real-time platform analytics including user activity, transaction volumes, and system performance metrics
+2. WHEN an Admin_User configures platform settings, THE TalentHive_Platform SHALL allow modification of commission rates, feature toggles, and business rules
+3. THE TalentHive_Platform SHALL enable Admin_User to implement automated content moderation with customizable flagging criteria
+4. WHEN financial discrepancies occur, THE TalentHive_Platform SHALL alert Admin_User and provide investigation tools with complete audit trails
+5. THE TalentHive_Platform SHALL allow Admin_User to generate comprehensive business intelligence reports and export data for external analysis
+
+### Requirement 18
+
+**User Story:** As an admin, I want advanced user management and platform moderation tools, so that I can maintain platform integrity and handle complex user issues.
+
+#### Acceptance Criteria
+
+1. THE TalentHive_Platform SHALL provide Admin_User with bulk user management operations including status changes, communications, and data exports
+2. WHEN reviewing user disputes, THE TalentHive_Platform SHALL display complete interaction history, payment records, and communication logs
+3. THE TalentHive_Platform SHALL enable Admin_User to implement graduated enforcement actions with automated escalation workflows
+4. WHEN suspicious activity is detected, THE TalentHive_Platform SHALL automatically flag accounts and notify Admin_User with detailed evidence
+5. THE TalentHive_Platform SHALL allow Admin_User to create and manage platform-wide announcements, policy updates, and maintenance notifications

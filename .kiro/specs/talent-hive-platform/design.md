@@ -180,12 +180,43 @@ graph TD
 │   ├── GET /
 │   ├── PUT /:id/read
 │   └── PUT /mark-all-read
+├── /time-tracking
+│   ├── GET /entries
+│   ├── POST /entries/start
+│   ├── PUT /entries/:id/stop
+│   ├── POST /entries/:id/submit
+│   └── GET /reports/:contractId
+├── /organizations
+│   ├── GET /
+│   ├── POST /
+│   ├── GET /:id
+│   ├── PUT /:id
+│   ├── POST /:id/members
+│   └── DELETE /:id/members/:userId
+├── /service-packages
+│   ├── GET /freelancer/:freelancerId
+│   ├── POST /
+│   ├── PUT /:id
+│   └── DELETE /:id
+├── /templates
+│   ├── GET /
+│   ├── POST /
+│   ├── GET /:id
+│   ├── PUT /:id
+│   └── DELETE /:id
 └── /admin
     ├── GET /dashboard
+    ├── GET /analytics
     ├── GET /users
     ├── PUT /users/:id/status
+    ├── POST /users/bulk-action
     ├── GET /reports
-    └── GET /disputes
+    ├── GET /disputes
+    ├── GET /platform-settings
+    ├── PUT /platform-settings
+    ├── GET /moderation-queue
+    ├── POST /moderation/:id/action
+    └── GET /audit-logs
 ```
 
 ## Data Models
@@ -208,15 +239,42 @@ interface User {
   freelancerProfile?: {
     title: string;
     hourlyRate: number;
+    skillRates: { skill: string; rate: number }[]; // Different rates per skill
     skills: string[];
     experience: string;
     portfolio: PortfolioItem[];
-    availability: 'available' | 'busy' | 'unavailable';
+    availability: {
+      status: 'available' | 'busy' | 'unavailable';
+      schedule: WeeklySchedule;
+      calendar: AvailabilitySlot[];
+    };
+    servicePackages: ServicePackage[];
+    teamMembers?: TeamMember[];
+    certifications: Certification[];
+    timeTracking: {
+      isEnabled: boolean;
+      screenshotFrequency?: number; // minutes
+      activityMonitoring?: boolean;
+    };
   };
   clientProfile?: {
     companyName?: string;
     industry?: string;
     projectsPosted: number;
+    organizationId?: ObjectId; // For team accounts
+    teamRole?: 'owner' | 'admin' | 'member';
+    budgetLimits?: {
+      daily?: number;
+      monthly?: number;
+      requiresApproval?: boolean;
+    };
+    preferredVendors: ObjectId[]; // Freelancer references
+    projectTemplates: ProjectTemplate[];
+  };
+  adminProfile?: {
+    permissions: AdminPermission[];
+    lastLoginAt: Date;
+    accessLevel: 'super_admin' | 'moderator' | 'support';
   };
   rating: {
     average: number;
@@ -226,6 +284,70 @@ interface User {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface ServicePackage {
+  _id: ObjectId;
+  title: string;
+  description: string;
+  price: number;
+  deliveryTime: number; // days
+  revisions: number;
+  features: string[];
+  isActive: boolean;
+}
+
+interface TeamMember {
+  userId: ObjectId;
+  role: string;
+  skills: string[];
+  hourlyRate?: number;
+}
+
+interface Certification {
+  name: string;
+  issuer: string;
+  dateEarned: Date;
+  expiryDate?: Date;
+  verificationUrl?: string;
+}
+
+interface WeeklySchedule {
+  monday: TimeSlot[];
+  tuesday: TimeSlot[];
+  wednesday: TimeSlot[];
+  thursday: TimeSlot[];
+  friday: TimeSlot[];
+  saturday: TimeSlot[];
+  sunday: TimeSlot[];
+}
+
+interface TimeSlot {
+  start: string; // HH:MM format
+  end: string;   // HH:MM format
+}
+
+interface AvailabilitySlot {
+  date: Date;
+  isAvailable: boolean;
+  note?: string;
+}
+
+interface ProjectTemplate {
+  _id: ObjectId;
+  name: string;
+  description: string;
+  category: string;
+  skills: string[];
+  budget: BudgetRange;
+  timeline: Timeline;
+  requirements: string[];
+  attachments: string[];
+}
+
+interface AdminPermission {
+  resource: string;
+  actions: string[];
 }
 ```
 
@@ -342,6 +464,88 @@ interface Review {
   createdAt: Date;
 }
 ```
+
+### Organization Schema
+```typescript
+interface Organization {
+  _id: ObjectId;
+  name: string;
+  industry: string;
+  owner: ObjectId; // User reference
+  members: OrganizationMember[];
+  settings: {
+    budgetApprovalThreshold: number;
+    requiresApprovalWorkflow: boolean;
+    defaultProjectVisibility: 'public' | 'private';
+  };
+  billing: {
+    paymentMethods: string[];
+    billingAddress: Address;
+    taxId?: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface OrganizationMember {
+  userId: ObjectId;
+  role: 'admin' | 'project_manager' | 'member';
+  permissions: string[];
+  joinedAt: Date;
+}
+```
+
+### TimeEntry Schema
+```typescript
+interface TimeEntry {
+  _id: ObjectId;
+  contract: ObjectId; // Contract reference
+  freelancer: ObjectId; // User reference
+  milestone?: ObjectId; // Milestone reference
+  startTime: Date;
+  endTime: Date;
+  duration: number; // minutes
+  description: string;
+  screenshots?: string[]; // Cloudinary URLs
+  activityLevel?: number; // 0-100 percentage
+  status: 'draft' | 'submitted' | 'approved' | 'rejected';
+  clientFeedback?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### PlatformSettings Schema
+```typescript
+interface PlatformSettings {
+  _id: ObjectId;
+  commissionRates: {
+    freelancer: number; // percentage
+    client: number;     // percentage
+  };
+  features: {
+    [featureName: string]: {
+      enabled: boolean;
+      config?: any;
+    };
+  };
+  moderationRules: {
+    autoFlagKeywords: string[];
+    suspiciousActivityThresholds: {
+      rapidProposals: number;
+      highValueTransactions: number;
+      disputeRatio: number;
+    };
+  };
+  businessRules: {
+    maxProposalsPerProject: number;
+    minProjectBudget: number;
+    maxProjectDuration: number; // days
+    paymentHoldPeriod: number;  // days
+  };
+  updatedBy: ObjectId; // Admin reference
+  updatedAt: Date;
+}
 
 ## Error Handling
 
