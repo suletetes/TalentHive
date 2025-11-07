@@ -1,26 +1,15 @@
 import { Router } from 'express';
+import { getDashboardStats, getUsers, updateUserStatus, getReports } from '@/controllers/adminController';
+import { authenticate, authorize } from '@/middleware/auth';
 
 const router = Router();
 
-// Placeholder routes
-router.get('/dashboard', (req, res) => {
-  res.status(501).json({ message: 'Admin dashboard - to be implemented' });
-});
+router.use(authenticate);
+router.use(authorize('admin'));
 
-router.get('/users', (req, res) => {
-  res.status(501).json({ message: 'Admin get users - to be implemented' });
-});
-
-router.put('/users/:id/status', (req, res) => {
-  res.status(501).json({ message: 'Admin update user status - to be implemented' });
-});
-
-router.get('/reports', (req, res) => {
-  res.status(501).json({ message: 'Admin reports - to be implemented' });
-});
-
-router.get('/disputes', (req, res) => {
-  res.status(501).json({ message: 'Admin disputes - to be implemented' });
-});
+router.get('/dashboard/stats', getDashboardStats);
+router.get('/users', getUsers);
+router.put('/users/:userId/status', updateUserStatus);
+router.get('/reports', getReports);
 
 export default router;
