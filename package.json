@@ -1,5 +1,5 @@
 {
-  "name": "talenthive-platform",
+  "name": "talenthive",
   "version": "1.0.0",
   "description": "Comprehensive freelancing platform built with MERN stack",
   "main": "server/dist/index.js",

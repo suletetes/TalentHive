@@ -1,18 +1,13 @@
 import { Router } from 'express';
+import { createReview, getReviews, respondToReview } from '@/controllers/reviewController';
+import { authenticate } from '@/middleware/auth';
 
 const router = Router();
 
-// Placeholder routes
-router.get('/user/:userId', (req, res) => {
-  res.status(501).json({ message: 'Get user reviews - to be implemented' });
-});
+router.use(authenticate);
 
-router.post('/', (req, res) => {
-  res.status(501).json({ message: 'Create review - to be implemented' });
-});
-
-router.get('/:id', (req, res) => {
-  res.status(501).json({ message: 'Get review by ID - to be implemented' });
-});
+router.post('/', createReview);
+router.get('/user/:userId', getReviews);
+router.post('/:reviewId/respond', respondToReview);
 
 export default router;
