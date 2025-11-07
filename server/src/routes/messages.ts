@@ -1,22 +1,21 @@
 import { Router } from 'express';
+import {
+  getConversations,
+  getOrCreateConversation,
+  getMessages,
+  sendMessage,
+  markAsRead,
+} from '@/controllers/messageController';
+import { authenticate } from '@/middleware/auth';
 
 const router = Router();
 
-// Placeholder routes
-router.get('/conversations', (req, res) => {
-  res.status(501).json({ message: 'Get conversations - to be implemented' });
-});
+router.use(authenticate);
 
-router.get('/conversations/:id', (req, res) => {
-  res.status(501).json({ message: 'Get conversation by ID - to be implemented' });
-});
-
-router.post('/conversations', (req, res) => {
-  res.status(501).json({ message: 'Create conversation - to be implemented' });
-});
-
-router.post('/conversations/:id/messages', (req, res) => {
-  res.status(501).json({ message: 'Send message - to be implemented' });
-});
+router.get('/conversations', getConversations);
+router.post('/conversations', getOrCreateConversation);
+router.get('/conversations/:conversationId/messages', getMessages);
+router.post('/conversations/:conversationId/messages', sendMessage);
+router.post('/conversations/:conversationId/read', markAsRead);
 
 export default router;
