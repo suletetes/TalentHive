@@ -1,18 +1,23 @@
 import { Router } from 'express';
+import {
+  getNotifications,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+  getPreferences,
+  updatePreferences,
+} from '@/controllers/notificationController';
+import { authenticate } from '@/middleware/auth';
 
 const router = Router();
 
-// Placeholder routes
-router.get('/', (req, res) => {
-  res.status(501).json({ message: 'Get notifications - to be implemented' });
-});
+router.use(authenticate);
 
-router.put('/:id/read', (req, res) => {
-  res.status(501).json({ message: 'Mark notification as read - to be implemented' });
-});
-
-router.put('/mark-all-read', (req, res) => {
-  res.status(501).json({ message: 'Mark all notifications as read - to be implemented' });
-});
+router.get('/', getNotifications);
+router.post('/:notificationId/read', markAsRead);
+router.post('/read-all', markAllAsRead);
+router.delete('/:notificationId', deleteNotification);
+router.get('/preferences', getPreferences);
+router.put('/preferences', updatePreferences);
 
 export default router;
