@@ -24,7 +24,7 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
   const { email, password, firstName, lastName, role, companyName, title } = req.body;
 
   // Check if user already exists
-  const existingUser = await User.findByEmail(email);
+  const existingUser = await User.findOne({ email: email.toLowerCase() });
   if (existingUser) {
     return next(new AppError('User already exists with this email', 400));
   }
@@ -104,8 +104,9 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
       },
     },
   });
-});export cons
-t loginValidation = [
+});
+
+export const loginValidation = [
   body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
   body('password').notEmpty().withMessage('Password is required'),
 ];
@@ -119,7 +120,7 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
   const { email, password } = req.body;
 
   // Find user and include password for comparison
-  const user = await User.findByEmail(email).select('+password');
+  const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
   if (!user || !(await user.comparePassword(password))) {
     return next(new AppError('Invalid email or password', 401));
   }
@@ -134,7 +135,7 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
 
   // Generate tokens
   const { accessToken, refreshToken } = generateTokens({
-    userId: user._id,
+    userId: (user._id as any).toString(),
     email: user.email,
     role: user.role,
   });
@@ -177,7 +178,7 @@ export const refreshToken = catchAsync(async (req: Request, res: Response, next:
     }
 
     const { accessToken, refreshToken: newRefreshToken } = generateTokens({
-      userId: user._id,
+      userId: (user._id as any).toString(),
       email: user.email,
       role: user.role,
     });

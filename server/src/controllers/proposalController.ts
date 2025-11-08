@@ -258,8 +258,9 @@ export const withdrawProposal = catchAsync(async (req: AuthRequest, res: Respons
     status: 'success',
     message: 'Proposal withdrawn successfully',
   });
-});expo
-rt const acceptProposal = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+});
+
+export const acceptProposal = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const { feedback } = req.body;
 

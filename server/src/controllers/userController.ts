@@ -163,8 +163,9 @@ export const getFreelancerById = catchAsync(async (req: Request, res: Response, 
       freelancer,
     },
   });
-});e
-xport const addSkill = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+});
+
+export const addSkill = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { skill, rate } = req.body;
   const userId = req.user._id;
 
@@ -341,7 +342,7 @@ export const updatePortfolioItem = catchAsync(async (req: AuthRequest, res: Resp
     return next(new AppError('User not found', 404));
   }
 
-  const portfolioItem = user.freelancerProfile?.portfolio?.id(itemId);
+  const portfolioItem = user.freelancerProfile?.portfolio?.find(item => item._id?.toString() === itemId);
   if (!portfolioItem) {
     return next(new AppError('Portfolio item not found', 404));
   }

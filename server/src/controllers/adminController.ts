@@ -112,7 +112,7 @@ export const getReports = catchAsync(async (req: AuthRequest, res: Response) => 
 
   const [userGrowth, revenueData, projectStats] = await Promise.all([
     User.aggregate([
-      { $match: dateFilter.$ gte ? { createdAt: dateFilter } : {} },
+      { $match: dateFilter.$gte ? { createdAt: dateFilter } : {} },
       {
         $group: {
           _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
