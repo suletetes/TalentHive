@@ -64,7 +64,7 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
-app.use(`/api/${process.env.API_VERSION || 'v1'}`, routes);
+app.use('/api', routes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
@@ -113,7 +113,7 @@ async function startServer() {
     server.listen(PORT, () => {
       logger.info(`🚀 Server running on port ${PORT} in ${NODE_ENV} mode`);
       logger.info(`📊 Health check available at http://localhost:${PORT}/health`);
-      logger.info(`🔗 API available at http://localhost:${PORT}/api/${process.env.API_VERSION || 'v1'}`);
+      logger.info(`🔗 API available at http://localhost:${PORT}/api`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);
