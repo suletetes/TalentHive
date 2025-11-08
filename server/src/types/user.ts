@@ -150,4 +150,12 @@ export interface IUser extends Document {
   lastLoginAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  
+  // Instance methods
+  comparePassword(candidatePassword: string): Promise<boolean>;
+  updateRating(newRating: number): void;
+}
+
+export interface IUserModel {
+  findByEmail(email: string): Promise<IUser | null>;
 }

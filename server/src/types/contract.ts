@@ -19,6 +19,11 @@ export interface IContract extends Document {
   signatures: ISignature[];
   createdAt: Date;
   updatedAt: Date;
+  
+  // Virtual properties
+  totalPaid: number;
+  remainingAmount: number;
+  overdueMilestones: IMilestone[];
 }
 
 export interface IMilestone extends Document {

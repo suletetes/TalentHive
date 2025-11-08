@@ -35,4 +35,13 @@ export interface IProject extends Document {
   isFeatured: boolean;
   createdAt: Date;
   updatedAt: Date;
+  
+  // Instance methods
+  incrementViewCount(): Promise<IProject>;
+  isExpired(): boolean;
+}
+
+export interface IProjectModel {
+  findActive(): any;
+  searchProjects(query: string): any;
 }

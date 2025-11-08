@@ -21,6 +21,11 @@ export interface IPayment extends Document {
   };
   createdAt: Date;
   updatedAt: Date;
+  
+  // Methods
+  calculatePlatformFee(feePercentage?: number): number;
+  canBeProcessed(): boolean;
+  canBeRefunded(): boolean;
 }
 
 export interface IEscrowAccount extends Document {
