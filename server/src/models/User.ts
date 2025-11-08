@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { IUser } from '@/types/user';
+import { IUser, IUserModel } from '@/types/user';
 
 const timeSlotSchema = new Schema({
   start: { type: String, required: true },
@@ -218,4 +218,4 @@ userSchema.statics.findByEmail = function(email: string) {
   return this.findOne({ email: email.toLowerCase() });
 };
 
-export const User = mongoose.model<IUser>('User', userSchema);
+export const User = mongoose.model<IUser>('User', userSchema) as mongoose.Model<IUser> & IUserModel;

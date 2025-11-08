@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { IProject } from '@/types/project';
+import { IProject, IProjectModel } from '@/types/project';
 
 const budgetSchema = new Schema({
   type: {
@@ -212,4 +212,4 @@ projectSchema.pre('save', function(next) {
   next();
 });
 
-export const Project = mongoose.model<IProject>('Project', projectSchema);
+export const Project = mongoose.model<IProject>('Project', projectSchema) as mongoose.Model<IProject> & IProjectModel;
