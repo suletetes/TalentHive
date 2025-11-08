@@ -110,7 +110,7 @@ describe('Project Management', () => {
     });
 
     it('should validate required fields', async () => {
-      const invalidData = { ...validProjectData };
+      const invalidData: any = { ...validProjectData };
       delete invalidData.title;
 
       await request(app)

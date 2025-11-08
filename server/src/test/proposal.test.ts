@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { app } from '../app';
+import { app } from '../index';
 import { User } from '../models/User';
 import { Project } from '../models/Project';
 import { Proposal } from '../models/Proposal';
@@ -214,7 +214,7 @@ describe('Proposal System', () => {
         isEmailVerified: true,
       });
 
-      const otherToken = generateToken(otherUser._id);
+      const otherToken = generateToken((otherUser._id as any).toString());
 
       await request(app)
         .get(`/api/proposals/project/${project._id}`)
@@ -284,7 +284,7 @@ describe('Proposal System', () => {
       // Check project status updated
       const updatedProject = await Project.findById(project._id);
       expect(updatedProject?.status).toBe('in_progress');
-      expect(updatedProject?.selectedFreelancer.toString()).toBe(freelancerUser._id.toString());
+      expect(updatedProject?.selectedFreelancer?.toString()).toBe(freelancerUser._id.toString());
     });
 
     it('should fail for non-project owner', async () => {

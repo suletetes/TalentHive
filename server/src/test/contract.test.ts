@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { app } from '../app';
+import { app } from '../index';
 import { User } from '../models/User';
 import { Project } from '../models/Project';
 import { Proposal } from '../models/Proposal';
@@ -545,7 +545,7 @@ describe('Contract System', () => {
           isEmailVerified: true,
         });
 
-        const otherToken = generateToken(otherUser._id);
+        const otherToken = generateToken((otherUser._id as any).toString());
 
         const amendmentData = {
           type: 'timeline_change',

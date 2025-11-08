@@ -1,9 +1,9 @@
 import request from 'supertest';
 import mongoose from 'mongoose';
-import app from '../index';
-import User from '../models/User';
-import Project from '../models/Project';
-import Contract from '../models/Contract';
+import { app } from '../index';
+import { User } from '../models/User';
+import { Project } from '../models/Project';
+import { Contract } from '../models/Contract';
 import TimeEntry from '../models/TimeEntry';
 import WorkSession from '../models/WorkSession';
 import { generateToken } from '../utils/jwt';
@@ -26,7 +26,7 @@ describe('Time Tracking API', () => {
       role: 'freelancer',
       isEmailVerified: true,
     });
-    freelancerId = freelancer._id.toString();
+    freelancerId = (freelancer._id as any).toString();
     freelancerToken = generateToken(freelancerId);
 
     const client = await User.create({
@@ -37,7 +37,7 @@ describe('Time Tracking API', () => {
       role: 'client',
       isEmailVerified: true,
     });
-    clientId = client._id.toString();
+    clientId = (client._id as any).toString();
     clientToken = generateToken(clientId);
 
     // Create test project
@@ -50,7 +50,7 @@ describe('Time Tracking API', () => {
       skills: ['JavaScript', 'React'],
       status: 'active',
     });
-    projectId = project._id.toString();
+    projectId = (project._id as any).toString();
 
     // Create test contract
     const contract = await Contract.create({
@@ -65,7 +65,7 @@ describe('Time Tracking API', () => {
       startDate: new Date(),
       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
-    contractId = contract._id.toString();
+    contractId = (contract._id as any).toString();
   });
 
   afterAll(async () => {

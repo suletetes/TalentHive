@@ -1,7 +1,7 @@
 import request from 'supertest';
 import mongoose from 'mongoose';
-import app from '../index';
-import User from '../models/User';
+import { app } from '../index';
+import { User } from '../models/User';
 import ServicePackage from '../models/ServicePackage';
 import ProjectTemplate from '../models/ProjectTemplate';
 import PreferredVendor from '../models/PreferredVendor';
@@ -25,7 +25,7 @@ describe('Service Package and Template API', () => {
       role: 'freelancer',
       isEmailVerified: true,
     });
-    freelancerId = freelancer._id.toString();
+    freelancerId = (freelancer._id as any).toString();
     freelancerToken = generateToken(freelancerId);
 
     const client = await User.create({
@@ -36,7 +36,7 @@ describe('Service Package and Template API', () => {
       role: 'client',
       isEmailVerified: true,
     });
-    clientId = client._id.toString();
+    clientId = (client._id as any).toString();
     clientToken = generateToken(clientId);
   });
 

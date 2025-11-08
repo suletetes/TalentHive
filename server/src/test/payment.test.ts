@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { app } from '../app';
+import { app } from '../index';
 import { User } from '../models/User';
 import { Project } from '../models/Project';
 import { Proposal } from '../models/Proposal';
@@ -10,37 +10,37 @@ import { generateToken } from '../utils/jwt';
 import { stripe } from '../config/stripe';
 
 // Mock Stripe
-jest.mock('../config/stripe', () => ({
-  stripe: {
-    paymentIntents: {
-      create: jest.fn(),
-      retrieve: jest.fn(),
-    },
-    accounts: {
-      create: jest.fn(),
-      retrieve: jest.fn(),
-    },
-    accountLinks: {
-      create: jest.fn(),
-    },
-    paymentMethods: {
-      retrieve: jest.fn(),
-    },
-    transfers: {
-      create: jest.fn(),
-    },
-    refunds: {
-      create: jest.fn(),
-    },
+const mockStripe = {
+  paymentIntents: {
+    create: jest.fn(),
+    retrieve: jest.fn(),
   },
+  accounts: {
+    create: jest.fn(),
+    retrieve: jest.fn(),
+  },
+  accountLinks: {
+    create: jest.fn(),
+  },
+  paymentMethods: {
+    retrieve: jest.fn(),
+  },
+  transfers: {
+    create: jest.fn(),
+  },
+  refunds: {
+    create: jest.fn(),
+  },
+};
+
+jest.mock('../config/stripe', () => ({
+  stripe: mockStripe,
   STRIPE_CONFIG: {
     PLATFORM_FEE_PERCENTAGE: 0.05,
     CURRENCY: 'USD',
     ESCROW_HOLD_DAYS: 7,
   },
 }));
-
-const mockStripe = stripe as jest.Mocked<typeof stripe>;
 
 describe('Payment System', () => {
   let clientUser: any;

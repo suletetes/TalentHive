@@ -1,7 +1,7 @@
 import request from 'supertest';
 import mongoose from 'mongoose';
-import app from '../index';
-import User from '../models/User';
+import { app } from '../index';
+import { User } from '../models/User';
 import { Organization } from '../models/Organization';
 import BudgetApproval from '../models/BudgetApproval';
 import { generateToken } from '../utils/jwt';
@@ -23,7 +23,7 @@ describe('Organization API', () => {
       role: 'client',
       isEmailVerified: true,
     });
-    ownerId = owner._id.toString();
+    ownerId = (owner._id as any).toString();
     ownerToken = generateToken(ownerId);
 
     const member = await User.create({
@@ -34,7 +34,7 @@ describe('Organization API', () => {
       role: 'client',
       isEmailVerified: true,
     });
-    memberId = member._id.toString();
+    memberId = (member._id as any).toString();
     memberToken = generateToken(memberId);
   });
 
