@@ -5,7 +5,17 @@ import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import { AxiosResponse } from 'axios';
 import toast from 'react-hot-toast';
+
+// Helper function to create proper Axios response mock
+const createMockResponse = (data: any): AxiosResponse => ({
+  data,
+  status: 200,
+  statusText: 'OK',
+  headers: {},
+  config: {} as any,
+});
 
 import { ProposalForm } from '../components/proposals/ProposalForm';
 import { ProposalCard } from '../components/proposals/ProposalCard';
@@ -145,9 +155,9 @@ describe('ProposalForm', () => {
   });
 
   it('submits proposal successfully', async () => {
-    mockApiService.post.mockResolvedValueOnce({
-      data: { status: 'success', data: { proposal: mockProposal } },
-    });
+    mockApiService.post.mockResolvedValueOnce(
+      createMockResponse({ status: 'success', data: { proposal: mockProposal } })
+    );
 
     const onSuccess = jest.fn();
 
@@ -276,8 +286,8 @@ describe('ProposalCard', () => {
 
 describe('ProposalList', () => {
   beforeEach(() => {
-    mockApiService.get.mockResolvedValue({
-      data: {
+    mockApiService.get.mockResolvedValue(
+      createMockResponse({
         status: 'success',
         data: {
           proposals: [mockProposal],
@@ -288,8 +298,8 @@ describe('ProposalList', () => {
             pages: 1,
           },
         },
-      },
-    });
+      })
+    );
   });
 
   it('renders proposal list for client', async () => {
@@ -399,9 +409,9 @@ describe('ProposalDetailModal', () => {
   });
 
   it('handles proposal acceptance', async () => {
-    mockApiService.post.mockResolvedValueOnce({
-      data: { status: 'success', data: { proposal: { ...mockProposal, status: 'accepted' } } },
-    });
+    mockApiService.post.mockResolvedValueOnce(
+      createMockResponse({ status: 'success', data: { proposal: { ...mockProposal, status: 'accepted' } } })
+    );
 
     const onAction = jest.fn();
 
@@ -439,9 +449,9 @@ describe('ProposalDetailModal', () => {
   });
 
   it('handles proposal withdrawal', async () => {
-    mockApiService.delete.mockResolvedValueOnce({
-      data: { status: 'success' },
-    });
+    mockApiService.delete.mockResolvedValueOnce(
+      createMockResponse({ status: 'success' })
+    );
 
     // Mock window.confirm
     const originalConfirm = window.confirm;

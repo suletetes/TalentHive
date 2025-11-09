@@ -5,7 +5,17 @@ import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import { AxiosResponse } from 'axios';
 import toast from 'react-hot-toast';
+
+// Helper function to create proper Axios response mock
+const createMockResponse = (data: any): AxiosResponse => ({
+  data,
+  status: 200,
+  statusText: 'OK',
+  headers: {},
+  config: {} as any,
+});
 
 import { PaymentForm } from '../components/payments/PaymentForm';
 import { PaymentHistory } from '../components/payments/PaymentHistory';
@@ -192,8 +202,8 @@ describe('PaymentForm', () => {
     require('@stripe/react-stripe-js').useStripe.mockReturnValue(mockStripe);
     require('@stripe/react-stripe-js').useElements.mockReturnValue(mockElements);
 
-    mockApiService.post.mockResolvedValueOnce({
-      data: {
+    mockApiService.post.mockResolvedValueOnce(
+      createMockResponse({
         status: 'success',
         data: {
           payment: { _id: 'payment-1' },
@@ -203,8 +213,8 @@ describe('PaymentForm', () => {
             client_secret: 'pi_test_123_secret',
           },
         },
-      },
-    });
+      })
+    );
 
     const onSuccess = jest.fn();
 
@@ -240,8 +250,8 @@ describe('PaymentForm', () => {
 
 describe('PaymentHistory', () => {
   beforeEach(() => {
-    mockApiService.get.mockResolvedValue({
-      data: {
+    mockApiService.get.mockResolvedValue(
+      createMockResponse({
         status: 'success',
         data: {
           payments: mockPayments,
@@ -252,8 +262,8 @@ describe('PaymentHistory', () => {
             pages: 1,
           },
         },
-      },
-    });
+      })
+    );
   });
 
   it('renders payment history correctly', async () => {
@@ -308,15 +318,15 @@ describe('PaymentHistory', () => {
   });
 
   it('shows empty state when no payments', async () => {
-    mockApiService.get.mockResolvedValueOnce({
-      data: {
+    mockApiService.get.mockResolvedValueOnce(
+      createMockResponse({
         status: 'success',
         data: {
           payments: [],
           pagination: { total: 0 },
         },
-      },
-    });
+      })
+    );
 
     render(
       <TestWrapper>
@@ -351,9 +361,9 @@ describe('EscrowAccountSetup', () => {
   });
 
   it('shows account details for existing account', async () => {
-    mockApiService.get.mockResolvedValueOnce({
-      data: { status: 'success', data: mockEscrowAccount },
-    });
+    mockApiService.get.mockResolvedValueOnce(
+      createMockResponse({ status: 'success', data: mockEscrowAccount })
+    );
 
     render(
       <TestWrapper>
@@ -374,15 +384,15 @@ describe('EscrowAccountSetup', () => {
       response: { status: 404 },
     });
 
-    mockApiService.post.mockResolvedValueOnce({
-      data: {
+    mockApiService.post.mockResolvedValueOnce(
+      createMockResponse({
         status: 'success',
         data: {
           escrowAccount: mockEscrowAccount.escrowAccount,
           onboardingUrl: 'https://connect.stripe.com/setup/test',
         },
-      },
-    });
+      })
+    );
 
     // Mock window.location.href
     delete (window as any).location;
@@ -414,17 +424,17 @@ describe('PayoutManager', () => {
   beforeEach(() => {
     mockApiService.get.mockImplementation((url) => {
       if (url === '/payments/escrow/account') {
-        return Promise.resolve({
-          data: { status: 'success', data: mockEscrowAccount },
-        });
+        return Promise.resolve(
+          createMockResponse({ status: 'success', data: mockEscrowAccount })
+        );
       }
       if (url.includes('/payments/history')) {
-        return Promise.resolve({
-          data: {
+        return Promise.resolve(
+          createMockResponse({
             status: 'success',
             data: { payments: [] },
-          },
-        });
+          })
+        );
       }
       return Promise.reject(new Error('Unknown endpoint'));
     });
@@ -460,15 +470,15 @@ describe('PayoutManager', () => {
   });
 
   it('handles payout request', async () => {
-    mockApiService.post.mockResolvedValueOnce({
-      data: {
+    mockApiService.post.mockResolvedValueOnce(
+      createMockResponse({
         status: 'success',
         data: {
           payment: { _id: 'payment-1', amount: 1000 },
           transfer: { id: 'tr_test_123', status: 'pending' },
         },
-      },
-    });
+      })
+    );
 
     render(
       <TestWrapper>
@@ -519,11 +529,13 @@ describe('PayoutManager', () => {
 
     mockApiService.get.mockImplementation((url) => {
       if (url === '/payments/escrow/account') {
-        return Promise.resolve({
-          data: { status: 'success', data: lowBalanceAccount },
-        });
+        return Promise.resolve(
+          createMockResponse({ status: 'success', data: lowBalanceAccount })
+        );
       }
-      return Promise.resolve({ data: { status: 'success', data: { payments: [] } } });
+      return Promise.resolve(
+        createMockResponse({ status: 'success', data: { payments: [] } })
+      );
     });
 
     render(

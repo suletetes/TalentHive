@@ -18,14 +18,19 @@ const mockStore = configureStore({
   preloadedState: {
     auth: {
       user: {
-        _id: '123',
+        id: '123',
         email: 'freelancer@test.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        role: 'freelancer',
+        role: 'freelancer' as const,
+        profile: {
+          firstName: 'John',
+          lastName: 'Doe',
+        },
+        isVerified: true,
       },
       token: 'mock-token',
+      refreshToken: 'mock-refresh-token',
       isAuthenticated: true,
+      isLoading: false,
     },
   },
 });

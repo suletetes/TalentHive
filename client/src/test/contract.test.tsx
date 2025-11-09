@@ -5,7 +5,17 @@ import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import { AxiosResponse } from 'axios';
 import toast from 'react-hot-toast';
+
+// Helper function to create proper Axios response mock
+const createMockResponse = (data: any): AxiosResponse => ({
+  data,
+  status: 200,
+  statusText: 'OK',
+  headers: {},
+  config: {} as any,
+});
 
 import { ContractCard } from '../components/contracts/ContractCard';
 import { ContractForm } from '../components/contracts/ContractForm';
@@ -330,9 +340,9 @@ describe('ContractForm', () => {
   });
 
   it('submits contract successfully', async () => {
-    mockApiService.post.mockResolvedValueOnce({
-      data: { status: 'success', data: { contract: mockContract } },
-    });
+    mockApiService.post.mockResolvedValueOnce(
+      createMockResponse({ status: 'success', data: { contract: mockContract } })
+    );
 
     const onSuccess = jest.fn();
 
@@ -471,9 +481,9 @@ describe('MilestoneManager', () => {
   });
 
   it('handles milestone submission', async () => {
-    mockApiService.post.mockResolvedValueOnce({
-      data: { status: 'success', data: { milestone: mockContractWithMilestones.milestones[1] } },
-    });
+    mockApiService.post.mockResolvedValueOnce(
+      createMockResponse({ status: 'success', data: { milestone: mockContractWithMilestones.milestones[1] } })
+    );
 
     render(
       <TestWrapper>
@@ -517,9 +527,9 @@ describe('MilestoneManager', () => {
   });
 
   it('handles milestone approval', async () => {
-    mockApiService.post.mockResolvedValueOnce({
-      data: { status: 'success', data: { milestone: mockContractWithMilestones.milestones[0] } },
-    });
+    mockApiService.post.mockResolvedValueOnce(
+      createMockResponse({ status: 'success', data: { milestone: mockContractWithMilestones.milestones[0] } })
+    );
 
     const contractWithSubmittedMilestone = {
       ...mockContractWithMilestones,
