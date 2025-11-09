@@ -18,7 +18,7 @@ import {
   IconButton,
   Chip,
 } from '@mui/material';
-import { Add, Delete, Edit } from '@mui/icons-material';
+import { Add, Delete } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -110,9 +110,9 @@ export const ContractForm: React.FC<ContractFormProps> = ({
     },
   });
 
-  const calculateEndDate = () => {
+  const calculateEndDate = (): Date => {
     const { duration, unit } = proposal.timeline;
-    const startDate = formik.values.startDate ? new Date(formik.values.startDate) : new Date();
+    const startDate: Date = formik.values.startDate ? new Date(formik.values.startDate) : new Date();
     
     let days = duration;
     if (unit === 'weeks') days *= 7;
@@ -121,7 +121,7 @@ export const ContractForm: React.FC<ContractFormProps> = ({
     return addDays(startDate, days);
   };
 
-  const formik = useFormik({
+  const formik: any = useFormik({
     initialValues: {
       title: `Contract for ${proposal.project.title}`,
       description: `This contract outlines the terms and conditions for the completion of ${proposal.project.title} by ${proposal.freelancer.profile.firstName} ${proposal.freelancer.profile.lastName}.`,

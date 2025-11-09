@@ -264,13 +264,13 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           )}
 
           {/* Skills (for freelancers) */}
-          {user.role === 'freelancer' && user.freelancerProfile?.skills.length > 0 && (
+          {user.role === 'freelancer' && user.freelancerProfile?.skills && user.freelancerProfile.skills.length > 0 && (
             <Box>
               <Typography variant="subtitle2" gutterBottom>
                 Skills
               </Typography>
               <Box display="flex" flexWrap="wrap" gap={0.5}>
-                {user.freelancerProfile.skills.map((skill) => (
+                {user.freelancerProfile?.skills?.map((skill) => (
                   <Chip
                     key={skill}
                     label={skill}
@@ -283,10 +283,10 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           )}
 
           {/* Hourly Rate (for freelancers) */}
-          {user.role === 'freelancer' && user.freelancerProfile?.hourlyRate > 0 && (
+          {user.role === 'freelancer' && user.freelancerProfile?.hourlyRate && user.freelancerProfile.hourlyRate > 0 && (
             <Box mt={2}>
               <Typography variant="h5" color="primary">
-                ${user.freelancerProfile.hourlyRate}/hour
+                ${user.freelancerProfile?.hourlyRate}/hour
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Starting rate

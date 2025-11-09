@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { store } from '@/store';
 import { logout, setTokens } from '@/store/slices/authSlice';
 
@@ -103,9 +103,14 @@ class ApiService {
     return this.api.put(url, data, config);
   }
 
+  async patch(url: string, data?: any, config?: AxiosRequestConfig) {
+    return this.api.patch(url, data, config);
+  }
+
   async delete(url: string, config?: AxiosRequestConfig) {
     return this.api.delete(url, config);
   }
 }
 
 export const apiService = new ApiService();
+export default apiService;
