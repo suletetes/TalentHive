@@ -247,7 +247,7 @@ export const ProfilePage: React.FC = () => {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={formik.touched.profile?.firstName && Boolean(formik.errors.profile?.firstName)}
-                  helperText={formik.touched.profile?.firstName && formik.errors.profile?.firstName}
+                  helperText={formik.touched.profile?.firstName && formik.errors.profile?.firstName as string}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -259,7 +259,7 @@ export const ProfilePage: React.FC = () => {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={formik.touched.profile?.lastName && Boolean(formik.errors.profile?.lastName)}
-                  helperText={formik.touched.profile?.lastName && formik.errors.profile?.lastName}
+                  helperText={formik.touched.profile?.lastName && formik.errors.profile?.lastName as string}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -273,7 +273,7 @@ export const ProfilePage: React.FC = () => {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={formik.touched.profile?.bio && Boolean(formik.errors.profile?.bio)}
-                  helperText={formik.touched.profile?.bio && formik.errors.profile?.bio}
+                  helperText={formik.touched.profile?.bio && formik.errors.profile?.bio as string}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -307,7 +307,7 @@ export const ProfilePage: React.FC = () => {
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
                       error={formik.touched.freelancerProfile?.title && Boolean(formik.errors.freelancerProfile?.title)}
-                      helperText={formik.touched.freelancerProfile?.title && formik.errors.freelancerProfile?.title}
+                      helperText={formik.touched.freelancerProfile?.title && formik.errors.freelancerProfile?.title as string}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -320,7 +320,7 @@ export const ProfilePage: React.FC = () => {
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
                       error={formik.touched.freelancerProfile?.hourlyRate && Boolean(formik.errors.freelancerProfile?.hourlyRate)}
-                      helperText={formik.touched.freelancerProfile?.hourlyRate && formik.errors.freelancerProfile?.hourlyRate}
+                      helperText={formik.touched.freelancerProfile?.hourlyRate && formik.errors.freelancerProfile?.hourlyRate as string}
                     />
                   </Grid>
                 </>
