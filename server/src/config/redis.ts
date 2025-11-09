@@ -48,6 +48,9 @@ export const getRedisClient = (): RedisClientType => {
   return redisClient;
 };
 
+// Export redisClient directly for compatibility
+export { redisClient };
+
 export const disconnectRedis = async (): Promise<void> => {
   try {
     if (redisClient) {
