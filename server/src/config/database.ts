@@ -12,7 +12,11 @@ export const connectDB = async (): Promise<void> => {
     logger.info(`✅ MongoDB connected: ${mongoose.connection.host}`);
   } catch (error) {
     logger.error('❌ MongoDB connection error:', error);
-    process.exit(1);
+    // Don't exit in test environment
+    if (process.env.NODE_ENV !== 'test') {
+      process.exit(1);
+    }
+    throw error;
   }
 };
 

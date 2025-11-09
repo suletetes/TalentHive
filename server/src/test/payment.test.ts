@@ -10,31 +10,29 @@ import { generateToken } from '../utils/jwt';
 import { stripe } from '../config/stripe';
 
 // Mock Stripe
-const mockStripe = {
-  paymentIntents: {
-    create: jest.fn(),
-    retrieve: jest.fn(),
-  },
-  accounts: {
-    create: jest.fn(),
-    retrieve: jest.fn(),
-  },
-  accountLinks: {
-    create: jest.fn(),
-  },
-  paymentMethods: {
-    retrieve: jest.fn(),
-  },
-  transfers: {
-    create: jest.fn(),
-  },
-  refunds: {
-    create: jest.fn(),
-  },
-};
-
 jest.mock('../config/stripe', () => ({
-  stripe: mockStripe,
+  stripe: {
+    paymentIntents: {
+      create: jest.fn(),
+      retrieve: jest.fn(),
+    },
+    accounts: {
+      create: jest.fn(),
+      retrieve: jest.fn(),
+    },
+    accountLinks: {
+      create: jest.fn(),
+    },
+    paymentMethods: {
+      retrieve: jest.fn(),
+    },
+    transfers: {
+      create: jest.fn(),
+    },
+    refunds: {
+      create: jest.fn(),
+    },
+  },
   STRIPE_CONFIG: {
     PLATFORM_FEE_PERCENTAGE: 0.05,
     CURRENCY: 'USD',

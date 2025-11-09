@@ -5,14 +5,25 @@ let redisClient: RedisClientType;
 
 export const connectRedis = async (): Promise<void> => {
   try {
-    redisClient = createClient({
-      socket: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-      },
-      password: process.env.REDIS_PASSWORD || undefined,
-      database: parseInt(process.env.REDIS_DB || '0'),
-    });
+    // Support both URL format (Redis Cloud) and traditional host/port format
+    const redisUrl = process.env.REDIS_URL;
+    
+    if (redisUrl) {
+      // Use URL format (e.g., redis://username:password@host:port)
+      redisClient = createClient({
+        url: redisUrl,
+      });
+    } else {
+      // Use traditional format
+      redisClient = createClient({
+        socket: {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: parseInt(process.env.REDIS_PORT || '6379'),
+        },
+        password: process.env.REDIS_PASSWORD || undefined,
+        database: parseInt(process.env.REDIS_DB || '0'),
+      });
+    }
 
     redisClient.on('error', (error) => {
       logger.error('Redis connection error:', error);
