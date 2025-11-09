@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import ServicePackage from '@/models/ServicePackage';
 import ProjectTemplate from '@/models/ProjectTemplate';
 import PreferredVendor from '@/models/PreferredVendor';
-import Project from '@/models/Project';
+import { Project } from '@/models/Project';
 import { logger } from '@/utils/logger';
 
 // Create service package

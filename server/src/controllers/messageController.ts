@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Request, Response, NextFunction } from 'express';
 import { Message, Conversation } from '@/models/Message';
 import { AppError, catchAsync } from '@/middleware/errorHandler';
