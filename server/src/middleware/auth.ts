@@ -57,3 +57,7 @@ export const authorize = (...roles: string[]) => {
     next();
   };
 };
+
+// Aliases for compatibility
+export const protect = authenticate;
+export const restrictTo = authorize;
