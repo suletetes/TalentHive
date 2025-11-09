@@ -33,7 +33,6 @@ import {
   Visibility,
   ThumbUp,
   ThumbDown,
-  Edit,
   Add,
   Delete,
 } from '@mui/icons-material';
@@ -257,7 +256,7 @@ export const MilestoneManager: React.FC<MilestoneManagerProps> = ({
         Milestones ({contract.milestones.length})
       </Typography>
 
-      {contract.milestones.map((milestone, index) => (
+      {contract.milestones.map((milestone) => (
         <Card key={milestone._id} sx={{ mb: 2 }}>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>

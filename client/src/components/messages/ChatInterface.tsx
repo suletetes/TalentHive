@@ -5,19 +5,12 @@ import {
   TextField,
   IconButton,
   Typography,
-  Avatar,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Divider,
-  Badge,
 } from '@mui/material';
-import { Send, AttachFile } from '@mui/icons-material';
+import { Send } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { apiService } from '@/services/api';
-import io, { Socket } from 'socket.io-client';
+// import io, { Socket } from 'socket.io-client';
 
 interface ChatInterfaceProps {
   conversationId: string;
@@ -29,7 +22,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   currentUserId,
 }) => {
   const [message, setMessage] = useState('');
-  const [socket, setSocket] = useState<Socket | null>(null);
+  // const [socket, setSocket] = useState<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -51,25 +44,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   });
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const newSocket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000', {
-      auth: { token },
-    });
+    // const token = localStorage.getItem('token');
+    // const newSocket = io(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000', {
+    //   auth: { token },
+    // });
 
-    newSocket.on('connect', () => {
-      newSocket.emit('join_conversation', conversationId);
-    });
+    // newSocket.on('connect', () => {
+    //   newSocket.emit('join_conversation', conversationId);
+    // });
 
-    newSocket.on('new_message', () => {
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
-    });
+    // newSocket.on('new_message', () => {
+    //   queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+    // });
 
-    setSocket(newSocket);
+    // setSocket(newSocket);
 
-    return () => {
-      newSocket.emit('leave_conversation', conversationId);
-      newSocket.disconnect();
-    };
+    // return () => {
+    //   newSocket.emit('leave_conversation', conversationId);
+    //   newSocket.disconnect();
+    // };
   }, [conversationId]);
 
   const handleSend = () => {
@@ -110,7 +103,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <div ref={messagesEndRef} />
       </Box>
 
-      <Divider />
+      {/* <Divider /> */}
 
       <Box sx={{ p: 2, display: 'flex', gap: 1 }}>
         <TextField
