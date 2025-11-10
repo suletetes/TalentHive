@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -11,12 +11,15 @@ import {
   Grid,
   Pagination,
   Alert,
-  CircularProgress,
+  Button,
 } from '@mui/material';
-import { Search, FilterList } from '@mui/icons-material';
-import { useQuery } from '@tanstack/react-query';
-import { apiService } from '@/services/api';
+import { Search, FilterList, Refresh } from '@mui/icons-material';
 import { ProposalCard } from './ProposalCard';
+import { useProposals, useAcceptProposal, useRejectProposal } from '@/hooks/api/useProposals';
+import { useSocket } from '@/hooks/useSocket';
+import { ListSkeleton } from '@/components/ui/LoadingStates';
+import { ErrorHandler } from '@/utils/errorHandler';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface ProposalListProps {
   projectId?: string;
@@ -34,39 +37,86 @@ export const ProposalList: React.FC<ProposalListProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('submittedAt');
   const [sortOrder, setSortOrder] = useState('desc');
+  const toast = useToast();
+  const socket = useSocket();
 
   const limit = 10;
 
   // Fetch proposals based on view mode
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['proposals', projectId, viewMode, page, statusFilter, searchTerm, sortBy, sortOrder],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        sortBy,
-        sortOrder,
-      });
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useProposals({
+    projectId,
+    page,
+    limit,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    search: searchTerm || undefined,
+    sortBy,
+    sortOrder,
+  });
 
-      if (statusFilter !== 'all') {
-        params.append('status', statusFilter);
-      }
-
-      if (searchTerm) {
-        params.append('search', searchTerm);
-      }
-
-      const endpoint = projectId 
-        ? `/proposals/project/${projectId}?${params}`
-        : `/proposals/my?${params}`;
-
-      const response = await apiService.get(endpoint);
-      return response.data;
+  // Accept proposal mutation
+  const acceptMutation = useAcceptProposal({
+    onSuccess: () => {
+      toast.success('Proposal accepted successfully!');
+      refetch();
+    },
+    onError: (error) => {
+      ErrorHandler.handleAndShow(error);
     },
   });
 
+  // Reject proposal mutation
+  const rejectMutation = useRejectProposal({
+    onSuccess: () => {
+      toast.success('Proposal rejected');
+      refetch();
+    },
+    onError: (error) => {
+      ErrorHandler.handleAndShow(error);
+    },
+  });
+
+  // Real-time updates via Socket.io
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleProposalUpdate = (data: any) => {
+      // Refetch proposals when there's an update
+      if (projectId && data.projectId === projectId) {
+        refetch();
+      } else if (!projectId) {
+        refetch();
+      }
+    };
+
+    socket.on('proposal:updated', handleProposalUpdate);
+    socket.on('proposal:created', handleProposalUpdate);
+    socket.on('proposal:status-changed', handleProposalUpdate);
+
+    return () => {
+      socket.off('proposal:updated', handleProposalUpdate);
+      socket.off('proposal:created', handleProposalUpdate);
+      socket.off('proposal:status-changed', handleProposalUpdate);
+    };
+  }, [socket, projectId, refetch]);
+
   const handleProposalAction = (action: string, proposalId: string) => {
-    onProposalAction?.(action, proposalId);
+    switch (action) {
+      case 'accept':
+        acceptMutation.mutate(proposalId);
+        break;
+      case 'reject':
+        rejectMutation.mutate(proposalId);
+        break;
+      default:
+        onProposalAction?.(action, proposalId);
+    }
   };
 
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
@@ -101,23 +151,30 @@ export const ProposalList: React.FC<ProposalListProps> = ({
   ];
 
   if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <ListSkeleton items={5} height={150} />;
   }
 
-  if (error) {
+  if (isError) {
+    const apiError = ErrorHandler.handle(error);
     return (
-      <Alert severity="error" sx={{ mb: 2 }}>
-        Failed to load proposals. Please try again.
+      <Alert
+        severity="error"
+        action={
+          <Button color="inherit" size="small" startIcon={<Refresh />} onClick={() => refetch()}>
+            Retry
+          </Button>
+        }
+      >
+        <Typography variant="subtitle2" gutterBottom>
+          Failed to load proposals
+        </Typography>
+        <Typography variant="body2">{apiError.message}</Typography>
       </Alert>
     );
   }
 
-  const proposals = data?.data?.proposals || [];
-  const pagination = data?.data?.pagination || {};
+  const proposals = data?.proposals || [];
+  const pagination = data?.pagination || {};
 
   return (
     <Box>
@@ -200,7 +257,9 @@ export const ProposalList: React.FC<ProposalListProps> = ({
       </Grid>
 
       {/* Proposals List */}
-      {proposals.length === 0 ? (
+      {isFetching && !isLoading ? (
+        <ListSkeleton items={3} height={150} />
+      ) : proposals.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 6 }}>
           <FilterList sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -225,6 +284,7 @@ export const ProposalList: React.FC<ProposalListProps> = ({
               onAccept={(id) => handleProposalAction('accept', id)}
               onReject={(id) => handleProposalAction('reject', id)}
               onView={(id) => handleProposalAction('view', id)}
+              isProcessing={acceptMutation.isPending || rejectMutation.isPending}
             />
           ))}
 
@@ -237,6 +297,7 @@ export const ProposalList: React.FC<ProposalListProps> = ({
                 onChange={handlePageChange}
                 color="primary"
                 size="large"
+                disabled={isFetching}
               />
             </Box>
           )}

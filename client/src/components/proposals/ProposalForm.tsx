@@ -18,15 +18,17 @@ import {
   ListItemSecondaryAction,
   IconButton,
   Chip,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
-import { AttachMoney, Schedule, Add, Delete, Upload } from '@mui/icons-material';
+import { AttachMoney, Schedule, Add, Delete } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
-import { apiService } from '@/services/api';
+import { useCreateProposal } from '@/hooks/api/useProposals';
+import { ErrorHandler, ValidationErrorHandler } from '@/utils/errorHandler';
+import { useToast } from '@/components/ui/ToastProvider';
 
 const proposalSchema = yup.object({
   coverLetter: yup.string()
@@ -78,19 +80,25 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
     deliverables: [],
   });
   const [attachments, setAttachments] = useState<string[]>([]);
-  
-  const queryClient = useQueryClient();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const toast = useToast();
 
-  const submitMutation = useMutation({
-    mutationFn: (data: any) => apiService.post(`/proposals/project/${project._id}`, data),
+  const submitMutation = useCreateProposal({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success('Proposal submitted successfully!');
       onSuccess?.();
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to submit proposal');
+    onError: (error) => {
+      const apiError = ErrorHandler.handle(error);
+      setSubmitError(apiError.message);
+      
+      // Extract field-specific errors
+      const fieldErrors = ValidationErrorHandler.extractFieldErrors(apiError);
+      Object.entries(fieldErrors).forEach(([field, message]) => {
+        formik.setFieldError(field, message);
+      });
+      
+      ErrorHandler.showToast(apiError);
     },
   });
 
@@ -105,11 +113,15 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
     },
     validationSchema: proposalSchema,
     onSubmit: (values) => {
+      setSubmitError(null);
+      
       const data = {
+        projectId: project._id,
         ...values,
-        milestones,
-        attachments,
+        milestones: milestones.length > 0 ? milestones : undefined,
+        attachments: attachments.length > 0 ? attachments : undefined,
       };
+      
       submitMutation.mutate(data);
     },
   });
@@ -156,6 +168,12 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         {getBudgetGuidance()}
       </Typography>
+
+      {submitError && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setSubmitError(null)}>
+          {submitError}
+        </Alert>
+      )}
 
       <Box component="form" onSubmit={formik.handleSubmit}>
         {/* Cover Letter */}
@@ -358,19 +376,27 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
         <Divider sx={{ my: 3 }} />
 
         {/* Actions */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-          <Button onClick={onCancel} variant="outlined">
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
+          <Button 
+            onClick={onCancel} 
+            variant="outlined"
+            disabled={submitMutation.isPending}
+          >
             Cancel
           </Button>
           
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={submitMutation.isPending}
-            size="large"
-          >
-            {submitMutation.isPending ? 'Submitting...' : 'Submit Proposal'}
-          </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {submitMutation.isPending && <CircularProgress size={24} />}
+            
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={submitMutation.isPending || !formik.isValid}
+              size="large"
+            >
+              {submitMutation.isPending ? 'Submitting...' : 'Submit Proposal'}
+            </Button>
+          </Box>
         </Box>
       </Box>
     </Paper>
