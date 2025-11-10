@@ -18,7 +18,7 @@ import { AboutPage } from '@/pages/AboutPage';
 import { PrivacyPolicyPage } from '@/pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from '@/pages/TermsOfServicePage';
 import { SuccessStoriesPage } from '@/pages/SuccessStoriesPage';
-import { ErrorBoundary } from '@/components/error/ErrorBoundary';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { ToastProvider } from '@/components/ui/ToastProvider';
 

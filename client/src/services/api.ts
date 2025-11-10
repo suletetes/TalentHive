@@ -1,6 +1,5 @@
-// Re-export the new API core and services
-export { apiCore } from './api/core';
-export { authService } from './api/auth.service';
+// Re-export everything from the api directory
+export * from './api/index';
 
 // For backward compatibility, export apiCore as apiService
 import { apiCore } from './api/core';
