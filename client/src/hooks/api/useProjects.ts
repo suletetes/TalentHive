@@ -1,17 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import {
-  projectsService,
-  CreateProjectDto,
-  UpdateProjectDto,
-  ProjectFilters,
-} from '@/services/api';
+import { projectsService } from '@/services/api/projects.service';
 
 // Query keys for cache management
 export const projectKeys = {
   all: ['projects'] as const,
   lists: () => [...projectKeys.all, 'list'] as const,
-  list: (filters?: ProjectFilters) => [...projectKeys.lists(), filters] as const,
+  list: (filters?: any) => [...projectKeys.lists(), filters] as const,
   details: () => [...projectKeys.all, 'detail'] as const,
   detail: (id: string) => [...projectKeys.details(), id] as const,
   my: () => [...projectKeys.all, 'my'] as const,
@@ -77,22 +72,27 @@ export function useSearchProjects(query: string, filters?: ProjectFilters) {
 }
 
 // Create project mutation
-export function useCreateProject() {
+export function useCreateProject(options?: any) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: CreateProjectDto) => projectsService.createProject(data),
-    onSuccess: (response) => {
+    onSuccess: (response, variables, context) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
       queryClient.invalidateQueries({ queryKey: projectKeys.my() });
       queryClient.invalidateQueries({ queryKey: projectKeys.stats() });
-      toast.success('Project created successfully!');
+      
+      if (!options?.onSuccess) {
+        toast.success('Project created successfully!');
+      } else {
+        options.onSuccess(response, variables, context);
+      }
     },
-    onError: (error: any) => {
+    onError: options?.onError || ((error: any) => {
       const message = error.response?.data?.message || 'Failed to create project';
       toast.error(message);
-    },
+    }),
   });
 }
 

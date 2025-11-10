@@ -13,6 +13,15 @@ export const proposalKeys = {
   stats: () => [...proposalKeys.all, 'stats'] as const,
 };
 
+// Fetch proposals with filters
+export function useProposals(filters?: any) {
+  return useQuery({
+    queryKey: ['proposals', filters],
+    queryFn: () => proposalsService.getProposals(filters),
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
 // Fetch proposals for a project
 export function useProposalsForProject(projectId: string) {
   return useQuery({
