@@ -22,13 +22,20 @@ import { ContractForm } from '../components/contracts/ContractForm';
 import { MilestoneManager } from '../components/contracts/MilestoneManager';
 import { theme } from '../theme';
 import { apiService } from '../services/api';
+import { vi } from 'vitest';
 
 // Mock dependencies
-jest.mock('../services/api');
-jest.mock('react-hot-toast');
+vi.mock('../services/api');
+vi.mock('react-hot-toast', () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+    loading: vi.fn(),
+  },
+}));
 
-const mockApiService = apiService as jest.Mocked<typeof apiService>;
-const mockToast = toast as jest.Mocked<typeof toast>;
+const mockApiService = apiService as any;
+const mockToast = toast as any;
 
 // Test wrapper component
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {

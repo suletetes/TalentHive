@@ -23,25 +23,32 @@ import { EscrowAccountSetup } from '../components/payments/EscrowAccountSetup';
 import { PayoutManager } from '../components/payments/PayoutManager';
 import { theme } from '../theme';
 import { apiService } from '../services/api';
+import { vi } from 'vitest';
 
 // Mock dependencies
-jest.mock('../services/api');
-jest.mock('react-hot-toast');
-jest.mock('@stripe/stripe-js');
-jest.mock('@stripe/react-stripe-js', () => ({
+vi.mock('../services/api');
+vi.mock('react-hot-toast', () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+    loading: vi.fn(),
+  },
+}));
+vi.mock('@stripe/stripe-js');
+vi.mock('@stripe/react-stripe-js', () => ({
   Elements: ({ children }: any) => children,
   CardElement: () => <div data-testid="card-element">Card Element</div>,
   useStripe: () => ({
-    createPaymentMethod: jest.fn(),
-    confirmCardPayment: jest.fn(),
+    createPaymentMethod: vi.fn(),
+    confirmCardPayment: vi.fn(),
   }),
   useElements: () => ({
-    getElement: jest.fn(() => ({})),
+    getElement: vi.fn(() => ({})),
   }),
 }));
 
-const mockApiService = apiService as jest.Mocked<typeof apiService>;
-const mockToast = toast as jest.Mocked<typeof toast>;
+const mockApiService = apiService as any;
+const mockToast = toast as any;
 
 // Test wrapper component
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
