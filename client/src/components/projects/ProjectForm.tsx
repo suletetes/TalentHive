@@ -7,17 +7,19 @@ import {
   Button,
   Typography,
   Paper,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
 
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { BudgetTimelineStep } from './steps/BudgetTimelineStep';
 import { RequirementsStep } from './steps/RequirementsStep';
 import { ReviewStep } from './steps/ReviewStep';
-import { apiService } from '@/services/api';
+import { useCreateProject, useUpdateProject } from '@/hooks/api/useProjects';
+import { ErrorHandler, ValidationErrorHandler } from '@/utils/errorHandler';
+import { useToast } from '@/components/ui/ToastProvider';
 
 const steps = ['Basic Information', 'Budget & Timeline', 'Requirements', 'Review'];
 
@@ -49,17 +51,44 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
   onCancel,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
-  const queryClient = useQueryClient();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const toast = useToast();
+  const isEditMode = !!initialData?._id;
 
-  const createMutation = useMutation({
-    mutationFn: (data: any) => apiService.post('/projects', data),
+  const createMutation = useCreateProject({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success('Project created successfully!');
       onSuccess?.();
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create project');
+    onError: (error) => {
+      const apiError = ErrorHandler.handle(error);
+      setSubmitError(apiError.message);
+      
+      // Extract field-specific errors
+      const fieldErrors = ValidationErrorHandler.extractFieldErrors(apiError);
+      Object.entries(fieldErrors).forEach(([field, message]) => {
+        formik.setFieldError(field, message);
+      });
+      
+      ErrorHandler.showToast(apiError);
+    },
+  });
+
+  const updateMutation = useUpdateProject({
+    onSuccess: () => {
+      toast.success('Project updated successfully!');
+      onSuccess?.();
+    },
+    onError: (error) => {
+      const apiError = ErrorHandler.handle(error);
+      setSubmitError(apiError.message);
+      
+      const fieldErrors = ValidationErrorHandler.extractFieldErrors(apiError);
+      Object.entries(fieldErrors).forEach(([field, message]) => {
+        formik.setFieldError(field, message);
+      });
+      
+      ErrorHandler.showToast(apiError);
     },
   });
 
@@ -87,9 +116,17 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     },
     validationSchema: projectSchema,
     onSubmit: (values) => {
-      createMutation.mutate(values);
+      setSubmitError(null);
+      
+      if (isEditMode) {
+        updateMutation.mutate({ id: initialData._id, data: values });
+      } else {
+        createMutation.mutate(values);
+      }
     },
   });
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const handleNext = () => {
     setActiveStep((prevStep) => prevStep + 1);
@@ -129,10 +166,9 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         return null;
     }
   };  return (
-
     <Paper sx={{ p: 4 }}>
       <Typography variant="h5" gutterBottom>
-        {initialData ? 'Edit Project' : 'Create New Project'}
+        {isEditMode ? 'Edit Project' : 'Create New Project'}
       </Typography>
 
       <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
@@ -143,6 +179,12 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         ))}
       </Stepper>
 
+      {submitError && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setSubmitError(null)}>
+          {submitError}
+        </Alert>
+      )}
+
       <Box component="form" onSubmit={formik.handleSubmit}>
         {renderStepContent(activeStep)}
 
@@ -150,24 +192,30 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           <Button
             onClick={activeStep === 0 ? onCancel : handleBack}
             variant="outlined"
+            disabled={isSubmitting}
           >
             {activeStep === 0 ? 'Cancel' : 'Back'}
           </Button>
 
-          <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {isSubmitting && <CircularProgress size={24} />}
+            
             {activeStep === steps.length - 1 ? (
               <Button
                 type="submit"
                 variant="contained"
-                disabled={createMutation.isPending}
+                disabled={isSubmitting || !formik.isValid}
               >
-                {createMutation.isPending ? 'Creating...' : 'Create Project'}
+                {isSubmitting 
+                  ? (isEditMode ? 'Updating...' : 'Creating...') 
+                  : (isEditMode ? 'Update Project' : 'Create Project')
+                }
               </Button>
             ) : (
               <Button
                 onClick={handleNext}
                 variant="contained"
-                disabled={!isStepValid(activeStep)}
+                disabled={!isStepValid(activeStep) || isSubmitting}
               >
                 Next
               </Button>

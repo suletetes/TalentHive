@@ -10,17 +10,18 @@ import {
   DialogTitle,
   DialogContent,
   IconButton,
+  Alert,
 } from '@mui/material';
-import { Add, Close } from '@mui/icons-material';
-import { useQuery } from '@tanstack/react-query';
+import { Add, Close, Refresh } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { ProjectFilters } from '@/components/projects/ProjectFilters';
 import { ProjectForm } from '@/components/projects/ProjectForm';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { PageLoading, GridSkeleton } from '@/components/ui/LoadingStates';
 import { RootState } from '@/store';
-import { apiService } from '@/services/api';
+import { useProjects } from '@/hooks/api/useProjects';
+import { ErrorHandler } from '@/utils/errorHandler';
 
 export const ProjectsPage: React.FC = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -42,31 +43,21 @@ export const ProjectsPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const isClient = user?.role === 'client';
 
-  const { data: projectsData, isLoading } = useQuery({
-    queryKey: ['projects', filters],
-    queryFn: () => {
-      const params = new URLSearchParams();
-      
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== '' && value !== false && value !== 0) {
-          if (key === 'skills' && Array.isArray(value) && value.length > 0) {
-            params.append(key, value.join(','));
-          } else if (key === 'budgetRange') {
-            const [min, max] = value as [number, number];
-            if (min > 0) params.append('budgetMin', min.toString());
-            if (max < 10000) params.append('budgetMax', max.toString());
-          } else if (key !== 'budgetRange') {
-            params.append(key, value.toString());
-          }
-        }
-      });
-
-      return apiService.get(`/projects?${params.toString()}`);
-    },
+  const {
+    data: projectsData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useProjects({
+    ...filters,
+    budgetMin: filters.budgetRange[0] > 0 ? filters.budgetRange[0] : undefined,
+    budgetMax: filters.budgetRange[1] < 10000 ? filters.budgetRange[1] : undefined,
   });
 
-  const projects = projectsData?.data?.data?.projects || [];
-  const pagination = projectsData?.data?.data?.pagination;
+  const projects = projectsData?.projects || [];
+  const pagination = projectsData?.pagination;
 
   const handleFiltersChange = (newFilters: any) => {
     setFilters({ ...newFilters, page: 1 }); // Reset to first page when filters change
@@ -95,10 +86,41 @@ export const ProjectsPage: React.FC = () => {
 
   const handleCreateSuccess = () => {
     setCreateDialogOpen(false);
+    refetch();
+  };
+
+  const handleRetry = () => {
+    refetch();
   };
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading projects..." />;
+    return <PageLoading message="Loading projects..." />;
+  }
+
+  if (isError) {
+    const apiError = ErrorHandler.handle(error);
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Alert
+          severity="error"
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              startIcon={<Refresh />}
+              onClick={handleRetry}
+            >
+              Retry
+            </Button>
+          }
+        >
+          <Typography variant="subtitle2" gutterBottom>
+            Failed to load projects
+          </Typography>
+          <Typography variant="body2">{apiError.message}</Typography>
+        </Alert>
+      </Container>
+    );
   }
 
   return (
@@ -142,7 +164,11 @@ export const ProjectsPage: React.FC = () => {
       )}
 
       {/* Projects Grid */}
-      {projects.length === 0 ? (
+      {isFetching && !isLoading ? (
+        <Box sx={{ position: 'relative', minHeight: 400 }}>
+          <GridSkeleton items={6} columns={3} height={250} />
+        </Box>
+      ) : projects.length === 0 ? (
         <Box
           sx={{
             textAlign: 'center',
@@ -183,6 +209,7 @@ export const ProjectsPage: React.FC = () => {
                 onChange={handlePageChange}
                 color="primary"
                 size="large"
+                disabled={isFetching}
               />
             </Box>
           )}
