@@ -18,11 +18,17 @@ import { AboutPage } from '@/pages/AboutPage';
 import { PrivacyPolicyPage } from '@/pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from '@/pages/TermsOfServicePage';
 import { SuccessStoriesPage } from '@/pages/SuccessStoriesPage';
+import { ErrorBoundary } from '@/components/error/ErrorBoundary';
+import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
+import { ToastProvider } from '@/components/ui/ToastProvider';
 
 function App() {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Routes>
+    <ErrorBoundary showDetails={import.meta.env.DEV}>
+      <ToastProvider>
+        <OfflineIndicator />
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          <Routes>
         {/* Public routes */}
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
@@ -56,7 +62,9 @@ function App() {
         {/* 404 route */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </Box>
+        </Box>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
 
