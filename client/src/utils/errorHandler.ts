@@ -204,5 +204,58 @@ export class ErrorHandler {
     // if (import.meta.env.PROD) {
     //   Sentry.captureException(error, { extra: { context, apiError } });
     // }
+
+    return apiError;
+  }
+
+  static isServerError(error: ApiError): boolean {
+    return (error.statusCode || 0) >= 500;
+  }
+
+  static logError(error: unknown, context?: string): ApiError {
+    const apiError = this.handle(error);
+    
+    if (import.meta.env.DEV) {
+      console.group(`🚨 Error ${context ? `in ${context}` : ''}`);
+      console.error('Original error:', error);
+      console.error('Processed error:', apiError);
+      console.groupEnd();
+    }
+
+    return apiError;
+  }
+}
+
+// Validation error helper
+export class ValidationErrorHandler {
+  static extractFieldErrors(error: ApiError): Record<string, string> {
+    const fieldErrors: Record<string, string> = {};
+
+    if (error.field && error.message) {
+      fieldErrors[error.field] = error.message;
+    }
+
+    if (error.details && Array.isArray(error.details)) {
+      error.details.forEach((detail: any) => {
+        if (detail.field && detail.message) {
+          fieldErrors[detail.field] = detail.message;
+        }
+      });
+    }
+
+    if (error.details && typeof error.details === 'object' && !Array.isArray(error.details)) {
+      Object.entries(error.details).forEach(([field, message]) => {
+        if (typeof message === 'string') {
+          fieldErrors[field] = message;
+        }
+      });
+    }
+
+    return fieldErrors;
+  }
+
+  static getFieldError(error: ApiError, fieldName: string): string | undefined {
+    const fieldErrors = this.extractFieldErrors(error);
+    return fieldErrors[fieldName];
   }
 }

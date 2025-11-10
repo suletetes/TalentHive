@@ -2,6 +2,21 @@
 export { apiCore } from './core';
 
 // Export all services
+export * from './auth.service';
+export * from './projects.service';
+export * from './proposals.service';
+export * from './contracts.service';
+export * from './payments.service';
+export * from './messages.service';
+export * from './reviews.service';
+export * from './notifications.service';
+export * from './timeTracking.service';
+export * from './organizations.service';
+export * from './services.service';
+export * from './search.service';
+export * from './upload.service';
+
+// Export service instances
 export { authService } from './auth.service';
 export { projectsService } from './projects.service';
 export { proposalsService } from './proposals.service';
