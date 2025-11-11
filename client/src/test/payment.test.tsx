@@ -33,6 +33,11 @@ vi.mock('react-hot-toast', () => ({
     error: vi.fn(),
     loading: vi.fn(),
   },
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    loading: vi.fn(),
+  },
 }));
 vi.mock('@stripe/stripe-js');
 vi.mock('@stripe/react-stripe-js', () => ({
@@ -195,14 +200,14 @@ describe('PaymentForm', () => {
 
   it('handles payment submission', async () => {
     const mockStripe = {
-      createPaymentMethod: jest.fn().mockResolvedValue({
+      createPaymentMethod: vi.fn().mockResolvedValue({
         error: null,
         paymentMethod: { id: 'pm_test_123' },
       }),
     };
 
     const mockElements = {
-      getElement: jest.fn().mockReturnValue({}),
+      getElement: vi.fn().mockReturnValue({}),
     };
 
     // Mock the Stripe hooks
@@ -223,7 +228,7 @@ describe('PaymentForm', () => {
       })
     );
 
-    const onSuccess = jest.fn();
+    const onSuccess = vi.fn();
 
     render(
       <TestWrapper>

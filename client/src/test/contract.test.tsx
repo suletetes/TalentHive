@@ -32,6 +32,11 @@ vi.mock('react-hot-toast', () => ({
     error: vi.fn(),
     loading: vi.fn(),
   },
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    loading: vi.fn(),
+  },
 }));
 
 const mockApiService = apiService as any;
@@ -238,8 +243,8 @@ describe('ContractCard', () => {
   });
 
   it('calls action handlers', () => {
-    const onView = jest.fn();
-    const onSign = jest.fn();
+    const onView = vi.fn();
+    const onSign = vi.fn();
 
     const draftContract = {
       ...mockContract,
@@ -351,7 +356,7 @@ describe('ContractForm', () => {
       createMockResponse({ status: 'success', data: { contract: mockContract } })
     );
 
-    const onSuccess = jest.fn();
+    const onSuccess = vi.fn();
 
     render(
       <TestWrapper>

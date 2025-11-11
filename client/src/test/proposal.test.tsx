@@ -33,6 +33,31 @@ vi.mock('react-hot-toast', () => ({
     error: vi.fn(),
     loading: vi.fn(),
   },
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    loading: vi.fn(),
+  },
+}));
+
+// Mock socket
+const mockSocket = {
+  on: vi.fn(),
+  off: vi.fn(),
+  emit: vi.fn(),
+  connect: vi.fn(),
+  disconnect: vi.fn(),
+  isConnected: vi.fn(() => true),
+  getSocketId: vi.fn(() => 'mock-socket-id'),
+};
+
+vi.mock('../services/socket/socket.service', () => ({
+  default: mockSocket,
+  socketService: mockSocket,
+}));
+
+vi.mock('../hooks/useSocket', () => ({
+  useSocket: () => mockSocket,
 }));
 
 const mockApiService = apiService as any;
@@ -124,7 +149,7 @@ const mockProposal = {
 
 describe('ProposalForm', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders proposal form correctly', () => {
@@ -134,11 +159,11 @@ describe('ProposalForm', () => {
       </TestWrapper>
     );
 
-    expect(screen.getByText('Submit Proposal')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Submit Proposal/i })).toBeInTheDocument();
     expect(screen.getByText('Test Project')).toBeInTheDocument();
-    expect(screen.getByLabelText('Cover Letter')).toBeInTheDocument();
-    expect(screen.getByLabelText('Your Bid')).toBeInTheDocument();
-    expect(screen.getByLabelText('Duration')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Cover Letter/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Your Bid/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Duration/i)).toBeInTheDocument();
   });
 
   it('validates cover letter length', async () => {
@@ -148,8 +173,8 @@ describe('ProposalForm', () => {
       </TestWrapper>
     );
 
-    const coverLetterInput = screen.getByLabelText('Cover Letter');
-    const submitButton = screen.getByText('Submit Proposal');
+    const coverLetterInput = screen.getByLabelText(/Cover Letter/i);
+    const submitButton = screen.getByRole('button', { name: /Submit Proposal/i });
 
     // Enter short cover letter
     fireEvent.change(coverLetterInput, { target: { value: 'Too short' } });
@@ -166,7 +191,7 @@ describe('ProposalForm', () => {
       createMockResponse({ status: 'success', data: { proposal: mockProposal } })
     );
 
-    const onSuccess = jest.fn();
+    const onSuccess = vi.fn();
 
     render(
       <TestWrapper>
@@ -175,15 +200,15 @@ describe('ProposalForm', () => {
     );
 
     // Fill form
-    fireEvent.change(screen.getByLabelText('Cover Letter'), {
+    fireEvent.change(screen.getByLabelText(/Cover Letter/i), {
       target: { value: 'I am very interested in this project and have the required skills to complete it successfully. I have extensive experience in web development.' },
     });
-    fireEvent.change(screen.getByLabelText('Your Bid'), {
+    fireEvent.change(screen.getByLabelText(/Your Bid/i), {
       target: { value: '1500' },
     });
 
     // Submit form
-    fireEvent.click(screen.getByText('Submit Proposal'));
+    fireEvent.click(screen.getByRole('button', { name: /Submit Proposal/i }));
 
     await waitFor(() => {
       expect(mockApiService.post).toHaveBeenCalledWith(
@@ -269,8 +294,8 @@ describe('ProposalCard', () => {
   });
 
   it('calls action handlers', () => {
-    const onAccept = jest.fn();
-    const onReject = jest.fn();
+    const onAccept = vi.fn();
+    const onReject = vi.fn();
 
     render(
       <TestWrapper>
@@ -380,7 +405,7 @@ describe('ProposalDetailModal', () => {
       <TestWrapper>
         <ProposalDetailModal
           open={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           proposal={mockProposal}
           viewMode="client"
         />
@@ -399,7 +424,7 @@ describe('ProposalDetailModal', () => {
       <TestWrapper>
         <ProposalDetailModal
           open={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           proposal={mockProposal}
           viewMode="client"
         />
@@ -420,13 +445,13 @@ describe('ProposalDetailModal', () => {
       createMockResponse({ status: 'success', data: { proposal: { ...mockProposal, status: 'accepted' } } })
     );
 
-    const onAction = jest.fn();
+    const onAction = vi.fn();
 
     render(
       <TestWrapper>
         <ProposalDetailModal
           open={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           proposal={mockProposal}
           viewMode="client"
           onAction={onAction}
@@ -462,15 +487,15 @@ describe('ProposalDetailModal', () => {
 
     // Mock window.confirm
     const originalConfirm = window.confirm;
-    window.confirm = jest.fn(() => true);
+    window.confirm = vi.fn(() => true);
 
-    const onAction = jest.fn();
+    const onAction = vi.fn();
 
     render(
       <TestWrapper>
         <ProposalDetailModal
           open={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           proposal={mockProposal}
           viewMode="freelancer"
           onAction={onAction}
