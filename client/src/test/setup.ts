@@ -32,3 +32,21 @@ global.IntersectionObserver = class IntersectionObserver {
   }
   unobserve() {}
 } as any;
+
+// Mock socket.io-client
+vi.mock('socket.io-client', () => {
+  const mockSocket = {
+    on: vi.fn(),
+    off: vi.fn(),
+    emit: vi.fn(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    connected: false,
+    id: undefined,
+  };
+
+  return {
+    default: vi.fn(() => mockSocket),
+    io: vi.fn(() => mockSocket),
+  };
+});
