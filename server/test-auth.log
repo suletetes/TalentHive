@@ -1,0 +1,302 @@
+
+> talenthive-server@1.0.0 test
+> jest auth.test.ts
+
+(node:46488) [MONGOOSE] Warning: Duplicate schema index on {"email":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46488) [MONGOOSE] Warning: Duplicate schema index on {"user":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:46488) [MONGOOSE] Warning: Duplicate schema index on {"stripeAccountId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:46488) [MONGOOSE] Warning: Duplicate schema index on {"stripeEventId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:46488) [MONGOOSE] Warning: Duplicate schema index on {"owner":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:46488) [MONGOOSE] Warning: Duplicate schema index on {"client":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:46488) [MONGOOSE] Warning: Duplicate schema index on {"category":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+2025-11-11 23:16:58 [[32minfo[39m]: Mongoose connected to MongoDB {
+  "service": "talenthive"
+}
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/register HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/register HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/register HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/register HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/register HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/register HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/register HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/login HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/register HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/login HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/register HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/login HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/register HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/login HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/register HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/login HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/register HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/login HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/register HTTP/1.1" 404 46 "-" "-"
+::ffff:127.0.0.1 - - [11/Nov/2025:23:16:59 +0000] "POST /api/v1/auth/login HTTP/1.1" 404 46 "-" "-"
+2025-11-11 23:16:59 [[32minfo[39m]: Mongoose disconnected from MongoDB {
+  "service": "talenthive"
+}
+FAIL src/test/auth.test.ts (24.959 s)
+  ● Authentication Endpoints › POST /api/v1/auth/register › should register a new user successfully
+
+    expected 201 "Created", got 404 "Not Found"
+
+      22 |         .post('/api/v1/auth/register')
+      23 |         .send(validUserData)
+    > 24 |         .expect(201);
+         |          ^
+      25 |
+      26 |       expect(response.body.status).toBe('success');
+      27 |       expect(response.body.data.user.email).toBe(validUserData.email);
+
+      at Object.<anonymous> (src/test/auth.test.ts:24:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Authentication Endpoints › POST /api/v1/auth/register › should not register user with invalid email
+
+    expected 400 "Bad Request", got 404 "Not Found"
+
+      41 |         .post('/api/v1/auth/register')
+      42 |         .send(invalidData)
+    > 43 |         .expect(400);
+         |          ^
+      44 |
+      45 |       expect(response.body.status).toBe('error');
+      46 |     });
+
+      at Object.<anonymous> (src/test/auth.test.ts:43:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Authentication Endpoints › POST /api/v1/auth/register › should not register user with short password
+
+    expected 400 "Bad Request", got 404 "Not Found"
+
+      52 |         .post('/api/v1/auth/register')
+      53 |         .send(invalidData)
+    > 54 |         .expect(400);
+         |          ^
+      55 |
+      56 |       expect(response.body.status).toBe('error');
+      57 |     });
+
+      at Object.<anonymous> (src/test/auth.test.ts:54:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Authentication Endpoints › POST /api/v1/auth/register › should not register user with duplicate email
+
+    expected 201 "Created", got 404 "Not Found"
+
+      62 |         .post('/api/v1/auth/register')
+      63 |         .send(validUserData)
+    > 64 |         .expect(201);
+         |          ^
+      65 |
+      66 |       // Try to create second user with same email
+      67 |       const response = await request(app)
+
+      at Object.<anonymous> (src/test/auth.test.ts:64:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Authentication Endpoints › POST /api/v1/auth/register › should create freelancer profile for freelancer role
+
+    expected 201 "Created", got 404 "Not Found"
+
+      80 |         .post('/api/v1/auth/register')
+      81 |         .send(freelancerData)
+    > 82 |         .expect(201);
+         |          ^
+      83 |
+      84 |       const user = await User.findOne({ email: freelancerData.email });
+      85 |       expect(user?.freelancerProfile).toBeTruthy();
+
+      at Object.<anonymous> (src/test/auth.test.ts:82:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Authentication Endpoints › POST /api/v1/auth/register › should create client profile for client role
+
+    expected 201 "Created", got 404 "Not Found"
+
+      93 |         .post('/api/v1/auth/register')
+      94 |         .send(clientData)
+    > 95 |         .expect(201);
+         |          ^
+      96 |
+      97 |       const user = await User.findOne({ email: clientData.email });
+      98 |       expect(user?.clientProfile).toBeTruthy();
+
+      at Object.<anonymous> (src/test/auth.test.ts:95:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Authentication Endpoints › POST /api/v1/auth/login › should login with valid credentials
+
+    expected 200 "OK", got 404 "Not Found"
+
+      124 |           password: userData.password,
+      125 |         })
+    > 126 |         .expect(200);
+          |          ^
+      127 |
+      128 |       expect(response.body.status).toBe('success');
+      129 |       expect(response.body.data.user.email).toBe(userData.email);
+
+      at Object.<anonymous> (src/test/auth.test.ts:126:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Authentication Endpoints › POST /api/v1/auth/login › should not login with invalid email
+
+    expected 401 "Unauthorized", got 404 "Not Found"
+
+      139 |           password: userData.password,
+      140 |         })
+    > 141 |         .expect(401);
+          |          ^
+      142 |
+      143 |       expect(response.body.status).toBe('error');
+      144 |       expect(response.body.message).toContain('Invalid email or password');
+
+      at Object.<anonymous> (src/test/auth.test.ts:141:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Authentication Endpoints › POST /api/v1/auth/login › should not login with invalid password
+
+    expected 401 "Unauthorized", got 404 "Not Found"
+
+      152 |           password: 'wrongpassword',
+      153 |         })
+    > 154 |         .expect(401);
+          |          ^
+      155 |
+      156 |       expect(response.body.status).toBe('error');
+      157 |       expect(response.body.message).toContain('Invalid email or password');
+
+      at Object.<anonymous> (src/test/auth.test.ts:154:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Authentication Endpoints › POST /api/v1/auth/login › should update lastLoginAt on successful login
+
+    expected 200 "OK", got 404 "Not Found"
+
+      167 |           password: userData.password,
+      168 |         })
+    > 169 |         .expect(200);
+          |          ^
+      170 |
+      171 |       const user = await User.findOne({ email: userData.email });
+      172 |       expect(user?.lastLoginAt).toBeTruthy();
+
+      at Object.<anonymous> (src/test/auth.test.ts:169:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Authentication Endpoints › POST /api/v1/auth/refresh-token › should refresh tokens with valid refresh token
+
+    TypeError: Cannot read properties of undefined (reading 'tokens')
+
+      197 |         });
+      198 |
+    > 199 |       refreshToken = loginResponse.body.data.tokens.refreshToken;
+          |                                              ^
+      200 |     });
+      201 |
+      202 |     it('should refresh tokens with valid refresh token', async () => {
+
+      at Object.<anonymous> (src/test/auth.test.ts:199:46)
+
+  ● Authentication Endpoints › POST /api/v1/auth/refresh-token › should not refresh tokens with invalid refresh token
+
+    TypeError: Cannot read properties of undefined (reading 'tokens')
+
+      197 |         });
+      198 |
+    > 199 |       refreshToken = loginResponse.body.data.tokens.refreshToken;
+          |                                              ^
+      200 |     });
+      201 |
+      202 |     it('should refresh tokens with valid refresh token', async () => {
+
+      at Object.<anonymous> (src/test/auth.test.ts:199:46)
+
+  ● Authentication Endpoints › POST /api/v1/auth/refresh-token › should not refresh tokens without refresh token
+
+    TypeError: Cannot read properties of undefined (reading 'tokens')
+
+      197 |         });
+      198 |
+    > 199 |       refreshToken = loginResponse.body.data.tokens.refreshToken;
+          |                                              ^
+      200 |     });
+      201 |
+      202 |     it('should refresh tokens with valid refresh token', async () => {
+
+      at Object.<anonymous> (src/test/auth.test.ts:199:46)
+
+
+  ● Test suite failed to run
+
+    The client is closed
+
+      68 |   
+      69 |   if (redisClient) {
+    > 70 |     await redisClient.quit();
+         |                       ^
+      71 |   }
+      72 | });
+
+      at RedisSocket.quit (node_modules/@redis/client/dist/lib/client/socket.js:70:19)
+      at Commander.QUIT (node_modules/@redis/client/dist/lib/client/index.js:260:71)
+      at Object.<anonymous> (src/test/setup.ts:70:23)
+
+Test Suites: 1 failed, 1 total
+Tests:       13 failed, 13 total
+Snapshots:   0 total
+Time:        25.878 s
+Ran all test suites matching /auth.test.ts/i.
