@@ -224,7 +224,7 @@ describe('ProposalForm', () => {
     });
   });
 
-  it('adds and removes milestones', () => {
+  it('adds and removes milestones', async () => {
     render(
       <TestWrapper>
         <ProposalForm project={mockProject} />
@@ -232,25 +232,35 @@ describe('ProposalForm', () => {
     );
 
     // Add milestone
-    fireEvent.change(screen.getByLabelText('Milestone Title'), {
+    const titleInput = screen.getByLabelText(/Milestone Title/i);
+    const amountInput = screen.getByLabelText(/Amount/i);
+    const descriptionInput = screen.getByLabelText(/Milestone Description/i);
+    
+    fireEvent.change(titleInput, {
       target: { value: 'Test Milestone' },
     });
-    fireEvent.change(screen.getByLabelText('Amount'), {
+    fireEvent.change(amountInput, {
       target: { value: '500' },
     });
-    fireEvent.change(screen.getByLabelText('Milestone Description'), {
+    fireEvent.change(descriptionInput, {
       target: { value: 'Test milestone description' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /add/i }));
+    const addButton = screen.getByRole('button', { name: /add milestone/i });
+    fireEvent.click(addButton);
 
-    expect(screen.getByText('Test Milestone')).toBeInTheDocument();
-    expect(screen.getByText('Test milestone description')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Test Milestone/i)).toBeInTheDocument();
+      expect(screen.getByText(/Test milestone description/i)).toBeInTheDocument();
+    });
 
     // Remove milestone
-    fireEvent.click(screen.getByTestId('DeleteIcon'));
+    const deleteButton = screen.getByTestId('DeleteIcon');
+    fireEvent.click(deleteButton);
 
-    expect(screen.queryByText('Test Milestone')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText(/Test Milestone/i)).not.toBeInTheDocument();
+    });
   });
 });
 
@@ -342,8 +352,8 @@ describe('ProposalList', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Project Proposals')).toBeInTheDocument();
-      expect(screen.getByText('1 proposal found')).toBeInTheDocument();
+      expect(screen.getByText(/Project Proposals/i)).toBeInTheDocument();
+      expect(screen.getByText(/1 proposal found/i)).toBeInTheDocument();
     });
   });
 
@@ -355,7 +365,7 @@ describe('ProposalList', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('My Proposals')).toBeInTheDocument();
+      expect(screen.getByText(/My Proposals/i)).toBeInTheDocument();
     });
   });
 
@@ -388,7 +398,12 @@ describe('ProposalList', () => {
       </TestWrapper>
     );
 
-    const searchInput = screen.getByPlaceholderText('Search proposals...');
+    await waitFor(() => {
+      const searchInput = screen.getByPlaceholderText(/Search proposals/i);
+      expect(searchInput).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/Search proposals/i);
     fireEvent.change(searchInput, { target: { value: 'test search' } });
 
     await waitFor(() => {

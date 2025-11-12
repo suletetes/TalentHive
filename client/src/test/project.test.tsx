@@ -129,7 +129,7 @@ describe('Project Components', () => {
       expect(screen.getByText('FEATURED')).toBeInTheDocument();
     });
 
-    it('shows urgent flag for urgent projects', () => {
+    it('shows urgent flag for urgent projects', async () => {
       const urgentProject = { ...mockProject, isUrgent: true };
       
       render(
@@ -139,8 +139,10 @@ describe('Project Components', () => {
       );
 
       // Check for urgent flag icon (using title attribute)
-      const urgentIcon = screen.getByTitle('Urgent project');
-      expect(urgentIcon).toBeInTheDocument();
+      await waitFor(() => {
+        const urgentIcon = screen.getByTitle('Urgent project');
+        expect(urgentIcon).toBeInTheDocument();
+      });
     });
 
     it('displays skills with overflow indicator', () => {

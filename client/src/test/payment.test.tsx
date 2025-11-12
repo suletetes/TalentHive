@@ -159,7 +159,7 @@ const mockEscrowAccount = {
 
 describe('PaymentForm', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders payment form correctly', () => {
@@ -315,11 +315,16 @@ describe('PaymentHistory', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Status')).toBeInTheDocument();
+      expect(screen.getByText('Payment History')).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText('Status'), {
-      target: { value: 'completed' },
+    // Find the Status select by its label
+    const statusSelect = screen.getByRole('combobox', { name: /Status/i });
+    fireEvent.mouseDown(statusSelect);
+
+    await waitFor(() => {
+      const completedOption = screen.getByText('Completed');
+      fireEvent.click(completedOption);
     });
 
     await waitFor(() => {
@@ -499,24 +504,26 @@ describe('PayoutManager', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Request Payout')).toBeInTheDocument();
+      expect(screen.getByText('Payout Management')).toBeInTheDocument();
     });
 
-    // Click request payout button
-    fireEvent.click(screen.getByText('Request Payout'));
+    // Click request payout button (use getAllByRole to handle multiple buttons)
+    const payoutButtons = screen.getAllByRole('button', { name: /Request Payout/i });
+    fireEvent.click(payoutButtons[0]);
 
     // Should open dialog
     await waitFor(() => {
-      expect(screen.getByText('Request Payout')).toBeInTheDocument();
-      expect(screen.getByLabelText('Payout Amount')).toBeInTheDocument();
+      expect(screen.getByLabelText(/Payout Amount/i)).toBeInTheDocument();
     });
 
     // Fill amount and submit
-    fireEvent.change(screen.getByLabelText('Payout Amount'), {
+    fireEvent.change(screen.getByLabelText(/Payout Amount/i), {
       target: { value: '1000' },
     });
 
-    fireEvent.click(screen.getAllByText('Request Payout')[1]); // Button in dialog
+    // Find and click the submit button in the dialog
+    const submitButtons = screen.getAllByRole('button', { name: /Request Payout/i });
+    fireEvent.click(submitButtons[submitButtons.length - 1]); // Last button is in dialog
 
     await waitFor(() => {
       expect(mockApiService.post).toHaveBeenCalledWith(

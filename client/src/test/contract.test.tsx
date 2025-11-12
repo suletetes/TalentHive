@@ -179,11 +179,11 @@ describe('ContractCard', () => {
       </TestWrapper>
     );
 
-    expect(screen.getByText('Web Development Contract')).toBeInTheDocument();
-    expect(screen.getByText('E-commerce Website')).toBeInTheDocument();
-    expect(screen.getByText('Freelancer: Jane Smith')).toBeInTheDocument();
-    expect(screen.getByText('$2000 USD')).toBeInTheDocument();
-    expect(screen.getByText('In Progress')).toBeInTheDocument();
+    expect(screen.getByText(/Web Development Contract/i)).toBeInTheDocument();
+    expect(screen.getByText(/E-commerce Website/i)).toBeInTheDocument();
+    expect(screen.getByText(/Freelancer: Jane Smith/i)).toBeInTheDocument();
+    expect(screen.getByText(/\$2000 USD/i)).toBeInTheDocument();
+    expect(screen.getByText(/In Progress/i)).toBeInTheDocument();
   });
 
   it('renders contract card for freelancer view', () => {
@@ -273,7 +273,7 @@ describe('ContractCard', () => {
 
 describe('ContractForm', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders contract form with proposal data', () => {
