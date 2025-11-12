@@ -8,7 +8,7 @@
     "build": "vite build",
     "build:check": "tsc && vite build",
     "preview": "vite preview",
-  "test": "vitest run --reporter dot --reporter verbose --no-color | npx strip-ansi-cli",
+  "test": "vitest run --reporter dot --reporter verbose --no-color",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
