@@ -449,7 +449,9 @@ describe('MilestoneManager', () => {
 
     expect(screen.getByText('Frontend Development')).toBeInTheDocument();
     expect(screen.getByText('Backend Development')).toBeInTheDocument();
-    expect(screen.getByText('$1000')).toBeInTheDocument();
+    // Both milestones have $1000, so use getAllByText
+    const amounts = screen.getAllByText('$1000');
+    expect(amounts.length).toBeGreaterThan(0);
   });
 
   it('shows submit button for freelancer on eligible milestones', () => {
