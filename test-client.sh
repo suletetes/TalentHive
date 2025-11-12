@@ -1,28 +1,29 @@
 #!/bin/bash
 
 # TalentHive Client Test Runner - Errors Only
-# This script runs tests and shows only failures with relevant error details
+# Shows only test failures with relevant error details
 
 echo "=========================================="
 echo "TALENTHIVE CLIENT - TEST SUITE"
 echo "=========================================="
 echo ""
 
-# Colors for output
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Create logs directory
-mkdir -p client/test-logs
+# Setup
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLIENT_DIR="$SCRIPT_DIR/client"
+LOG_DIR="$CLIENT_DIR/test-logs"
+ERROR_SUMMARY="$LOG_DIR/error-summary.txt"
 
-# Error summary file
-ERROR_SUMMARY="client/test-logs/error-summary.txt"
+mkdir -p "$LOG_DIR"
 > "$ERROR_SUMMARY"
 
-# Function to extract and display only errors
+# Function to run test and check for failures
 run_test() {
     local test_name=$1
     local test_path=$2
@@ -30,35 +31,39 @@ run_test() {
     
     echo -n "Testing $test_name... "
     
-    # Run test and capture output
-    local temp_log="client/test-logs/temp_$log_file"
-    cd client && npm test -- "$test_path" --reporter=verbose --run > "$temp_log" 2>&1
-    local exit_code=$?
-    cd ..
+    # Run test from client directory
+    local temp_log="$LOG_DIR/temp_$log_file"
+    (cd "$CLIENT_DIR" && npm test -- "$test_path" --run) > "$temp_log" 2>&1
     
-    if [ $exit_code -eq 0 ]; then
-        echo -e "${GREEN}✓ PASSED${NC}"
-        rm "$temp_log"
-    else
+    # Check if test failed by looking for "failed" in output
+    if grep -q "Test Files.*failed\|Tests.*failed" "$temp_log"; then
         echo -e "${RED}✗ FAILED${NC}"
         
-        # Extract only error information
+        # Extract error summary
         echo "" >> "$ERROR_SUMMARY"
         echo "========================================" >> "$ERROR_SUMMARY"
         echo "FAILED: $test_name" >> "$ERROR_SUMMARY"
         echo "========================================" >> "$ERROR_SUMMARY"
         
-        # Extract FAIL lines and error messages
-        grep -A 5 "FAIL\|Error:\|Expected\|Received\|AssertionError" "$temp_log" | \
-            grep -v "node_modules\|at Object\|at process" >> "$ERROR_SUMMARY" 2>/dev/null
+        # Get failure count
+        grep "Test Files.*failed\|Tests.*failed" "$temp_log" | tail -1 >> "$ERROR_SUMMARY"
+        echo "" >> "$ERROR_SUMMARY"
         
-        # Save full log for reference
-        mv "$temp_log" "client/test-logs/$log_file"
+        # Extract specific error messages (limit to first 30 lines of errors)
+        grep -B 1 "TestingLibraryElementError\|Error:\|AssertionError" "$temp_log" | \
+            grep -v "node_modules\|at Object\|at process\|⎯\|❯\|stderr" | \
+            head -30 >> "$ERROR_SUMMARY" 2>/dev/null
         
-        echo "  → See client/test-logs/$log_file for full details"
+        # Save full log
+        mv "$temp_log" "$LOG_DIR/$log_file"
+        echo "  → Full log: client/test-logs/$log_file"
+        
+        return 1
+    else
+        echo -e "${GREEN}✓ PASSED${NC}"
+        rm "$temp_log"
+        return 0
     fi
-    
-    return $exit_code
 }
 
 # Track results
@@ -70,7 +75,7 @@ declare -a failed_suites
 echo "Running tests (errors only mode)..."
 echo ""
 
-# Test suites
+# Test suites with correct paths
 tests=(
     "Authentication:src/test/auth.test.tsx:auth.log"
     "Profile:src/test/profile.test.tsx:profile.log"
@@ -80,6 +85,7 @@ tests=(
     "Payment:src/test/payment.test.tsx:payment.log"
     "Time Tracking:src/test/timeTracking.test.tsx:timetracking.log"
     "API Hooks:src/hooks/api/__tests__/hooks.test.ts:hooks.log"
+    "API Services:src/services/api/__tests__/services.test.ts:services.log"
     "Socket:src/services/socket/__tests__/socket.test.ts:socket.log"
 )
 
