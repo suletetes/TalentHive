@@ -20,10 +20,13 @@ describe('Service Package and Template API', () => {
     const freelancer = await User.create({
       email: 'freelancer@test.com',
       password: 'Test123!',
-      firstName: 'John',
-      lastName: 'Freelancer',
+      profile: {
+        firstName: 'John',
+        lastName: 'Freelancer',
+      },
       role: 'freelancer',
       isEmailVerified: true,
+      isActive: true,
     });
     freelancerId = (freelancer._id as any).toString();
     freelancerToken = generateToken(freelancerId);
@@ -31,10 +34,13 @@ describe('Service Package and Template API', () => {
     const client = await User.create({
       email: 'client@test.com',
       password: 'Test123!',
-      firstName: 'Jane',
-      lastName: 'Client',
+      profile: {
+        firstName: 'Jane',
+        lastName: 'Client',
+      },
       role: 'client',
       isEmailVerified: true,
+      isActive: true,
     });
     clientId = (client._id as any).toString();
     clientToken = generateToken(clientId);
