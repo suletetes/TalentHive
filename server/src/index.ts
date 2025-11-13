@@ -64,7 +64,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes
+// API routes (v1)
+app.use('/api/v1', routes);
+// Also support /api for backward compatibility
 app.use('/api', routes);
 
 // Socket.IO connection handling
