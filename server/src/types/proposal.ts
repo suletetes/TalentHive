@@ -11,7 +11,7 @@ export interface IProposal extends Document {
   };
   attachments: string[];
   milestones: IMilestone[];
-  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+  status: 'submitted' | 'accepted' | 'rejected' | 'withdrawn';
   clientFeedback?: string;
   isHighlighted: boolean;
   submittedAt: Date;
