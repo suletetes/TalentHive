@@ -27,6 +27,7 @@ describe('Time Tracking API', () => {
       },
       role: 'freelancer',
       isEmailVerified: true,
+      isActive: true,
     });
     freelancerId = (freelancer._id as any).toString();
     freelancerToken = generateToken(freelancerId);
@@ -40,6 +41,7 @@ describe('Time Tracking API', () => {
       },
       role: 'client',
       isEmailVerified: true,
+      isActive: true,
     });
     clientId = (client._id as any).toString();
     clientToken = generateToken(clientId);
