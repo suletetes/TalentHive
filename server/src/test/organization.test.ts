@@ -18,10 +18,13 @@ describe('Organization API', () => {
     const owner = await User.create({
       email: 'owner@test.com',
       password: 'Test123!',
-      firstName: 'John',
-      lastName: 'Owner',
+      profile: {
+        firstName: 'John',
+        lastName: 'Owner',
+      },
       role: 'client',
       isEmailVerified: true,
+      isActive: true,
     });
     ownerId = (owner._id as any).toString();
     ownerToken = generateToken(ownerId);
@@ -29,10 +32,13 @@ describe('Organization API', () => {
     const member = await User.create({
       email: 'member@test.com',
       password: 'Test123!',
-      firstName: 'Jane',
-      lastName: 'Member',
+      profile: {
+        firstName: 'Jane',
+        lastName: 'Member',
+      },
       role: 'client',
       isEmailVerified: true,
+      isActive: true,
     });
     memberId = (member._id as any).toString();
     memberToken = generateToken(memberId);

@@ -21,8 +21,10 @@ describe('Time Tracking API', () => {
     const freelancer = await User.create({
       email: 'freelancer@test.com',
       password: 'Test123!',
-      firstName: 'John',
-      lastName: 'Freelancer',
+      profile: {
+        firstName: 'John',
+        lastName: 'Freelancer',
+      },
       role: 'freelancer',
       isEmailVerified: true,
     });
@@ -32,8 +34,10 @@ describe('Time Tracking API', () => {
     const client = await User.create({
       email: 'client@test.com',
       password: 'Test123!',
-      firstName: 'Jane',
-      lastName: 'Client',
+      profile: {
+        firstName: 'Jane',
+        lastName: 'Client',
+      },
       role: 'client',
       isEmailVerified: true,
     });
