@@ -17,15 +17,17 @@ import { authenticate, authorize } from '@/middleware/auth';
 const router = Router();
 
 // Public routes
-router.get('/project/:projectId', getProposalsForProject);
 router.get('/:id', getProposalById);
 
 // Protected routes (require authentication)
 router.use(authenticate);
 
+// Project proposals (client only)
+router.get('/project/:projectId', authorize('client'), getProposalsForProject);
+
 // Freelancer routes
 router.post('/project/:projectId', authorize('freelancer'), createProposalValidation, createProposal);
-router.get('/my/proposals', authorize('freelancer'), getMyProposals);
+router.get('/my', authorize('freelancer'), getMyProposals);
 router.put('/:id', authorize('freelancer'), updateProposal);
 router.delete('/:id', authorize('freelancer'), withdrawProposal);
 router.patch('/:id/highlight', authorize('freelancer'), highlightProposal);
@@ -35,6 +37,6 @@ router.post('/:id/accept', authorize('client'), acceptProposal);
 router.post('/:id/reject', authorize('client'), rejectProposal);
 
 // General stats
-router.get('/my/stats', getProposalStats);
+router.get('/stats', getProposalStats);
 
 export default router;

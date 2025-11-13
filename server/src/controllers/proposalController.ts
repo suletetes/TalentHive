@@ -89,13 +89,18 @@ export const createProposal = catchAsync(async (req: AuthRequest, res: Response,
   });
 });
 
-export const getProposalsForProject = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+export const getProposalsForProject = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { projectId } = req.params;
   const { sortBy = 'submittedAt', sortOrder = 'desc' } = req.query;
 
   const project = await Project.findById(projectId);
   if (!project) {
     return next(new AppError('Project not found', 404));
+  }
+
+  // Check if user is the project owner
+  if (project.client.toString() !== req.user._id.toString()) {
+    return next(new AppError('You can only view proposals for your own projects', 403));
   }
 
   const sort: any = {};
@@ -139,9 +144,9 @@ export const getMyProposals = catchAsync(async (req: AuthRequest, res: Response,
 
   const [proposals, total] = await Promise.all([
     Proposal.find(query)
-      .populate('project', 'title description client budget timeline status')
       .populate({
         path: 'project',
+        select: 'title description client budget timeline status',
         populate: {
           path: 'client',
           select: 'profile rating clientProfile',
@@ -207,9 +212,9 @@ export const updateProposal = catchAsync(async (req: AuthRequest, res: Response,
     return next(new AppError('You can only update your own proposals', 403));
   }
 
-  // Can only update pending proposals
-  if (proposal.status !== 'pending') {
-    return next(new AppError('Can only update pending proposals', 400));
+  // Can only update submitted proposals
+  if (proposal.status !== 'submitted') {
+    return next(new AppError('Can only update submitted proposals', 400));
   }
 
   const updateData: any = {};
@@ -291,12 +296,12 @@ export const acceptProposal = catchAsync(async (req: AuthRequest, res: Response,
     startDate: new Date(),
   });
 
-  // Reject all other pending proposals for this project
+  // Reject all other submitted proposals for this project
   await Proposal.updateMany(
     {
       project: project._id,
       _id: { $ne: proposal._id },
-      status: 'pending',
+      status: 'submitted',
     },
     {
       status: 'rejected',
@@ -361,9 +366,9 @@ export const highlightProposal = catchAsync(async (req: AuthRequest, res: Respon
     return next(new AppError('You can only highlight your own proposals', 403));
   }
 
-  // Can only highlight pending proposals
-  if (proposal.status !== 'pending') {
-    return next(new AppError('Can only highlight pending proposals', 400));
+  // Can only highlight submitted proposals
+  if (proposal.status !== 'submitted') {
+    return next(new AppError('Can only highlight submitted proposals', 400));
   }
 
   proposal.isHighlighted = !proposal.isHighlighted;
@@ -388,16 +393,16 @@ export const getProposalStats = catchAsync(async (req: AuthRequest, res: Respons
   let stats: any = {};
 
   if (userRole === 'freelancer') {
-    const [total, pending, accepted, rejected] = await Promise.all([
+    const [total, submitted, accepted, rejected] = await Promise.all([
       Proposal.countDocuments({ freelancer: userId }),
-      Proposal.countDocuments({ freelancer: userId, status: 'pending' }),
+      Proposal.countDocuments({ freelancer: userId, status: 'submitted' }),
       Proposal.countDocuments({ freelancer: userId, status: 'accepted' }),
       Proposal.countDocuments({ freelancer: userId, status: 'rejected' }),
     ]);
 
     stats = {
       total,
-      pending,
+      submitted,
       accepted,
       rejected,
       successRate: total > 0 ? Math.round((accepted / total) * 100) : 0,
@@ -407,16 +412,16 @@ export const getProposalStats = catchAsync(async (req: AuthRequest, res: Respons
     const projects = await Project.find({ client: userId }).select('_id');
     const projectIds = projects.map(p => p._id);
 
-    const [total, pending, accepted, rejected] = await Promise.all([
+    const [total, submitted, accepted, rejected] = await Promise.all([
       Proposal.countDocuments({ project: { $in: projectIds } }),
-      Proposal.countDocuments({ project: { $in: projectIds }, status: 'pending' }),
+      Proposal.countDocuments({ project: { $in: projectIds }, status: 'submitted' }),
       Proposal.countDocuments({ project: { $in: projectIds }, status: 'accepted' }),
       Proposal.countDocuments({ project: { $in: projectIds }, status: 'rejected' }),
     ]);
 
     stats = {
       total,
-      pending,
+      submitted,
       accepted,
       rejected,
     };
