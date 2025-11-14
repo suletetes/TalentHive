@@ -216,4 +216,11 @@ proposalSchema.pre('save', async function(next) {
   next();
 });
 
+// Instance method to check if proposal can be modified
+proposalSchema.methods.canBeModified = function(): boolean {
+  // Proposals can be modified if they are in draft or submitted status
+  // Once accepted or rejected, they cannot be modified
+  return ['draft', 'submitted'].includes(this.status);
+};
+
 export const Proposal = mongoose.model<IProposal>('Proposal', proposalSchema);

@@ -281,7 +281,7 @@ export const acceptProposal = catchAsync(async (req: AuthRequest, res: Response,
     return next(new AppError('Project is no longer accepting proposals', 400));
   }
 
-  await proposal.accept(feedback);
+  const updatedProposal = await proposal.accept(feedback);
 
   // Update project status and selected freelancer
   await Project.findByIdAndUpdate(project._id, {
@@ -312,7 +312,7 @@ export const acceptProposal = catchAsync(async (req: AuthRequest, res: Response,
     status: 'success',
     message: 'Proposal accepted successfully',
     data: {
-      proposal,
+      proposal: updatedProposal,
     },
   });
 });
@@ -333,7 +333,7 @@ export const rejectProposal = catchAsync(async (req: AuthRequest, res: Response,
     return next(new AppError('You can only reject proposals for your own projects', 403));
   }
 
-  await proposal.reject(feedback);
+  const updatedProposal = await proposal.reject(feedback);
 
   // Clear cache
   await deleteCache(`proposals:project:${project._id}`);
@@ -342,7 +342,7 @@ export const rejectProposal = catchAsync(async (req: AuthRequest, res: Response,
     status: 'success',
     message: 'Proposal rejected successfully',
     data: {
-      proposal,
+      proposal: updatedProposal,
     },
   });
 });

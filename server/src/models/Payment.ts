@@ -257,6 +257,27 @@ paymentSchema.pre('save', function(next) {
   next();
 });
 
+// Post-init hook to calculate fees for newly created documents (not yet saved)
+paymentSchema.post('init', function() {
+  if (!this.platformFee && this.amount) {
+    this.calculatePlatformFee();
+  }
+  if (!this.escrowReleaseDate && this.type === 'milestone_payment') {
+    this.escrowReleaseDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  }
+});
+
+// Also calculate on document creation (before save)
+paymentSchema.pre('validate', function(next) {
+  if (!this.platformFee && this.amount) {
+    this.calculatePlatformFee();
+  }
+  if (!this.escrowReleaseDate && this.type === 'milestone_payment') {
+    this.escrowReleaseDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  }
+  next();
+});
+
 export const Payment = mongoose.model<IPayment>('Payment', paymentSchema);
 export const EscrowAccount = mongoose.model<IEscrowAccount>('EscrowAccount', escrowAccountSchema);
 export const Transaction = mongoose.model<ITransaction>('Transaction', transactionSchema);
