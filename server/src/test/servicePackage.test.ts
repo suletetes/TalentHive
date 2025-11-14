@@ -15,8 +15,8 @@ describe('Service Package and Template API', () => {
   let packageId: string;
   let templateId: string;
 
-  beforeAll(async () => {
-    // Create test users
+  beforeEach(async () => {
+    // Create test users before each test
     const freelancer = await User.create({
       email: 'freelancer@test.com',
       password: 'Test123!',

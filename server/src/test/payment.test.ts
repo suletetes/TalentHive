@@ -117,7 +117,7 @@ describe('Payment System', () => {
     proposal = await Proposal.create({
       project: project._id,
       freelancer: freelancerUser._id,
-      coverLetter: 'Test proposal',
+      coverLetter: 'This is a test proposal with sufficient length to meet the minimum requirement of 50 characters for the cover letter field.',
       bidAmount: 1500,
       timeline: { duration: 10, unit: 'days' },
       status: 'accepted',
