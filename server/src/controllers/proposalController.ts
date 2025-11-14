@@ -144,14 +144,8 @@ export const getMyProposals = catchAsync(async (req: AuthRequest, res: Response,
 
   const [proposals, total] = await Promise.all([
     Proposal.find(query)
-      .populate({
-        path: 'project',
-        select: 'title description client budget timeline status',
-        populate: {
-          path: 'client',
-          select: 'profile rating clientProfile',
-        },
-      })
+      .populate('project', 'title description client budget timeline status')
+      .populate('freelancer', 'profile rating')
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit as string)),
