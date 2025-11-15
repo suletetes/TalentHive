@@ -95,9 +95,15 @@ export class ProjectsService {
       });
     }
 
-    return apiCore.get<PaginatedResponse<Project>>(
+    const response = await apiCore.get<{ status: string; data: { projects: Project[]; pagination: any } }>(
       `${this.basePath}?${params.toString()}`
     );
+    
+    // Transform API response to expected format
+    return {
+      data: response.data.projects,
+      pagination: response.data.pagination,
+    };
   }
 
   async getProjectById(id: string): Promise<{ data: Project }> {

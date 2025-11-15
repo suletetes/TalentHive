@@ -8,16 +8,50 @@ import {
   Box,
   Button,
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { Work, Person, Payment, Star } from '@mui/icons-material';
+import { useQuery } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { apiService } from '@/services/api';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 export const DashboardPage: React.FC = () => {
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  const { data: statsData, isLoading } = useQuery({
+    queryKey: ['dashboard-stats', user?.role],
+    queryFn: async () => {
+      if (user?.role === 'client' || user?.role === 'freelancer') {
+        const response = await apiService.get<any>('/projects/my/stats');
+        return response.data.data;
+      }
+      return null;
+    },
+    enabled: !!user,
+  });
+
+  const { data: profileData } = useQuery({
+    queryKey: ['profile'],
+    queryFn: () => apiService.get<any>('/users/profile'),
+    enabled: !!user,
+  });
+
+  const profile = (profileData as any)?.data?.data?.user;
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  const stats = statsData || {};
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         Dashboard
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Welcome back! Here's an overview of your account.
+        Welcome back, {profile?.profile?.firstName || 'User'}! Here's an overview of your account.
       </Typography>
 
       <Grid container spacing={3}>
@@ -27,13 +61,15 @@ export const DashboardPage: React.FC = () => {
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <Work color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Active Projects</Typography>
+                <Typography variant="h6">
+                  {user?.role === 'client' ? 'My Projects' : 'Active Projects'}
+                </Typography>
               </Box>
               <Typography variant="h4" color="primary">
-                5
+                {stats.totalProjects || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                2 new this week
+                {stats.activeProjects || 0} active
               </Typography>
             </CardContent>
           </Card>
@@ -44,13 +80,18 @@ export const DashboardPage: React.FC = () => {
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <Person color="secondary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Total Clients</Typography>
+                <Typography variant="h6">
+                  {user?.role === 'client' ? 'Freelancers Hired' : 'Proposals'}
+                </Typography>
               </Box>
               <Typography variant="h4" color="secondary">
-                12
+                {user?.role === 'client' 
+                  ? (stats.freelancersHired || 0)
+                  : (stats.totalProposals || 0)
+                }
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                3 new this month
+                {user?.role === 'client' ? 'Total hired' : 'Submitted'}
               </Typography>
             </CardContent>
           </Card>
@@ -61,13 +102,15 @@ export const DashboardPage: React.FC = () => {
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <Payment color="success" sx={{ mr: 1 }} />
-                <Typography variant="h6">Earnings</Typography>
+                <Typography variant="h6">
+                  {user?.role === 'client' ? 'Total Spent' : 'Earnings'}
+                </Typography>
               </Box>
               <Typography variant="h4" color="success.main">
-                $2,450
+                ${stats.totalEarnings || stats.totalSpent || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                This month
+                All time
               </Typography>
             </CardContent>
           </Card>
@@ -81,10 +124,13 @@ export const DashboardPage: React.FC = () => {
                 <Typography variant="h6">Rating</Typography>
               </Box>
               <Typography variant="h4" color="warning.main">
-                4.9
+                {profile?.rating?.average?.toFixed(1) || 'N/A'}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Based on 25 reviews
+                {profile?.rating?.count > 0 
+                  ? `Based on ${profile.rating.count} reviews`
+                  : 'No reviews yet'
+                }
               </Typography>
             </CardContent>
           </Card>
@@ -114,13 +160,13 @@ export const DashboardPage: React.FC = () => {
                 Quick Actions
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                <Button variant="contained" fullWidth>
+                <Button variant="contained" fullWidth component={Link} to="/dashboard/projects/new">
                   Post New Project
                 </Button>
-                <Button variant="outlined" fullWidth>
+                <Button variant="outlined" fullWidth component={Link} to="/dashboard/profile">
                   Update Profile
                 </Button>
-                <Button variant="outlined" fullWidth>
+                <Button variant="outlined" fullWidth component={Link} to="/dashboard/messages">
                   View Messages
                 </Button>
               </Box>
