@@ -425,7 +425,7 @@ async function seedProposals(users: any[], projects: any[]) {
           dueDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
         },
       ],
-      status: 'pending',
+      status: 'submitted',
     },
     {
       project: designProject._id,
