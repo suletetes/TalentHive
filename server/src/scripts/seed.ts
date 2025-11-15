@@ -108,6 +108,7 @@ async function seedUsers() {
       password: hashedPassword,
       role: 'freelancer',
       isEmailVerified: true,
+      isVerified: true,
       profile: {
         firstName: 'Alice',
         lastName: 'Developer',
@@ -115,19 +116,21 @@ async function seedUsers() {
         location: 'Austin, TX',
       },
       freelancerProfile: {
+        title: 'Full-Stack Developer',
         hourlyRate: 75,
         skills: ['React', 'Node.js', 'TypeScript', 'MongoDB', 'AWS'],
         availability: {
           status: 'available',
         },
       },
-      rating: 4.8,
+      rating: { average: 4.8, count: 15 },
     },
     {
       email: 'bob.designer@example.com',
       password: hashedPassword,
       role: 'freelancer',
       isEmailVerified: true,
+      isVerified: true,
       profile: {
         firstName: 'Bob',
         lastName: 'Designer',
@@ -135,19 +138,21 @@ async function seedUsers() {
         location: 'Los Angeles, CA',
       },
       freelancerProfile: {
+        title: 'UI/UX Designer',
         hourlyRate: 65,
         skills: ['Figma', 'Adobe XD', 'Sketch', 'Prototyping', 'User Research'],
         availability: {
           status: 'available',
         },
       },
-      rating: 4.9,
+      rating: { average: 4.9, count: 22 },
     },
     {
       email: 'carol.writer@example.com',
       password: hashedPassword,
       role: 'freelancer',
       isEmailVerified: true,
+      isVerified: true,
       profile: {
         firstName: 'Carol',
         lastName: 'Writer',
@@ -155,13 +160,14 @@ async function seedUsers() {
         location: 'Seattle, WA',
       },
       freelancerProfile: {
+        title: 'Technical Writer',
         hourlyRate: 50,
         skills: ['Technical Writing', 'Content Strategy', 'SEO', 'Documentation'],
         availability: {
           status: 'available',
         },
       },
-      rating: 4.7,
+      rating: { average: 4.7, count: 18 },
     },
   ];
   
