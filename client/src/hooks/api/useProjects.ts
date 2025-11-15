@@ -2,6 +2,34 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { projectsService } from '@/services/api/projects.service';
 
+interface ProjectFilters {
+  status?: string;
+  category?: string;
+  minBudget?: number;
+  maxBudget?: number;
+  skills?: string[];
+}
+
+interface CreateProjectDto {
+  title: string;
+  description: string;
+  category: string;
+  skills: string[];
+  budget: {
+    type: 'fixed' | 'hourly';
+    min: number;
+    max: number;
+    currency: string;
+  };
+  timeline: {
+    duration: number;
+    unit: 'days' | 'weeks' | 'months';
+  };
+  requirements: string[];
+}
+
+interface UpdateProjectDto extends Partial<CreateProjectDto> {}
+
 // Query keys for cache management
 export const projectKeys = {
   all: ['projects'] as const,

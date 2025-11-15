@@ -10,6 +10,12 @@ import { RegisterPage } from '@/pages/auth/RegisterPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { ProjectsPage } from '@/pages/ProjectsPage';
+import { ProjectDetailPage } from '@/pages/ProjectDetailPage';
+import { NewProjectPage } from '@/pages/NewProjectPage';
+import { MessagesPage } from '@/pages/MessagesPage';
+import { BrowseProjectsPage } from '@/pages/BrowseProjectsPage';
+import { FreelancersPage } from '@/pages/FreelancersPage';
+import { FreelancerDetailPage } from '@/pages/FreelancerDetailPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { HelpCenterPage } from '@/pages/HelpCenterPage';
 import { ContactPage } from '@/pages/ContactPage';
@@ -24,7 +30,7 @@ import { ToastProvider } from '@/components/ui/ToastProvider';
 
 function App() {
   return (
-    <ErrorBoundary showDetails={import.meta.env.DEV}>
+    <ErrorBoundary>
       <ToastProvider>
         <OfflineIndicator />
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -43,6 +49,13 @@ function App() {
           <Route path="privacy" element={<PrivacyPolicyPage />} />
           <Route path="terms" element={<TermsOfServicePage />} />
           <Route path="success-stories" element={<SuccessStoriesPage />} />
+          
+          {/* Browse pages (public) */}
+          <Route path="projects" element={<BrowseProjectsPage />} />
+          <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="find-work" element={<BrowseProjectsPage />} />
+          <Route path="freelancers" element={<FreelancersPage />} />
+          <Route path="freelancers/:id" element={<FreelancerDetailPage />} />
         </Route>
 
         {/* Protected routes */}
@@ -57,6 +70,9 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="projects" element={<ProjectsPage />} />
+          <Route path="projects/new" element={<NewProjectPage />} />
+          <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="messages" element={<MessagesPage />} />
         </Route>
 
         {/* 404 route */}
