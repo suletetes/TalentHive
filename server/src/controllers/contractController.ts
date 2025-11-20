@@ -150,29 +150,35 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
 
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-  const [contracts, total] = await Promise.all([
-    Contract.find(query)
-      .populate('client', 'profile')
-      .populate('freelancer', 'profile freelancerProfile rating')
-      .populate('project', 'title')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit as string)),
-    Contract.countDocuments(query),
-  ]);
+  try {
+    const [contracts, total] = await Promise.all([
+      Contract.find(query)
+        .populate('client', 'profile rating')
+        .populate('freelancer', 'profile freelancerProfile rating')
+        .populate('project', 'title description')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit as string))
+        .lean(),
+      Contract.countDocuments(query),
+    ]);
 
-  res.json({
-    status: 'success',
-    data: {
-      contracts,
-      pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total,
-        pages: Math.ceil(total / parseInt(limit as string)),
+    res.json({
+      status: 'success',
+      data: {
+        contracts: contracts || [],
+        pagination: {
+          page: parseInt(page as string),
+          limit: parseInt(limit as string),
+          total,
+          pages: Math.ceil(total / parseInt(limit as string)),
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error('Error fetching contracts:', error);
+    return next(new AppError('Failed to fetch contracts', 500));
+  }
 });
 
 export const signContract = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
