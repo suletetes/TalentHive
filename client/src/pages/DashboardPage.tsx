@@ -31,9 +31,9 @@ export const DashboardPage: React.FC = () => {
         return response.data.stats;
       } else if (user?.role === 'client' || user?.role === 'freelancer') {
         const response = await apiService.get<any>('/projects/my/stats');
-        return response.data.data;
+        return response.data.data || {};
       }
-      return null;
+      return {};
     },
     enabled: !!user,
   });

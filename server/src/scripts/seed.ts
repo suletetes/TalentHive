@@ -42,6 +42,9 @@ async function disconnectDB() {
 async function clearDatabase() {
   logger.info('🧹 Clearing existing data...');
   
+  const { Conversation } = await import('@/models/Message');
+  const { Payment } = await import('@/models/Payment');
+  
   await User.deleteMany({});
   await Organization.deleteMany({});
   await Project.deleteMany({});
@@ -52,9 +55,11 @@ async function clearDatabase() {
   await PreferredVendor.deleteMany({});
   await Review.deleteMany({});
   await Message.deleteMany({});
+  await Conversation.deleteMany({});
   await Notification.deleteMany({});
   await TimeEntry.deleteMany({});
   await BudgetApproval.deleteMany({});
+  await Payment.deleteMany({});
   
   logger.info('✅ Database cleared');
 }
@@ -174,6 +179,80 @@ async function seedUsers() {
         },
       },
       rating: { average: 4.7, count: 18 },
+    },
+    // Additional Freelancers
+    {
+      email: 'david.mobile@example.com',
+      password: hashedPassword,
+      role: 'freelancer',
+      accountStatus: 'active',
+      isEmailVerified: true,
+      isVerified: true,
+      profile: {
+        firstName: 'David',
+        lastName: 'Martinez',
+        bio: 'Mobile app developer specializing in React Native and Flutter',
+        location: 'Miami, FL',
+      },
+      freelancerProfile: {
+        title: 'Mobile App Developer',
+        hourlyRate: 80,
+        skills: ['React Native', 'Flutter', 'iOS', 'Android', 'Firebase'],
+        availability: {
+          status: 'available',
+        },
+      },
+      rating: { average: 4.6, count: 12 },
+    },
+    {
+      email: 'emma.data@example.com',
+      password: hashedPassword,
+      role: 'freelancer',
+      accountStatus: 'active',
+      isEmailVerified: true,
+      isVerified: true,
+      profile: {
+        firstName: 'Emma',
+        lastName: 'Chen',
+        bio: 'Data scientist and machine learning engineer',
+        location: 'Boston, MA',
+      },
+      freelancerProfile: {
+        title: 'Data Scientist',
+        hourlyRate: 95,
+        skills: ['Python', 'Machine Learning', 'TensorFlow', 'Data Analysis', 'SQL'],
+        availability: {
+          status: 'busy',
+        },
+      },
+      rating: { average: 5.0, count: 8 },
+    },
+    // Additional Clients
+    {
+      email: 'michael.startup@example.com',
+      password: hashedPassword,
+      role: 'client',
+      accountStatus: 'active',
+      isEmailVerified: true,
+      profile: {
+        firstName: 'Michael',
+        lastName: 'Brown',
+        bio: 'Founder of HealthTech startup',
+        location: 'Denver, CO',
+      },
+    },
+    {
+      email: 'lisa.enterprise@example.com',
+      password: hashedPassword,
+      role: 'client',
+      accountStatus: 'active',
+      isEmailVerified: true,
+      profile: {
+        firstName: 'Lisa',
+        lastName: 'Anderson',
+        bio: 'IT Director at Fortune 500 company',
+        location: 'Chicago, IL',
+      },
     },
   ];
   
@@ -426,6 +505,122 @@ async function seedProjects(users: any[], organizations: any[]) {
       ],
       client: client2._id,
       status: 'cancelled',
+    },
+    // Additional open projects for browsing
+    {
+      title: 'Python Data Analysis Script',
+      description: 'Create Python scripts for analyzing sales data and generating reports',
+      category: 'Data Science',
+      budget: { 
+        type: 'fixed',
+        min: 1500, 
+        max: 2500 
+      },
+      timeline: {
+        duration: 15,
+        unit: 'days',
+      },
+      skills: ['Python', 'Pandas', 'Data Visualization', 'Excel'],
+      requirements: [
+        'Data cleaning',
+        'Statistical analysis',
+        'Automated reports',
+        'Documentation',
+      ],
+      client: users.find(u => u.email === 'michael.startup@example.com')?._id || client1._id,
+      status: 'open',
+    },
+    {
+      title: 'React Native Mobile App',
+      description: 'Build a cross-platform mobile app for fitness tracking',
+      category: 'Mobile Development',
+      budget: { 
+        type: 'fixed',
+        min: 8000, 
+        max: 12000 
+      },
+      timeline: {
+        duration: 90,
+        unit: 'days',
+      },
+      skills: ['React Native', 'Firebase', 'Redux', 'REST API'],
+      requirements: [
+        'User authentication',
+        'Activity tracking',
+        'Social features',
+        'Push notifications',
+      ],
+      client: users.find(u => u.email === 'michael.startup@example.com')?._id || client1._id,
+      status: 'open',
+    },
+    {
+      title: 'SEO Optimization for Website',
+      description: 'Improve search engine rankings for e-commerce website',
+      category: 'Marketing',
+      budget: { 
+        type: 'fixed',
+        min: 2000, 
+        max: 3500 
+      },
+      timeline: {
+        duration: 45,
+        unit: 'days',
+      },
+      skills: ['SEO', 'Google Analytics', 'Content Marketing', 'Link Building'],
+      requirements: [
+        'Keyword research',
+        'On-page optimization',
+        'Technical SEO audit',
+        'Monthly reports',
+      ],
+      client: users.find(u => u.email === 'lisa.enterprise@example.com')?._id || client2._id,
+      status: 'open',
+    },
+    {
+      title: 'DevOps CI/CD Pipeline Setup',
+      description: 'Set up automated deployment pipeline with Docker and Kubernetes',
+      category: 'DevOps',
+      budget: { 
+        type: 'fixed',
+        min: 4000, 
+        max: 6000 
+      },
+      timeline: {
+        duration: 30,
+        unit: 'days',
+      },
+      skills: ['Docker', 'Kubernetes', 'Jenkins', 'AWS', 'Terraform'],
+      requirements: [
+        'Automated testing',
+        'Deployment automation',
+        'Monitoring setup',
+        'Documentation',
+      ],
+      client: users.find(u => u.email === 'lisa.enterprise@example.com')?._id || client2._id,
+      status: 'open',
+    },
+    {
+      title: 'Video Editing for YouTube Channel',
+      description: 'Edit 10 videos for educational YouTube channel',
+      category: 'Video & Animation',
+      budget: { 
+        type: 'fixed',
+        min: 1000, 
+        max: 1800 
+      },
+      timeline: {
+        duration: 20,
+        unit: 'days',
+      },
+      skills: ['Video Editing', 'Adobe Premiere', 'After Effects', 'Color Grading'],
+      requirements: [
+        'Professional editing',
+        'Intro/outro animations',
+        'Subtitles',
+        'Thumbnail design',
+      ],
+      client: users.find(u => u.email === 'michael.startup@example.com')?._id || client1._id,
+      status: 'open',
     },
   ];
   
@@ -833,37 +1028,82 @@ async function seedTimeEntries(users: any[], contracts: any[]) {
 async function seedMessages(users: any[]) {
   logger.info('💬 Seeding messages...');
   
+  const { Conversation } = await import('@/models/Message');
+  
   const alice = users.find(u => u.email === 'alice.dev@example.com');
   const bob = users.find(u => u.email === 'bob.designer@example.com');
   const client1 = users.find(u => u.email === 'john.client@example.com');
   const client2 = users.find(u => u.email === 'sarah.manager@example.com');
   
+  // Create conversations first
+  const conversations = [
+    {
+      participants: [client1._id, alice._id],
+      unreadCount: new Map([[client1._id.toString(), 0], [alice._id.toString(), 0]]),
+    },
+    {
+      participants: [client2._id, bob._id],
+      unreadCount: new Map([[client2._id.toString(), 1], [bob._id.toString(), 0]]),
+    },
+  ];
+  
+  const createdConversations = await Conversation.insertMany(conversations);
+  logger.info(`✅ Created ${createdConversations.length} conversations`);
+  
+  // Create messages for conversations
   const messages = [
     {
+      conversation: createdConversations[0]._id,
       sender: client1._id,
-      recipient: alice._id,
       content: 'Hi Alice, I reviewed your proposal for the e-commerce project. Can we discuss the timeline?',
-      isRead: true,
+      type: 'text',
+      readBy: [client1._id, alice._id],
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
     },
     {
+      conversation: createdConversations[0]._id,
       sender: alice._id,
-      recipient: client1._id,
       content: 'Sure! I can start next week and deliver within 45 days. Let me know if you have any questions.',
-      isRead: true,
+      type: 'text',
+      readBy: [client1._id, alice._id],
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 3600000),
     },
     {
-      sender: client2._id,
-      recipient: bob._id,
-      content: 'Great work on the design mockups! Can you make a few adjustments to the color scheme?',
-      isRead: false,
+      conversation: createdConversations[0]._id,
+      sender: client1._id,
+      content: 'That sounds perfect! Let\'s move forward with the project.',
+      type: 'text',
+      readBy: [client1._id, alice._id],
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    },
+    {
+      conversation: createdConversations[1]._id,
+      sender: client2._id,
+      content: 'Great work on the design mockups! Can you make a few adjustments to the color scheme?',
+      type: 'text',
+      readBy: [client2._id],
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    },
+    {
+      conversation: createdConversations[1]._id,
+      sender: bob._id,
+      content: 'Absolutely! I\'ll update the color palette and send you the revised mockups by tomorrow.',
+      type: 'text',
+      readBy: [client2._id, bob._id],
+      createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
     },
   ];
   
   const createdMessages = await Message.insertMany(messages);
   logger.info(`✅ Created ${createdMessages.length} messages`);
+  
+  // Update conversations with last message
+  await Conversation.findByIdAndUpdate(createdConversations[0]._id, {
+    lastMessage: createdMessages[2]._id,
+  });
+  await Conversation.findByIdAndUpdate(createdConversations[1]._id, {
+    lastMessage: createdMessages[4]._id,
+  });
   
   return createdMessages;
 }
@@ -878,7 +1118,7 @@ async function seedNotifications(users: any[]) {
   const notifications = [
     {
       user: alice._id,
-      type: 'proposal_accepted',
+      type: 'proposal',
       title: 'Proposal Accepted',
       message: 'Your proposal for "Backend API Development" has been accepted!',
       isRead: false,
@@ -886,7 +1126,7 @@ async function seedNotifications(users: any[]) {
     },
     {
       user: bob._id,
-      type: 'new_message',
+      type: 'message',
       title: 'New Message',
       message: 'You have a new message from Sarah Johnson',
       isRead: false,
@@ -894,11 +1134,43 @@ async function seedNotifications(users: any[]) {
     },
     {
       user: client1._id,
-      type: 'new_proposal',
+      type: 'proposal',
       title: 'New Proposal',
       message: 'You received a new proposal for "E-commerce Website Development"',
       isRead: true,
       createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+    },
+    {
+      user: alice._id,
+      type: 'contract',
+      title: 'Contract Signed',
+      message: 'Contract for "Mobile App UI/UX Design" has been signed by the client',
+      isRead: true,
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+    },
+    {
+      user: client1._id,
+      type: 'payment',
+      title: 'Payment Processed',
+      message: 'Payment of $1,500 has been processed for milestone completion',
+      isRead: true,
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    },
+    {
+      user: bob._id,
+      type: 'review',
+      title: 'New Review',
+      message: 'You received a 5-star review from Sarah Johnson',
+      isRead: false,
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    },
+    {
+      user: alice._id,
+      type: 'project',
+      title: 'New Project Match',
+      message: 'A new project matching your skills has been posted: "Python Data Analysis Script"',
+      isRead: false,
+      createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
     },
   ];
   
@@ -906,6 +1178,55 @@ async function seedNotifications(users: any[]) {
   logger.info(`✅ Created ${createdNotifications.length} notifications`);
   
   return createdNotifications;
+}
+
+async function seedPayments(users: any[], contracts: any[]) {
+  logger.info('💰 Seeding payments...');
+  
+  const { Payment } = await import('@/models/Payment');
+  
+  const payments = [];
+  
+  // Create payments for completed milestones
+  for (const contract of contracts.slice(0, 2)) {
+    // Payment for first milestone
+    payments.push({
+      contract: contract._id,
+      milestone: contract.milestones[0]._id,
+      client: contract.client,
+      freelancer: contract.freelancer,
+      amount: contract.milestones[0].amount,
+      currency: 'USD',
+      type: 'milestone_payment',
+      status: 'completed',
+      stripePaymentIntentId: `pi_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      platformFee: contract.milestones[0].amount * 0.1, // 10% platform fee
+      freelancerAmount: contract.milestones[0].amount * 0.9,
+      processedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+    });
+  }
+  
+  // Add some pending payments
+  if (contracts.length > 2) {
+    payments.push({
+      contract: contracts[2]._id,
+      milestone: contracts[2].milestones[0]._id,
+      client: contracts[2].client,
+      freelancer: contracts[2].freelancer,
+      amount: contracts[2].milestones[0].amount,
+      currency: 'USD',
+      type: 'milestone_payment',
+      status: 'pending',
+      stripePaymentIntentId: `pi_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      platformFee: contracts[2].milestones[0].amount * 0.1,
+      freelancerAmount: contracts[2].milestones[0].amount * 0.9,
+    });
+  }
+  
+  const createdPayments = await Payment.insertMany(payments);
+  logger.info(`✅ Created ${createdPayments.length} payments`);
+  
+  return createdPayments;
 }
 
 async function seedDatabase() {
@@ -927,6 +1248,7 @@ async function seedDatabase() {
     const contracts = await seedContracts(users, projects, proposals);
     const reviews = await seedReviews(users, contracts);
     const timeEntries = await seedTimeEntries(users, contracts);
+    const payments = await seedPayments(users, contracts);
     const messages = await seedMessages(users);
     const notifications = await seedNotifications(users);
     
@@ -940,6 +1262,7 @@ async function seedDatabase() {
     - Contracts: ${contracts.length}
     - Reviews: ${reviews.length}
     - Time Entries: ${timeEntries.length}
+    - Payments: ${payments.length}
     - Messages: ${messages.length}
     - Notifications: ${notifications.length}`);
     
