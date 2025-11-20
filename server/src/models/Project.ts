@@ -70,7 +70,7 @@ const projectSchema = new Schema<IProject>({
   status: {
     type: String,
     enum: ['draft', 'open', 'in_progress', 'completed', 'cancelled'],
-    default: 'draft',
+    default: 'open',
   },
   visibility: {
     type: String,

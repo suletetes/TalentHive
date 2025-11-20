@@ -121,16 +121,41 @@ async function seedUsers() {
       profile: {
         firstName: 'Alice',
         lastName: 'Developer',
-        bio: 'Full-stack developer with 5+ years experience in React and Node.js',
+        bio: 'Passionate full-stack developer with 5+ years of experience building scalable web applications. Specialized in React, Node.js, and cloud technologies. I love turning complex problems into elegant solutions and have successfully delivered 50+ projects for clients worldwide.',
         location: 'Austin, TX',
+        timezone: 'America/Chicago',
       },
       freelancerProfile: {
-        title: 'Full-Stack Developer',
+        title: 'Senior Full-Stack Developer',
         hourlyRate: 75,
-        skills: ['React', 'Node.js', 'TypeScript', 'MongoDB', 'AWS'],
+        skills: ['React', 'Node.js', 'TypeScript', 'MongoDB', 'AWS', 'Docker', 'GraphQL', 'PostgreSQL', 'Redis', 'CI/CD'],
+        experience: '5+ years of professional software development experience. Previously worked at tech startups and Fortune 500 companies. Expert in building RESTful APIs, microservices architecture, and modern frontend applications.',
         availability: {
           status: 'available',
         },
+        portfolio: [
+          {
+            title: 'E-commerce Platform',
+            description: 'Built a full-featured e-commerce platform with React, Node.js, and Stripe integration. Handles 10k+ daily transactions.',
+            images: [],
+            technologies: ['React', 'Node.js', 'MongoDB', 'Stripe', 'AWS'],
+            completedAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+          },
+          {
+            title: 'Real-time Analytics Dashboard',
+            description: 'Developed a real-time analytics dashboard for a SaaS company using React, WebSockets, and D3.js.',
+            images: [],
+            technologies: ['React', 'WebSocket', 'D3.js', 'Node.js'],
+            completedAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000),
+          },
+        ],
+        certifications: [
+          {
+            name: 'AWS Certified Solutions Architect',
+            issuer: 'Amazon Web Services',
+            dateEarned: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
+          },
+        ],
       },
       rating: { average: 4.8, count: 15 },
     },
@@ -144,16 +169,34 @@ async function seedUsers() {
       profile: {
         firstName: 'Bob',
         lastName: 'Designer',
-        bio: 'UI/UX Designer specializing in modern web applications',
+        bio: 'Award-winning UI/UX Designer with 7+ years of experience creating beautiful, user-centered digital experiences. I specialize in mobile app design, web applications, and design systems. My work has been featured in Awwwards and CSS Design Awards.',
         location: 'Los Angeles, CA',
+        timezone: 'America/Los_Angeles',
       },
       freelancerProfile: {
-        title: 'UI/UX Designer',
+        title: 'Senior UI/UX Designer',
         hourlyRate: 65,
-        skills: ['Figma', 'Adobe XD', 'Sketch', 'Prototyping', 'User Research'],
+        skills: ['Figma', 'Adobe XD', 'Sketch', 'Prototyping', 'User Research', 'Wireframing', 'Design Systems', 'Responsive Design', 'Mobile Design', 'Usability Testing'],
+        experience: '7+ years designing digital products for startups and enterprises. Expert in user research, information architecture, and creating pixel-perfect designs that convert.',
         availability: {
           status: 'available',
         },
+        portfolio: [
+          {
+            title: 'Mobile Banking App',
+            description: 'Redesigned a mobile banking app that increased user engagement by 45% and reduced support tickets by 30%.',
+            images: [],
+            technologies: ['Figma', 'Prototyping', 'User Testing'],
+            completedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+          },
+          {
+            title: 'SaaS Dashboard Design',
+            description: 'Created a comprehensive design system and dashboard for a B2B SaaS platform serving 50k+ users.',
+            images: [],
+            technologies: ['Figma', 'Design System', 'Component Library'],
+            completedAt: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000),
+          },
+        ],
       },
       rating: { average: 4.9, count: 22 },
     },
