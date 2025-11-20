@@ -70,6 +70,7 @@ async function seedUsers() {
       email: 'admin@talenthive.com',
       password: hashedPassword,
       role: 'admin',
+      accountStatus: 'active',
       isEmailVerified: true,
       profile: {
         firstName: 'Admin',
@@ -81,6 +82,7 @@ async function seedUsers() {
       email: 'john.client@example.com',
       password: hashedPassword,
       role: 'client',
+      accountStatus: 'active',
       isEmailVerified: true,
       profile: {
         firstName: 'John',
@@ -94,6 +96,7 @@ async function seedUsers() {
       email: 'sarah.manager@example.com',
       password: hashedPassword,
       role: 'client',
+      accountStatus: 'active',
       isEmailVerified: true,
       profile: {
         firstName: 'Sarah',
@@ -107,6 +110,7 @@ async function seedUsers() {
       email: 'alice.dev@example.com',
       password: hashedPassword,
       role: 'freelancer',
+      accountStatus: 'active',
       isEmailVerified: true,
       isVerified: true,
       profile: {
@@ -129,6 +133,7 @@ async function seedUsers() {
       email: 'bob.designer@example.com',
       password: hashedPassword,
       role: 'freelancer',
+      accountStatus: 'active',
       isEmailVerified: true,
       isVerified: true,
       profile: {
@@ -151,6 +156,7 @@ async function seedUsers() {
       email: 'carol.writer@example.com',
       password: hashedPassword,
       role: 'freelancer',
+      accountStatus: 'active',
       isEmailVerified: true,
       isVerified: true,
       profile: {
@@ -548,7 +554,7 @@ async function seedProposals(users: any[], projects: any[]) {
           dueDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
         },
       ],
-      status: 'pending',
+      status: 'submitted',
     },
     {
       project: marketingProject._id,
@@ -573,7 +579,7 @@ async function seedProposals(users: any[], projects: any[]) {
           dueDate: new Date(Date.now() + 35 * 24 * 60 * 60 * 1000),
         },
       ],
-      status: 'pending',
+      status: 'submitted',
     },
     // Accepted proposals
     {

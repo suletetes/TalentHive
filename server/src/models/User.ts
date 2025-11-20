@@ -166,6 +166,11 @@ const userSchema = new Schema<IUser>({
     average: { type: Number, default: 0, min: 0, max: 5 },
     count: { type: Number, default: 0, min: 0 },
   },
+  accountStatus: {
+    type: String,
+    enum: ['active', 'suspended', 'deactivated'],
+    default: 'active',
+  },
   isVerified: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
   emailVerificationToken: String,
