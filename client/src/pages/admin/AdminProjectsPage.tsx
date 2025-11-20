@@ -81,8 +81,8 @@ export const AdminProjectsPage: React.FC = () => {
     );
   }
 
-  const projects = data?.data?.projects || [];
-  const pagination = data?.data?.pagination || { page: 1, pages: 1, total: 0 };
+  const projects = data?.projects || [];
+  const pagination = data?.pagination || { page: 1, pages: 1, total: 0 };
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
