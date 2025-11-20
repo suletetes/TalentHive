@@ -12,18 +12,18 @@ import {
   respondToAmendment,
   cancelContract,
 } from '@/controllers/contractController';
-import { authenticate } from '@/middleware/auth';
+import { authenticate, authorize } from '@/middleware/auth';
 
 const router = Router();
 
 // All routes require authentication
 router.use(authenticate);
 
-// Get my contracts
+// Get my contracts (both clients and freelancers)
 router.get('/my', getMyContracts);
 
-// Create contract from accepted proposal
-router.post('/proposal/:proposalId', createContractValidation, createContract);
+// Create contract from accepted proposal (clients only)
+router.post('/proposal/:proposalId', authorize('client'), createContractValidation, createContract);
 
 // Get specific contract
 router.get('/:id', getContract);
