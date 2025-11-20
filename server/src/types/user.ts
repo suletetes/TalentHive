@@ -141,6 +141,7 @@ export interface IUser extends Document {
     average: number;
     count: number;
   };
+  accountStatus: 'active' | 'suspended' | 'deactivated';
   isVerified: boolean;
   isActive: boolean;
   emailVerificationToken?: string;

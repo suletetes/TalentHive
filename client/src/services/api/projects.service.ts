@@ -107,15 +107,18 @@ export class ProjectsService {
   }
 
   async getProjectById(id: string): Promise<{ data: Project }> {
-    return apiCore.get<{ data: Project }>(`${this.basePath}/${id}`);
+    const response = await apiCore.get<{ status: string; data: { project: Project } }>(`${this.basePath}/${id}`);
+    return { data: response.data.project };
   }
 
   async createProject(data: CreateProjectDto): Promise<{ data: Project }> {
-    return apiCore.post<{ data: Project }>(this.basePath, data);
+    const response = await apiCore.post<{ status: string; data: { project: Project } }>(this.basePath, data);
+    return { data: response.data.project };
   }
 
   async updateProject(id: string, data: UpdateProjectDto): Promise<{ data: Project }> {
-    return apiCore.put<{ data: Project }>(`${this.basePath}/${id}`, data);
+    const response = await apiCore.put<{ status: string; data: { project: Project } }>(`${this.basePath}/${id}`, data);
+    return { data: response.data.project };
   }
 
   async deleteProject(id: string): Promise<{ message: string }> {
@@ -123,7 +126,8 @@ export class ProjectsService {
   }
 
   async getMyProjects(): Promise<{ data: Project[] }> {
-    return apiCore.get<{ data: Project[] }>(`${this.basePath}/my/projects`);
+    const response = await apiCore.get<{ status: string; data: { projects: Project[]; pagination: any } }>(`${this.basePath}/my/projects`);
+    return { data: response.data.projects };
   }
 
   async searchProjects(
@@ -149,7 +153,8 @@ export class ProjectsService {
   }
 
   async toggleProjectStatus(id: string): Promise<{ data: Project }> {
-    return apiCore.patch<{ data: Project }>(`${this.basePath}/${id}/status`);
+    const response = await apiCore.patch<{ status: string; data: { project: Project } }>(`${this.basePath}/${id}/status`);
+    return { data: response.data.project };
   }
 
   async getProjectStats(): Promise<{ data: any }> {

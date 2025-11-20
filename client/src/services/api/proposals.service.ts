@@ -26,7 +26,7 @@ export interface Proposal {
     amount: number;
     duration: number;
   }>;
-  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+  status: 'submitted' | 'accepted' | 'rejected' | 'withdrawn';
   isHighlighted: boolean;
   createdAt: Date;
   updatedAt: Date;

@@ -60,10 +60,22 @@ export class AdminService {
     userId: string,
     accountStatus: 'active' | 'suspended' | 'deactivated'
   ): Promise<{ data: { user: AdminUser } }> {
-    return apiCore.put<{ data: { user: AdminUser } }>(
+    const response = await apiCore.put<{ status: string; data: { user: AdminUser } }>(
       `${this.basePath}/users/${userId}/status`,
       { accountStatus }
     );
+    return { data: response.data };
+  }
+
+  async updateUserRole(
+    userId: string,
+    role: 'admin' | 'freelancer' | 'client'
+  ): Promise<{ data: { user: AdminUser } }> {
+    const response = await apiCore.put<{ status: string; data: { user: AdminUser } }>(
+      `${this.basePath}/users/${userId}/role`,
+      { role }
+    );
+    return { data: response.data };
   }
 
   async getReports(params?: {
