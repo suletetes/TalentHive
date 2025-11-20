@@ -240,6 +240,7 @@ async function seedProjects(users: any[], organizations: any[]) {
   const client2 = users.find(u => u.email === 'sarah.manager@example.com');
   
   const projects = [
+    // Open projects
     {
       title: 'E-commerce Website Development',
       description: 'Build a modern e-commerce platform with React and Node.js',
@@ -286,6 +287,29 @@ async function seedProjects(users: any[], organizations: any[]) {
       status: 'open',
     },
     {
+      title: 'Marketing Website Redesign',
+      description: 'Redesign our company website with modern UI/UX',
+      category: 'Web Development',
+      budget: { 
+        type: 'fixed',
+        min: 3000, 
+        max: 5000 
+      },
+      timeline: {
+        duration: 45,
+        unit: 'days',
+      },
+      skills: ['React', 'Design', 'SEO'],
+      requirements: [
+        'Modern design',
+        'SEO optimization',
+        'Fast loading',
+      ],
+      client: client1._id,
+      status: 'open',
+    },
+    // In progress projects
+    {
       title: 'Technical Documentation',
       description: 'Create comprehensive API documentation and user guides',
       category: 'Writing',
@@ -306,6 +330,96 @@ async function seedProjects(users: any[], organizations: any[]) {
       ],
       client: client1._id,
       status: 'in_progress',
+    },
+    {
+      title: 'Backend API Development',
+      description: 'Build RESTful API with Node.js and Express',
+      category: 'Web Development',
+      budget: { 
+        type: 'hourly',
+        min: 50, 
+        max: 80 
+      },
+      timeline: {
+        duration: 30,
+        unit: 'days',
+      },
+      skills: ['Node.js', 'Express', 'MongoDB', 'REST API'],
+      requirements: [
+        'RESTful architecture',
+        'Authentication',
+        'Database integration',
+      ],
+      client: client2._id,
+      status: 'in_progress',
+    },
+    // Completed projects
+    {
+      title: 'Logo Design',
+      description: 'Create a modern logo for our startup',
+      category: 'Design',
+      budget: { 
+        type: 'fixed',
+        min: 500, 
+        max: 1000 
+      },
+      timeline: {
+        duration: 7,
+        unit: 'days',
+      },
+      skills: ['Graphic Design', 'Branding'],
+      requirements: [
+        'Multiple concepts',
+        'Vector files',
+        'Brand guidelines',
+      ],
+      client: client2._id,
+      status: 'completed',
+    },
+    {
+      title: 'WordPress Plugin Development',
+      description: 'Custom WordPress plugin for e-commerce functionality',
+      category: 'Web Development',
+      budget: { 
+        type: 'fixed',
+        min: 2000, 
+        max: 3000 
+      },
+      timeline: {
+        duration: 20,
+        unit: 'days',
+      },
+      skills: ['WordPress', 'PHP', 'JavaScript'],
+      requirements: [
+        'Custom functionality',
+        'Admin interface',
+        'Documentation',
+      ],
+      client: client1._id,
+      status: 'completed',
+    },
+    // Cancelled project
+    {
+      title: 'Social Media Management',
+      description: 'Manage social media accounts for 3 months',
+      category: 'Marketing',
+      budget: { 
+        type: 'fixed',
+        min: 1000, 
+        max: 1500 
+      },
+      timeline: {
+        duration: 90,
+        unit: 'days',
+      },
+      skills: ['Social Media', 'Content Creation'],
+      requirements: [
+        'Daily posts',
+        'Engagement tracking',
+        'Monthly reports',
+      ],
+      client: client2._id,
+      status: 'cancelled',
     },
   ];
   
@@ -400,8 +514,11 @@ async function seedProposals(users: any[], projects: any[]) {
   const ecommerceProject = projects.find(p => p.title === 'E-commerce Website Development');
   const designProject = projects.find(p => p.title === 'Mobile App UI/UX Design');
   const docProject = projects.find(p => p.title === 'Technical Documentation');
+  const marketingProject = projects.find(p => p.title === 'Marketing Website Redesign');
+  const backendProject = projects.find(p => p.title === 'Backend API Development');
   
   const proposals = [
+    // Pending proposals
     {
       project: ecommerceProject._id,
       freelancer: alice._id,
@@ -431,8 +548,34 @@ async function seedProposals(users: any[], projects: any[]) {
           dueDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
         },
       ],
-      status: 'submitted',
+      status: 'pending',
     },
+    {
+      project: marketingProject._id,
+      freelancer: bob._id,
+      coverLetter: 'I can help redesign your marketing website with a modern, conversion-focused design.',
+      bidAmount: 4000,
+      timeline: {
+        duration: 35,
+        unit: 'days',
+      },
+      milestones: [
+        {
+          title: 'Design Phase',
+          description: 'Create mockups and design system',
+          amount: 2000,
+          dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+        },
+        {
+          title: 'Development Phase',
+          description: 'Implement the design',
+          amount: 2000,
+          dueDate: new Date(Date.now() + 35 * 24 * 60 * 60 * 1000),
+        },
+      ],
+      status: 'pending',
+    },
+    // Accepted proposals
     {
       project: designProject._id,
       freelancer: bob._id,
@@ -488,6 +631,57 @@ async function seedProposals(users: any[], projects: any[]) {
         },
       ],
       status: 'accepted',
+    },
+    {
+      project: backendProject._id,
+      freelancer: alice._id,
+      coverLetter: 'I have 5+ years of experience building scalable APIs with Node.js. I can deliver a robust solution.',
+      bidAmount: 3500,
+      timeline: {
+        duration: 28,
+        unit: 'days',
+      },
+      milestones: [
+        {
+          title: 'API Architecture',
+          description: 'Design and implement API structure',
+          amount: 1500,
+          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        },
+        {
+          title: 'Implementation',
+          description: 'Complete API implementation',
+          amount: 2000,
+          dueDate: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000),
+        },
+      ],
+      status: 'accepted',
+    },
+    // Rejected proposals
+    {
+      project: ecommerceProject._id,
+      freelancer: bob._id,
+      coverLetter: 'I can help with the frontend design of your e-commerce platform.',
+      bidAmount: 7500,
+      timeline: {
+        duration: 60,
+        unit: 'days',
+      },
+      milestones: [],
+      status: 'rejected',
+    },
+    // Withdrawn proposals
+    {
+      project: marketingProject._id,
+      freelancer: carol._id,
+      coverLetter: 'I can help with content for your marketing website.',
+      bidAmount: 3000,
+      timeline: {
+        duration: 30,
+        unit: 'days',
+      },
+      milestones: [],
+      status: 'withdrawn',
     },
   ];
   
@@ -630,6 +824,84 @@ async function seedTimeEntries(users: any[], contracts: any[]) {
   return createdTimeEntries;
 }
 
+async function seedMessages(users: any[]) {
+  logger.info('💬 Seeding messages...');
+  
+  const alice = users.find(u => u.email === 'alice.dev@example.com');
+  const bob = users.find(u => u.email === 'bob.designer@example.com');
+  const client1 = users.find(u => u.email === 'john.client@example.com');
+  const client2 = users.find(u => u.email === 'sarah.manager@example.com');
+  
+  const messages = [
+    {
+      sender: client1._id,
+      recipient: alice._id,
+      content: 'Hi Alice, I reviewed your proposal for the e-commerce project. Can we discuss the timeline?',
+      isRead: true,
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    },
+    {
+      sender: alice._id,
+      recipient: client1._id,
+      content: 'Sure! I can start next week and deliver within 45 days. Let me know if you have any questions.',
+      isRead: true,
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 3600000),
+    },
+    {
+      sender: client2._id,
+      recipient: bob._id,
+      content: 'Great work on the design mockups! Can you make a few adjustments to the color scheme?',
+      isRead: false,
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    },
+  ];
+  
+  const createdMessages = await Message.insertMany(messages);
+  logger.info(`✅ Created ${createdMessages.length} messages`);
+  
+  return createdMessages;
+}
+
+async function seedNotifications(users: any[]) {
+  logger.info('🔔 Seeding notifications...');
+  
+  const alice = users.find(u => u.email === 'alice.dev@example.com');
+  const bob = users.find(u => u.email === 'bob.designer@example.com');
+  const client1 = users.find(u => u.email === 'john.client@example.com');
+  
+  const notifications = [
+    {
+      user: alice._id,
+      type: 'proposal_accepted',
+      title: 'Proposal Accepted',
+      message: 'Your proposal for "Backend API Development" has been accepted!',
+      isRead: false,
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    },
+    {
+      user: bob._id,
+      type: 'new_message',
+      title: 'New Message',
+      message: 'You have a new message from Sarah Johnson',
+      isRead: false,
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    },
+    {
+      user: client1._id,
+      type: 'new_proposal',
+      title: 'New Proposal',
+      message: 'You received a new proposal for "E-commerce Website Development"',
+      isRead: true,
+      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+    },
+  ];
+  
+  const createdNotifications = await Notification.insertMany(notifications);
+  logger.info(`✅ Created ${createdNotifications.length} notifications`);
+  
+  return createdNotifications;
+}
+
 async function seedDatabase() {
   try {
     logger.info('🌱 Starting database seeding...');
@@ -649,6 +921,8 @@ async function seedDatabase() {
     const contracts = await seedContracts(users, projects, proposals);
     const reviews = await seedReviews(users, contracts);
     const timeEntries = await seedTimeEntries(users, contracts);
+    const messages = await seedMessages(users);
+    const notifications = await seedNotifications(users);
     
     logger.info('✅ Database seeding completed successfully');
     logger.info(`📊 Summary:
@@ -659,7 +933,9 @@ async function seedDatabase() {
     - Proposals: ${proposals.length}
     - Contracts: ${contracts.length}
     - Reviews: ${reviews.length}
-    - Time Entries: ${timeEntries.length}`);
+    - Time Entries: ${timeEntries.length}
+    - Messages: ${messages.length}
+    - Notifications: ${notifications.length}`);
     
   } catch (error) {
     logger.error('❌ Database seeding failed:', error);

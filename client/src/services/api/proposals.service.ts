@@ -67,7 +67,7 @@ export class ProposalsService {
   }
 
   async getMyProposals(): Promise<{ data: Proposal[] }> {
-    return apiCore.get<{ data: Proposal[] }>(`${this.basePath}/my/proposals`);
+    return apiCore.get<{ data: Proposal[] }>(`${this.basePath}/my`);
   }
 
   async getProposalById(id: string): Promise<{ data: Proposal }> {
@@ -95,7 +95,7 @@ export class ProposalsService {
   }
 
   async getProposalStats(): Promise<{ data: any }> {
-    return apiCore.get<{ data: any }>(`${this.basePath}/my/stats`);
+    return apiCore.get<{ data: any }>(`${this.basePath}/stats`);
   }
 }
 
