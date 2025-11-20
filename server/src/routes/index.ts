@@ -48,4 +48,10 @@ router.use('/services', servicePackageRoutes);
 import searchRoutes from './search';
 router.use('/search', searchRoutes);
 
+// Category and skill routes
+import categoryRoutes from './categories';
+import skillRoutes from './skills';
+router.use('/categories', categoryRoutes);
+router.use('/skills', skillRoutes);
+
 export default router;
