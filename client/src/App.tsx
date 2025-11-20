@@ -18,6 +18,8 @@ import { ContractsPage } from '@/pages/ContractsPage';
 import { PaymentsPage } from '@/pages/PaymentsPage';
 import { ReviewsPage } from '@/pages/ReviewsPage';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
+import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
+import { AdminProjectsPage } from '@/pages/admin/AdminProjectsPage';
 import { BrowseProjectsPage } from '@/pages/BrowseProjectsPage';
 import { FreelancersPage } from '@/pages/FreelancersPage';
 import { FreelancerDetailPage } from '@/pages/FreelancerDetailPage';
@@ -94,8 +96,8 @@ function App() {
           }
         >
           <Route path="dashboard" element={<AdminDashboardPage />} />
-          <Route path="users" element={<div>User Management - Coming Soon</div>} />
-          <Route path="projects" element={<div>Project Management - Coming Soon</div>} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="projects" element={<AdminProjectsPage />} />
         </Route>
 
         {/* 404 route */}

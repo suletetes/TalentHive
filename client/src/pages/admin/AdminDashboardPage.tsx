@@ -95,7 +95,7 @@ export const AdminDashboardPage: React.FC = () => {
 
   const handleUpdateStatus = (user: AdminUser) => {
     setSelectedUser(user);
-    setNewStatus(user.accountStatus);
+    setNewStatus(user.accountStatus || 'active');
     setStatusDialogOpen(true);
   };
 
@@ -108,8 +108,9 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
+  const getStatusColor = (status?: string) => {
+    if (!status) return 'default';
+    switch (status.toLowerCase()) {
       case 'active':
         return 'success';
       case 'suspended':
@@ -121,8 +122,9 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
+  const getRoleColor = (role?: string) => {
+    if (!role) return 'default';
+    switch (role.toLowerCase()) {
       case 'admin':
         return 'error';
       case 'client':
@@ -291,14 +293,14 @@ export const AdminDashboardPage: React.FC = () => {
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <Chip
-                        label={user.role.toUpperCase()}
+                        label={user.role?.toUpperCase() || 'N/A'}
                         color={getRoleColor(user.role)}
                         size="small"
                       />
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={user.accountStatus.toUpperCase()}
+                        label={user.accountStatus?.toUpperCase() || 'N/A'}
                         color={getStatusColor(user.accountStatus)}
                         size="small"
                       />
