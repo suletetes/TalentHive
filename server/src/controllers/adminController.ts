@@ -87,6 +87,10 @@ export const updateUserStatus = catchAsync(async (req: AuthRequest, res: Respons
   const { userId } = req.params;
   const { accountStatus } = req.body;
 
+  if (!['active', 'suspended', 'deactivated'].includes(accountStatus)) {
+    return next(new AppError('Invalid account status', 400));
+  }
+
   const user = await User.findByIdAndUpdate(
     userId,
     { accountStatus },
@@ -96,6 +100,33 @@ export const updateUserStatus = catchAsync(async (req: AuthRequest, res: Respons
   if (!user) {
     return next(new AppError('User not found', 404));
   }
+
+  res.json({
+    status: 'success',
+    data: { user },
+  });
+});
+
+export const updateUserRole = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const { userId } = req.params;
+  const { role } = req.body;
+
+  if (!['admin', 'freelancer', 'client'].includes(role)) {
+    return next(new AppError('Invalid role', 400));
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  // Prevent changing own role
+  if (user._id.toString() === req.user._id.toString()) {
+    return next(new AppError('Cannot change your own role', 403));
+  }
+
+  user.role = role;
+  await user.save();
 
   res.json({
     status: 'success',
