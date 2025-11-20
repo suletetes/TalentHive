@@ -13,6 +13,11 @@ import { ProjectsPage } from '@/pages/ProjectsPage';
 import { ProjectDetailPage } from '@/pages/ProjectDetailPage';
 import { NewProjectPage } from '@/pages/NewProjectPage';
 import { MessagesPage } from '@/pages/MessagesPage';
+import { ProposalsPage } from '@/pages/ProposalsPage';
+import { ContractsPage } from '@/pages/ContractsPage';
+import { PaymentsPage } from '@/pages/PaymentsPage';
+import { ReviewsPage } from '@/pages/ReviewsPage';
+import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { BrowseProjectsPage } from '@/pages/BrowseProjectsPage';
 import { FreelancersPage } from '@/pages/FreelancersPage';
 import { FreelancerDetailPage } from '@/pages/FreelancerDetailPage';
@@ -72,7 +77,25 @@ function App() {
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/new" element={<NewProjectPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="proposals" element={<ProposalsPage />} />
+          <Route path="contracts" element={<ContractsPage />} />
+          <Route path="payments" element={<PaymentsPage />} />
+          <Route path="reviews" element={<ReviewsPage />} />
           <Route path="messages" element={<MessagesPage />} />
+        </Route>
+
+        {/* Admin routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="users" element={<div>User Management - Coming Soon</div>} />
+          <Route path="projects" element={<div>Project Management - Coming Soon</div>} />
         </Route>
 
         {/* 404 route */}

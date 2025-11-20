@@ -17,6 +17,38 @@ import { AccountCircle, Notifications } from '@mui/icons-material';
 import { RootState } from '@/store';
 import { useAuth } from '@/hooks/useAuth';
 
+interface NavigationItem {
+  label: string;
+  path: string;
+  roles?: ('admin' | 'freelancer' | 'client')[];
+}
+
+const navigationConfig: NavigationItem[] = [
+  // Freelancer-specific
+  { label: 'Find Work', path: '/projects', roles: ['freelancer'] },
+  { label: 'My Proposals', path: '/dashboard/proposals', roles: ['freelancer'] },
+  { label: 'My Contracts', path: '/dashboard/contracts', roles: ['freelancer'] },
+  
+  // Client-specific
+  { label: 'Post Project', path: '/dashboard/projects/new', roles: ['client'] },
+  { label: 'My Projects', path: '/dashboard/projects', roles: ['client'] },
+  { label: 'My Contracts', path: '/dashboard/contracts', roles: ['client'] },
+  { label: 'Find Talent', path: '/freelancers', roles: ['client'] },
+  
+  // Admin-specific
+  { label: 'Admin Dashboard', path: '/admin/dashboard', roles: ['admin'] },
+  { label: 'Users', path: '/admin/users', roles: ['admin'] },
+  { label: 'Projects', path: '/admin/projects', roles: ['admin'] },
+  
+  // Common authenticated
+  { label: 'Messages', path: '/dashboard/messages', roles: ['freelancer', 'client', 'admin'] },
+  
+  // Unauthenticated
+  { label: 'Find Work', path: '/projects' },
+  { label: 'Find Talent', path: '/freelancers' },
+  { label: 'About', path: '/about' },
+];
+
 export const Header: React.FC = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -35,6 +67,21 @@ export const Header: React.FC = () => {
     logout();
     handleClose();
   };
+
+  // Filter navigation items based on user role
+  const getNavigationItems = () => {
+    if (!isAuthenticated || !user) {
+      // Show unauthenticated menu
+      return navigationConfig.filter(item => !item.roles);
+    }
+    
+    // Show role-specific menu
+    return navigationConfig.filter(item => 
+      item.roles && item.roles.includes(user.role as any)
+    );
+  };
+
+  const navItems = getNavigationItems();
 
   return (
     <AppBar position="sticky" color="primary" elevation={1}>
@@ -57,15 +104,16 @@ export const Header: React.FC = () => {
 
           {/* Navigation Links */}
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            <Button color="inherit" component={Link} to="/projects">
-              Find Work
-            </Button>
-            <Button color="inherit" component={Link} to="/freelancers">
-              Find Talent
-            </Button>
-            <Button color="inherit" component={Link} to="/about">
-              About
-            </Button>
+            {navItems.map((item) => (
+              <Button
+                key={item.path}
+                color="inherit"
+                component={Link}
+                to={item.path}
+              >
+                {item.label}
+              </Button>
+            ))}
           </Box>
 
           {/* User Actions */}
