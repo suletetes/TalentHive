@@ -45,7 +45,9 @@ export const AdminUsersPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [newStatus, setNewStatus] = useState<'active' | 'suspended' | 'deactivated'>('active');
+  const [newRole, setNewRole] = useState<'admin' | 'freelancer' | 'client'>('client');
 
   // Fetch users
   const { data, isLoading, error, refetch } = useQuery({
@@ -78,10 +80,31 @@ export const AdminUsersPage: React.FC = () => {
     },
   });
 
+  // Update user role mutation
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: 'admin' | 'freelancer' | 'client' }) =>
+      adminService.updateUserRole(userId, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success('User role updated successfully');
+      setRoleDialogOpen(false);
+      setSelectedUser(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update user role');
+    },
+  });
+
   const handleUpdateStatus = (user: AdminUser) => {
     setSelectedUser(user);
     setNewStatus(user.accountStatus || 'active');
     setStatusDialogOpen(true);
+  };
+
+  const handleUpdateRole = (user: AdminUser) => {
+    setSelectedUser(user);
+    setNewRole(user.role);
+    setRoleDialogOpen(true);
   };
 
   const handleStatusUpdate = () => {
@@ -89,6 +112,15 @@ export const AdminUsersPage: React.FC = () => {
       updateStatusMutation.mutate({
         userId: selectedUser._id,
         status: newStatus,
+      });
+    }
+  };
+
+  const handleRoleUpdate = () => {
+    if (selectedUser) {
+      updateRoleMutation.mutate({
+        userId: selectedUser._id,
+        role: newRole,
       });
     }
   };
@@ -249,13 +281,23 @@ export const AdminUsersPage: React.FC = () => {
                       {format(new Date(user.createdAt), 'MMM dd, yyyy')}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => handleUpdateStatus(user)}
-                      >
-                        Update Status
-                      </Button>
+                      <Box display="flex" gap={1}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => handleUpdateStatus(user)}
+                        >
+                          Status
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="secondary"
+                          onClick={() => handleUpdateRole(user)}
+                        >
+                          Role
+                        </Button>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -317,6 +359,51 @@ export const AdminUsersPage: React.FC = () => {
             disabled={updateStatusMutation.isPending}
           >
             {updateStatusMutation.isPending ? 'Updating...' : 'Update Status'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Update User Role Dialog */}
+      <Dialog
+        open={roleDialogOpen}
+        onClose={() => setRoleDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Update User Role</DialogTitle>
+        <DialogContent>
+          {selectedUser && (
+            <Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                User: {selectedUser.profile?.firstName} {selectedUser.profile?.lastName} ({selectedUser.email})
+              </Typography>
+              <Typography variant="body2" color="warning.main" sx={{ mt: 1, mb: 2 }}>
+                Warning: Changing a user's role will affect their permissions and access to features.
+              </Typography>
+              <FormControl fullWidth>
+                <InputLabel>User Role</InputLabel>
+                <Select
+                  value={newRole}
+                  label="User Role"
+                  onChange={(e) => setNewRole(e.target.value as any)}
+                >
+                  <MenuItem value="client">Client</MenuItem>
+                  <MenuItem value="freelancer">Freelancer</MenuItem>
+                  <MenuItem value="admin">Admin</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRoleDialogOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handleRoleUpdate}
+            color="secondary"
+            variant="contained"
+            disabled={updateRoleMutation.isPending}
+          >
+            {updateRoleMutation.isPending ? 'Updating...' : 'Update Role'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -71,7 +71,7 @@ export const ProposalsPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
+      case 'submitted':
         return 'warning';
       case 'accepted':
         return 'success';
@@ -169,7 +169,7 @@ export const ProposalsPage: React.FC = () => {
                     >
                       View Details
                     </Button>
-                    {proposal.status === 'pending' && (
+                    {proposal.status === 'submitted' && (
                       <Button
                         variant="outlined"
                         color="error"
