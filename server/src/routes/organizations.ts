@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { protect, restrictTo } from '@/middleware/auth';
+import { authenticate, authorize } from '@/middleware/auth';
 import {
   createOrganization,
   getOrganization,
@@ -16,10 +16,10 @@ import {
 const router = Router();
 
 // All routes require authentication
-router.use(protect);
+router.use(authenticate);
 
 // Organization routes
-router.post('/', restrictTo('client'), createOrganization);
+router.post('/', authorize('client'), createOrganization);
 router.get('/my-organizations', getUserOrganizations);
 router.get('/:organizationId', getOrganization);
 router.patch('/:organizationId', updateOrganization);
