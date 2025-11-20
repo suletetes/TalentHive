@@ -230,15 +230,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Box display="flex" alignItems="center" gap={1}>
             <Avatar
-              src={project.client.profile.avatar}
-              alt={`${project.client.profile.firstName} ${project.client.profile.lastName}`}
+              src={project.client?.profile?.avatar}
+              alt={`${project.client?.profile?.firstName || ''} ${project.client?.profile?.lastName || ''}`}
               sx={{ width: 24, height: 24 }}
-            />
+            >
+              {project.client?.profile?.firstName?.[0] || 'C'}
+            </Avatar>
             <Typography variant="body2">
-              {project.client.clientProfile?.companyName ||
-                `${project.client.profile.firstName} ${project.client.profile.lastName}`}
+              {project.client?.clientProfile?.companyName ||
+                `${project.client?.profile?.firstName || ''} ${project.client?.profile?.lastName || ''}`}
             </Typography>
-            {project.client.rating.count > 0 && (
+            {project.client?.rating?.count > 0 && (
               <Typography variant="body2" color="text.secondary">
                 ★ {project.client.rating.average.toFixed(1)}
               </Typography>

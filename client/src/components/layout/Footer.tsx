@@ -96,7 +96,7 @@ export const Footer: React.FC = () => {
           }}
         >
           <Typography variant="body2" color="grey.400">
-            © 2024 TalentHive. All rights reserved.
+            © 2026 TalentHive. All rights reserved.
           </Typography>
           <Box sx={{ display: 'flex', gap: 3 }}>
             <Link component={RouterLink} to="/privacy" color="grey.400">
