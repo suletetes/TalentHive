@@ -73,7 +73,7 @@ export const ProfilePage: React.FC = () => {
     },
   });
 
-  const user = profileData?.data?.data?.user;
+  const user = profileData?.data?.user;
 
   const formik = useFormik({
     initialValues: {

@@ -20,7 +20,7 @@ import { ProjectFilters } from '@/components/projects/ProjectFilters';
 import { ProjectForm } from '@/components/projects/ProjectForm';
 import { PageLoading, GridSkeleton } from '@/components/ui/LoadingStates';
 import { RootState } from '@/store';
-import { useProjects } from '@/hooks/api/useProjects';
+import { useMyProjects } from '@/hooks/api/useProjects';
 import { ErrorHandler } from '@/utils/errorHandler';
 
 export const ProjectsPage: React.FC = () => {
@@ -50,14 +50,10 @@ export const ProjectsPage: React.FC = () => {
     error,
     refetch,
     isFetching,
-  } = useProjects({
-    ...filters,
-    budgetMin: filters.budgetRange[0] > 0 ? filters.budgetRange[0] : undefined,
-    budgetMax: filters.budgetRange[1] < 10000 ? filters.budgetRange[1] : undefined,
-  });
+  } = useMyProjects();
 
-  const projects = projectsData?.projects || [];
-  const pagination = projectsData?.pagination;
+  const projects = projectsData?.data || [];
+  const pagination = null; // My projects doesn't have pagination
 
   const handleFiltersChange = (newFilters: any) => {
     setFilters({ ...newFilters, page: 1 }); // Reset to first page when filters change
