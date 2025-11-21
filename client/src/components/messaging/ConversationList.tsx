@@ -56,7 +56,8 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   }, [refetch]);
 
   const getOtherParticipant = (conversation: Conversation) => {
-    return conversation.participants.find((p) => p._id !== currentUser?._id);
+    const currentUserId = currentUser?.id || currentUser?._id;
+    return conversation.participants.find((p) => p._id !== currentUserId);
   };
 
   const getUnreadCount = (conversation: Conversation) => {
@@ -65,9 +66,10 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       return conversation.unreadCount;
     }
     // If it's an object (Map), get the count for current user
-    if (conversation.unreadCount && typeof conversation.unreadCount === 'object' && currentUser?._id) {
+    const currentUserId = currentUser?.id || currentUser?._id;
+    if (conversation.unreadCount && typeof conversation.unreadCount === 'object' && currentUserId) {
       const unreadMap = conversation.unreadCount as any;
-      return unreadMap[currentUser._id] || 0;
+      return unreadMap[currentUserId] || 0;
     }
     return 0;
   };

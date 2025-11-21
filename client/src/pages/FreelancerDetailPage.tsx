@@ -169,9 +169,58 @@ export const FreelancerDetailPage = () => {
       </Paper>
 
       <Grid container spacing={3}>
+        {/* Statistics Section */}
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Statistics
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography>Projects Completed:</Typography>
+                  <Typography fontWeight="bold">
+                    {freelancer.freelancerProfile?.portfolio?.length || 0}
+                  </Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography>Total Reviews:</Typography>
+                  <Typography fontWeight="bold">
+                    {freelancer.rating?.count || 0}
+                  </Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography>Average Rating:</Typography>
+                  <Typography fontWeight="bold">
+                    {freelancer.rating?.count > 0 
+                      ? `${(freelancer.rating.average || 0).toFixed(1)}/5.0`
+                      : 'No ratings yet'
+                    }
+                  </Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography>Skills:</Typography>
+                  <Typography fontWeight="bold">
+                    {freelancer.freelancerProfile?.skills?.length || 0}
+                  </Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography>Member Since:</Typography>
+                  <Typography fontWeight="bold">
+                    {new Date(freelancer.createdAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
         {/* Work Experience Section */}
         {freelancer.freelancerProfile?.workExperience && freelancer.freelancerProfile.workExperience.length > 0 && (
-          <Grid item xs={12}>
+          <Grid item xs={12} md={8}>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
