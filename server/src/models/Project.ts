@@ -103,6 +103,13 @@ const projectSchema = new Schema<IProject>({
     type: Boolean,
     default: false,
   },
+  // Draft functionality fields
+  isDraft: {
+    type: Boolean,
+    default: false,
+  },
+  draftSavedAt: Date,
+  publishedAt: Date,
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -118,6 +125,7 @@ projectSchema.index({ createdAt: -1 });
 projectSchema.index({ budget: 1 });
 projectSchema.index({ visibility: 1, status: 1 });
 projectSchema.index({ isFeatured: 1, createdAt: -1 });
+projectSchema.index({ isDraft: 1 });
 projectSchema.index({ isUrgent: 1, createdAt: -1 });
 
 // Text search index
@@ -181,6 +189,21 @@ projectSchema.statics.searchProjects = function(query: string) {
     visibility: 'public',
   }).sort({ score: { $meta: 'textScore' } });
 };
+
+// Pre-save middleware to sync draft status
+projectSchema.pre('save', function(next) {
+  // Sync isDraft with status
+  if (this.status === 'draft') {
+    this.isDraft = true;
+    this.draftSavedAt = new Date();
+  } else {
+    this.isDraft = false;
+    if (this.isModified('status') && this.status === 'open' && !this.publishedAt) {
+      this.publishedAt = new Date();
+    }
+  }
+  next();
+});
 
 // Pre-save middleware to validate budget
 projectSchema.pre('save', function(next) {

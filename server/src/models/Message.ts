@@ -1,106 +1,92 @@
-import mongoose, { Schema } from 'mongoose';
-import { IMessage, IConversation, IAttachment } from '@/types/message';
+import mongoose, { Schema, Document } from 'mongoose';
 
-const attachmentSchema = new Schema<IAttachment>({
-  type: {
-    type: String,
-    enum: ['file', 'image', 'document'],
-    required: true,
-  },
-  url: {
-    type: String,
-    required: true,
-  },
-  filename: {
-    type: String,
-    required: true,
-  },
-  size: {
-    type: Number,
-    required: true,
-  },
-  mimeType: {
-    type: String,
-    required: true,
-  },
-});
+export interface IMessage extends Document {
+  conversation: mongoose.Types.ObjectId;
+  sender: mongoose.Types.ObjectId;
+  content: string;
+  attachments: string[];
+  readBy: mongoose.Types.ObjectId[];
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const messageSchema = new Schema<IMessage>({
   conversation: {
     type: Schema.Types.ObjectId,
     ref: 'Conversation',
     required: true,
-    index: true,
   },
   sender: {
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    index: true,
   },
   content: {
     type: String,
-    required: true,
-    maxlength: 5000,
+    required: [true, 'Message content is required'],
+    trim: true,
+    maxlength: [5000, 'Message cannot exceed 5000 characters'],
   },
-  type: {
+  attachments: [{
     type: String,
-    enum: ['text', 'file', 'image', 'system'],
-    default: 'text',
-  },
-  attachments: [attachmentSchema],
+    trim: true,
+  }],
   readBy: [{
     type: Schema.Types.ObjectId,
     ref: 'User',
   }],
-  isEdited: {
-    type: Boolean,
-    default: false,
-  },
-  isDeleted: {
-    type: Boolean,
-    default: false,
-  },
 }, {
   timestamps: true,
-});
-
-const conversationSchema = new Schema<IConversation>({
-  participants: [{
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  }],
-  project: {
-    type: Schema.Types.ObjectId,
-    ref: 'Project',
-  },
-  contract: {
-    type: Schema.Types.ObjectId,
-    ref: 'Contract',
-  },
-  lastMessage: {
-    type: Schema.Types.ObjectId,
-    ref: 'Message',
-  },
-  unreadCount: {
-    type: Map,
-    of: Number,
-    default: {},
-  },
-  isArchived: {
-    type: Boolean,
-    default: false,
-  },
-}, {
-  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
 });
 
 // Indexes
 messageSchema.index({ conversation: 1, createdAt: -1 });
-messageSchema.index({ sender: 1, createdAt: -1 });
-conversationSchema.index({ participants: 1 });
-conversationSchema.index({ lastMessage: 1 });
+messageSchema.index({ sender: 1 });
+messageSchema.index({ readBy: 1 });
+
+// Virtual to check if message is read by a specific user
+messageSchema.virtual('isReadBy').get(function() {
+  return (userId: string) => {
+    return this.readBy.some(id => id.toString() === userId.toString());
+  };
+});
+
+// Method to mark as read by a user
+messageSchema.methods.markAsRead = function(userId: string) {
+  if (!this.readBy.some(id => id.toString() === userId.toString())) {
+    this.readBy.push(userId as any);
+    return this.save();
+  }
+  return Promise.resolve(this);
+};
+
+// Static method to find messages in a conversation
+messageSchema.statics.findByConversation = function(
+  conversationId: string,
+  limit: number = 50,
+  before?: Date
+) {
+  const query: any = { conversation: conversationId };
+  
+  if (before) {
+    query.createdAt = { $lt: before };
+  }
+  
+  return this.find(query)
+    .populate('sender', 'profile')
+    .sort({ createdAt: -1 })
+    .limit(limit);
+};
+
+// Static method to count unread messages for a user in a conversation
+messageSchema.statics.countUnread = function(conversationId: string, userId: string) {
+  return this.countDocuments({
+    conversation: conversationId,
+    sender: { $ne: userId },
+    readBy: { $ne: userId },
+  });
+};
 
 export const Message = mongoose.model<IMessage>('Message', messageSchema);
-export const Conversation = mongoose.model<IConversation>('Conversation', conversationSchema);
