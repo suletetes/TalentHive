@@ -28,9 +28,7 @@ export const getSkills = catchAsync(async (req: Request, res: Response) => {
   
   res.json({
     status: 'success',
-    data: {
-      skills,
-    },
+    data: skills,
   });
 });
 

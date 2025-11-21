@@ -4,7 +4,7 @@ import { Organization } from '@/models/Organization';
 import BudgetApproval from '@/models/BudgetApproval';
 import { User } from '@/models/User';
 import { logger } from '@/utils/logger';
-import { sendEmail } from '@/utils/email';
+import { sendEmail } from '@/utils/email.resend';
 
 // Create organization
 export const createOrganization = async (req: Request, res: Response) => {

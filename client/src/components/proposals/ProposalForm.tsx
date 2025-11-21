@@ -124,11 +124,14 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
     onSubmit: (values) => {
       setSubmitError(null);
       
+      // Remove temporary _tempId from milestones before sending
+      const cleanMilestones = milestones.map(({ _tempId, ...milestone }) => milestone);
+      
       const data = {
         coverLetter: values.coverLetter,
         bidAmount: values.bidAmount,
         timeline: values.timeline,
-        milestones: milestones.length > 0 ? milestones : undefined,
+        milestones: cleanMilestones.length > 0 ? cleanMilestones : undefined,
         attachments: attachments.length > 0 ? attachments : undefined,
       };
       
@@ -137,8 +140,16 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
   });
 
   const handleAddMilestone = () => {
-    if (newMilestone.title && newMilestone.description && newMilestone.amount > 0) {
-      setMilestones([...milestones, { ...newMilestone, id: Date.now() }]);
+    if (newMilestone.title && newMilestone.description && newMilestone.amount > 0 && newMilestone.dueDate) {
+      const { title, description, amount, dueDate, deliverables } = newMilestone;
+      setMilestones([...milestones, { 
+        title, 
+        description, 
+        amount, 
+        dueDate, 
+        deliverables,
+        _tempId: Date.now() // Temporary ID for UI only
+      }]);
       setNewMilestone({
         title: '',
         description: '',
@@ -150,7 +161,7 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
   };
 
   const handleRemoveMilestone = (id: number) => {
-    setMilestones(milestones.filter(m => m.id !== id));
+    setMilestones(milestones.filter(m => m._tempId !== id));
   };
 
   const getTotalMilestoneAmount = () => {
@@ -320,7 +331,7 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
             <Button
               variant="outlined"
               onClick={handleAddMilestone}
-              disabled={!newMilestone.title || !newMilestone.amount}
+              disabled={!newMilestone.title || !newMilestone.description || !newMilestone.amount || !newMilestone.dueDate}
               sx={{ height: '40px' }}
             >
               <Add />
@@ -342,7 +353,7 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
           <Box sx={{ mb: 3 }}>
             <List>
               {milestones.map((milestone) => (
-                <ListItem key={milestone.id} divider>
+                <ListItem key={milestone._tempId} divider>
                   <ListItemText
                     primary={milestone.title}
                     secondary={
@@ -362,7 +373,7 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
                     }
                   />
                   <ListItemSecondaryAction>
-                    <IconButton onClick={() => handleRemoveMilestone(milestone.id)}>
+                    <IconButton onClick={() => handleRemoveMilestone(milestone._tempId)}>
                       <Delete />
                     </IconButton>
                   </ListItemSecondaryAction>
