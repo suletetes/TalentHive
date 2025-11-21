@@ -267,14 +267,9 @@ export const forgotPassword = catchAsync(async (req: Request, res: Response, nex
   user.passwordResetExpires = passwordResetExpires;
   await user.save({ validateBeforeSave: false });
 
-  // Send reset email using email service
+  // Send reset email
   try {
-    const { emailService } = await import('@/services/email.service');
-    await emailService.sendPasswordResetEmail(
-      user.email,
-      user.profile.firstName,
-      resetToken
-    );
+    await sendPasswordResetEmail(user.email, resetToken);
 
     res.json({
       status: 'success',

@@ -24,9 +24,7 @@ export const getCategories = catchAsync(async (req: Request, res: Response) => {
   
   res.json({
     status: 'success',
-    data: {
-      categories,
-    },
+    data: categories,
   });
 });
 

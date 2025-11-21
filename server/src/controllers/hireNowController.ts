@@ -3,7 +3,7 @@ import { HireNowRequest } from '@/models/HireNowRequest';
 import { Contract } from '@/models/Contract';
 import { Project } from '@/models/Project';
 import { AppError } from '@/middleware/errorHandler';
-import { emailService } from '@/services/email.service';
+import { sendEmail } from '@/utils/email.resend';
 import { User } from '@/models/User';
 
 /**
@@ -49,7 +49,7 @@ export const createHireNowRequest = async (
 
     // Send email notification to freelancer
     try {
-      await emailService.sendEmail({
+      await sendEmail({
         to: (hireNowRequest.freelancer as any).email,
         subject: `New Hire Now Request: ${projectTitle}`,
         html: `
@@ -185,7 +185,7 @@ export const acceptHireNowRequest = async (
 
     // Send email notification to client
     try {
-      await emailService.sendEmail({
+      await sendEmail({
         to: (hireNowRequest.client as any).email,
         subject: `Hire Now Request Accepted: ${hireNowRequest.projectTitle}`,
         html: `
@@ -247,7 +247,7 @@ export const rejectHireNowRequest = async (
 
     // Send email notification to client
     try {
-      await emailService.sendEmail({
+      await sendEmail({
         to: (hireNowRequest.client as any).email,
         subject: `Hire Now Request Declined: ${hireNowRequest.projectTitle}`,
         html: `
