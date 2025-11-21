@@ -15,6 +15,9 @@ import { Message } from '@/models/Message';
 import { Notification } from '@/models/Notification';
 import TimeEntry from '@/models/TimeEntry';
 import BudgetApproval from '@/models/BudgetApproval';
+import { Category } from '@/models/Category';
+import { Skill } from '@/models/Skill';
+import { HireNowRequest } from '@/models/HireNowRequest';
 
 // Load environment variables
 dotenv.config();
@@ -42,7 +45,7 @@ async function disconnectDB() {
 async function clearDatabase() {
   logger.info('🧹 Clearing existing data...');
   
-  const { Conversation } = await import('@/models/Message');
+  const { Conversation } = await import('@/models/Conversation');
   const { Payment } = await import('@/models/Payment');
   
   await User.deleteMany({});
@@ -60,8 +63,162 @@ async function clearDatabase() {
   await TimeEntry.deleteMany({});
   await BudgetApproval.deleteMany({});
   await Payment.deleteMany({});
+  await Category.deleteMany({});
+  await Skill.deleteMany({});
+  await HireNowRequest.deleteMany({});
   
   logger.info('✅ Database cleared');
+}
+
+async function seedCategories(adminId: any) {
+  logger.info('📁 Seeding categories...');
+  
+  const categories = [
+    { name: 'Web Development', slug: 'web-development', description: 'Full-stack, frontend, and backend web development', icon: '💻', createdBy: adminId },
+    { name: 'Mobile Development', slug: 'mobile-development', description: 'iOS, Android, and cross-platform mobile apps', icon: '📱', createdBy: adminId },
+    { name: 'UI/UX Design', slug: 'ui-ux-design', description: 'User interface and user experience design', icon: '🎨', createdBy: adminId },
+    { name: 'Graphic Design', slug: 'graphic-design', description: 'Logo design, branding, and visual identity', icon: '🖼️', createdBy: adminId },
+    { name: 'Data Science', slug: 'data-science', description: 'Data analysis, machine learning, and AI', icon: '📊', createdBy: adminId },
+    { name: 'DevOps', slug: 'devops', description: 'CI/CD, cloud infrastructure, and automation', icon: '⚙️', createdBy: adminId },
+    { name: 'Content Writing', slug: 'content-writing', description: 'Blog posts, articles, and copywriting', icon: '✍️', createdBy: adminId },
+    { name: 'Digital Marketing', slug: 'digital-marketing', description: 'SEO, social media, and online advertising', icon: '📈', createdBy: adminId },
+    { name: 'Video & Animation', slug: 'video-animation', description: 'Video editing, motion graphics, and 3D animation', icon: '🎬', createdBy: adminId },
+    { name: 'Game Development', slug: 'game-development', description: 'Game design, programming, and asset creation', icon: '🎮', createdBy: adminId },
+    { name: 'Blockchain', slug: 'blockchain', description: 'Smart contracts, DApps, and cryptocurrency', icon: '⛓️', createdBy: adminId },
+    { name: 'Cybersecurity', slug: 'cybersecurity', description: 'Security audits, penetration testing, and compliance', icon: '🔒', createdBy: adminId },
+  ];
+  
+  const createdCategories = await Category.insertMany(categories);
+  logger.info(`✅ Created ${createdCategories.length} categories`);
+  
+  return createdCategories;
+}
+
+async function seedSkills(categories: any[], adminId: any) {
+  logger.info('🛠️ Seeding skills...');
+  
+  const webDev = categories.find(c => c.slug === 'web-development');
+  const mobileDev = categories.find(c => c.slug === 'mobile-development');
+  const uiux = categories.find(c => c.slug === 'ui-ux-design');
+  const graphicDesign = categories.find(c => c.slug === 'graphic-design');
+  const dataScience = categories.find(c => c.slug === 'data-science');
+  const devops = categories.find(c => c.slug === 'devops');
+  const writing = categories.find(c => c.slug === 'content-writing');
+  const marketing = categories.find(c => c.slug === 'digital-marketing');
+  const video = categories.find(c => c.slug === 'video-animation');
+  const gaming = categories.find(c => c.slug === 'game-development');
+  const blockchain = categories.find(c => c.slug === 'blockchain');
+  const security = categories.find(c => c.slug === 'cybersecurity');
+  
+  const skills = [
+    // Web Development
+    { name: 'React', slug: 'react', category: webDev._id, createdBy: adminId },
+    { name: 'Vue.js', slug: 'vuejs', category: webDev._id, createdBy: adminId },
+    { name: 'Angular', slug: 'angular', category: webDev._id, createdBy: adminId },
+    { name: 'Node.js', slug: 'nodejs', category: webDev._id },
+    { name: 'Express.js', slug: 'expressjs', category: webDev._id },
+    { name: 'TypeScript', slug: 'typescript', category: webDev._id },
+    { name: 'JavaScript', slug: 'javascript', category: webDev._id },
+    { name: 'HTML/CSS', slug: 'html-css', category: webDev._id },
+    { name: 'MongoDB', slug: 'mongodb', category: webDev._id },
+    { name: 'PostgreSQL', slug: 'postgresql', category: webDev._id },
+    { name: 'MySQL', slug: 'mysql', category: webDev._id },
+    { name: 'GraphQL', slug: 'graphql', category: webDev._id },
+    { name: 'REST API', slug: 'rest-api', category: webDev._id },
+    { name: 'Next.js', slug: 'nextjs', category: webDev._id },
+    { name: 'Tailwind CSS', slug: 'tailwind-css', category: webDev._id },
+    
+    // Mobile Development
+    { name: 'React Native', slug: 'react-native', category: mobileDev._id },
+    { name: 'Flutter', slug: 'flutter', category: mobileDev._id },
+    { name: 'iOS Development', slug: 'ios-development', category: mobileDev._id },
+    { name: 'Android Development', slug: 'android-development', category: mobileDev._id },
+    { name: 'Swift', slug: 'swift', category: mobileDev._id },
+    { name: 'Kotlin', slug: 'kotlin', category: mobileDev._id },
+    { name: 'Firebase', slug: 'firebase', category: mobileDev._id },
+    
+    // UI/UX Design
+    { name: 'Figma', slug: 'figma', category: uiux._id },
+    { name: 'Adobe XD', slug: 'adobe-xd', category: uiux._id },
+    { name: 'Sketch', slug: 'sketch', category: uiux._id },
+    { name: 'Prototyping', slug: 'prototyping', category: uiux._id },
+    { name: 'User Research', slug: 'user-research', category: uiux._id },
+    { name: 'Wireframing', slug: 'wireframing', category: uiux._id },
+    { name: 'Design Systems', slug: 'design-systems', category: uiux._id },
+    
+    // Graphic Design
+    { name: 'Adobe Photoshop', slug: 'adobe-photoshop', category: graphicDesign._id },
+    { name: 'Adobe Illustrator', slug: 'adobe-illustrator', category: graphicDesign._id },
+    { name: 'Logo Design', slug: 'logo-design', category: graphicDesign._id },
+    { name: 'Branding', slug: 'branding', category: graphicDesign._id },
+    { name: 'Print Design', slug: 'print-design', category: graphicDesign._id },
+    
+    // Data Science
+    { name: 'Python', slug: 'python', category: dataScience._id },
+    { name: 'Machine Learning', slug: 'machine-learning', category: dataScience._id },
+    { name: 'TensorFlow', slug: 'tensorflow', category: dataScience._id },
+    { name: 'PyTorch', slug: 'pytorch', category: dataScience._id },
+    { name: 'Data Analysis', slug: 'data-analysis', category: dataScience._id },
+    { name: 'Pandas', slug: 'pandas', category: dataScience._id },
+    { name: 'NumPy', slug: 'numpy', category: dataScience._id },
+    { name: 'SQL', slug: 'sql', category: dataScience._id },
+    
+    // DevOps
+    { name: 'Docker', slug: 'docker', category: devops._id },
+    { name: 'Kubernetes', slug: 'kubernetes', category: devops._id },
+    { name: 'AWS', slug: 'aws', category: devops._id },
+    { name: 'Azure', slug: 'azure', category: devops._id },
+    { name: 'Jenkins', slug: 'jenkins', category: devops._id },
+    { name: 'Terraform', slug: 'terraform', category: devops._id },
+    { name: 'CI/CD', slug: 'ci-cd', category: devops._id },
+    
+    // Content Writing
+    { name: 'Technical Writing', slug: 'technical-writing', category: writing._id },
+    { name: 'Copywriting', slug: 'copywriting', category: writing._id },
+    { name: 'Content Strategy', slug: 'content-strategy', category: writing._id },
+    { name: 'Blog Writing', slug: 'blog-writing', category: writing._id },
+    
+    // Digital Marketing
+    { name: 'SEO', slug: 'seo', category: marketing._id },
+    { name: 'Google Analytics', slug: 'google-analytics', category: marketing._id },
+    { name: 'Social Media Marketing', slug: 'social-media-marketing', category: marketing._id },
+    { name: 'Email Marketing', slug: 'email-marketing', category: marketing._id },
+    { name: 'PPC Advertising', slug: 'ppc-advertising', category: marketing._id },
+    
+    // Video & Animation
+    { name: 'Video Editing', slug: 'video-editing', category: video._id },
+    { name: 'Adobe Premiere', slug: 'adobe-premiere', category: video._id },
+    { name: 'After Effects', slug: 'after-effects', category: video._id },
+    { name: '3D Animation', slug: '3d-animation', category: video._id },
+    { name: 'Motion Graphics', slug: 'motion-graphics', category: video._id },
+    
+    // Game Development
+    { name: 'Unity', slug: 'unity', category: gaming._id },
+    { name: 'Unreal Engine', slug: 'unreal-engine', category: gaming._id },
+    { name: 'C#', slug: 'csharp', category: gaming._id },
+    { name: 'C++', slug: 'cpp', category: gaming._id },
+    { name: 'Game Design', slug: 'game-design', category: gaming._id },
+    
+    // Blockchain
+    { name: 'Solidity', slug: 'solidity', category: blockchain._id },
+    { name: 'Smart Contracts', slug: 'smart-contracts', category: blockchain._id },
+    { name: 'Web3', slug: 'web3', category: blockchain._id },
+    { name: 'Ethereum', slug: 'ethereum', category: blockchain._id },
+    
+    // Cybersecurity
+    { name: 'Penetration Testing', slug: 'penetration-testing', category: security._id },
+    { name: 'Security Audits', slug: 'security-audits', category: security._id },
+    { name: 'Network Security', slug: 'network-security', category: security._id },
+    { name: 'Ethical Hacking', slug: 'ethical-hacking', category: security._id },
+  ];
+  
+  // Add createdBy to all skills
+  const skillsWithCreator = skills.map(skill => ({ ...skill, createdBy: adminId }));
+  
+  const createdSkills = await Skill.insertMany(skillsWithCreator);
+  logger.info(`✅ Created ${createdSkills.length} skills`);
+  
+  return createdSkills;
 }
 
 async function seedUsers() {
@@ -300,7 +457,138 @@ async function seedUsers() {
   ];
   
   const createdUsers = await User.insertMany(users);
-  logger.info(`✅ Created ${createdUsers.length} users`);
+  
+  // Mark some freelancers as featured
+  const alice = createdUsers.find(u => u.email === 'alice.dev@example.com');
+  const bob = createdUsers.find(u => u.email === 'bob.designer@example.com');
+  const david = createdUsers.find(u => u.email === 'david.mobile@example.com');
+  
+  if (alice) {
+    alice.isFeatured = true;
+    alice.featuredOrder = 1;
+    alice.featuredSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    await alice.save();
+  }
+  
+  if (bob) {
+    bob.isFeatured = true;
+    bob.featuredOrder = 2;
+    bob.featuredSince = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000);
+    await bob.save();
+  }
+  
+  if (david) {
+    david.isFeatured = true;
+    david.featuredOrder = 3;
+    david.featuredSince = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+    await david.save();
+  }
+  
+  // Add work experience and education to freelancers
+  if (alice && alice.freelancerProfile) {
+    (alice.freelancerProfile as any).workExperience = [
+      {
+        title: 'Senior Software Engineer',
+        company: 'Tech Innovations Inc.',
+        location: 'San Francisco, CA',
+        startDate: new Date('2020-01-01'),
+        endDate: new Date('2023-06-01'),
+        current: false,
+        description: 'Led development of microservices architecture serving 1M+ users. Mentored junior developers and established best practices for code quality.',
+      },
+      {
+        title: 'Full Stack Developer',
+        company: 'StartupXYZ',
+        location: 'Austin, TX',
+        startDate: new Date('2018-03-01'),
+        endDate: new Date('2019-12-01'),
+        current: false,
+        description: 'Built and maintained multiple web applications using React and Node.js. Implemented CI/CD pipelines and automated testing.',
+      },
+    ];
+    (alice.freelancerProfile as any).education = [
+      {
+        degree: 'Bachelor of Science',
+        institution: 'University of Texas',
+        fieldOfStudy: 'Computer Science',
+        startDate: new Date('2014-09-01'),
+        endDate: new Date('2018-05-01'),
+        description: 'Graduated with honors. Focus on software engineering and algorithms.',
+      },
+    ];
+    (alice.freelancerProfile as any).languages = [
+      { language: 'English', proficiency: 'native' },
+      { language: 'Spanish', proficiency: 'conversational' },
+    ];
+    await alice.save();
+  }
+  
+  if (bob && bob.freelancerProfile) {
+    (bob.freelancerProfile as any).workExperience = [
+      {
+        title: 'Lead UI/UX Designer',
+        company: 'Design Studio Pro',
+        location: 'Los Angeles, CA',
+        startDate: new Date('2019-06-01'),
+        current: true,
+        description: 'Leading design team of 5 designers. Created design systems for Fortune 500 clients. Won multiple design awards.',
+      },
+      {
+        title: 'UI Designer',
+        company: 'Creative Agency',
+        location: 'Los Angeles, CA',
+        startDate: new Date('2016-01-01'),
+        endDate: new Date('2019-05-01'),
+        current: false,
+        description: 'Designed user interfaces for web and mobile applications. Conducted user research and usability testing.',
+      },
+    ];
+    (bob.freelancerProfile as any).education = [
+      {
+        degree: 'Bachelor of Fine Arts',
+        institution: 'Art Center College of Design',
+        fieldOfStudy: 'Graphic Design',
+        startDate: new Date('2012-09-01'),
+        endDate: new Date('2016-05-01'),
+        description: 'Specialized in digital design and user experience.',
+      },
+    ];
+    (bob.freelancerProfile as any).languages = [
+      { language: 'English', proficiency: 'native' },
+      { language: 'French', proficiency: 'fluent' },
+    ];
+    await bob.save();
+  }
+  
+  if (david && david.freelancerProfile) {
+    (david.freelancerProfile as any).workExperience = [
+      {
+        title: 'Mobile App Developer',
+        company: 'App Solutions LLC',
+        location: 'Miami, FL',
+        startDate: new Date('2020-01-01'),
+        current: true,
+        description: 'Developing cross-platform mobile applications using React Native and Flutter. Published 10+ apps on App Store and Google Play.',
+      },
+    ];
+    (david.freelancerProfile as any).education = [
+      {
+        degree: 'Bachelor of Science',
+        institution: 'Florida International University',
+        fieldOfStudy: 'Software Engineering',
+        startDate: new Date('2015-09-01'),
+        endDate: new Date('2019-05-01'),
+        description: 'Focus on mobile development and user interface design.',
+      },
+    ];
+    (david.freelancerProfile as any).languages = [
+      { language: 'English', proficiency: 'native' },
+      { language: 'Spanish', proficiency: 'native' },
+    ];
+    await david.save();
+  }
+  
+  logger.info(`✅ Created ${createdUsers.length} users (${alice && bob && david ? '3' : '0'} featured)`);
   
   return createdUsers;
 }
@@ -665,10 +953,86 @@ async function seedProjects(users: any[], organizations: any[]) {
       client: users.find(u => u.email === 'michael.startup@example.com')?._id || client1._id,
       status: 'open',
     },
+    // Draft projects
+    {
+      title: 'Machine Learning Model Development',
+      description: 'Build a machine learning model for customer churn prediction',
+      category: 'Data Science',
+      budget: { 
+        type: 'fixed',
+        min: 5000, 
+        max: 8000 
+      },
+      timeline: {
+        duration: 45,
+        unit: 'days',
+      },
+      skills: ['Python', 'Machine Learning', 'TensorFlow', 'Data Analysis'],
+      requirements: [
+        'Data preprocessing',
+        'Model training',
+        'Performance evaluation',
+        'Documentation',
+      ],
+      client: users.find(u => u.email === 'lisa.enterprise@example.com')?._id || client2._id,
+      status: 'draft',
+      isDraft: true,
+      draftSavedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    },
+    {
+      title: 'Blockchain Smart Contract Development',
+      description: 'Develop smart contracts for NFT marketplace',
+      category: 'Blockchain',
+      budget: { 
+        type: 'fixed',
+        min: 10000, 
+        max: 15000 
+      },
+      timeline: {
+        duration: 60,
+        unit: 'days',
+      },
+      skills: ['Solidity', 'Smart Contracts', 'Web3', 'Ethereum'],
+      requirements: [
+        'NFT minting contract',
+        'Marketplace contract',
+        'Security audit',
+        'Testing',
+      ],
+      client: users.find(u => u.email === 'michael.startup@example.com')?._id || client1._id,
+      status: 'draft',
+      isDraft: true,
+      draftSavedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+    },
+    {
+      title: 'Corporate Website Redesign',
+      description: 'Complete redesign of corporate website with modern UI',
+      category: 'Web Development',
+      budget: { 
+        type: 'fixed',
+        min: 8000, 
+        max: 12000 
+      },
+      timeline: {
+        duration: 60,
+        unit: 'days',
+      },
+      skills: ['React', 'Design', 'TypeScript', 'Tailwind CSS'],
+      requirements: [
+        'Responsive design',
+        'CMS integration',
+        'SEO optimization',
+        'Performance optimization',
+      ],
+      client: users.find(u => u.email === 'lisa.enterprise@example.com')?._id || client2._id,
+      status: 'draft',
+      isDraft: true,
+      draftSavedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    },
   ];
   
   const createdProjects = await Project.insertMany(projects);
-  logger.info(`✅ Created ${createdProjects.length} projects`);
+  logger.info(`✅ Created ${createdProjects.length} projects (${projects.filter(p => p.isDraft).length} drafts)`);
   
   return createdProjects;
 }
@@ -935,6 +1299,128 @@ async function seedProposals(users: any[], projects: any[]) {
   return createdProposals;
 }
 
+async function seedHireNowRequests(users: any[]) {
+  logger.info('🤝 Seeding hire now requests...');
+  
+  const client1 = users.find(u => u.email === 'john.client@example.com');
+  const client2 = users.find(u => u.email === 'sarah.manager@example.com');
+  const michael = users.find(u => u.email === 'michael.startup@example.com');
+  const alice = users.find(u => u.email === 'alice.dev@example.com');
+  const bob = users.find(u => u.email === 'bob.designer@example.com');
+  const carol = users.find(u => u.email === 'carol.writer@example.com');
+  const emma = users.find(u => u.email === 'emma.data@example.com');
+  
+  const hireNowRequests = [
+    // Pending request
+    {
+      client: client1._id,
+      freelancer: alice._id,
+      projectTitle: 'Quick Website Fix',
+      projectDescription: 'Need urgent help fixing a bug in our production website. Should take 2-3 hours.',
+      budget: 300,
+      timeline: {
+        duration: 3,
+        unit: 'days',
+      },
+      milestones: [
+        {
+          title: 'Bug Fix',
+          description: 'Identify and fix the production bug',
+          amount: 300,
+          dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        },
+      ],
+      message: 'Hi Alice, we have an urgent bug that needs fixing. Can you help us out?',
+      status: 'pending',
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    },
+    // Accepted request
+    {
+      client: client2._id,
+      freelancer: bob._id,
+      projectTitle: 'Logo Redesign',
+      projectDescription: 'Redesign our company logo with a modern look',
+      budget: 800,
+      timeline: {
+        duration: 7,
+        unit: 'days',
+      },
+      milestones: [
+        {
+          title: 'Initial Concepts',
+          description: 'Provide 3 logo concepts',
+          amount: 400,
+          dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        },
+        {
+          title: 'Final Logo',
+          description: 'Deliver final logo with all file formats',
+          amount: 400,
+          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      ],
+      message: 'Love your portfolio! Would you be interested in redesigning our logo?',
+      status: 'accepted',
+      respondedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      responseMessage: 'Thank you! I would love to work on this project.',
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+    },
+    // Rejected request
+    {
+      client: michael._id,
+      freelancer: emma._id,
+      projectTitle: 'Data Analysis Project',
+      projectDescription: 'Analyze customer data and provide insights',
+      budget: 1500,
+      timeline: {
+        duration: 14,
+        unit: 'days',
+      },
+      milestones: [
+        {
+          title: 'Data Analysis',
+          description: 'Complete analysis and report',
+          amount: 1500,
+          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        },
+      ],
+      message: 'We need help analyzing our customer data. Are you available?',
+      status: 'rejected',
+      respondedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      responseMessage: 'Thank you for reaching out, but I am currently fully booked.',
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    },
+    // Another pending request
+    {
+      client: michael._id,
+      freelancer: carol._id,
+      projectTitle: 'Blog Content Writing',
+      projectDescription: 'Write 5 blog posts for our company blog',
+      budget: 500,
+      timeline: {
+        duration: 10,
+        unit: 'days',
+      },
+      milestones: [
+        {
+          title: 'Blog Posts',
+          description: 'Deliver 5 SEO-optimized blog posts',
+          amount: 500,
+          dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+        },
+      ],
+      message: 'We need quality blog content. Can you help?',
+      status: 'pending',
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    },
+  ];
+  
+  const createdRequests = await HireNowRequest.insertMany(hireNowRequests);
+  logger.info(`✅ Created ${createdRequests.length} hire now requests`);
+  
+  return createdRequests;
+}
+
 async function seedContracts(users: any[], projects: any[], proposals: any[]) {
   logger.info('📄 Seeding contracts...');
   
@@ -1071,7 +1557,7 @@ async function seedTimeEntries(users: any[], contracts: any[]) {
 async function seedMessages(users: any[]) {
   logger.info('💬 Seeding messages...');
   
-  const { Conversation } = await import('@/models/Message');
+  const { Conversation } = await import('@/models/Conversation');
   
   const alice = users.find(u => u.email === 'alice.dev@example.com');
   const bob = users.find(u => u.email === 'bob.designer@example.com');
@@ -1284,10 +1770,14 @@ async function seedDatabase() {
     
     // Seed data in order (due to dependencies)
     const users = await seedUsers();
+    const admin = users.find(u => u.role === 'admin');
+    const categories = await seedCategories(admin._id);
+    const skills = await seedSkills(categories, admin._id);
     const organizations = await seedOrganizations(users);
     const projects = await seedProjects(users, organizations);
     const servicePackages = await seedServicePackages(users);
     const proposals = await seedProposals(users, projects);
+    const hireNowRequests = await seedHireNowRequests(users);
     const contracts = await seedContracts(users, projects, proposals);
     const reviews = await seedReviews(users, contracts);
     const timeEntries = await seedTimeEntries(users, contracts);
@@ -1297,11 +1787,14 @@ async function seedDatabase() {
     
     logger.info('✅ Database seeding completed successfully');
     logger.info(`📊 Summary:
+    - Categories: ${categories.length}
+    - Skills: ${skills.length}
     - Users: ${users.length}
     - Organizations: ${organizations.length}
     - Projects: ${projects.length}
     - Service Packages: ${servicePackages.length}
     - Proposals: ${proposals.length}
+    - Hire Now Requests: ${hireNowRequests.length}
     - Contracts: ${contracts.length}
     - Reviews: ${reviews.length}
     - Time Entries: ${timeEntries.length}

@@ -33,6 +33,10 @@ export interface IProject extends Document {
   viewCount: number;
   isUrgent: boolean;
   isFeatured: boolean;
+  // Draft functionality
+  isDraft?: boolean;
+  draftSavedAt?: Date;
+  publishedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   

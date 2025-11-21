@@ -10,7 +10,7 @@ import userReducer from './slices/userSlice';
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['auth'], // Only persist auth state
+  whitelist: ['auth', 'ui'], // Persist auth and UI state (including theme)
 };
 
 const rootReducer = combineReducers({
