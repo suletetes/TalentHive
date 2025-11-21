@@ -4,7 +4,7 @@ import MessageIcon from '@mui/icons-material/Message';
 import { useMutation } from '@tanstack/react-query';
 import { messagesService } from '@/services/api/messages.service';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 interface MessageButtonProps {
   userId: string;

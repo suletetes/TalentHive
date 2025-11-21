@@ -10,7 +10,7 @@ import SendIcon from '@mui/icons-material/Send';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { messagesService } from '@/services/api/messages.service';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 interface MessageComposerProps {
   conversationId: string;
