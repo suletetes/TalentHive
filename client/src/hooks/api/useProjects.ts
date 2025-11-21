@@ -8,6 +8,11 @@ interface ProjectFilters {
   minBudget?: number;
   maxBudget?: number;
   skills?: string[];
+  search?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  page?: number;
+  limit?: number;
 }
 
 interface CreateProjectDto {
