@@ -60,7 +60,16 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   };
 
   const getUnreadCount = (conversation: Conversation) => {
-    return conversation.unreadCount || 0;
+    // Handle case where unreadCount might be an object/Map from backend
+    if (typeof conversation.unreadCount === 'number') {
+      return conversation.unreadCount;
+    }
+    // If it's an object (Map), get the count for current user
+    if (conversation.unreadCount && typeof conversation.unreadCount === 'object' && currentUser?._id) {
+      const unreadMap = conversation.unreadCount as any;
+      return unreadMap[currentUser._id] || 0;
+    }
+    return 0;
   };
 
   if (isLoading) {
@@ -75,9 +84,9 @@ export const ConversationList: React.FC<ConversationListProps> = ({
     return (
       <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
         <EmptyState
-          icon={ChatBubbleOutlineIcon}
+          icon={<ChatBubbleOutlineIcon sx={{ fontSize: 64 }} />}
           title="No Conversations"
-          message="Start a conversation by messaging a freelancer or client from their profile"
+          description="Start a conversation by messaging a freelancer or client from their profile"
         />
       </Box>
     );
@@ -134,18 +143,20 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                       </Typography>
                     }
                     secondary={
-                      <Box>
+                      <Box component="span" sx={{ display: 'block' }}>
                         <Typography
+                          component="span"
                           variant="body2"
                           color="text.secondary"
                           noWrap
                           sx={{
+                            display: 'block',
                             fontWeight: unreadCount > 0 ? 500 : 400,
                           }}
                         >
                           {conversation.lastMessage?.content || 'No messages yet'}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography component="span" variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                           {conversation.lastMessage
                             ? formatDistanceToNow(new Date(conversation.lastMessage.createdAt), {
                                 addSuffix: true,

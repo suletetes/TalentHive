@@ -26,7 +26,7 @@ export const MessageButton: React.FC<MessageButtonProps> = ({
       return messagesService.createConversation(userId);
     },
     onSuccess: (response) => {
-      navigate('/messages');
+      navigate('/dashboard/messages');
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to start conversation');

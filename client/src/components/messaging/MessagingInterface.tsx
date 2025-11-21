@@ -71,13 +71,11 @@ export const MessagingInterface: React.FC = () => {
           ) : (
             <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <EmptyState
-                icon={ChatBubbleOutlineIcon}
+                icon={<ChatBubbleOutlineIcon sx={{ fontSize: 64 }} />}
                 title="No Conversation Selected"
-                message="Select a conversation from the menu to start messaging"
-                action={{
-                  label: 'Open Conversations',
-                  onClick: () => setMobileDrawerOpen(true),
-                }}
+                description="Select a conversation from the menu to start messaging"
+                actionLabel="Open Conversations"
+                onAction={() => setMobileDrawerOpen(true)}
               />
             </Box>
           )}
@@ -99,9 +97,9 @@ export const MessagingInterface: React.FC = () => {
             ) : (
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <EmptyState
-                  icon={ChatBubbleOutlineIcon}
+                  icon={<ChatBubbleOutlineIcon sx={{ fontSize: 64 }} />}
                   title="No Conversation Selected"
-                  message="Select a conversation from the list to start messaging"
+                  description="Select a conversation from the list to start messaging"
                 />
               </Box>
             )}
