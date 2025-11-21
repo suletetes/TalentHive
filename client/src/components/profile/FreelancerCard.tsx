@@ -22,6 +22,7 @@ interface FreelancerCardProps {
       lastName: string;
       avatar?: string;
       location?: string;
+      bio?: string;
     };
     freelancerProfile: {
       title: string;
@@ -151,6 +152,24 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
             size="small"
           />
         </Box>
+
+        {/* Description */}
+        {freelancer.profile.bio && (
+          <Box mb={2}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
+              {freelancer.profile.bio}
+            </Typography>
+          </Box>
+        )}
 
         {/* Skills */}
         <Box mb={2}>

@@ -83,12 +83,23 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const toast = useToast();
 
-  const submitMutation = useCreateProposal({
-    onSuccess: () => {
-      toast.success('Proposal submitted successfully!');
+  const submitMutation = useCreateProposal();
+
+  // Handle success
+  React.useEffect(() => {
+    if (submitMutation.isSuccess) {
+      formik.resetForm();
+      setMilestones([]);
+      setAttachments([]);
+      setSubmitError(null);
       onSuccess?.();
-    },
-    onError: (error) => {
+    }
+  }, [submitMutation.isSuccess]);
+
+  // Handle error
+  React.useEffect(() => {
+    if (submitMutation.isError) {
+      const error = submitMutation.error as any;
       const apiError = ErrorHandler.handle(error);
       setSubmitError(apiError.message);
       
@@ -97,10 +108,8 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
       Object.entries(fieldErrors).forEach(([field, message]) => {
         formik.setFieldError(field, message);
       });
-      
-      ErrorHandler.showToast(apiError);
-    },
-  });
+    }
+  }, [submitMutation.isError, submitMutation.error]);
 
   const formik = useFormik({
     initialValues: {
@@ -116,13 +125,14 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
       setSubmitError(null);
       
       const data = {
-        projectId: project._id,
-        ...values,
+        coverLetter: values.coverLetter,
+        bidAmount: values.bidAmount,
+        timeline: values.timeline,
         milestones: milestones.length > 0 ? milestones : undefined,
         attachments: attachments.length > 0 ? attachments : undefined,
       };
       
-      submitMutation.mutate(data);
+      submitMutation.mutate({ projectId: project._id, data });
     },
   });
 
