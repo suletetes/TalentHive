@@ -1,122 +1,97 @@
 import React from 'react';
-import { Box, Button, Typography, Paper } from '@mui/material';
-import {
-  ErrorOutline as ErrorIcon,
-  Refresh as RefreshIcon,
-  WifiOff as WifiOffIcon,
-} from '@mui/icons-material';
-import { ErrorHandler } from '@/utils/errorHandler';
+import { Box, Typography, Button, Paper, Alert } from '@mui/material';
+import { Error, Refresh, WifiOff, BugReport } from '@mui/icons-material';
 
 interface ErrorStateProps {
-  error: unknown;
-  onRetry?: () => void;
   title?: string;
+  message?: string;
+  onRetry?: () => void;
+  retryLabel?: string;
+  type?: 'network' | 'server' | 'notFound' | 'generic';
   showDetails?: boolean;
+  details?: string;
 }
 
+const errorConfig = {
+  network: {
+    icon: <WifiOff sx={{ fontSize: 64 }} />,
+    defaultTitle: 'Network Error',
+    defaultMessage: 'Unable to connect to the server. Please check your internet connection and try again.',
+  },
+  server: {
+    icon: <BugReport sx={{ fontSize: 64 }} />,
+    defaultTitle: 'Server Error',
+    defaultMessage: 'Something went wrong on our end. Our team has been notified and is working on a fix.',
+  },
+  notFound: {
+    icon: <Error sx={{ fontSize: 64 }} />,
+    defaultTitle: 'Not Found',
+    defaultMessage: 'The resource you are looking for could not be found.',
+  },
+  generic: {
+    icon: <Error sx={{ fontSize: 64 }} />,
+    defaultTitle: 'Something Went Wrong',
+    defaultMessage: 'An unexpected error occurred. Please try again.',
+  },
+};
+
 export const ErrorState: React.FC<ErrorStateProps> = ({
-  error,
-  onRetry,
   title,
+  message,
+  onRetry,
+  retryLabel = 'Try Again',
+  type = 'generic',
   showDetails = false,
+  details,
 }) => {
-  const apiError = ErrorHandler.handle(error);
-  const isNetworkError = ErrorHandler.isNetworkError(error);
+  const config = errorConfig[type];
 
   return (
     <Paper
       elevation={0}
       sx={{
-        p: 4,
+        p: 6,
         textAlign: 'center',
-        bgcolor: 'grey.50',
+        bgcolor: 'error.lighter',
+        border: 1,
+        borderColor: 'error.light',
         borderRadius: 2,
       }}
     >
       <Box
         sx={{
+          color: 'error.main',
+          mb: 2,
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 2,
+          justifyContent: 'center',
         }}
       >
-        {isNetworkError ? (
-          <WifiOffIcon sx={{ fontSize: 60, color: 'error.main' }} />
-        ) : (
-          <ErrorIcon sx={{ fontSize: 60, color: 'error.main' }} />
-        )}
-
-        <Typography variant="h6" component="h2">
-          {title || 'Something went wrong'}
-        </Typography>
-
-        <Typography variant="body2" color="text.secondary" maxWidth={400}>
-          {apiError.message}
-        </Typography>
-
-        {showDetails && import.meta.env.DEV && (
-          <Box
-            sx={{
-              mt: 2,
-              p: 2,
-              bgcolor: 'white',
-              borderRadius: 1,
-              textAlign: 'left',
-              width: '100%',
-              maxWidth: 600,
-              maxHeight: 150,
-              overflow: 'auto',
-            }}
-          >
-            <Typography variant="caption" component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
-              {JSON.stringify(apiError, null, 2)}
-            </Typography>
-          </Box>
-        )}
-
-        {onRetry && (
-          <Button
-            variant="contained"
-            startIcon={<RefreshIcon />}
-            onClick={onRetry}
-            sx={{ mt: 2 }}
-          >
-            Try Again
-          </Button>
-        )}
+        {config.icon}
       </Box>
-    </Paper>
-  );
-};
-
-// Inline error state for smaller components
-export const InlineErrorState: React.FC<ErrorStateProps> = ({ error, onRetry }) => {
-  const apiError = ErrorHandler.handle(error);
-
-  return (
-    <Box
-      sx={{
-        p: 2,
-        bgcolor: 'error.light',
-        borderRadius: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 2,
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <ErrorIcon sx={{ color: 'error.main' }} />
-        <Typography variant="body2" color="error.dark">
-          {apiError.message}
-        </Typography>
-      </Box>
+      <Typography variant="h6" gutterBottom fontWeight={600} color="error.main">
+        {title || config.defaultTitle}
+      </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
+        {message || config.defaultMessage}
+      </Typography>
       {onRetry && (
-        <Button size="small" variant="outlined" color="error" onClick={onRetry}>
-          Retry
+        <Button
+          variant="contained"
+          color="error"
+          startIcon={<Refresh />}
+          onClick={onRetry}
+          sx={{ mt: 1 }}
+        >
+          {retryLabel}
         </Button>
       )}
-    </Box>
+      {showDetails && details && (
+        <Alert severity="error" sx={{ mt: 3, textAlign: 'left' }}>
+          <Typography variant="caption" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            {details}
+          </Typography>
+        </Alert>
+      )}
+    </Paper>
   );
 };
