@@ -50,7 +50,14 @@ export const authorize = (...roles: string[]) => {
       return next(new AppError('Authentication required', 401));
     }
 
-    if (!roles.includes(req.user.role)) {
+    // Check if user has primary role or any of the additional roles
+    const userRoles = req.user.roles && req.user.roles.length > 0 
+      ? req.user.roles 
+      : [req.user.role];
+    
+    const hasPermission = userRoles.some((userRole: string) => roles.includes(userRole));
+
+    if (!hasPermission) {
       return next(new AppError('Insufficient permissions', 403));
     }
 
