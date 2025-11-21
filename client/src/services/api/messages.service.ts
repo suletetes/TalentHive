@@ -41,7 +41,7 @@ export class MessagesService {
   private basePath = '/messages';
 
   async sendMessage(conversationId: string, data: SendMessageDto): Promise<{ data: Message }> {
-    return apiCore.post<{ data: Message }>(`${this.basePath}/${conversationId}`, data);
+    return apiCore.post<{ data: Message }>(`${this.basePath}/conversations/${conversationId}/messages`, data);
   }
 
   async getMessages(
@@ -57,7 +57,7 @@ export class MessagesService {
       });
     }
     return apiCore.get<{ data: Message[]; pagination: any }>(
-      `${this.basePath}/${conversationId}?${queryParams.toString()}`
+      `${this.basePath}/conversations/${conversationId}/messages?${queryParams.toString()}`
     );
   }
 
@@ -66,8 +66,9 @@ export class MessagesService {
   }
 
   async markAsRead(conversationId: string): Promise<{ message: string }> {
-    return apiCore.patch<{ message: string }>(
-      `${this.basePath}/${conversationId}/read`
+    return apiCore.post<{ message: string }>(
+      `${this.basePath}/conversations/${conversationId}/read`,
+      {}
     );
   }
 

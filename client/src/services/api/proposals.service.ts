@@ -67,7 +67,8 @@ export class ProposalsService {
   }
 
   async getMyProposals(): Promise<{ data: Proposal[] }> {
-    return apiCore.get<{ data: Proposal[] }>(`${this.basePath}/my`);
+    const response = await apiCore.get<{ status: string; data: { proposals: Proposal[]; pagination: any } }>(`${this.basePath}/my`);
+    return { data: response.data.proposals };
   }
 
   async getProposalById(id: string): Promise<{ data: Proposal }> {

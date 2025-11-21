@@ -68,7 +68,8 @@ export class ContractsService {
   }
 
   async getMyContracts(): Promise<{ data: Contract[] }> {
-    return apiCore.get<{ data: Contract[] }>(`${this.basePath}/my`);
+    const response = await apiCore.get<{ status: string; data: { contracts: Contract[]; pagination: any } }>(`${this.basePath}/my`);
+    return { data: response.data.contracts };
   }
 
   async signContract(id: string): Promise<{ data: Contract }> {
