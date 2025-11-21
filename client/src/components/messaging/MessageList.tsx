@@ -23,20 +23,37 @@ interface MessageListProps {
 }
 
 export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }) => {
+  console.log('📨 MessageList rendering for conversation:', conversation._id);
+  
   const currentUser = useSelector((state: RootState) => state.auth.user);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['messages', conversation._id, page],
     queryFn: async () => {
+      console.log('🔍 Fetching messages for conversation:', conversation._id);
       const response = await messagesService.getMessages(conversation._id, { page, limit: 50 });
+      console.log('📬 Messages fetched:', response);
       return response;
     },
   });
 
-  const otherParticipant = conversation.participants.find((p) => p._id !== currentUser?._id);
+  console.log('👤 Current user:', currentUser);
+  console.log('👥 Conversation participants:', conversation.participants);
+  
+  const currentUserId = currentUser?.id || currentUser?._id;
+  const otherParticipant = conversation.participants.find((p) => p._id !== currentUserId);
+  console.log('🎯 Other participant:', otherParticipant);
+  
+  if (error) {
+    console.error('❌ Error loading messages:', error);
+  }
+  
+  if (isLoading) {
+    console.log('⏳ Loading messages...');
+  }
 
   useEffect(() => {
     // Mark messages as read when viewing conversation
@@ -130,7 +147,7 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {/* Header */}
       <AppBar position="static" color="default" elevation={1}>
         <Toolbar>
