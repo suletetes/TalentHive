@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -10,12 +10,16 @@ import {
   Menu,
   MenuItem,
   Avatar,
+  Badge,
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { AccountCircle, Notifications } from '@mui/icons-material';
+import { AccountCircle, Notifications, Message } from '@mui/icons-material';
 import { RootState } from '@/store';
 import { useAuth } from '@/hooks/useAuth';
+import { useUnreadCount } from '@/hooks/api/useMessages';
+import { socketService } from '@/services/socket';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 interface NavigationItem {
   label: string;
@@ -54,6 +58,33 @@ export const Header: React.FC = () => {
   const { logout } = useAuth();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const { data: unreadCount, refetch: refetchUnreadCount } = useUnreadCount(isAuthenticated);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Connect socket when authenticated
+      if (!socketService.isConnected()) {
+        socketService.connect();
+      }
+
+      // Listen for new messages to update unread count
+      const handleNewMessage = () => {
+        refetchUnreadCount();
+      };
+
+      const handleMessagesRead = () => {
+        refetchUnreadCount();
+      };
+
+      socketService.on('new_message', handleNewMessage);
+      socketService.on('messages_read', handleMessagesRead);
+
+      return () => {
+        socketService.off('new_message', handleNewMessage);
+        socketService.off('messages_read', handleMessagesRead);
+      };
+    }
+  }, [isAuthenticated, refetchUnreadCount]);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -118,8 +149,18 @@ export const Header: React.FC = () => {
 
           {/* User Actions */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ThemeToggle />
             {isAuthenticated ? (
               <>
+                <IconButton 
+                  color="inherit"
+                  component={Link}
+                  to="/dashboard/messages"
+                >
+                  <Badge badgeContent={unreadCount || 0} color="error">
+                    <Message />
+                  </Badge>
+                </IconButton>
                 <IconButton color="inherit">
                   <Notifications />
                 </IconButton>
