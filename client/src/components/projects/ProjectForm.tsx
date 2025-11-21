@@ -113,6 +113,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       visibility: initialData?.visibility || 'public',
       isUrgent: initialData?.isUrgent || false,
       applicationDeadline: initialData?.applicationDeadline || '',
+      status: initialData?.status || 'open',
     },
     validationSchema: projectSchema,
     onSubmit: (values) => {
@@ -125,6 +126,17 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       }
     },
   });
+
+  const handleSaveAsDraft = () => {
+    setSubmitError(null);
+    const draftValues = { ...formik.values, status: 'draft' };
+    
+    if (isEditMode) {
+      updateMutation.mutate({ id: initialData._id, data: draftValues });
+    } else {
+      createMutation.mutate(draftValues);
+    }
+  };
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
@@ -152,6 +164,10 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     }
   };
 
+  const handleEditStep = (step: number) => {
+    setActiveStep(step);
+  };
+
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
@@ -161,7 +177,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       case 2:
         return <RequirementsStep formik={formik} />;
       case 3:
-        return <ReviewStep formik={formik} />;
+        return <ReviewStep formik={formik} onEditStep={handleEditStep} />;
       default:
         return null;
     }
@@ -201,16 +217,25 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             {isSubmitting && <CircularProgress size={24} />}
             
             {activeStep === steps.length - 1 ? (
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={isSubmitting || !formik.isValid}
-              >
-                {isSubmitting 
-                  ? (isEditMode ? 'Updating...' : 'Creating...') 
-                  : (isEditMode ? 'Update Project' : 'Create Project')
-                }
-              </Button>
+              <>
+                <Button
+                  onClick={handleSaveAsDraft}
+                  variant="outlined"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Saving...' : 'Save as Draft'}
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={isSubmitting || !formik.isValid}
+                >
+                  {isSubmitting 
+                    ? (isEditMode ? 'Updating...' : 'Publishing...') 
+                    : (isEditMode ? 'Update Project' : 'Publish Project')
+                  }
+                </Button>
+              </>
             ) : (
               <Button
                 onClick={handleNext}

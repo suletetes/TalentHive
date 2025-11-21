@@ -57,6 +57,8 @@ interface ProjectCardProps {
     viewCount: number;
     isUrgent: boolean;
     isFeatured: boolean;
+    status?: string;
+    isDraft?: boolean;
     createdAt: string;
     applicationDeadline?: string;
   };
@@ -107,8 +109,29 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         },
       }}
     >
+      {/* Draft Badge */}
+      {(project.isDraft || project.status === 'draft') && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            bgcolor: 'warning.main',
+            color: 'white',
+            px: 1,
+            py: 0.5,
+            borderRadius: 1,
+            fontSize: '0.75rem',
+            fontWeight: 'bold',
+            zIndex: 1,
+          }}
+        >
+          DRAFT
+        </Box>
+      )}
+
       {/* Featured Badge */}
-      {project.isFeatured && (
+      {project.isFeatured && !(project.isDraft || project.status === 'draft') && (
         <Box
           sx={{
             position: 'absolute',
