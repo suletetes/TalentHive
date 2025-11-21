@@ -5,38 +5,12 @@ import {
   Autocomplete,
   Chip,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  FormHelperText,
+  CircularProgress,
 } from '@mui/material';
-
-const PROJECT_CATEGORIES = [
-  'Web Development',
-  'Mobile Development',
-  'Design & Creative',
-  'Writing & Translation',
-  'Digital Marketing',
-  'Video & Animation',
-  'Music & Audio',
-  'Programming & Tech',
-  'Business',
-  'Data Science',
-  'AI & Machine Learning',
-  'DevOps & Cloud',
-];
-
-const COMMON_SKILLS = [
-  'React', 'Vue.js', 'Angular', 'Node.js', 'Python', 'JavaScript', 'TypeScript',
-  'PHP', 'Laravel', 'Django', 'Ruby on Rails', 'Java', 'C#', '.NET',
-  'iOS Development', 'Android Development', 'React Native', 'Flutter',
-  'UI/UX Design', 'Graphic Design', 'Adobe Photoshop', 'Adobe Illustrator',
-  'Figma', 'Sketch', 'WordPress', 'Shopify', 'Magento', 'WooCommerce',
-  'SEO', 'Google Ads', 'Facebook Ads', 'Content Marketing', 'Social Media',
-  'Video Editing', 'After Effects', 'Premiere Pro', 'Animation',
-  'Data Analysis', 'Machine Learning', 'TensorFlow', 'PyTorch',
-  'AWS', 'Google Cloud', 'Azure', 'Docker', 'Kubernetes',
-];
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiService } from '@/services/api';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface BasicInfoStepProps {
   formik: any;
@@ -44,10 +18,67 @@ interface BasicInfoStepProps {
 
 export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
   const [skillInput, setSkillInput] = useState('');
+  const [categoryInput, setCategoryInput] = useState('');
+  const toast = useToast();
+  const queryClient = useQueryClient();
 
-  const handleSkillAdd = (skill: string) => {
-    if (skill && !formik.values.skills.includes(skill)) {
-      formik.setFieldValue('skills', [...formik.values.skills, skill]);
+  // Fetch categories
+  const { data: categoriesData, isLoading: loadingCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await apiService.get('/categories');
+      return response.data.data;
+    },
+  });
+
+  // Fetch skills
+  const { data: skillsData, isLoading: loadingSkills } = useQuery({
+    queryKey: ['skills'],
+    queryFn: async () => {
+      const response = await apiService.get('/skills');
+      return response.data.data;
+    },
+  });
+
+  // Create category mutation
+  const createCategoryMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const response = await apiService.post('/categories', { name });
+      return response.data.data;
+    },
+    onSuccess: (newCategory) => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      formik.setFieldValue('category', newCategory._id);
+      toast.success('Category created successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to create category');
+    },
+  });
+
+  // Create skill mutation
+  const createSkillMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const response = await apiService.post('/skills', { name });
+      return response.data.data;
+    },
+    onSuccess: (newSkill) => {
+      queryClient.invalidateQueries({ queryKey: ['skills'] });
+      handleSkillAdd(newSkill._id);
+      toast.success('Skill created successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to create skill');
+    },
+  });
+
+  const categories = categoriesData || [];
+  const skills = skillsData || [];
+
+  const handleSkillAdd = (skillId: string) => {
+    if (skillId && !formik.values.skills.includes(skillId)) {
+      formik.setFieldValue('skills', [...formik.values.skills, skillId]);
+      setSkillInput(''); // Clear input after adding
     }
   };
 
@@ -56,6 +87,49 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
       'skills',
       formik.values.skills.filter((skill: string) => skill !== skillToRemove)
     );
+  };
+
+  const handleCategoryChange = (event: any, newValue: any) => {
+    if (typeof newValue === 'string') {
+      // User typed a new category
+      if (newValue.trim()) {
+        createCategoryMutation.mutate(newValue.trim());
+      }
+    } else if (newValue && newValue.inputValue) {
+      // User selected "Add new category"
+      createCategoryMutation.mutate(newValue.inputValue);
+    } else if (newValue) {
+      // User selected an existing category
+      formik.setFieldValue('category', newValue._id);
+    } else {
+      // User cleared the selection
+      formik.setFieldValue('category', '');
+    }
+  };
+
+  const handleSkillChange = (event: any, newValue: any) => {
+    if (typeof newValue === 'string') {
+      // User typed a new skill
+      if (newValue.trim()) {
+        createSkillMutation.mutate(newValue.trim());
+      }
+    } else if (newValue && newValue.inputValue) {
+      // User selected "Add new skill"
+      createSkillMutation.mutate(newValue.inputValue);
+    } else if (newValue) {
+      // User selected an existing skill
+      handleSkillAdd(newValue._id);
+    }
+    setSkillInput(''); // Clear input after selection
+  };
+
+  const getSelectedCategory = () => {
+    return categories.find((cat: any) => cat._id === formik.values.category) || null;
+  };
+
+  const getSkillName = (skillId: string) => {
+    const skill = skills.find((s: any) => s._id === skillId);
+    return skill ? skill.name : skillId;
   };
 
   return (
@@ -92,23 +166,66 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
         placeholder="Describe your project in detail. Include what you need, your goals, and any specific requirements..."
       />
 
-      <FormControl fullWidth margin="normal">
-        <InputLabel>Category</InputLabel>
-        <Select
-          name="category"
-          value={formik.values.category}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          error={formik.touched.category && Boolean(formik.errors.category)}
-          label="Category"
-        >
-          {PROJECT_CATEGORIES.map((category) => (
-            <MenuItem key={category} value={category}>
-              {category}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <Box sx={{ mt: 2 }}>
+        <Autocomplete
+          freeSolo
+          selectOnFocus
+          clearOnBlur
+          handleHomeEndKeys
+          options={categories}
+          getOptionLabel={(option: any) => {
+            if (typeof option === 'string') {
+              return option;
+            }
+            if (option.inputValue) {
+              return option.inputValue;
+            }
+            return option.name || '';
+          }}
+          value={getSelectedCategory()}
+          onChange={handleCategoryChange}
+          onInputChange={(event, newInputValue) => {
+            setCategoryInput(newInputValue);
+          }}
+          filterOptions={(options, params) => {
+            const filtered = options.filter((option: any) =>
+              option.name.toLowerCase().includes(params.inputValue.toLowerCase())
+            );
+
+            const { inputValue } = params;
+            const isExisting = options.some((option: any) => inputValue === option.name);
+            if (inputValue !== '' && !isExisting) {
+              filtered.push({
+                inputValue,
+                name: `Add "${inputValue}"`,
+              });
+            }
+
+            return filtered;
+          }}
+          loading={loadingCategories || createCategoryMutation.isPending}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Category"
+              placeholder="Select or create a category"
+              error={formik.touched.category && Boolean(formik.errors.category)}
+              helperText={formik.touched.category && formik.errors.category}
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {(loadingCategories || createCategoryMutation.isPending) && (
+                      <CircularProgress color="inherit" size={20} />
+                    )}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+        />
+      </Box>
 
       <Box sx={{ mt: 2 }}>
         <Typography variant="subtitle2" gutterBottom>
@@ -116,47 +233,78 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
         </Typography>
         <Autocomplete
           freeSolo
-          options={COMMON_SKILLS}
-          value={skillInput}
-          onInputChange={(event, newValue) => setSkillInput(newValue)}
-          onChange={(event, newValue) => {
-            if (newValue) {
-              handleSkillAdd(newValue);
-              setSkillInput('');
+          selectOnFocus
+          clearOnBlur
+          handleHomeEndKeys
+          options={skills}
+          getOptionLabel={(option: any) => {
+            if (typeof option === 'string') {
+              return option;
             }
-          }}
-          onKeyPress={(event) => {
-            if (event.key === 'Enter' && skillInput.trim()) {
-              event.preventDefault();
-              handleSkillAdd(skillInput.trim());
-              setSkillInput('');
+            if (option.inputValue) {
+              return option.inputValue;
             }
+            return option.name || '';
           }}
+          value={null}
+          inputValue={skillInput}
+          onInputChange={(event, newInputValue) => {
+            setSkillInput(newInputValue);
+          }}
+          onChange={handleSkillChange}
+          filterOptions={(options, params) => {
+            const filtered = options.filter((option: any) =>
+              option.name.toLowerCase().includes(params.inputValue.toLowerCase())
+            );
+
+            const { inputValue } = params;
+            const isExisting = options.some((option: any) => inputValue === option.name);
+            if (inputValue !== '' && !isExisting) {
+              filtered.push({
+                inputValue,
+                name: `Add "${inputValue}"`,
+              });
+            }
+
+            return filtered;
+          }}
+          loading={loadingSkills || createSkillMutation.isPending}
           renderInput={(params) => (
             <TextField
               {...params}
-              placeholder="Type and press Enter to add skills"
+              placeholder="Type to search or create skills"
               variant="outlined"
               size="small"
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {(loadingSkills || createSkillMutation.isPending) && (
+                      <CircularProgress color="inherit" size={20} />
+                    )}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
             />
           )}
         />
-        
+
         <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-          {formik.values.skills.map((skill: string) => (
+          {formik.values.skills.map((skillId: string) => (
             <Chip
-              key={skill}
-              label={skill}
-              onDelete={() => handleSkillRemove(skill)}
+              key={skillId}
+              label={getSkillName(skillId)}
+              onDelete={() => handleSkillRemove(skillId)}
               size="small"
             />
           ))}
         </Box>
-        
+
         {formik.touched.skills && formik.errors.skills && (
-          <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+          <FormHelperText error sx={{ mt: 1 }}>
             {formik.errors.skills}
-          </Typography>
+          </FormHelperText>
         )}
       </Box>
     </Box>
