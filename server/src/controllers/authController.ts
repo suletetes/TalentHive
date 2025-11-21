@@ -3,7 +3,7 @@ import { body, validationResult } from 'express-validator';
 import crypto from 'crypto';
 import { User } from '@/models/User';
 import { generateTokens, verifyToken } from '@/utils/jwt';
-import { sendVerificationEmail } from '@/utils/email';
+import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from '@/utils/email.resend';
 import { AppError, catchAsync } from '@/middleware/errorHandler';
 import { deleteCache } from '@/config/redis';
 
