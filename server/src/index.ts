@@ -1,3 +1,7 @@
+// Load environment variables FIRST before any other imports
+import dotenv from 'dotenv';
+dotenv.config();
+
 import 'module-alias/register';
 import express from 'express';
 import cors from 'cors';
@@ -6,7 +10,6 @@ import compression from 'compression';
 import morgan from 'morgan';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import dotenv from 'dotenv';
 
 import { connectDB } from '@/config/database';
 import { connectRedis } from '@/config/redis';
@@ -15,9 +18,6 @@ import { errorHandler } from '@/middleware/errorHandler';
 import { rateLimiter } from '@/middleware/rateLimiter';
 import { socketService } from '@/services/socket.service';
 import routes from '@/routes';
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const server = createServer(app);

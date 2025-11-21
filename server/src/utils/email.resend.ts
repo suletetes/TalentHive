@@ -1,7 +1,14 @@
 import { Resend } from 'resend';
 import { logger } from './logger';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend only if API key is available
+let resend: Resend | null = null;
+
+if (process.env.RESEND_API_KEY) {
+  resend = new Resend(process.env.RESEND_API_KEY);
+} else {
+  logger.warn('RESEND_API_KEY not configured. Email functionality will be disabled.');
+}
 
 interface EmailOptions {
   to: string;
@@ -15,8 +22,8 @@ interface EmailOptions {
  */
 export const sendEmail = async (options: EmailOptions): Promise<void> => {
   try {
-    if (!process.env.RESEND_API_KEY) {
-      logger.warn('Resend API key not configured. Email not sent.');
+    if (!resend) {
+      logger.warn('Resend not initialized. Email not sent. Please set RESEND_API_KEY in .env file.');
       return;
     }
 
