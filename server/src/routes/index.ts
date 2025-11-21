@@ -54,4 +54,20 @@ import skillRoutes from './skills';
 router.use('/categories', categoryRoutes);
 router.use('/skills', skillRoutes);
 
+// Webhook routes
+import webhookRoutes from './webhook.routes';
+router.use('/webhooks', webhookRoutes);
+
+// Analytics routes (admin only)
+import analyticsRoutes from './analytics.routes';
+router.use('/analytics', analyticsRoutes);
+
+// Hire Now routes
+import hireNowRoutes from './hireNow.routes';
+router.use('/hire-now', hireNowRoutes);
+
+// Featured freelancers (public route)
+import { getFeaturedFreelancers } from '@/controllers/adminController';
+router.get('/featured-freelancers', getFeaturedFreelancers);
+
 export default router;

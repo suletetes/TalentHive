@@ -1,5 +1,18 @@
 import { Router } from 'express';
-import { getDashboardStats, getUsers, updateUserStatus, updateUserRole, getReports } from '@/controllers/adminController';
+import {
+  getDashboardStats,
+  getUsers,
+  updateUserStatus,
+  updateUserRole,
+  getReports,
+  assignRole,
+  removeRole,
+  featureFreelancer,
+  unfeatureFreelancer,
+  getFeaturedFreelancers,
+  reorderFeaturedFreelancers,
+  getAnalytics,
+} from '@/controllers/adminController';
 import { authenticate, authorize } from '@/middleware/auth';
 
 const router = Router();
@@ -12,5 +25,18 @@ router.get('/users', getUsers);
 router.put('/users/:userId/status', updateUserStatus);
 router.put('/users/:userId/role', updateUserRole);
 router.get('/reports', getReports);
+
+// Role management
+router.post('/users/:userId/roles', assignRole);
+router.delete('/users/:userId/roles', removeRole);
+
+// Featured freelancers
+router.post('/featured-freelancers/:userId/feature', featureFreelancer);
+router.delete('/featured-freelancers/:userId/unfeature', unfeatureFreelancer);
+router.get('/featured-freelancers', getFeaturedFreelancers);
+router.put('/featured-freelancers/reorder', reorderFeaturedFreelancers);
+
+// Analytics
+router.get('/analytics', getAnalytics);
 
 export default router;

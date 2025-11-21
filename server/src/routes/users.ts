@@ -11,6 +11,8 @@ import {
   addPortfolioItem,
   updatePortfolioItem,
   deletePortfolioItem,
+  changePassword,
+  changePasswordValidation,
 } from '@/controllers/userController';
 import {
   uploadAvatar,
@@ -26,6 +28,7 @@ const router = Router();
 // Profile management (requires authentication)
 router.get('/profile', authenticate, getProfile);
 router.put('/profile', authenticate, updateProfileValidation, updateProfile);
+router.put('/change-password', authenticate, changePasswordValidation, changePassword);
 
 // Public freelancer discovery
 router.get('/freelancers', getFreelancers);
