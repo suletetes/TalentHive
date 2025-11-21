@@ -1,26 +1,28 @@
-import { Container, Typography, Box, Paper, List, ListItem, ListItemText, Avatar, ListItemAvatar } from '@mui/material';
-import { useAuth } from '@/hooks/useAuth';
+import React, { useEffect } from 'react';
+import { Container, Box, Typography, Paper } from '@mui/material';
+import { MessagingInterface } from '@/components/messaging/MessagingInterface';
+import { socketService } from '@/services/socket';
 
-export const MessagesPage = () => {
-  const { user } = useAuth();
+export const MessagesPage: React.FC = () => {
+  useEffect(() => {
+    // Ensure socket is connected when viewing messages
+    if (!socketService.isConnected()) {
+      socketService.connect();
+    }
+  }, []);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Messages
-      </Typography>
-      <Typography variant="body1" color="text.secondary" paragraph>
-        Communicate with clients and freelancers
-      </Typography>
-      <Paper sx={{ mt: 3 }}>
-        <Box sx={{ p: 3, textAlign: 'center' }}>
-          <Typography variant="h6" color="text.secondary">
-            No conversations yet
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Start a conversation by contacting a freelancer or client
-          </Typography>
-        </Box>
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          Messages
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Communicate with clients and freelancers
+        </Typography>
+      </Box>
+      <Paper elevation={2} sx={{ height: 'calc(100vh - 200px)', overflow: 'hidden' }}>
+        <MessagingInterface />
       </Paper>
     </Container>
   );

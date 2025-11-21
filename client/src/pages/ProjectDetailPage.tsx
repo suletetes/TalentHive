@@ -37,6 +37,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { useProject } from '@/hooks/api/useProjects';
 import { proposalsService } from '@/services/api/proposals.service';
+import { MessageButton } from '@/components/messaging/MessageButton';
 import { format, isValid, parseISO } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -302,12 +303,19 @@ export const ProjectDetailPage = () => {
                 >
                   {project.client?.profile?.firstName?.[0]}
                 </Avatar>
-                <Box>
+                <Box flex={1}>
                   <Typography variant="subtitle1" fontWeight="medium">
                     {project.client?.profile?.firstName} {project.client?.profile?.lastName}
                   </Typography>
                 </Box>
               </Box>
+              {user?.role === 'freelancer' && project.client?._id && (
+                <MessageButton 
+                  userId={project.client._id} 
+                  fullWidth 
+                  size="small"
+                />
+              )}
             </Paper>
           )}
 

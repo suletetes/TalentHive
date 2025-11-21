@@ -12,46 +12,111 @@ import {
   InputLabel,
   Chip,
   Stack,
-  Card,
-  CardContent,
-  CardActions,
+  Pagination,
+  Alert,
   Button,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import { Refresh } from '@mui/icons-material';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { ProjectCard } from '@/components/projects/ProjectCard';
 import { useProjects } from '@/hooks/api/useProjects';
-import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { apiService } from '@/services/api';
+import { ErrorHandler } from '@/utils/errorHandler';
 
 export const BrowseProjectsPage = () => {
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState('recent');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [page, setPage] = useState(1);
+  const limit = 12;
 
-  const { data: projectsResponse, isLoading } = useProjects();
+  // Fetch categories from database
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await apiService.get('/categories');
+      return response.data.data;
+    },
+  });
 
-  const categories = ['Web Development', 'Mobile Apps', 'Design', 'Marketing', 'Writing', 'Data'];
+  const categories = categoriesData || [];
+
+  // Fetch projects with filters
+  const {
+    data: projectsResponse,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useProjects({
+    search: searchTerm,
+    category: selectedCategory,
+    status: 'open', // Only show open projects (not drafts)
+    sortBy,
+    sortOrder,
+    page,
+    limit,
+  });
+
+  const handleRetry = () => {
+    refetch();
+  };
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCategoryToggle = (categoryId: string) => {
+    setSelectedCategory(selectedCategory === categoryId ? '' : categoryId);
+    setPage(1); // Reset to first page when filter changes
+  };
+
+  const handleSortChange = (value: string) => {
+    const [field, order] = value.split('-');
+    setSortBy(field);
+    setSortOrder(order);
+    setPage(1);
+  };
 
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  // projectsResponse is PaginatedResponse<Project> with { data: Project[], pagination: {...} }
-  const projects = Array.isArray(projectsResponse?.data) ? projectsResponse.data : [];
-  const filteredProjects = projects.filter((project) => {
-    const matchesSearch =
-      searchTerm === '' ||
-      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchTerm.toLowerCase());
+  if (isError) {
+    const apiError = ErrorHandler.handle(error);
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Alert
+          severity="error"
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              startIcon={<Refresh />}
+              onClick={handleRetry}
+            >
+              Retry
+            </Button>
+          }
+        >
+          <Typography variant="subtitle2" gutterBottom>
+            Failed to load projects
+          </Typography>
+          <Typography variant="body2">{apiError.message}</Typography>
+        </Alert>
+      </Container>
+    );
+  }
 
-    const matchesCategory =
-      selectedCategories.length === 0 || selectedCategories.includes(project.category);
-
-    return matchesSearch && matchesCategory && project.status === 'open';
-  });
+  const projects = projectsResponse?.data || [];
+  const pagination = projectsResponse?.pagination;
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="xl" sx={{ py: 4 }}>
       <Typography variant="h3" gutterBottom>
         Browse Projects
       </Typography>
@@ -67,7 +132,10 @@ export const BrowseProjectsPage = () => {
               fullWidth
               placeholder="Search projects..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1);
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -80,88 +148,113 @@ export const BrowseProjectsPage = () => {
           <Grid item xs={12} md={3}>
             <FormControl fullWidth>
               <InputLabel>Sort By</InputLabel>
-              <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)} label="Sort By">
-                <MenuItem value="recent">Most Recent</MenuItem>
-                <MenuItem value="budget">Highest Budget</MenuItem>
-                <MenuItem value="proposals">Fewest Proposals</MenuItem>
+              <Select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e) => handleSortChange(e.target.value)}
+                label="Sort By"
+              >
+                <MenuItem value="createdAt-desc">Most Recent</MenuItem>
+                <MenuItem value="createdAt-asc">Oldest First</MenuItem>
+                <MenuItem value="budget.max-desc">Highest Budget</MenuItem>
+                <MenuItem value="budget.max-asc">Lowest Budget</MenuItem>
+                <MenuItem value="proposalCount-asc">Fewest Proposals</MenuItem>
+                <MenuItem value="proposalCount-desc">Most Proposals</MenuItem>
               </Select>
             </FormControl>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedCategory('');
+                setSortBy('createdAt');
+                setSortOrder('desc');
+                setPage(1);
+              }}
+              sx={{ height: '56px' }}
+            >
+              Clear Filters
+            </Button>
           </Grid>
         </Grid>
 
         {/* Category Filters */}
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Filter by Category:
-          </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            {categories.map((category) => (
-              <Chip
-                key={category}
-                label={category}
-                onClick={() => {
-                  setSelectedCategories((prev) =>
-                    prev.includes(category)
-                      ? prev.filter((c) => c !== category)
-                      : [...prev, category]
-                  );
-                }}
-                color={selectedCategories.includes(category) ? 'primary' : 'default'}
-                sx={{ mb: 1 }}
-              />
-            ))}
-          </Stack>
-        </Box>
+        {categories.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Filter by Category:
+            </Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {categories.map((category: any) => (
+                <Chip
+                  key={category._id}
+                  label={category.name}
+                  onClick={() => handleCategoryToggle(category._id)}
+                  color={selectedCategory === category._id ? 'primary' : 'default'}
+                  sx={{ mb: 1 }}
+                />
+              ))}
+            </Stack>
+          </Box>
+        )}
       </Box>
 
-      {/* Projects Grid */}
-      {!filteredProjects || filteredProjects.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography variant="h6" color="text.secondary">
-            No projects found
-          </Typography>
+      {/* Results Summary */}
+      {pagination && (
+        <Box sx={{ mb: 3 }}>
           <Typography variant="body2" color="text.secondary">
-            Try adjusting your search criteria
+            Showing {((pagination.page - 1) * pagination.limit) + 1} -{' '}
+            {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
+            {pagination.total} projects
           </Typography>
         </Box>
+      )}
+
+      {/* Projects Grid */}
+      {projects.length === 0 ? (
+        <Box sx={{ textAlign: 'center', py: 8, bgcolor: 'grey.50', borderRadius: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            No projects found
+          </Typography>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            Try adjusting your search criteria or check back later for new projects
+          </Typography>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setSearchTerm('');
+              setSelectedCategory('');
+              setPage(1);
+            }}
+          >
+            Clear Filters
+          </Button>
+        </Box>
       ) : (
-        <Grid container spacing={3}>
-          {filteredProjects.map((project) => (
-            <Grid item xs={12} key={project._id}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {project.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" paragraph>
-                    {project.description}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                    {project.skills?.map((skill) => (
-                      <Chip key={skill} label={skill} size="small" />
-                    ))}
-                  </Box>
-                  <Typography variant="body2">
-                    <strong>Budget:</strong> ${project.budget?.min} - ${project.budget?.max}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Timeline:</strong> {project.timeline?.duration}{' '}
-                    {project.timeline?.unit}
-                  </Typography>
-                </CardContent>
-                <CardActions>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    onClick={() => navigate(`/dashboard/projects/${project._id}`)}
-                  >
-                    View Details
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        <>
+          <Grid container spacing={3}>
+            {projects.map((project: any) => (
+              <Grid item xs={12} sm={6} lg={4} key={project._id}>
+                <ProjectCard project={project} showBookmark={true} />
+              </Grid>
+            ))}
+          </Grid>
+
+          {/* Pagination */}
+          {pagination && pagination.pages > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Pagination
+                count={pagination.pages}
+                page={pagination.page}
+                onChange={handlePageChange}
+                color="primary"
+                size="large"
+              />
+            </Box>
+          )}
+        </>
       )}
     </Container>
   );
