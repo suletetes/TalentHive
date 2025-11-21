@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { Conversation } from '@/models/Conversation';
 import { Message } from '@/models/Message';
 import { AppError } from '@/middleware/errorHandler';
-import { io } from '@/index';
+import { socketService } from '@/services/socket.service';
 
 /**
  * Get all conversations for the authenticated user
@@ -176,7 +176,7 @@ export const sendMessage = async (
     // Emit socket event for real-time delivery
     conversation.participants.forEach((participantId) => {
       if (participantId.toString() !== userId.toString()) {
-        io.to(`user_${participantId}`).emit('new_message', {
+        socketService.emitToUser(participantId.toString(), 'new_message', {
           conversationId,
           message,
         });
@@ -230,7 +230,7 @@ export const markAsRead = async (
     await conversation.save();
 
     // Emit socket event
-    io.to(`user_${userId}`).emit('messages_read', {
+    socketService.emitToUser(userId, 'messages_read', {
       conversationId,
     });
 

@@ -13,6 +13,7 @@ import { connectRedis } from '@/config/redis';
 import { logger } from '@/utils/logger';
 import { errorHandler } from '@/middleware/errorHandler';
 import { rateLimiter } from '@/middleware/rateLimiter';
+import { socketService } from '@/services/socket.service';
 import routes from '@/routes';
 
 // Load environment variables
@@ -26,6 +27,9 @@ const io = new SocketIOServer(server, {
     methods: ['GET', 'POST'],
   },
 });
+
+// Initialize socket service
+socketService.setIO(io);
 
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
