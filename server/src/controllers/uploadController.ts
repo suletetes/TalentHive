@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '@/models/User';
 import { AppError, catchAsync } from '@/middleware/errorHandler';
-import { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from '@/utils/upload';
+import { uploadService } from '@/services/upload.service';
 import { deleteCache } from '@/config/redis';
 
 interface AuthRequest extends Request {
@@ -16,12 +16,8 @@ export const uploadAvatar = catchAsync(async (req: AuthRequest, res: Response, n
   const userId = req.user._id;
   
   try {
-    // Upload to Cloudinary
-    const imageUrl = await uploadToCloudinary(
-      req.file.buffer,
-      'talenthive/avatars',
-      `avatar_${userId}`
-    );
+    // Upload to Cloudinary using upload service
+    const imageUrl = await uploadService.uploadAvatar(req.file.buffer, userId);
 
     // Update user avatar
     const user = await User.findByIdAndUpdate(
@@ -44,8 +40,8 @@ export const uploadAvatar = catchAsync(async (req: AuthRequest, res: Response, n
         avatar: imageUrl,
       },
     });
-  } catch (error) {
-    next(new AppError('Failed to upload avatar', 500));
+  } catch (error: any) {
+    next(new AppError(error.message || 'Failed to upload avatar', 500));
   }
 });
 
@@ -61,15 +57,18 @@ export const uploadPortfolioImages = catchAsync(async (req: AuthRequest, res: Re
   }
 
   try {
-    const uploadPromises = (req.files as Express.Multer.File[]).map((file, index) =>
-      uploadToCloudinary(
-        file.buffer,
-        'talenthive/portfolio',
-        `portfolio_${userId}_${Date.now()}_${index}`
-      )
+    const buffers = (req.files as Express.Multer.File[]).map(file => file.buffer);
+    const imageUrls = await uploadService.uploadMultiple(
+      buffers,
+      'talenthive/portfolio',
+      {
+        transformation: [
+          { width: 1200, height: 800, crop: 'limit' },
+          { quality: 'auto:good' },
+          { fetch_format: 'auto' },
+        ],
+      }
     );
-
-    const imageUrls = await Promise.all(uploadPromises);
 
     res.json({
       status: 'success',
@@ -78,8 +77,8 @@ export const uploadPortfolioImages = catchAsync(async (req: AuthRequest, res: Re
         images: imageUrls,
       },
     });
-  } catch (error) {
-    next(new AppError('Failed to upload portfolio images', 500));
+  } catch (error: any) {
+    next(new AppError(error.message || 'Failed to upload portfolio images', 500));
   }
 });
 
@@ -96,17 +95,14 @@ export const deletePortfolioImage = catchAsync(async (req: AuthRequest, res: Res
   }
 
   try {
-    // Extract public ID from Cloudinary URL
-    const publicId = extractPublicId(imageUrl);
-    
-    // Delete from Cloudinary
-    await deleteFromCloudinary(publicId);
+    // Delete from Cloudinary using upload service
+    await uploadService.deleteImage(imageUrl);
 
     res.json({
       status: 'success',
       message: 'Portfolio image deleted successfully',
     });
-  } catch (error) {
-    next(new AppError('Failed to delete portfolio image', 500));
+  } catch (error: any) {
+    next(new AppError(error.message || 'Failed to delete portfolio image', 500));
   }
 });

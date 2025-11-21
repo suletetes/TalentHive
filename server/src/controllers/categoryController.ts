@@ -52,6 +52,7 @@ export const createCategory = catchAsync(async (req: AuthRequest, res: Response,
     slug,
     description,
     icon,
+    createdBy: req.user._id,
   });
   
   res.status(201).json({

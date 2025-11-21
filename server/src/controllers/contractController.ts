@@ -22,7 +22,8 @@ export const createContractValidation = [
 export const createContract = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return next(new AppError('Validation failed', 400));
+    const errorMessages = errors.array().map(err => err.msg).join(', ');
+    return next(new AppError(errorMessages, 400));
   }
 
   const { proposalId } = req.params;
@@ -150,35 +151,30 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
 
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-  try {
-    const [contracts, total] = await Promise.all([
-      Contract.find(query)
-        .populate('client', 'profile rating')
-        .populate('freelancer', 'profile freelancerProfile rating')
-        .populate('project', 'title description')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(parseInt(limit as string))
-        .lean(),
-      Contract.countDocuments(query),
-    ]);
+  const [contracts, total] = await Promise.all([
+    Contract.find(query)
+      .populate('client', 'profile rating')
+      .populate('freelancer', 'profile freelancerProfile rating')
+      .populate('project', 'title description')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit as string))
+      .lean(),
+    Contract.countDocuments(query),
+  ]);
 
-    res.json({
-      status: 'success',
-      data: {
-        contracts: contracts || [],
-        pagination: {
-          page: parseInt(page as string),
-          limit: parseInt(limit as string),
-          total,
-          pages: Math.ceil(total / parseInt(limit as string)),
-        },
+  res.json({
+    status: 'success',
+    data: {
+      contracts: contracts || [],
+      pagination: {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        total,
+        pages: Math.ceil(total / parseInt(limit as string)),
       },
-    });
-  } catch (error) {
-    console.error('Error fetching contracts:', error);
-    return next(new AppError('Failed to fetch contracts', 500));
-  }
+    },
+  });
 });
 
 export const signContract = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -273,10 +269,18 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
 
   await contract.save();
 
+  // Repopulate contract to get updated data
+  await contract.populate([
+    { path: 'client', select: 'profile' },
+    { path: 'freelancer', select: 'profile freelancerProfile' },
+    { path: 'project', select: 'title' },
+  ]);
+
   res.json({
     status: 'success',
     message: 'Milestone submitted successfully',
     data: {
+      contract,
       milestone,
     },
   });
@@ -315,10 +319,18 @@ export const approveMilestone = catchAsync(async (req: AuthRequest, res: Respons
 
   await contract.save();
 
+  // Repopulate contract to get updated data
+  await contract.populate([
+    { path: 'client', select: 'profile' },
+    { path: 'freelancer', select: 'profile freelancerProfile' },
+    { path: 'project', select: 'title' },
+  ]);
+
   res.json({
     status: 'success',
     message: 'Milestone approved successfully',
     data: {
+      contract,
       milestone,
     },
   });
@@ -358,10 +370,18 @@ export const rejectMilestone = catchAsync(async (req: AuthRequest, res: Response
 
   await contract.save();
 
+  // Repopulate contract to get updated data
+  await contract.populate([
+    { path: 'client', select: 'profile' },
+    { path: 'freelancer', select: 'profile freelancerProfile' },
+    { path: 'project', select: 'title' },
+  ]);
+
   res.json({
     status: 'success',
     message: 'Milestone rejected',
     data: {
+      contract,
       milestone,
     },
   });

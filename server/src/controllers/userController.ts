@@ -389,3 +389,57 @@ export const deletePortfolioItem = catchAsync(async (req: AuthRequest, res: Resp
     message: 'Portfolio item deleted successfully',
   });
 });
+
+// Change password validation
+export const changePasswordValidation = [
+  body('currentPassword').notEmpty().withMessage('Current password is required'),
+  body('newPassword')
+    .isLength({ min: 8 })
+    .withMessage('New password must be at least 8 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage('New password must contain at least one uppercase letter, one lowercase letter, and one number'),
+  body('confirmPassword')
+    .custom((value, { req }) => value === req.body.newPassword)
+    .withMessage('Passwords do not match'),
+];
+
+// Change password
+export const changePassword = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new AppError('Validation failed', 400));
+  }
+
+  const { currentPassword, newPassword } = req.body;
+
+  // Get user with password field
+  const user = await User.findById(req.user._id).select('+password');
+  
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  // Verify current password
+  const isPasswordCorrect = await user.comparePassword(currentPassword);
+  if (!isPasswordCorrect) {
+    return next(new AppError('Current password is incorrect', 401));
+  }
+
+  // Check if new password is same as current
+  const isSamePassword = await user.comparePassword(newPassword);
+  if (isSamePassword) {
+    return next(new AppError('New password must be different from current password', 400));
+  }
+
+  // Update password
+  user.password = newPassword;
+  await user.save();
+
+  // Clear user cache
+  await deleteCache(`user:${user._id}`);
+
+  res.json({
+    status: 'success',
+    message: 'Password changed successfully',
+  });
+});

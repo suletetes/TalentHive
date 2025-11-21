@@ -55,7 +55,7 @@ export const createSkill = catchAsync(async (req: AuthRequest, res: Response, ne
     name,
     slug,
     category,
-    description,
+    createdBy: req.user._id,
   });
   
   res.status(201).json({

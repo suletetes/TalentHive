@@ -13,7 +13,8 @@ interface AuthRequest extends Request {
 
 export const createProposalValidation = [
   body('coverLetter').trim().isLength({ min: 50, max: 2000 }).withMessage('Cover letter must be between 50 and 2000 characters'),
-  body('bidAmount').isFloat({ min: 0 }).withMessage('Bid amount must be a positive number'),
+  body('bidAmount').optional().isFloat({ min: 0 }).withMessage('Bid amount must be a positive number'),
+  body('proposedBudget.amount').optional().isFloat({ min: 0 }).withMessage('Proposed budget amount must be a positive number'),
   body('timeline.duration').isInt({ min: 1 }).withMessage('Timeline duration must be a positive integer'),
   body('timeline.unit').isIn(['days', 'weeks', 'months']).withMessage('Timeline unit must be days, weeks, or months'),
 ];
@@ -21,7 +22,8 @@ export const createProposalValidation = [
 export const createProposal = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return next(new AppError('Validation failed', 400));
+    const errorMessages = errors.array().map(err => err.msg).join(', ');
+    return next(new AppError(errorMessages, 400));
   }
 
   if (req.user.role !== 'freelancer') {
@@ -29,7 +31,14 @@ export const createProposal = catchAsync(async (req: AuthRequest, res: Response,
   }
 
   const { projectId } = req.params;
-  const { coverLetter, bidAmount, timeline, milestones, attachments } = req.body;
+  const { coverLetter, bidAmount, proposedBudget, timeline, milestones, attachments } = req.body;
+
+  // Handle both bidAmount and proposedBudget formats
+  const finalBidAmount = bidAmount || proposedBudget?.amount;
+  
+  if (!finalBidAmount) {
+    return next(new AppError('Bid amount is required', 400));
+  }
 
   // Check if project exists and is open for proposals
   const project = await Project.findById(projectId);
@@ -64,7 +73,7 @@ export const createProposal = catchAsync(async (req: AuthRequest, res: Response,
     project: projectId,
     freelancer: req.user._id,
     coverLetter,
-    bidAmount,
+    bidAmount: finalBidAmount,
     timeline,
     milestones: milestones || [],
     attachments: attachments || [],
@@ -142,28 +151,34 @@ export const getMyProposals = catchAsync(async (req: AuthRequest, res: Response,
 
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-  const [proposals, total] = await Promise.all([
-    Proposal.find(query)
-      .populate('project', 'title description client budget timeline status')
-      .populate('freelancer', 'profile rating')
-      .sort(sort)
-      .skip(skip)
-      .limit(parseInt(limit as string)),
-    Proposal.countDocuments(query),
-  ]);
+  try {
+    const [proposals, total] = await Promise.all([
+      Proposal.find(query)
+        .populate('project', 'title description client budget timeline status')
+        .populate('freelancer', 'profile rating')
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit as string))
+        .lean(),
+      Proposal.countDocuments(query),
+    ]);
 
-  res.json({
-    status: 'success',
-    data: {
-      proposals,
-      pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total,
-        pages: Math.ceil(total / parseInt(limit as string)),
+    res.json({
+      status: 'success',
+      data: {
+        proposals: proposals || [],
+        pagination: {
+          page: parseInt(page as string),
+          limit: parseInt(limit as string),
+          total,
+          pages: Math.ceil(total / parseInt(limit as string)),
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error('Error fetching proposals:', error);
+    return next(new AppError('Failed to fetch proposals', 500));
+  }
 });
 
 export const getProposalById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
