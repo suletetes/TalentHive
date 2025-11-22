@@ -484,8 +484,7 @@ export const toggleProjectStatus = catchAsync(async (req: AuthRequest, res: Resp
   });
 });
 
-// Get d
-ashboard stats for user
+// Get dashboard stats for user
 export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Response) => {
   const userId = req.user._id;
   const userRole = req.user.role;

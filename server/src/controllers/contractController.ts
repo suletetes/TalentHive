@@ -4,8 +4,10 @@ import { body, validationResult } from 'express-validator';
 import { Contract } from '@/models/Contract';
 import { Proposal } from '@/models/Proposal';
 import { Project } from '@/models/Project';
+import { User } from '@/models/User';
 import { AppError, catchAsync } from '@/middleware/errorHandler';
 import { deleteCache } from '@/config/redis';
+import { notificationService } from '@/services/notification.service';
 import crypto from 'crypto';
 
 interface AuthRequest extends Request {
@@ -96,6 +98,20 @@ export const createContract = catchAsync(async (req: AuthRequest, res: Response,
     { path: 'freelancer', select: 'profile freelancerProfile' },
     { path: 'project', select: 'title' },
   ]);
+
+  // Send notification to freelancer
+  try {
+    const client = await User.findById(req.user._id);
+    const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
+    await notificationService.notifyNewContract(
+      proposal.freelancer._id.toString(),
+      clientName,
+      contract._id.toString(),
+      project._id.toString()
+    );
+  } catch (error) {
+    console.error('Failed to send contract notification:', error);
+  }
 
   res.status(201).json({
     status: 'success',
@@ -276,6 +292,20 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
     { path: 'project', select: 'title' },
   ]);
 
+  // Send notification to client
+  try {
+    const freelancer = await User.findById(req.user._id);
+    const freelancerName = `${freelancer?.profile.firstName} ${freelancer?.profile.lastName}`;
+    await notificationService.notifyMilestoneSubmitted(
+      contract.client.toString(),
+      freelancerName,
+      contract._id.toString(),
+      milestone.title
+    );
+  } catch (error) {
+    console.error('Failed to send milestone submission notification:', error);
+  }
+
   res.json({
     status: 'success',
     message: 'Milestone submitted successfully',
@@ -325,6 +355,20 @@ export const approveMilestone = catchAsync(async (req: AuthRequest, res: Respons
     { path: 'freelancer', select: 'profile freelancerProfile' },
     { path: 'project', select: 'title' },
   ]);
+
+  // Send notification to freelancer
+  try {
+    const client = await User.findById(req.user._id);
+    const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
+    await notificationService.notifyMilestoneApproved(
+      contract.freelancer.toString(),
+      clientName,
+      contract._id.toString(),
+      milestone.title
+    );
+  } catch (error) {
+    console.error('Failed to send milestone approval notification:', error);
+  }
 
   res.json({
     status: 'success',
