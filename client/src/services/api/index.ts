@@ -42,7 +42,7 @@ export type {
 } from './projects.service';
 export type { Proposal, CreateProposalDto, UpdateProposalDto } from './proposals.service';
 export type { Contract, CreateContractDto, Amendment } from './contracts.service';
-export type { Payment, ProcessPaymentDto, PayoutRequest } from './payments.service';
+export type { Transaction, CreatePaymentIntentDto, ConfirmPaymentDto, RefundPaymentDto } from './payments.service';
 export type { Message, Conversation, SendMessageDto } from './messages.service';
 export type { Review, CreateReviewDto } from './reviews.service';
 export type {

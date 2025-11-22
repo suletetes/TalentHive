@@ -49,6 +49,10 @@ const projectSchema = new Schema<IProject>({
     ref: 'User',
     required: true,
   },
+  organization: {
+    type: Schema.Types.ObjectId,
+    ref: 'Organization',
+  },
   category: {
     type: String,
     required: true,
@@ -118,6 +122,7 @@ const projectSchema = new Schema<IProject>({
 
 // Indexes for better performance
 projectSchema.index({ client: 1 });
+projectSchema.index({ organization: 1 });
 projectSchema.index({ status: 1 });
 projectSchema.index({ skills: 1 });
 projectSchema.index({ category: 1 });

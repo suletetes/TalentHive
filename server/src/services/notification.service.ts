@@ -224,6 +224,23 @@ export class NotificationService {
   }
 
   /**
+   * Create notification for contract dispute
+   */
+  async notifyContractDispute(userId: string, initiatorName: string, contractId: string, reason: string) {
+    return this.createNotification({
+      userId,
+      type: 'contract',
+      title: 'Contract Dispute',
+      message: `${initiatorName} initiated a dispute: ${reason}`,
+      link: `/dashboard/contracts/${contractId}`,
+      priority: 'urgent',
+      metadata: {
+        contractId,
+      },
+    });
+  }
+
+  /**
    * Create system notification
    */
   async notifySystem(userId: string, title: string, message: string, link: string, priority: 'low' | 'normal' | 'high' | 'urgent' = 'normal') {
