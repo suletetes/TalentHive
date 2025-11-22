@@ -1,15 +1,15 @@
 import express from 'express';
 import { transactionController } from '../controllers/transactionController';
-import { auth } from '../middleware/auth';
-import { roleAuth } from '../middleware/roleAuth';
+import { authenticate } from '../middleware/auth';
+import { authorize } from '../middleware/auth';
 
 const router = express.Router();
 
 // All routes require authentication
-router.use(auth);
+router.use(authenticate);
 
 // Create payment intent (client only)
-router.post('/payment-intent', roleAuth(['client']), transactionController.createPaymentIntent);
+router.post('/payment-intent', authorize('client'), transactionController.createPaymentIntent);
 
 // Confirm payment
 router.post('/confirm', transactionController.confirmPayment);

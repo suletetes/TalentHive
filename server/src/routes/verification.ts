@@ -1,6 +1,6 @@
 import express from 'express';
 import { verificationController } from '../controllers/verificationController';
-import { auth } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -8,8 +8,8 @@ const router = express.Router();
 router.post('/verify-email', verificationController.verifyEmail);
 
 // Protected routes - require authentication
-router.post('/send-verification', auth, verificationController.sendVerificationEmail);
-router.post('/resend-verification', auth, verificationController.resendVerificationEmail);
-router.get('/status', auth, verificationController.checkVerificationStatus);
+router.post('/send-verification', authenticate, verificationController.sendVerificationEmail);
+router.post('/resend-verification', authenticate, verificationController.resendVerificationEmail);
+router.get('/status', authenticate, verificationController.checkVerificationStatus);
 
 export default router;

@@ -8,6 +8,7 @@ import {
   getAllConversations,
   adminCreateConversation,
   sendAdminMessage,
+  uploadMessageAttachments,
 } from '@/controllers/messageController';
 import {
   editMessage,
@@ -17,6 +18,7 @@ import {
   emitTyping,
 } from '@/controllers/messageEnhancementController';
 import { authenticate, authorize } from '@/middleware/auth';
+import { upload } from '@/utils/fileUpload';
 
 const router = Router();
 
@@ -40,5 +42,8 @@ router.delete('/messages/:messageId', deleteMessage);
 router.post('/messages/:messageId/reactions', addReaction);
 router.delete('/messages/:messageId/reactions', removeReaction);
 router.post('/conversations/:conversationId/typing', emitTyping);
+
+// File upload for messages
+router.post('/upload-attachments', upload.array('files', 10), uploadMessageAttachments);
 
 export default router;

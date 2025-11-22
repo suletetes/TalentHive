@@ -1,7 +1,7 @@
 import express from 'express';
 import { settingsController } from '../controllers/settingsController';
-import { auth } from '../middleware/auth';
-import { roleAuth } from '../middleware/roleAuth';
+import { authenticate } from '../middleware/auth';
+import { authorize } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -10,7 +10,7 @@ router.get('/', settingsController.getSettings);
 router.post('/calculate-commission', settingsController.calculateCommission);
 
 // Admin only routes
-router.put('/', auth, roleAuth(['admin']), settingsController.updateSettings);
-router.get('/history', auth, roleAuth(['admin']), settingsController.getSettingsHistory);
+router.put('/', authenticate, authorize('admin'), settingsController.updateSettings);
+router.get('/history', authenticate, authorize('admin'), settingsController.getSettingsHistory);
 
 export default router;

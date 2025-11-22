@@ -1,13 +1,12 @@
 import express from 'express';
 import { analyticsController } from '@/controllers/analyticsController';
-import { auth } from '@/middleware/auth';
-import { roleAuth } from '@/middleware/roleAuth';
+import { authenticate, authorize } from '@/middleware/auth';
 
 const router = express.Router();
 
 // All analytics routes require authentication and admin role
-router.use(auth);
-router.use(roleAuth(['admin']));
+router.use(authenticate);
+router.use(authorize('admin'));
 
 // Analytics endpoints
 router.get('/revenue', analyticsController.getRevenueAnalytics);

@@ -1,12 +1,12 @@
 import express from 'express';
 import { uploadFile, uploadMultipleFiles, deleteFile } from '../controllers/uploadController';
 import { upload } from '../utils/fileUpload';
-import { auth } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 
 // All routes require authentication
-router.use(auth);
+router.use(authenticate);
 
 // Upload single file
 router.post('/single', upload.single('file'), uploadFile);
