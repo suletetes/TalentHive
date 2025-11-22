@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { Review } from '@/models/Review';
 import { Contract } from '@/models/Contract';
+import { User } from '@/models/User';
 import { AppError, catchAsync } from '@/middleware/errorHandler';
+import { notificationService } from '@/services/notification.service';
 
 interface AuthRequest extends Request {
   user?: any;
@@ -49,6 +51,22 @@ export const createReview = catchAsync(async (req: AuthRequest, res: Response, n
 
   await review.populate('reviewer', 'profile');
 
+  // Send notification to reviewee (only if reviewing a freelancer)
+  if (isClient) {
+    try {
+      const client = await User.findById(req.user._id);
+      const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
+      await notificationService.notifyNewReview(
+        reviewee.toString(),
+        clientName,
+        rating,
+        contract.project.toString()
+      );
+    } catch (error) {
+      console.error('Failed to send review notification:', error);
+    }
+  }
+
   res.status(201).json({
     status: 'success',
     data: { review },
@@ -62,26 +80,27 @@ export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => 
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
   const [reviews, total] = await Promise.all([
-    Review.find({ reviewee: userId, status: 'published', isPublic: true })
-      .populate('reviewer', 'profile')
+    Review.find({ reviewee: userId, isPublic: true })
+      .populate('reviewer', 'profile email')
       .populate('project', 'title')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit as string)),
-    Review.countDocuments({ reviewee: userId, status: 'published', isPublic: true }),
+    Review.countDocuments({ reviewee: userId, isPublic: true }),
   ]);
+
+  // Map reviews to include 'client' field for frontend compatibility
+  const reviewsWithClient = reviews.map(review => {
+    const reviewObj = review.toObject();
+    return {
+      ...reviewObj,
+      client: reviewObj.reviewer, // Add client alias for reviewer
+    };
+  });
 
   res.json({
     status: 'success',
-    data: {
-      reviews,
-      pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total,
-        pages: Math.ceil(total / parseInt(limit as string)),
-      },
-    },
+    data: reviewsWithClient,
   });
 });
 

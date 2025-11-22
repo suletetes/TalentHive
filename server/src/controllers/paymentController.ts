@@ -1,529 +1,473 @@
-// @ts-nocheck
-import { Request, Response, NextFunction } from 'express';
-import { body, validationResult } from 'express-validator';
-import { Payment, EscrowAccount, Transaction } from '@/models/Payment';
+import { Request, Response } from 'express';
+import Stripe from 'stripe';
+import { Transaction } from '@/models/Transaction';
 import { Contract } from '@/models/Contract';
-import { User } from '@/models/User';
-import { AppError, catchAsync } from '@/middleware/errorHandler';
-import { stripe, STRIPE_CONFIG } from '@/config/stripe';
-import { deleteCache } from '@/config/redis';
+import { PlatformSettings } from '@/models/PlatformSettings';
+import { AuthRequest } from '@/types/auth';
+import { createNotification } from './notificationController';
+import { sendEmail } from '@/utils/email.resend';
 
-interface AuthRequest extends Request {
-  user?: any;
-}
-
-export const createPaymentIntentValidation = [
-  body('contractId').isMongoId().withMessage('Valid contract ID is required'),
-  body('milestoneId').isMongoId().withMessage('Valid milestone ID is required'),
-  body('amount').isFloat({ min: 1 }).withMessage('Amount must be a positive number'),
-];
-
-export const createPaymentIntent = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return next(new AppError('Validation failed', 400));
-  }
-
-  const { contractId, milestoneId, amount, paymentMethodId } = req.body;
-
-  // Get contract and validate
-  const contract = await Contract.findById(contractId)
-    .populate('client')
-    .populate('freelancer');
-
-  if (!contract) {
-    return next(new AppError('Contract not found', 404));
-  }
-
-  // Check if user is the client
-  if (contract.client._id.toString() !== req.user._id.toString()) {
-    return next(new AppError('Only the client can make payments', 403));
-  }
-
-  // Validate milestone
-  const milestone = contract.milestones.id(milestoneId);
-  if (!milestone) {
-    return next(new AppError('Milestone not found', 404));
-  }
-
-  if (milestone.status !== 'approved') {
-    return next(new AppError('Only approved milestones can be paid', 400));
-  }
-
-  // Check if payment already exists
-  const existingPayment = await Payment.findOne({
-    contract: contractId,
-    milestone: milestoneId,
-    status: { $in: ['pending', 'processing', 'completed'] },
-  });
-
-  if (existingPayment) {
-    return next(new AppError('Payment already exists for this milestone', 400));
-  }
-
-  // Create payment record
-  const payment = new Payment({
-    contract: contractId,
-    milestone: milestoneId,
-    client: contract.client._id,
-    freelancer: contract.freelancer._id,
-    amount,
-    type: 'milestone_payment',
-    metadata: {
-      description: `Payment for milestone: ${milestone.title}`,
-    },
-  });
-
-  // Create Stripe payment intent
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: Math.round(amount * 100), // Convert to cents
-    currency: STRIPE_CONFIG.CURRENCY.toLowerCase(),
-    payment_method: paymentMethodId,
-    confirmation_method: 'manual',
-    confirm: true,
-    return_url: `${process.env.CLIENT_URL}/payments/return`,
-    metadata: {
-      paymentId: payment._id.toString(),
-      contractId: contractId,
-      milestoneId: milestoneId,
-      type: 'milestone_payment',
-    },
-  });
-
-  payment.stripePaymentIntentId = paymentIntent.id;
-  payment.status = 'processing';
-  await payment.save();
-
-  // Update milestone status
-  milestone.status = 'paid';
-  milestone.paidAt = new Date();
-  await contract.save();
-
-  res.status(201).json({
-    status: 'success',
-    data: {
-      payment,
-      paymentIntent: {
-        id: paymentIntent.id,
-        status: paymentIntent.status,
-        client_secret: paymentIntent.client_secret,
-      },
-    },
-  });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2024-11-20.acacia',
 });
 
-export const confirmPayment = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { paymentIntentId } = req.params;
+// Create payment intent
+export const createPaymentIntent = async (req: Request, res: Response) => {
+  try {
+    const { contractId, milestoneId } = req.body;
+    const userId = (req as AuthRequest).user._id;
 
-  const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
-  if (!payment) {
-    return next(new AppError('Payment not found', 404));
-  }
+    // Find contract and validate
+    const contract = await Contract.findById(contractId)
+      .populate('client', 'email profile stripeCustomerId')
+      .populate('freelancer', 'email profile stripeConnectedAccountId');
 
-  // Retrieve payment intent from Stripe
-  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (!contract) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Contract not found',
+      });
+    }
 
-  if (paymentIntent.status === 'succeeded') {
-    payment.status = 'completed';
-    await payment.save();
+    // Verify user is the client
+    if (contract.client._id.toString() !== userId.toString()) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Only the client can make payments',
+      });
+    }
+
+    // Find milestone
+    const milestone = contract.milestones.id(milestoneId);
+    if (!milestone) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Milestone not found',
+      });
+    }
+
+    // Check milestone status
+    if (milestone.status !== 'approved') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Milestone must be approved before payment',
+      });
+    }
+
+    // Check if already paid
+    const existingTransaction = await Transaction.findOne({
+      contract: contractId,
+      milestone: milestoneId,
+      status: { $in: ['completed', 'processing'] },
+    });
+
+    if (existingTransaction) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Payment already processed for this milestone',
+      });
+    }
+
+    // Get platform settings for commission
+    const settings = await PlatformSettings.findOne().sort({ createdAt: -1 });
+    if (!settings) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Platform settings not configured',
+      });
+    }
+
+    // Calculate commission
+    let commission = 0;
+    if (settings.commission.type === 'percentage') {
+      commission = (milestone.amount * settings.commission.percentage) / 100;
+    } else {
+      commission = settings.commission.percentage;
+    }
+
+    // Apply min/max limits
+    if (settings.commission.minimumAmount > 0 && commission < settings.commission.minimumAmount) {
+      commission = settings.commission.minimumAmount;
+    }
+    if (settings.commission.maximumAmount > 0 && commission > settings.commission.maximumAmount) {
+      commission = settings.commission.maximumAmount;
+    }
+
+    const freelancerAmount = milestone.amount - commission;
+
+    // Create Stripe payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(milestone.amount * 100), // Convert to cents
+      currency: settings.payment.currency.toLowerCase(),
+      customer: (contract.client as any).stripeCustomerId,
+      metadata: {
+        contractId: contractId.toString(),
+        milestoneId: milestoneId.toString(),
+        clientId: contract.client._id.toString(),
+        freelancerId: contract.freelancer._id.toString(),
+        commission: commission.toString(),
+        freelancerAmount: freelancerAmount.toString(),
+      },
+      description: `Payment for milestone: ${milestone.title}`,
+    });
 
     // Create transaction record
-    await Transaction.create({
-      payment: payment._id,
-      type: 'charge',
-      amount: payment.amount,
-      currency: payment.currency,
-      status: 'succeeded',
-      stripeTransactionId: paymentIntent.id,
-      description: `Milestone payment: ${payment.metadata.description}`,
+    const transaction = await Transaction.create({
+      contract: contractId,
+      milestone: milestoneId,
+      amount: milestone.amount,
+      platformCommission: commission,
+      freelancerAmount,
+      status: 'pending',
+      stripePaymentIntentId: paymentIntent.id,
+      client: contract.client._id,
+      freelancer: contract.freelancer._id,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        clientSecret: paymentIntent.client_secret,
+        transaction,
+        breakdown: {
+          amount: milestone.amount,
+          commission,
+          freelancerAmount,
+          commissionPercentage: settings.commission.percentage,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Payment intent creation error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to create payment intent',
+      error: error.message,
+    });
+  }
+};
+
+// Confirm payment
+export const confirmPayment = async (req: Request, res: Response) => {
+  try {
+    const { paymentIntentId } = req.body;
+
+    // Retrieve payment intent from Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status !== 'succeeded') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Payment not successful',
+      });
+    }
+
+    // Update transaction
+    const transaction = await Transaction.findOne({
+      stripePaymentIntentId: paymentIntentId,
+    });
+
+    if (!transaction) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Transaction not found',
+      });
+    }
+
+    transaction.status = 'processing';
+    transaction.paidAt = new Date();
+    await transaction.save();
+
+    // Update milestone status
+    const contract = await Contract.findById(transaction.contract)
+      .populate('client', 'email profile')
+      .populate('freelancer', 'email profile');
+
+    if (contract) {
+      const milestone = contract.milestones.id(transaction.milestone);
+      if (milestone) {
+        milestone.status = 'paid';
+        milestone.paidAt = new Date();
+        await contract.save();
+      }
+
+      // Create notifications
+      await createNotification({
+        user: contract.freelancer._id.toString(),
+        type: 'payment',
+        title: 'Payment Received',
+        message: `Payment of $${transaction.amount} has been received for milestone: ${milestone?.title}`,
+        link: `/dashboard/contracts/${contract._id}`,
+        priority: 'high',
+        metadata: {
+          contractId: contract._id,
+          amount: transaction.amount,
+        },
+      });
+
+      // Send emails
+      await sendEmail({
+        to: (contract.freelancer as any).email,
+        subject: 'Payment Received',
+        html: `
+          <h2>Payment Received</h2>
+          <p>Hi ${(contract.freelancer as any).profile.firstName},</p>
+          <p>Great news! Payment of $${transaction.amount} has been received for the milestone "${milestone?.title}".</p>
+          <p>The funds will be released to your account after the escrow period.</p>
+          <p>View contract: <a href="${process.env.CLIENT_URL}/dashboard/contracts/${contract._id}">Click here</a></p>
+        `,
+      });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Payment confirmed successfully',
+      data: transaction,
+    });
+  } catch (error: any) {
+    console.error('Payment confirmation error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to confirm payment',
+      error: error.message,
+    });
+  }
+};
+
+// Release payment to freelancer
+export const releasePayment = async (req: Request, res: Response) => {
+  try {
+    const { transactionId } = req.params;
+
+    const transaction = await Transaction.findById(transactionId)
+      .populate('contract')
+      .populate('freelancer', 'email profile stripeConnectedAccountId');
+
+    if (!transaction) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Transaction not found',
+      });
+    }
+
+    if (transaction.status !== 'processing') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Transaction is not in processing status',
+      });
+    }
+
+    // Transfer to freelancer's Stripe account
+    if ((transaction.freelancer as any).stripeConnectedAccountId) {
+      const transfer = await stripe.transfers.create({
+        amount: Math.round(transaction.freelancerAmount * 100),
+        currency: 'usd',
+        destination: (transaction.freelancer as any).stripeConnectedAccountId,
+        metadata: {
+          transactionId: transaction._id.toString(),
+          contractId: transaction.contract.toString(),
+        },
+      });
+
+      transaction.stripeTransferId = transfer.id;
+    }
+
+    transaction.status = 'completed';
+    transaction.releasedAt = new Date();
+    await transaction.save();
+
+    // Create notification
+    await createNotification({
+      user: transaction.freelancer._id.toString(),
+      type: 'payment',
+      title: 'Payment Released',
+      message: `Payment of $${transaction.freelancerAmount} has been released to your account`,
+      link: `/dashboard/transactions`,
+      priority: 'high',
       metadata: {
-        paymentIntentId: paymentIntent.id,
+        amount: transaction.freelancerAmount,
       },
     });
 
-    // Clear cache
-    await deleteCache('payments:*');
-    await deleteCache('contracts:*');
-  } else if (paymentIntent.status === 'payment_failed') {
-    payment.status = 'failed';
-    await payment.save();
+    // Send email
+    await sendEmail({
+      to: (transaction.freelancer as any).email,
+      subject: 'Payment Released',
+      html: `
+        <h2>Payment Released</h2>
+        <p>Hi ${(transaction.freelancer as any).profile.firstName},</p>
+        <p>Your payment of $${transaction.freelancerAmount} has been released and transferred to your account.</p>
+        <p>View transactions: <a href="${process.env.CLIENT_URL}/dashboard/transactions">Click here</a></p>
+      `,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Payment released successfully',
+      data: transaction,
+    });
+  } catch (error: any) {
+    console.error('Payment release error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to release payment',
+      error: error.message,
+    });
   }
+};
 
-  res.json({
-    status: 'success',
-    data: {
-      payment,
-      paymentIntent: {
-        status: paymentIntent.status,
-      },
-    },
-  });
-});
+// Get transactions
+export const getTransactions = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as AuthRequest).user._id;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
 
-export const getPaymentHistory = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { page = 1, limit = 10, status, type } = req.query;
+    const filter: any = {
+      $or: [{ client: userId }, { freelancer: userId }],
+    };
 
-  const query: any = {
-    $or: [
-      { client: req.user._id },
-      { freelancer: req.user._id },
-    ],
-  };
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
 
-  if (status) {
-    query.status = status;
-  }
-
-  if (type) {
-    query.type = type;
-  }
-
-  const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
-
-  const [payments, total] = await Promise.all([
-    Payment.find(query)
-      .populate('client', 'profile')
-      .populate('freelancer', 'profile')
-      .populate('contract', 'title')
+    const transactions = await Transaction.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit as string)),
-    Payment.countDocuments(query),
-  ]);
+      .limit(limit)
+      .populate('contract', 'title')
+      .populate('client', 'profile.firstName profile.lastName')
+      .populate('freelancer', 'profile.firstName profile.lastName');
 
-  res.json({
-    status: 'success',
-    data: {
-      payments,
+    const total = await Transaction.countDocuments(filter);
+
+    res.status(200).json({
+      status: 'success',
+      data: transactions,
       pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
+        page,
+        limit,
         total,
-        pages: Math.ceil(total / parseInt(limit as string)),
+        pages: Math.ceil(total / limit),
       },
-    },
-  });
-});
-
-export const createEscrowAccount = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { accountType } = req.body;
-
-  // Check if account already exists
-  const existingAccount = await EscrowAccount.findOne({ user: req.user._id });
-  if (existingAccount) {
-    return next(new AppError('Escrow account already exists', 400));
-  }
-
-  // Create Stripe Connect account
-  const stripeAccount = await stripe.accounts.create({
-    type: 'express',
-    country: 'US', // This should be dynamic based on user location
-    email: req.user.email,
-    capabilities: {
-      card_payments: { requested: true },
-      transfers: { requested: true },
-    },
-    business_type: 'individual',
-    metadata: {
-      userId: req.user._id.toString(),
-      accountType,
-    },
-  });
-
-  // Create escrow account record
-  const escrowAccount = new EscrowAccount({
-    user: req.user._id,
-    stripeAccountId: stripeAccount.id,
-    accountType,
-    status: 'pending',
-  });
-
-  await escrowAccount.save();
-
-  // Create account link for onboarding
-  const accountLink = await stripe.accountLinks.create({
-    account: stripeAccount.id,
-    refresh_url: `${process.env.CLIENT_URL}/payments/setup/refresh`,
-    return_url: `${process.env.CLIENT_URL}/payments/setup/return`,
-    type: 'account_onboarding',
-  });
-
-  res.status(201).json({
-    status: 'success',
-    data: {
-      escrowAccount,
-      onboardingUrl: accountLink.url,
-    },
-  });
-});
-
-export const getEscrowAccount = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const escrowAccount = await EscrowAccount.findOne({ user: req.user._id });
-
-  if (!escrowAccount) {
-    return next(new AppError('Escrow account not found', 404));
-  }
-
-  // Get account details from Stripe
-  const stripeAccount = await stripe.accounts.retrieve(escrowAccount.stripeAccountId);
-
-  res.json({
-    status: 'success',
-    data: {
-      escrowAccount,
-      stripeAccount: {
-        id: stripeAccount.id,
-        charges_enabled: stripeAccount.charges_enabled,
-        payouts_enabled: stripeAccount.payouts_enabled,
-        details_submitted: stripeAccount.details_submitted,
-      },
-    },
-  });
-});
-
-export const addPayoutMethod = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { type, stripePaymentMethodId } = req.body;
-
-  const escrowAccount = await EscrowAccount.findOne({ user: req.user._id });
-  if (!escrowAccount) {
-    return next(new AppError('Escrow account not found', 404));
-  }
-
-  // Get payment method details from Stripe
-  const paymentMethod = await stripe.paymentMethods.retrieve(stripePaymentMethodId);
-
-  let details: any = {};
-  if (paymentMethod.type === 'us_bank_account') {
-    details = {
-      last4: paymentMethod.us_bank_account?.last4,
-      bankName: paymentMethod.us_bank_account?.bank_name,
-      accountType: paymentMethod.us_bank_account?.account_type,
-    };
-  } else if (paymentMethod.type === 'card') {
-    details = {
-      last4: paymentMethod.card?.last4,
-      brand: paymentMethod.card?.brand,
-    };
-  }
-
-  // Set all other methods as non-default if this is default
-  if (req.body.isDefault) {
-    escrowAccount.payoutMethods.forEach(method => {
-      method.isDefault = false;
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch transactions',
+      error: error.message,
     });
   }
+};
 
-  const payoutMethod = {
-    type,
-    stripePaymentMethodId,
-    isDefault: req.body.isDefault || escrowAccount.payoutMethods.length === 0,
-    details,
-    status: 'active',
-  };
+// Get user balance
+export const getBalance = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as AuthRequest).user._id;
 
-  escrowAccount.payoutMethods.push(payoutMethod as any);
-  await escrowAccount.save();
-
-  res.status(201).json({
-    status: 'success',
-    data: {
-      payoutMethod: escrowAccount.payoutMethods[escrowAccount.payoutMethods.length - 1],
-    },
-  });
-});
-
-export const requestPayout = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { amount, payoutMethodId } = req.body;
-
-  if (req.user.role !== 'freelancer') {
-    return next(new AppError('Only freelancers can request payouts', 403));
-  }
-
-  const escrowAccount = await EscrowAccount.findOne({ user: req.user._id });
-  if (!escrowAccount) {
-    return next(new AppError('Escrow account not found', 404));
-  }
-
-  if (escrowAccount.balance < amount) {
-    return next(new AppError('Insufficient balance', 400));
-  }
-
-  const payoutMethod = escrowAccount.payoutMethods.id(payoutMethodId);
-  if (!payoutMethod) {
-    return next(new AppError('Payout method not found', 404));
-  }
-
-  // Create Stripe transfer
-  const transfer = await stripe.transfers.create({
-    amount: Math.round(amount * 100), // Convert to cents
-    currency: escrowAccount.currency.toLowerCase(),
-    destination: escrowAccount.stripeAccountId,
-    metadata: {
-      userId: req.user._id.toString(),
-      payoutMethodId: payoutMethodId,
-      type: 'freelancer_payout',
-    },
-  });
-
-  // Create payment record
-  const payment = new Payment({
-    contract: null, // No specific contract for payouts
-    milestone: null,
-    client: null,
-    freelancer: req.user._id,
-    amount,
-    type: 'withdrawal',
-    status: 'processing',
-    stripeTransferId: transfer.id,
-    platformFee: 0, // No fee for withdrawals
-    freelancerAmount: amount,
-    metadata: {
-      description: 'Freelancer payout',
-    },
-  });
-
-  await payment.save();
-
-  // Update escrow balance
-  escrowAccount.balance -= amount;
-  await escrowAccount.save();
-
-  res.status(201).json({
-    status: 'success',
-    data: {
-      payment,
-      transfer: {
-        id: transfer.id,
-        amount: transfer.amount,
-        status: transfer.status,
+    const completed = await Transaction.aggregate([
+      {
+        $match: {
+          freelancer: userId,
+          status: 'completed',
+        },
       },
-    },
-  });
-});
-
-export const releaseEscrowPayment = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { paymentId } = req.params;
-
-  const payment = await Payment.findById(paymentId)
-    .populate('contract')
-    .populate('freelancer');
-
-  if (!payment) {
-    return next(new AppError('Payment not found', 404));
-  }
-
-  if (payment.status !== 'completed') {
-    return next(new AppError('Payment must be completed before release', 400));
-  }
-
-  // Check if user is authorized (client or admin)
-  const contract = payment.contract as any;
-  const isAuthorized = req.user.role === 'admin' || 
-                      contract.client.toString() === req.user._id.toString();
-
-  if (!isAuthorized) {
-    return next(new AppError('Not authorized to release this payment', 403));
-  }
-
-  // Get freelancer's escrow account
-  const freelancerAccount = await EscrowAccount.findOne({ user: payment.freelancer });
-  if (!freelancerAccount) {
-    return next(new AppError('Freelancer escrow account not found', 404));
-  }
-
-  // Add to freelancer's balance
-  freelancerAccount.balance += payment.freelancerAmount;
-  await freelancerAccount.save();
-
-  // Create transaction record
-  await Transaction.create({
-    payment: payment._id,
-    type: 'transfer',
-    amount: payment.freelancerAmount,
-    currency: payment.currency,
-    status: 'succeeded',
-    stripeTransactionId: `escrow_release_${payment._id}`,
-    description: `Escrow release for milestone payment`,
-    metadata: {
-      originalPaymentId: payment._id,
-      freelancerAccountId: freelancerAccount._id,
-    },
-  });
-
-  res.json({
-    status: 'success',
-    message: 'Payment released to freelancer',
-    data: {
-      payment,
-      freelancerBalance: freelancerAccount.balance,
-    },
-  });
-});
-
-export const refundPayment = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { paymentId } = req.params;
-  const { reason, amount } = req.body;
-
-  const payment = await Payment.findById(paymentId).populate('contract');
-  if (!payment) {
-    return next(new AppError('Payment not found', 404));
-  }
-
-  if (!payment.canBeRefunded()) {
-    return next(new AppError('Payment cannot be refunded', 400));
-  }
-
-  const contract = payment.contract as any;
-  const isAuthorized = req.user.role === 'admin' || 
-                      contract.client.toString() === req.user._id.toString();
-
-  if (!isAuthorized) {
-    return next(new AppError('Not authorized to refund this payment', 403));
-  }
-
-  const refundAmount = amount || payment.amount;
-
-  // Create Stripe refund
-  const refund = await stripe.refunds.create({
-    payment_intent: payment.stripePaymentIntentId!,
-    amount: Math.round(refundAmount * 100),
-    reason: 'requested_by_customer',
-    metadata: {
-      originalPaymentId: payment._id.toString(),
-      refundReason: reason,
-    },
-  });
-
-  // Update payment status
-  payment.status = 'refunded';
-  payment.metadata.adminNotes = reason;
-  await payment.save();
-
-  // Create transaction record
-  await Transaction.create({
-    payment: payment._id,
-    type: 'refund',
-    amount: refundAmount,
-    currency: payment.currency,
-    status: 'succeeded',
-    stripeTransactionId: refund.id,
-    description: `Refund for milestone payment: ${reason}`,
-    metadata: {
-      refundId: refund.id,
-      reason,
-    },
-  });
-
-  res.json({
-    status: 'success',
-    message: 'Payment refunded successfully',
-    data: {
-      payment,
-      refund: {
-        id: refund.id,
-        amount: refund.amount,
-        status: refund.status,
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$freelancerAmount' },
+        },
       },
-    },
-  });
-});
+    ]);
+
+    const pending = await Transaction.aggregate([
+      {
+        $match: {
+          freelancer: userId,
+          status: 'processing',
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$freelancerAmount' },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        available: completed[0]?.total || 0,
+        pending: pending[0]?.total || 0,
+        total: (completed[0]?.total || 0) + (pending[0]?.total || 0),
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch balance',
+      error: error.message,
+    });
+  }
+};
+
+// Refund payment
+export const refundPayment = async (req: Request, res: Response) => {
+  try {
+    const { transactionId } = req.params;
+    const { reason } = req.body;
+
+    const transaction = await Transaction.findById(transactionId)
+      .populate('client', 'email profile')
+      .populate('freelancer', 'email profile');
+
+    if (!transaction) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Transaction not found',
+      });
+    }
+
+    if (transaction.status === 'refunded') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Transaction already refunded',
+      });
+    }
+
+    // Create refund in Stripe
+    const refund = await stripe.refunds.create({
+      payment_intent: transaction.stripePaymentIntentId,
+      reason: 'requested_by_customer',
+    });
+
+    transaction.status = 'refunded';
+    transaction.failureReason = reason || 'Refund requested';
+    await transaction.save();
+
+    // Create notifications
+    await createNotification({
+      user: transaction.client.toString(),
+      type: 'payment',
+      title: 'Payment Refunded',
+      message: `Payment of $${transaction.amount} has been refunded`,
+      link: `/dashboard/transactions`,
+      priority: 'normal',
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Payment refunded successfully',
+      data: transaction,
+    });
+  } catch (error: any) {
+    console.error('Refund error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to process refund',
+      error: error.message,
+    });
+  }
+};

@@ -6,6 +6,7 @@ import { Project } from '@/models/Project';
 import { User } from '@/models/User';
 import { AppError, catchAsync } from '@/middleware/errorHandler';
 import { deleteCache } from '@/config/redis';
+import { notificationService } from '@/services/notification.service';
 
 interface AuthRequest extends Request {
   user?: any;
@@ -88,6 +89,21 @@ export const createProposal = catchAsync(async (req: AuthRequest, res: Response,
 
   // Clear cache
   await deleteCache(`proposals:project:${projectId}`);
+
+  // Send notification to client
+  try {
+    const freelancer = await User.findById(req.user._id);
+    const freelancerName = `${freelancer?.profile.firstName} ${freelancer?.profile.lastName}`;
+    await notificationService.notifyNewProposal(
+      project.client.toString(),
+      req.user._id.toString(),
+      freelancerName,
+      projectId,
+      proposal._id.toString()
+    );
+  } catch (error) {
+    console.error('Failed to send proposal notification:', error);
+  }
 
   res.status(201).json({
     status: 'success',
@@ -323,6 +339,20 @@ export const acceptProposal = catchAsync(async (req: AuthRequest, res: Response,
   await deleteCache(`proposals:project:${project._id}`);
   await deleteCache('projects:*');
 
+  // Send notification to freelancer
+  try {
+    const client = await User.findById(req.user._id);
+    const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
+    await notificationService.notifyProposalAccepted(
+      proposal.freelancer.toString(),
+      clientName,
+      project._id.toString(),
+      proposal._id.toString()
+    );
+  } catch (error) {
+    console.error('Failed to send proposal accepted notification:', error);
+  }
+
   res.json({
     status: 'success',
     message: 'Proposal accepted successfully',
@@ -352,6 +382,20 @@ export const rejectProposal = catchAsync(async (req: AuthRequest, res: Response,
 
   // Clear cache
   await deleteCache(`proposals:project:${project._id}`);
+
+  // Send notification to freelancer
+  try {
+    const client = await User.findById(req.user._id);
+    const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
+    await notificationService.notifyProposalRejected(
+      proposal.freelancer.toString(),
+      clientName,
+      project._id.toString(),
+      proposal._id.toString()
+    );
+  } catch (error) {
+    console.error('Failed to send proposal rejected notification:', error);
+  }
 
   res.json({
     status: 'success',

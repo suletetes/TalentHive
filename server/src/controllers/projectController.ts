@@ -155,12 +155,24 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
       .populate('client', 'profile rating clientProfile')
       .sort(sort)
       .skip(skip)
-      .limit(parseInt(limit as string)),
+      .limit(parseInt(limit as string))
+      .lean(),
     Project.countDocuments(query),
   ]);
 
+  // Add proposal counts to each project
+  const { Proposal } = await import('@/models/Proposal');
+  const projectsWithCounts = await Promise.all(
+    projects.map(async (project: any) => {
+      const proposalCount = await Proposal.countDocuments({ 
+        project: project._id 
+      });
+      return { ...project, proposalCount };
+    })
+  );
+
   const result = {
-    projects,
+    projects: projectsWithCounts,
     pagination: {
       page: parseInt(page as string),
       limit: parseInt(limit as string),
@@ -299,16 +311,29 @@ const getMyProjects = catchAsync(async (req: AuthRequest, res: Response, next: N
   const [projects, total] = await Promise.all([
     Project.find(query)
       .populate('selectedFreelancer', 'profile rating freelancerProfile')
+      .populate('client', 'profile rating clientProfile')
       .sort(sort)
       .skip(skip)
-      .limit(parseInt(limit as string)),
+      .limit(parseInt(limit as string))
+      .lean(),
     Project.countDocuments(query),
   ]);
+
+  // Add proposal counts to each project
+  const { Proposal } = await import('@/models/Proposal');
+  const projectsWithCounts = await Promise.all(
+    projects.map(async (project: any) => {
+      const proposalCount = await Proposal.countDocuments({ 
+        project: project._id 
+      });
+      return { ...project, proposalCount };
+    })
+  );
 
   res.json({
     status: 'success',
     data: {
-      projects,
+      projects: projectsWithCounts,
       pagination: {
         page: parseInt(page as string),
         limit: parseInt(limit as string),
@@ -456,5 +481,72 @@ export const toggleProjectStatus = catchAsync(async (req: AuthRequest, res: Resp
     data: {
       project,
     },
+  });
+});
+
+// Get d
+ashboard stats for user
+export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user._id;
+  const userRole = req.user.role;
+  
+  const { Proposal } = await import('@/models/Proposal');
+  const { Contract } = await import('@/models/Contract');
+  
+  if (userRole === 'client') {
+    // Get all project IDs for this client
+    const projectIds = await Project.find({ client: userId }).distinct('_id');
+    
+    const [totalProjects, activeProjects, completedProjects, pendingProposals, totalSpent] = await Promise.all([
+      Project.countDocuments({ client: userId }),
+      Project.countDocuments({ client: userId, status: 'open' }),
+      Project.countDocuments({ client: userId, status: 'completed' }),
+      Proposal.countDocuments({ 
+        project: { $in: projectIds },
+        status: 'submitted'
+      }),
+      Contract.aggregate([
+        { $match: { client: userId, status: { $in: ['active', 'completed'] } } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      ]).then(result => result[0]?.total || 0),
+    ]);
+    
+    return res.json({
+      status: 'success',
+      data: {
+        totalProjects,
+        activeProjects,
+        completedProjects,
+        pendingProposals,
+        totalSpent,
+      },
+    });
+  }
+  
+  if (userRole === 'freelancer') {
+    const [totalProposals, acceptedProposals, activeContracts, totalEarnings] = await Promise.all([
+      Proposal.countDocuments({ freelancer: userId }),
+      Proposal.countDocuments({ freelancer: userId, status: 'accepted' }),
+      Contract.countDocuments({ freelancer: userId, status: 'active' }),
+      Contract.aggregate([
+        { $match: { freelancer: userId, status: 'completed' } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      ]).then(result => result[0]?.total || 0),
+    ]);
+    
+    return res.json({
+      status: 'success',
+      data: {
+        totalProposals,
+        acceptedProposals,
+        activeProjects: activeContracts,
+        totalEarnings,
+      },
+    });
+  }
+  
+  res.json({
+    status: 'success',
+    data: {},
   });
 });
