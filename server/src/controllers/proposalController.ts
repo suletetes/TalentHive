@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { Proposal } from '@/models/Proposal';
@@ -27,7 +26,12 @@ export const createProposal = catchAsync(async (req: AuthRequest, res: Response,
     return next(new AppError(errorMessages, 400));
   }
 
-  if (req.user.role !== 'freelancer') {
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  if (req.user?.role !== 'freelancer') {
     return next(new AppError('Only freelancers can submit proposals', 403));
   }
 
@@ -51,14 +55,15 @@ export const createProposal = catchAsync(async (req: AuthRequest, res: Response,
     return next(new AppError('Project is not accepting proposals', 400));
   }
 
-  if (project.client.toString() === req.user._id.toString()) {
+  const projectClientId = project.client.toString();
+  if (projectClientId === userId.toString()) {
     return next(new AppError('Cannot submit proposal to your own project', 400));
   }
 
   // Check if freelancer already submitted a proposal
   const existingProposal = await Proposal.findOne({
     project: projectId,
-    freelancer: req.user._id,
+    freelancer: userId,
   });
 
   if (existingProposal) {
@@ -72,7 +77,7 @@ export const createProposal = catchAsync(async (req: AuthRequest, res: Response,
 
   const proposal = new Proposal({
     project: projectId,
-    freelancer: req.user._id,
+    freelancer: userId,
     coverLetter,
     bidAmount: finalBidAmount,
     timeline,
@@ -92,15 +97,17 @@ export const createProposal = catchAsync(async (req: AuthRequest, res: Response,
 
   // Send notification to client
   try {
-    const freelancer = await User.findById(req.user._id);
-    const freelancerName = `${freelancer?.profile.firstName} ${freelancer?.profile.lastName}`;
-    await notificationService.notifyNewProposal(
-      project.client.toString(),
-      req.user._id.toString(),
-      freelancerName,
-      projectId,
-      proposal._id.toString()
-    );
+    const freelancer = await User.findById(userId);
+    if (freelancer?.profile) {
+      const freelancerName = `${freelancer.profile.firstName} ${freelancer.profile.lastName}`;
+      await notificationService.notifyNewProposal(
+        project.client.toString(),
+        userId.toString(),
+        freelancerName,
+        projectId,
+        proposal._id.toString()
+      );
+    }
   } catch (error) {
     console.error('Failed to send proposal notification:', error);
   }
@@ -117,6 +124,10 @@ export const createProposal = catchAsync(async (req: AuthRequest, res: Response,
 export const getProposalsForProject = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { projectId } = req.params;
   const { sortBy = 'submittedAt', sortOrder = 'desc' } = req.query;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
   const project = await Project.findById(projectId);
   if (!project) {
@@ -124,7 +135,8 @@ export const getProposalsForProject = catchAsync(async (req: AuthRequest, res: R
   }
 
   // Check if user is the project owner
-  if (project.client.toString() !== req.user._id.toString()) {
+  const projectClientId = project.client.toString();
+  if (projectClientId !== userId.toString()) {
     return next(new AppError('You can only view proposals for your own projects', 403));
   }
 
@@ -233,7 +245,13 @@ export const updateProposal = catchAsync(async (req: AuthRequest, res: Response,
   }
 
   // Check if user owns the proposal
-  if (proposal.freelancer.toString() !== req.user._id.toString()) {
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  const freelancerId = proposal.freelancer.toString();
+  if (freelancerId !== userId.toString()) {
     return next(new AppError('You can only update your own proposals', 403));
   }
 
@@ -276,7 +294,13 @@ export const withdrawProposal = catchAsync(async (req: AuthRequest, res: Respons
   }
 
   // Check if user owns the proposal
-  if (proposal.freelancer.toString() !== req.user._id.toString()) {
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  const freelancerId = proposal.freelancer.toString();
+  if (freelancerId !== userId.toString()) {
     return next(new AppError('You can only withdraw your own proposals', 403));
   }
 
@@ -415,7 +439,13 @@ export const highlightProposal = catchAsync(async (req: AuthRequest, res: Respon
   }
 
   // Check if user owns the proposal
-  if (proposal.freelancer.toString() !== req.user._id.toString()) {
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  const freelancerId = proposal.freelancer.toString();
+  if (freelancerId !== userId.toString()) {
     return next(new AppError('You can only highlight your own proposals', 403));
   }
 

@@ -36,6 +36,23 @@ export const createProject = catchAsync(async (req: AuthRequest, res: Response, 
     client: req.user._id,
   };
 
+  // If organization is provided, verify user is a member
+  if (projectData.organization) {
+    const { Organization } = await import('@/models/Organization');
+    const org = await Organization.findById(projectData.organization);
+    
+    if (!org) {
+      return next(new AppError('Organization not found', 404));
+    }
+
+    const isMember = org.owner.toString() === req.user._id.toString() ||
+      org.members.some((m: any) => m.user.toString() === req.user._id.toString());
+    
+    if (!isMember) {
+      return next(new AppError('You are not a member of this organization', 403));
+    }
+  }
+
   // Validate budget range
   if (projectData.budget.min > projectData.budget.max) {
     return next(new AppError('Minimum budget cannot be greater than maximum budget', 400));
@@ -43,6 +60,15 @@ export const createProject = catchAsync(async (req: AuthRequest, res: Response, 
 
   const project = new Project(projectData);
   await project.save();
+
+  // If organization is linked, add project to organization
+  if (projectData.organization) {
+    const { Organization } = await import('@/models/Organization');
+    await Organization.findByIdAndUpdate(
+      projectData.organization,
+      { $push: { projects: project._id } }
+    );
+  }
 
   // Update client's project count
   await User.findByIdAndUpdate(req.user._id, {
@@ -77,6 +103,7 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
     status = 'open',
     featured,
     urgent,
+    organization,
   } = req.query;
 
   // Build cache key
@@ -95,6 +122,11 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
     visibility: 'public',
     status: status || 'open',
   };
+
+  // Add organization filter
+  if (organization) {
+    query.organization = organization;
+  }
 
   // Add filters
   if (category) {
@@ -153,6 +185,7 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
   const [projects, total] = await Promise.all([
     Project.find(query)
       .populate('client', 'profile rating clientProfile')
+      .populate('organization', 'name logo budget')
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit as string))
@@ -195,6 +228,7 @@ export const getProjectById = catchAsync(async (req: Request, res: Response, nex
 
   const project = await Project.findById(id)
     .populate('client', 'profile rating clientProfile')
+    .populate('organization', 'name logo budget members')
     .populate('selectedFreelancer', 'profile rating freelancerProfile')
     .populate({
       path: 'proposals',
@@ -237,11 +271,43 @@ export const updateProject = catchAsync(async (req: AuthRequest, res: Response, 
     return next(new AppError('Cannot update project in current status', 400));
   }
 
+  // Handle organization change
+  if (req.body.organization && req.body.organization !== project.organization?.toString()) {
+    const { Organization } = await import('@/models/Organization');
+    const org = await Organization.findById(req.body.organization);
+    
+    if (!org) {
+      return next(new AppError('Organization not found', 404));
+    }
+
+    const isMember = org.owner.toString() === req.user._id.toString() ||
+      org.members.some((m: any) => m.user.toString() === req.user._id.toString());
+    
+    if (!isMember) {
+      return next(new AppError('You are not a member of this organization', 403));
+    }
+
+    // Remove from old organization if it exists
+    if (project.organization) {
+      await Organization.findByIdAndUpdate(
+        project.organization,
+        { $pull: { projects: project._id } }
+      );
+    }
+
+    // Add to new organization
+    await Organization.findByIdAndUpdate(
+      req.body.organization,
+      { $push: { projects: project._id } }
+    );
+  }
+
   const updatedProject = await Project.findByIdAndUpdate(
     id,
     { ...req.body, updatedAt: new Date() },
     { new: true, runValidators: true }
-  ).populate('client', 'profile rating clientProfile');
+  ).populate('client', 'profile rating clientProfile')
+   .populate('organization', 'name logo budget');
 
   // Clear cache
   await deleteCache('projects:*');
@@ -271,6 +337,15 @@ export const deleteProject = catchAsync(async (req: AuthRequest, res: Response, 
   // Don't allow deletion if project has proposals or is in progress
   if (project.proposals.length > 0 || project.status === 'in_progress') {
     return next(new AppError('Cannot delete project with proposals or in progress', 400));
+  }
+
+  // Remove from organization if linked
+  if (project.organization) {
+    const { Organization } = await import('@/models/Organization');
+    await Organization.findByIdAndUpdate(
+      project.organization,
+      { $pull: { projects: project._id } }
+    );
   }
 
   await Project.findByIdAndDelete(id);

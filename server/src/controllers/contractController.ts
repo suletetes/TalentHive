@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { Contract } from '@/models/Contract';
@@ -10,10 +9,6 @@ import { deleteCache } from '@/config/redis';
 import { notificationService } from '@/services/notification.service';
 import crypto from 'crypto';
 
-interface AuthRequest extends Request {
-  user?: any;
-}
-
 export const createContractValidation = [
   body('title').trim().isLength({ min: 5, max: 200 }).withMessage('Title must be between 5 and 200 characters'),
   body('description').trim().isLength({ min: 10, max: 2000 }).withMessage('Description must be between 10 and 2000 characters'),
@@ -21,11 +16,16 @@ export const createContractValidation = [
   body('endDate').isISO8601().withMessage('End date must be a valid date'),
 ];
 
-export const createContract = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createContract = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const errorMessages = errors.array().map(err => err.msg).join(', ');
     return next(new AppError(errorMessages, 400));
+  }
+
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
   }
 
   const { proposalId } = req.params;
@@ -45,9 +45,13 @@ export const createContract = catchAsync(async (req: AuthRequest, res: Response,
   }
 
   const project = proposal.project as any;
+  if (!project) {
+    return next(new AppError('Project not found', 404));
+  }
 
   // Check if user is the project owner
-  if (project.client.toString() !== req.user._id.toString()) {
+  const projectClientId = typeof project.client === 'object' ? project.client._id : project.client;
+  if (projectClientId.toString() !== userId.toString()) {
     return next(new AppError('You can only create contracts for your own projects', 403));
   }
 
@@ -101,14 +105,17 @@ export const createContract = catchAsync(async (req: AuthRequest, res: Response,
 
   // Send notification to freelancer
   try {
-    const client = await User.findById(req.user._id);
-    const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
-    await notificationService.notifyNewContract(
-      proposal.freelancer._id.toString(),
-      clientName,
-      contract._id.toString(),
-      project._id.toString()
-    );
+    const client = await User.findById(userId);
+    if (client?.profile) {
+      const clientName = `${client.profile.firstName} ${client.profile.lastName}`;
+      const freelancerId = typeof proposal.freelancer === 'object' ? proposal.freelancer._id : proposal.freelancer;
+      await notificationService.notifyNewContract(
+        freelancerId.toString(),
+        clientName,
+        contract._id.toString(),
+        project._id.toString()
+      );
+    }
   } catch (error) {
     console.error('Failed to send contract notification:', error);
   }
@@ -143,21 +150,30 @@ export const getContract = catchAsync(async (req: Request, res: Response, next: 
   });
 });
 
+interface AuthRequest extends Request {
+  user?: any;
+}
+
 export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { page = 1, limit = 10, status, role } = req.query;
 
   const query: any = {};
 
   // Filter by user role
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
   if (role === 'client') {
-    query.client = req.user._id;
+    query.client = userId;
   } else if (role === 'freelancer') {
-    query.freelancer = req.user._id;
+    query.freelancer = userId;
   } else {
     // Show all contracts where user is either client or freelancer
     query.$or = [
-      { client: req.user._id },
-      { freelancer: req.user._id },
+      { client: userId },
+      { freelancer: userId },
     ];
   }
 
@@ -195,6 +211,10 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
 
 export const signContract = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { id } = req.params;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
   const contract = await Contract.findById(id);
   if (!contract) {
@@ -202,8 +222,11 @@ export const signContract = catchAsync(async (req: AuthRequest, res: Response, n
   }
 
   // Check if user is part of the contract
-  const isParticipant = [contract.client.toString(), contract.freelancer.toString()]
-    .includes(req.user._id.toString());
+  const clientId = typeof contract.client === 'object' ? contract.client._id : contract.client;
+  const freelancerId = typeof contract.freelancer === 'object' ? contract.freelancer._id : contract.freelancer;
+  
+  const isParticipant = [clientId.toString(), freelancerId.toString()]
+    .includes(userId.toString());
 
   if (!isParticipant) {
     return next(new AppError('You are not authorized to sign this contract', 403));
@@ -211,7 +234,7 @@ export const signContract = catchAsync(async (req: AuthRequest, res: Response, n
 
   // Check if user already signed
   const existingSignature = contract.signatures.find(
-    (sig: any) => sig.signedBy.toString() === req.user._id.toString()
+    (sig: any) => sig.signedBy.toString() === userId.toString()
   );
 
   if (existingSignature) {
@@ -220,12 +243,12 @@ export const signContract = catchAsync(async (req: AuthRequest, res: Response, n
 
   // Create signature
   const signatureData = {
-    signedBy: req.user._id,
+    signedBy: userId,
     signedAt: new Date(),
     ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
     userAgent: req.get('User-Agent') || 'unknown',
     signatureHash: crypto.createHash('sha256')
-      .update(`${req.user._id}-${Date.now()}-${req.ip}`)
+      .update(`${userId}-${Date.now()}-${req.ip}`)
       .digest('hex'),
   };
 
@@ -257,7 +280,12 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
     return next(new AppError('Contract not found', 404));
   }
 
-  if (!contract.canSubmitMilestone(milestoneId, req.user._id.toString())) {
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  if (!contract.canSubmitMilestone(milestoneId, userId.toString())) {
     return next(new AppError('You cannot submit this milestone', 403));
   }
 
@@ -325,7 +353,12 @@ export const approveMilestone = catchAsync(async (req: AuthRequest, res: Respons
     return next(new AppError('Contract not found', 404));
   }
 
-  if (!contract.canApproveMilestone(milestoneId, req.user._id.toString())) {
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  if (!contract.canApproveMilestone(milestoneId, userId.toString())) {
     return next(new AppError('You cannot approve this milestone', 403));
   }
 
@@ -389,7 +422,12 @@ export const rejectMilestone = catchAsync(async (req: AuthRequest, res: Response
     return next(new AppError('Contract not found', 404));
   }
 
-  if (!contract.canApproveMilestone(milestoneId, req.user._id.toString())) {
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  if (!contract.canApproveMilestone(milestoneId, userId.toString())) {
     return next(new AppError('You cannot reject this milestone', 403));
   }
 
@@ -591,5 +629,164 @@ export const cancelContract = catchAsync(async (req: AuthRequest, res: Response,
   res.json({
     status: 'success',
     message: 'Contract cancelled successfully',
+  });
+});
+
+export const createDispute = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const { reason, description, evidence } = req.body;
+
+  const contract = await Contract.findById(id);
+  if (!contract) {
+    return next(new AppError('Contract not found', 404));
+  }
+
+  // Check if user is part of the contract
+  const isParticipant = [contract.client.toString(), contract.freelancer.toString()]
+    .includes(req.user._id.toString());
+
+  if (!isParticipant) {
+    return next(new AppError('You are not authorized to create a dispute for this contract', 403));
+  }
+
+  if (contract.status === 'disputed') {
+    return next(new AppError('Contract is already in dispute', 400));
+  }
+
+  // Update contract status to disputed
+  contract.status = 'disputed';
+
+  // Add dispute amendment for record keeping
+  contract.amendments.push({
+    type: 'scope_change',
+    description: `Dispute created: ${description}`,
+    proposedBy: req.user._id,
+    changes: { 
+      status: 'disputed',
+      disputeReason: reason,
+      evidence: evidence,
+    },
+    reason: reason,
+    status: 'pending',
+  } as any);
+
+  await contract.save();
+
+  // Send notification to other party
+  try {
+    const otherPartyId = contract.client.toString() === req.user._id.toString() 
+      ? contract.freelancer.toString() 
+      : contract.client.toString();
+    
+    const user = await User.findById(req.user._id);
+    const userName = `${user?.profile.firstName} ${user?.profile.lastName}`;
+    
+    await notificationService.notifyContractDispute(
+      otherPartyId,
+      userName,
+      contract._id.toString(),
+      reason
+    );
+  } catch (error) {
+    console.error('Failed to send dispute notification:', error);
+  }
+
+  res.json({
+    status: 'success',
+    message: 'Dispute created successfully',
+    data: {
+      contract,
+    },
+  });
+});
+
+export const pauseContract = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const { reason } = req.body;
+
+  const contract = await Contract.findById(id);
+  if (!contract) {
+    return next(new AppError('Contract not found', 404));
+  }
+
+  // Check if user is part of the contract
+  const isParticipant = [contract.client.toString(), contract.freelancer.toString()]
+    .includes(req.user._id.toString());
+
+  if (!isParticipant) {
+    return next(new AppError('You are not authorized to pause this contract', 403));
+  }
+
+  if (contract.status !== 'active') {
+    return next(new AppError('Only active contracts can be paused', 400));
+  }
+
+  contract.status = 'paused';
+
+  // Add pause amendment for record keeping
+  contract.amendments.push({
+    type: 'scope_change',
+    description: 'Contract paused',
+    proposedBy: req.user._id,
+    changes: { status: 'paused' },
+    reason: reason || 'Contract paused by user',
+    status: 'accepted',
+    respondedAt: new Date(),
+    respondedBy: req.user._id,
+  } as any);
+
+  await contract.save();
+
+  res.json({
+    status: 'success',
+    message: 'Contract paused successfully',
+    data: {
+      contract,
+    },
+  });
+});
+
+export const resumeContract = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+
+  const contract = await Contract.findById(id);
+  if (!contract) {
+    return next(new AppError('Contract not found', 404));
+  }
+
+  // Check if user is part of the contract
+  const isParticipant = [contract.client.toString(), contract.freelancer.toString()]
+    .includes(req.user._id.toString());
+
+  if (!isParticipant) {
+    return next(new AppError('You are not authorized to resume this contract', 403));
+  }
+
+  if (contract.status !== 'paused') {
+    return next(new AppError('Only paused contracts can be resumed', 400));
+  }
+
+  contract.status = 'active';
+
+  // Add resume amendment for record keeping
+  contract.amendments.push({
+    type: 'scope_change',
+    description: 'Contract resumed',
+    proposedBy: req.user._id,
+    changes: { status: 'active' },
+    reason: 'Contract resumed by user',
+    status: 'accepted',
+    respondedAt: new Date(),
+    respondedBy: req.user._id,
+  } as any);
+
+  await contract.save();
+
+  res.json({
+    status: 'success',
+    message: 'Contract resumed successfully',
+    data: {
+      contract,
+    },
   });
 });

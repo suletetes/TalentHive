@@ -3,19 +3,18 @@ import Stripe from 'stripe';
 import { Transaction } from '@/models/Transaction';
 import { Contract } from '@/models/Contract';
 import { PlatformSettings } from '@/models/PlatformSettings';
-import { AuthRequest } from '@/types/auth';
 import { notificationService } from '@/services/notification.service';
 import { sendEmail } from '@/utils/email.resend';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2023-10-16',
 });
 
 // Create payment intent
 export const createPaymentIntent = async (req: Request, res: Response) => {
   try {
     const { contractId, milestoneId } = req.body;
-    const userId = (req as AuthRequest).user._id;
+    const userId = req.user?._id;
 
     // Find contract and validate
     const contract = await Contract.findById(contractId)
@@ -30,7 +29,10 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
     }
 
     // Verify user is the client
-    if (contract.client._id.toString() !== userId.toString()) {
+    const clientId = typeof contract.client === 'object' 
+      ? ((contract.client as any)._id?.toString() || (contract.client as any).toString())
+      : (contract.client as any).toString();
+    if (clientId !== userId?.toString()) {
       return res.status(403).json({
         status: 'error',
         message: 'Only the client can make payments',
@@ -38,7 +40,7 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
     }
 
     // Find milestone
-    const milestone = contract.milestones.id(milestoneId);
+    const milestone = (contract.milestones as any).id(milestoneId);
     if (!milestone) {
       return res.status(404).json({
         status: 'error',
@@ -79,32 +81,35 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
 
     // Calculate commission
     let commission = 0;
-    if (settings.commission.type === 'percentage') {
-      commission = (milestone.amount * settings.commission.percentage) / 100;
-    } else {
-      commission = settings.commission.percentage;
-    }
+    const commissionRate = settings.commissionRate || 10;
+    commission = (milestone.amount * commissionRate) / 100;
 
     // Apply min/max limits
-    if (settings.commission.minimumAmount > 0 && commission < settings.commission.minimumAmount) {
-      commission = settings.commission.minimumAmount;
+    if (settings.minCommission > 0 && commission < settings.minCommission) {
+      commission = settings.minCommission;
     }
-    if (settings.commission.maximumAmount > 0 && commission > settings.commission.maximumAmount) {
-      commission = settings.commission.maximumAmount;
+    if (settings.maxCommission > 0 && commission > settings.maxCommission) {
+      commission = settings.maxCommission;
     }
 
     const freelancerAmount = milestone.amount - commission;
 
     // Create Stripe payment intent
+    const freelancerId = typeof contract.freelancer === 'object'
+      ? ((contract.freelancer as any)._id?.toString() || (contract.freelancer as any).toString())
+      : (contract.freelancer as any).toString();
+    
+    const clientObj = typeof contract.client === 'object' ? contract.client : null;
+    
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(milestone.amount * 100), // Convert to cents
-      currency: settings.payment.currency.toLowerCase(),
-      customer: (contract.client as any).stripeCustomerId,
+      currency: (settings.currency || 'USD').toLowerCase(),
+      customer: (clientObj as any)?.stripeCustomerId,
       metadata: {
         contractId: contractId.toString(),
         milestoneId: milestoneId.toString(),
-        clientId: contract.client._id.toString(),
-        freelancerId: contract.freelancer._id.toString(),
+        clientId: clientId.toString(),
+        freelancerId: freelancerId,
         commission: commission.toString(),
         freelancerAmount: freelancerAmount.toString(),
       },
@@ -120,8 +125,9 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
       freelancerAmount,
       status: 'pending',
       stripePaymentIntentId: paymentIntent.id,
-      client: contract.client._id,
-      freelancer: contract.freelancer._id,
+      client: clientId.toString(),
+      freelancer: freelancerId,
+      currency: (settings.currency || 'USD').toUpperCase(),
     });
 
     res.status(200).json({
@@ -133,7 +139,7 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
           amount: milestone.amount,
           commission,
           freelancerAmount,
-          commissionPercentage: settings.commission.percentage,
+          commissionPercentage: settings.commissionRate,
         },
       },
     });
@@ -174,8 +180,7 @@ export const confirmPayment = async (req: Request, res: Response) => {
       });
     }
 
-    transaction.status = 'processing';
-    transaction.paidAt = new Date();
+    transaction.status = 'held_in_escrow';
     await transaction.save();
 
     // Update milestone status
@@ -184,7 +189,7 @@ export const confirmPayment = async (req: Request, res: Response) => {
       .populate('freelancer', 'email profile');
 
     if (contract) {
-      const milestone = contract.milestones.id(transaction.milestone);
+      const milestone = (contract.milestones as any).id(transaction.milestone);
       if (milestone) {
         milestone.status = 'paid';
         milestone.paidAt = new Date();
@@ -193,8 +198,12 @@ export const confirmPayment = async (req: Request, res: Response) => {
 
       // Create notifications
       try {
+        const freelancerObj = contract.freelancer as any;
+        const freelancerId = typeof freelancerObj === 'object' && freelancerObj._id
+          ? freelancerObj._id.toString()
+          : freelancerObj.toString();
         await notificationService.notifyPaymentReceived(
-          contract.freelancer._id.toString(),
+          freelancerId,
           transaction.amount,
           contract._id.toString()
         );
@@ -263,36 +272,37 @@ export const releasePayment = async (req: Request, res: Response) => {
       });
     }
 
-    if (transaction.status !== 'processing') {
+    if (transaction.status !== 'held_in_escrow') {
       return res.status(400).json({
         status: 'error',
-        message: 'Transaction is not in processing status',
+        message: 'Transaction is not in escrow status',
       });
     }
 
     // Transfer to freelancer's Stripe account
-    if ((transaction.freelancer as any).stripeConnectedAccountId) {
-      const transfer = await stripe.transfers.create({
+    const freelancerObj = transaction.freelancer as any;
+    if (freelancerObj.stripeConnectedAccountId) {
+      await stripe.transfers.create({
         amount: Math.round(transaction.freelancerAmount * 100),
-        currency: 'usd',
-        destination: (transaction.freelancer as any).stripeConnectedAccountId,
+        currency: (transaction.currency || 'USD').toLowerCase(),
+        destination: freelancerObj.stripeConnectedAccountId,
         metadata: {
           transactionId: transaction._id.toString(),
           contractId: transaction.contract.toString(),
         },
       });
-
-      transaction.stripeTransferId = transfer.id;
     }
 
-    transaction.status = 'completed';
+    transaction.status = 'released';
     transaction.releasedAt = new Date();
     await transaction.save();
 
     // Create notification
     try {
+      const freelancerObj = transaction.freelancer as any;
+      const freelancerId = typeof freelancerObj._id === 'object' ? freelancerObj._id.toString() : freelancerObj._id;
       await notificationService.notifyEscrowReleased(
-        transaction.freelancer._id.toString(),
+        freelancerId,
         transaction.freelancerAmount,
         transaction.contract.toString()
       );
@@ -345,7 +355,14 @@ export const releasePayment = async (req: Request, res: Response) => {
 // Get transactions
 export const getTransactions = async (req: Request, res: Response) => {
   try {
-    const userId = (req as AuthRequest).user._id;
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
+
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const skip = (page - 1) * limit;
@@ -390,7 +407,13 @@ export const getTransactions = async (req: Request, res: Response) => {
 // Get user balance
 export const getBalance = async (req: Request, res: Response) => {
   try {
-    const userId = (req as AuthRequest).user._id;
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const completed = await Transaction.aggregate([
       {
@@ -464,19 +487,22 @@ export const refundPayment = async (req: Request, res: Response) => {
     }
 
     // Create refund in Stripe
-    const refund = await stripe.refunds.create({
+    await stripe.refunds.create({
       payment_intent: transaction.stripePaymentIntentId,
       reason: 'requested_by_customer',
     });
 
     transaction.status = 'refunded';
+    transaction.refundedAt = new Date();
     transaction.failureReason = reason || 'Refund requested';
     await transaction.save();
 
     // Create notifications
     try {
+      const clientObj = transaction.client as any;
+      const clientId = typeof clientObj._id === 'object' ? clientObj._id.toString() : clientObj._id;
       await notificationService.notifySystem(
-        transaction.client.toString(),
+        clientId,
         'Payment Refunded',
         `Payment of ${transaction.amount} has been refunded`,
         '/dashboard/transactions',
