@@ -15,7 +15,7 @@ import {
   StepLabel,
 } from '@mui/material';
 import { Mail as MailIcon, Phone as PhoneIcon, Badge as BadgeIcon } from '@mui/icons-material';
-import { useUsers } from '@/hooks/api/useUsers';
+import { useAuth } from '@/hooks/useAuth';
 
 const steps = ['Email Verification', 'Phone Verification', 'Identity Verification'];
 
@@ -26,7 +26,7 @@ export const VerificationPage: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const { data: user } = useUsers();
+  const { user } = useAuth();
 
   const handleEmailVerification = async () => {
     setIsLoading(true);

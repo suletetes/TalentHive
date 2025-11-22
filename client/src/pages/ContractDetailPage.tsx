@@ -24,7 +24,10 @@ import {
   Download as DownloadIcon,
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useContract } from '@/hooks/api/useContracts';
 import { ContractTimeline } from '@/components/contracts/ContractTimeline';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -47,61 +50,7 @@ export const ContractDetailPage: React.FC = () => {
   const [amendmentDialogOpen, setAmendmentDialogOpen] = useState(false);
   const [amendmentReason, setAmendmentReason] = useState('');
 
-  // Mock data - replace with actual API call
-  const contract = {
-    _id: id,
-    title: 'Website Development Project',
-    client: { _id: '1', profile: { firstName: 'John', lastName: 'Doe' } },
-    freelancer: { _id: '2', profile: { firstName: 'Jane', lastName: 'Smith' } },
-    totalAmount: 5000,
-    status: 'active',
-    startDate: '2024-01-01',
-    endDate: '2024-03-31',
-    progress: 60,
-    milestones: [
-      {
-        _id: '1',
-        title: 'Design & Wireframes',
-        description: 'Create design mockups and wireframes',
-        amount: 1000,
-        dueDate: '2024-01-31',
-        status: 'paid',
-        approvedAt: '2024-01-30',
-      },
-      {
-        _id: '2',
-        title: 'Frontend Development',
-        description: 'Develop frontend components',
-        amount: 2000,
-        dueDate: '2024-02-28',
-        status: 'submitted',
-        submittedAt: '2024-02-27',
-      },
-      {
-        _id: '3',
-        title: 'Backend Integration',
-        description: 'Integrate with backend APIs',
-        amount: 1500,
-        dueDate: '2024-03-15',
-        status: 'pending',
-      },
-      {
-        _id: '4',
-        title: 'Testing & Deployment',
-        description: 'QA testing and production deployment',
-        amount: 500,
-        dueDate: '2024-03-31',
-        status: 'pending',
-      },
-    ],
-    terms: {
-      paymentTerms: 'Payment upon milestone completion',
-      cancellationPolicy: '7 days notice required',
-      intellectualProperty: 'Client owns all work product',
-      confidentiality: 'Both parties maintain confidentiality',
-      disputeResolution: 'Platform dispute resolution',
-    },
-  };
+  const { data: contract, isLoading, error, refetch } = useContract(id || '');
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -123,6 +72,18 @@ export const ContractDetailPage: React.FC = () => {
     setAmendmentDialogOpen(false);
     setAmendmentReason('');
   };
+
+  if (isLoading) {
+    return <LoadingSpinner message="Loading contract details..." />;
+  }
+
+  if (error || !contract) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <ErrorState error={error} onRetry={refetch} />
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>

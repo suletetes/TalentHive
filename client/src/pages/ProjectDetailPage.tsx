@@ -319,6 +319,34 @@ export const ProjectDetailPage = () => {
             </Paper>
           )}
 
+          {project.organization && (
+            <Paper sx={{ p: 3, mb: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Organization
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2} mb={2}>
+                {project.organization?.logo && (
+                  <Avatar
+                    src={project.organization.logo}
+                    sx={{ width: 56, height: 56 }}
+                  >
+                    {project.organization?.name?.[0]}
+                  </Avatar>
+                )}
+                <Box flex={1}>
+                  <Typography variant="subtitle1" fontWeight="medium">
+                    {project.organization?.name}
+                  </Typography>
+                  {project.organization?.budget && (
+                    <Typography variant="caption" color="text.secondary">
+                      Budget: ${project.organization.budget.spent} / ${project.organization.budget.total}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            </Paper>
+          )}
+
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Project Activity
