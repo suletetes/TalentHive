@@ -10,6 +10,7 @@ import {
   searchProjects,
   getProjectCategories,
   getProjectStats,
+  getMyProjectStats,
   toggleProjectStatus,
 } from '@/controllers/projectController';
 import { authenticate, authorize } from '@/middleware/auth';
@@ -28,7 +29,7 @@ router.use(authenticate);
 // Client-only routes
 router.post('/', authorize('client'), createProjectValidation, createProject);
 router.get('/my/projects', getMyProjects);
-router.get('/my/stats', getProjectStats);
+router.get('/my/stats', getMyProjectStats);
 router.put('/:id', authorize('client'), updateProject);
 router.delete('/:id', authorize('client'), deleteProject);
 router.patch('/:id/status', authorize('client'), toggleProjectStatus);
