@@ -121,8 +121,6 @@ projectSchema.index({ client: 1 });
 projectSchema.index({ status: 1 });
 projectSchema.index({ skills: 1 });
 projectSchema.index({ category: 1 });
-projectSchema.index({ createdAt: -1 });
-projectSchema.index({ budget: 1 });
 projectSchema.index({ visibility: 1, status: 1 });
 projectSchema.index({ isFeatured: 1, createdAt: -1 });
 projectSchema.index({ isDraft: 1 });

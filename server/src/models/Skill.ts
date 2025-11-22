@@ -58,8 +58,7 @@ const skillSchema = new Schema<ISkill>({
 });
 
 // Indexes
-skillSchema.index({ name: 1 });
-skillSchema.index({ slug: 1 });
+// Note: name and slug already have unique indexes from schema definition
 skillSchema.index({ category: 1 });
 skillSchema.index({ isActive: 1 });
 skillSchema.index({ projectCount: -1 });

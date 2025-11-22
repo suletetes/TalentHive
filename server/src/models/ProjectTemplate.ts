@@ -31,7 +31,6 @@ const projectTemplateSchema = new Schema<IProjectTemplate>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     organization: {
       type: Schema.Types.ObjectId,
@@ -52,7 +51,6 @@ const projectTemplateSchema = new Schema<IProjectTemplate>(
     category: {
       type: String,
       required: true,
-      index: true,
     },
     budget: {
       min: { type: Number, required: true, min: 0 },

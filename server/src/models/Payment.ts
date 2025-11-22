@@ -204,8 +204,7 @@ paymentSchema.index({ type: 1 });
 paymentSchema.index({ createdAt: -1 });
 paymentSchema.index({ stripePaymentIntentId: 1 });
 
-escrowAccountSchema.index({ user: 1 });
-escrowAccountSchema.index({ stripeAccountId: 1 });
+// Note: user and stripeAccountId already have unique indexes from schema definition
 escrowAccountSchema.index({ status: 1 });
 
 transactionSchema.index({ payment: 1 });
@@ -213,7 +212,7 @@ transactionSchema.index({ type: 1 });
 transactionSchema.index({ status: 1 });
 transactionSchema.index({ stripeTransactionId: 1 });
 
-paymentWebhookSchema.index({ stripeEventId: 1 });
+// Note: stripeEventId already has unique index from schema definition
 paymentWebhookSchema.index({ processed: 1 });
 paymentWebhookSchema.index({ createdAt: -1 });
 
