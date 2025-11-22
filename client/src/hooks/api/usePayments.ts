@@ -1,102 +1,100 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { paymentsService, ProcessPaymentDto, PayoutRequest } from '@/services/api';
+import { paymentsService, CreatePaymentIntentDto, ConfirmPaymentDto, RefundPaymentDto } from '@/services/api/payments.service';
 
-export const paymentKeys = {
-  all: ['payments'] as const,
-  history: (params?: any) => [...paymentKeys.all, 'history', params] as const,
-  escrow: () => [...paymentKeys.all, 'escrow'] as const,
-  methods: () => [...paymentKeys.all, 'methods'] as const,
+export const transactionKeys = {
+  all: ['transactions'] as const,
+  history: (params?: any) => [...transactionKeys.all, 'history', params] as const,
+  detail: (id: string) => [...transactionKeys.all, 'detail', id] as const,
+  fees: (amount: number) => [...transactionKeys.all, 'fees', amount] as const,
 };
 
-export function usePaymentHistory(params?: {
+export function useTransactionHistory(params?: {
   page?: number;
   limit?: number;
-  startDate?: string;
-  endDate?: string;
+  status?: string;
 }) {
   return useQuery({
-    queryKey: paymentKeys.history(params),
-    queryFn: () => paymentsService.getPaymentHistory(params),
+    queryKey: transactionKeys.history(params),
+    queryFn: () => paymentsService.getTransactionHistory(params),
     staleTime: 2 * 60 * 1000,
   });
 }
 
-export function useEscrowBalance() {
+export function useTransaction(transactionId: string) {
   return useQuery({
-    queryKey: paymentKeys.escrow(),
-    queryFn: () => paymentsService.getEscrowBalance(),
+    queryKey: transactionKeys.detail(transactionId),
+    queryFn: () => paymentsService.getTransaction(transactionId),
     staleTime: 1 * 60 * 1000,
   });
 }
 
-export function usePaymentMethods() {
+export function useCalculateFees(amount: number) {
   return useQuery({
-    queryKey: paymentKeys.methods(),
-    queryFn: () => paymentsService.getPaymentMethods(),
+    queryKey: transactionKeys.fees(amount),
+    queryFn: () => paymentsService.calculateFees(amount),
     staleTime: 5 * 60 * 1000,
+    enabled: amount > 0,
   });
 }
 
-export function useProcessPayment() {
+export function useCreatePaymentIntent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: ProcessPaymentDto) => paymentsService.processPayment(data),
+    mutationFn: (data: CreatePaymentIntentDto) => paymentsService.createPaymentIntent(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: paymentKeys.history() });
-      queryClient.invalidateQueries({ queryKey: paymentKeys.escrow() });
-      toast.success('Payment processed successfully!');
+      queryClient.invalidateQueries({ queryKey: transactionKeys.history() });
+      toast.success('Payment intent created successfully!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Payment failed');
-    },
-  });
-}
-
-export function useRequestPayout() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: PayoutRequest) => paymentsService.requestPayout(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: paymentKeys.escrow() });
-      queryClient.invalidateQueries({ queryKey: paymentKeys.history() });
-      toast.success('Payout requested successfully!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Payout request failed');
+      toast.error(error.response?.data?.message || 'Failed to create payment intent');
     },
   });
 }
 
-export function useAddPaymentMethod() {
+export function useConfirmPayment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { paymentMethodId: string }) =>
-      paymentsService.addPaymentMethod(data),
+    mutationFn: (data: ConfirmPaymentDto) => paymentsService.confirmPayment(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: paymentKeys.methods() });
-      toast.success('Payment method added!');
+      queryClient.invalidateQueries({ queryKey: transactionKeys.history() });
+      toast.success('Payment confirmed and held in escrow!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to add payment method');
+      toast.error(error.response?.data?.message || 'Failed to confirm payment');
     },
   });
 }
 
-export function useRemovePaymentMethod() {
+export function useReleaseEscrow() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (methodId: string) => paymentsService.removePaymentMethod(methodId),
+    mutationFn: (transactionId: string) => paymentsService.releaseEscrow(transactionId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: paymentKeys.methods() });
-      toast.success('Payment method removed!');
+      queryClient.invalidateQueries({ queryKey: transactionKeys.history() });
+      toast.success('Escrow released successfully!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to remove payment method');
+      toast.error(error.response?.data?.message || 'Failed to release escrow');
+    },
+  });
+}
+
+export function useRefundPayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ transactionId, data }: { transactionId: string; data: RefundPaymentDto }) =>
+      paymentsService.refundPayment(transactionId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: transactionKeys.history() });
+      toast.success('Payment refunded successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to refund payment');
     },
   });
 }

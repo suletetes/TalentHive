@@ -95,3 +95,38 @@ export const useRejectMilestone = () => {
     },
   });
 };
+
+export const usePauseContract = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ contractId, data }: { contractId: string; data: any }) =>
+      contractsService.pauseContract(contractId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+    },
+  });
+};
+
+export const useResumeContract = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (contractId: string) => contractsService.resumeContract(contractId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+    },
+  });
+};
+
+export const useCreateDispute = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ contractId, data }: { contractId: string; data: any }) =>
+      contractsService.createDispute(contractId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+    },
+  });
+};
