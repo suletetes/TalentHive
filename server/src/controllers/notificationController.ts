@@ -1,10 +1,10 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Notification } from '@/models/Notification';
 import { AuthRequest } from '@/types/auth';
 import { socketService } from '@/services/socket.service';
 
 // Get user notifications
-export const getNotifications = async (req: Request, res: Response) => {
+export const getNotifications = async (req: AuthRequest, res: Response) => {
   try {
     const userId = (req as AuthRequest).user._id;
     const page = parseInt(req.query.page as string) || 1;
@@ -51,7 +51,7 @@ export const getNotifications = async (req: Request, res: Response) => {
 };
 
 // Get unread notification count
-export const getUnreadCount = async (req: Request, res: Response) => {
+export const getUnreadCount = async (req: AuthRequest, res: Response) => {
   try {
     const userId = (req as AuthRequest).user._id;
 
@@ -74,7 +74,7 @@ export const getUnreadCount = async (req: Request, res: Response) => {
 };
 
 // Mark notification as read
-export const markAsRead = async (req: Request, res: Response) => {
+export const markAsRead = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const userId = (req as AuthRequest).user._id;
@@ -109,7 +109,7 @@ export const markAsRead = async (req: Request, res: Response) => {
 };
 
 // Mark all notifications as read
-export const markAllAsRead = async (req: Request, res: Response) => {
+export const markAllAsRead = async (req: AuthRequest, res: Response) => {
   try {
     const userId = (req as AuthRequest).user._id;
 
@@ -132,7 +132,7 @@ export const markAllAsRead = async (req: Request, res: Response) => {
 };
 
 // Delete notification
-export const deleteNotification = async (req: Request, res: Response) => {
+export const deleteNotification = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const userId = (req as AuthRequest).user._id;

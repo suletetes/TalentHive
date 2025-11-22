@@ -426,3 +426,43 @@ export const sendAdminMessage = async (
     next(new AppError(error.message || 'Failed to send message', 500));
   }
 };
+
+/**
+ * Upload message attachments
+ */
+export const uploadMessageAttachments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+      return next(new AppError('No files uploaded', 400));
+    }
+
+    const { uploadToCloudinary, formatFileSize } = await import('@/utils/fileUpload');
+
+    // Upload all files to Cloudinary
+    const uploadPromises = req.files.map((file) => 
+      uploadToCloudinary(file, 'talenthive/messages')
+    );
+    const results = await Promise.all(uploadPromises);
+
+    const uploadedFiles = results.map((result, index) => ({
+      url: result.url,
+      publicId: result.publicId,
+      filename: req.files![index].originalname,
+      size: req.files![index].size,
+      mimeType: req.files![index].mimetype,
+      type: req.files![index].mimetype.startsWith('image/') ? 'image' : 'document',
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: `${uploadedFiles.length} file(s) uploaded successfully`,
+      data: uploadedFiles,
+    });
+  } catch (error: any) {
+    next(new AppError(error.message || 'Failed to upload attachments', 500));
+  }
+};
