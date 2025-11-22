@@ -1,261 +1,150 @@
 import { AxiosError } from 'axios';
-import { toast } from 'react-hot-toast';
 
-export interface ApiError {
-  message: string;
-  code?: string;
-  field?: string;
-  statusCode?: number;
-  errors?: Array<{ field: string; message: string }>;
-}
-
-export class ErrorHandler {
-  /**
-   * Handle any error and convert it to ApiError format
-   */
-  static handle(error: unknown): ApiError {
-    if (error instanceof AxiosError) {
-      return this.handleAxiosError(error);
+/**
+ * Extract user-friendly error message from API error
+ */
+export const getErrorMessage = (error: unknown): string => {
+  if (error instanceof AxiosError) {
+    // API error response
+    if (error.response?.data?.message) {
+      return error.response.data.message;
     }
-
-    if (error instanceof Error) {
-      return {
-        message: error.message,
-        statusCode: 500,
-        code: 'UNKNOWN_ERROR',
-      };
+    if (error.response?.data?.error) {
+      return error.response.data.error;
     }
-
-    return {
-      message: 'An unexpected error occurred',
-      statusCode: 500,
-      code: 'UNKNOWN_ERROR',
-    };
-  }
-
-  /**
-   * Handle Axios-specific errors
-   */
-  private static handleAxiosError(error: AxiosError): ApiError {
-    const response = error.response;
-
-    // Network error (no response)
-    if (!response) {
-      if (error.code === 'ECONNABORTED') {
-        return {
-          message: 'Request timeout. Please try again.',
-          code: 'TIMEOUT',
-        };
-      }
-
-      return {
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-      };
-    }
-
-    const data = response.data as any;
-
-    // Map HTTP status codes to user-friendly messages
-    switch (response.status) {
-      case 400:
-        return {
-          message: data?.message || 'Invalid request. Please check your input.',
-          code: 'BAD_REQUEST',
-          field: data?.field,
-          errors: data?.errors,
-          statusCode: 400,
-        };
-
-      case 401:
-        return {
-          message: data?.message || 'Please log in to continue',
-          code: 'UNAUTHORIZED',
-          statusCode: 401,
-        };
-
-      case 403:
-        return {
-          message: data?.message || "You don't have permission to perform this action",
-          code: 'FORBIDDEN',
-          statusCode: 403,
-        };
-
-      case 404:
-        return {
-          message: data?.message || 'The requested resource was not found',
-          code: 'NOT_FOUND',
-          statusCode: 404,
-        };
-
-      case 409:
-        return {
-          message: data?.message || 'This resource already exists',
-          code: 'CONFLICT',
-          statusCode: 409,
-        };
-
-      case 422:
-        return {
-          message: data?.message || 'Validation failed. Please check your input.',
-          code: 'VALIDATION_ERROR',
-          field: data?.field,
-          errors: data?.errors,
-          statusCode: 422,
-        };
-
-      case 429:
-        return {
-          message: 'Too many requests. Please try again later.',
-          code: 'RATE_LIMIT',
-          statusCode: 429,
-        };
-
-      case 500:
-        return {
-          message: 'Server error. Please try again later.',
-          code: 'SERVER_ERROR',
-          statusCode: 500,
-        };
-
-      case 502:
-        return {
-          message: 'Service temporarily unavailable. Please try again.',
-          code: 'BAD_GATEWAY',
-          statusCode: 502,
-        };
-
-      case 503:
-        return {
-          message: 'Service under maintenance. Please try again later.',
-          code: 'SERVICE_UNAVAILABLE',
-          statusCode: 503,
-        };
-
-      default:
-        return {
-          message: data?.message || 'An error occurred. Please try again.',
-          code: 'UNKNOWN_ERROR',
-          statusCode: response.status,
-        };
-    }
-  }
-
-  /**
-   * Show error as toast notification
-   */
-  static showToast(error: ApiError, duration = 4000) {
-    toast.error(error.message, {
-      duration,
-      position: 'top-right',
-      style: {
-        maxWidth: '500px',
-      },
-    });
-  }
-
-  /**
-   * Handle error and show toast notification
-   */
-  static handleAndShow(error: unknown, duration?: number): ApiError {
-    const apiError = this.handle(error);
-    this.showToast(apiError, duration);
-    return apiError;
-  }
-
-  /**
-   * Get user-friendly error message
-   */
-  static getMessage(error: unknown): string {
-    return this.handle(error).message;
-  }
-
-  /**
-   * Check if error is a specific type
-   */
-  static isNetworkError(error: unknown): boolean {
-    const apiError = this.handle(error);
-    return apiError.code === 'NETWORK_ERROR' || apiError.code === 'TIMEOUT';
-  }
-
-  static isAuthError(error: unknown): boolean {
-    const apiError = this.handle(error);
-    return apiError.code === 'UNAUTHORIZED' || apiError.code === 'FORBIDDEN';
-  }
-
-  static isValidationError(error: unknown): boolean {
-    const apiError = this.handle(error);
-    return apiError.code === 'VALIDATION_ERROR' || apiError.code === 'BAD_REQUEST';
-  }
-
-  /**
-   * Log error to console (and potentially to monitoring service)
-   */
-  static log(error: unknown, context?: string) {
-    const apiError = this.handle(error);
-
-    console.error('[ErrorHandler]', {
-      context,
-      error: apiError,
-      timestamp: new Date().toISOString(),
-    });
-
-    // TODO: Send to error monitoring service (e.g., Sentry)
-    // if (import.meta.env.PROD) {
-    //   Sentry.captureException(error, { extra: { context, apiError } });
-    // }
-
-    return apiError;
-  }
-
-  static isServerError(error: ApiError): boolean {
-    return (error.statusCode || 0) >= 500;
-  }
-
-  static logError(error: unknown, context?: string): ApiError {
-    const apiError = this.handle(error);
     
-    if (import.meta.env.DEV) {
-      console.group(`🚨 Error ${context ? `in ${context}` : ''}`);
-      console.error('Original error:', error);
-      console.error('Processed error:', apiError);
-      console.groupEnd();
+    // HTTP status errors
+    if (error.response?.status === 401) {
+      return 'Your session has expired. Please login again.';
     }
-
-    return apiError;
-  }
-}
-
-// Validation error helper
-export class ValidationErrorHandler {
-  static extractFieldErrors(error: ApiError): Record<string, string> {
-    const fieldErrors: Record<string, string> = {};
-
-    if (error.field && error.message) {
-      fieldErrors[error.field] = error.message;
+    if (error.response?.status === 403) {
+      return 'You do not have permission to perform this action.';
     }
-
-    if (error.details && Array.isArray(error.details)) {
-      error.details.forEach((detail: any) => {
-        if (detail.field && detail.message) {
-          fieldErrors[detail.field] = detail.message;
-        }
-      });
+    if (error.response?.status === 404) {
+      return 'The requested resource was not found.';
     }
-
-    if (error.details && typeof error.details === 'object' && !Array.isArray(error.details)) {
-      Object.entries(error.details).forEach(([field, message]) => {
-        if (typeof message === 'string') {
-          fieldErrors[field] = message;
-        }
-      });
+    if (error.response?.status === 500) {
+      return 'A server error occurred. Please try again later.';
     }
-
-    return fieldErrors;
+    
+    // Network errors
+    if (error.code === 'ERR_NETWORK') {
+      return 'Network error. Please check your internet connection.';
+    }
+    if (error.code === 'ECONNABORTED') {
+      return 'Request timeout. Please try again.';
+    }
+    
+    return error.message || 'An unexpected error occurred';
   }
 
-  static getFieldError(error: ApiError, fieldName: string): string | undefined {
-    const fieldErrors = this.extractFieldErrors(error);
-    return fieldErrors[fieldName];
+  if (error instanceof Error) {
+    return error.message;
   }
-}
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  return 'An unexpected error occurred';
+};
+
+/**
+ * Log error for debugging (in development) or tracking (in production)
+ */
+export const logError = (error: unknown, context?: string) => {
+  const errorMessage = getErrorMessage(error);
+  const timestamp = new Date().toISOString();
+
+  if (process.env.NODE_ENV === 'development') {
+    console.error(`[${timestamp}] Error${context ? ` in ${context}` : ''}:`, error);
+  } else {
+    // In production, send to error tracking service
+    // Example: Sentry.captureException(error, { tags: { context } });
+    console.error(`[${timestamp}] ${errorMessage}`);
+  }
+};
+
+/**
+ * Handle async errors with try-catch wrapper
+ */
+export const handleAsyncError = async <T>(
+  asyncFn: () => Promise<T>,
+  context?: string
+): Promise<[T | null, string | null]> => {
+  try {
+    const result = await asyncFn();
+    return [result, null];
+  } catch (error) {
+    logError(error, context);
+    return [null, getErrorMessage(error)];
+  }
+};
+
+/**
+ * Retry failed async operations
+ */
+export const retryAsync = async <T>(
+  asyncFn: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000
+): Promise<T> => {
+  let lastError: unknown;
+
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await asyncFn();
+    } catch (error) {
+      lastError = error;
+      if (i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+      }
+    }
+  }
+
+  throw lastError;
+};
+
+/**
+ * Validate form data and return errors
+ */
+export const validateFormData = (
+  data: Record<string, any>,
+  rules: Record<string, (value: any) => string | null>
+): Record<string, string> => {
+  const errors: Record<string, string> = {};
+
+  Object.entries(rules).forEach(([field, validator]) => {
+    const error = validator(data[field]);
+    if (error) {
+      errors[field] = error;
+    }
+  });
+
+  return errors;
+};
+
+/**
+ * Check if error is a specific type
+ */
+export const isNetworkError = (error: unknown): boolean => {
+  return error instanceof AxiosError && error.code === 'ERR_NETWORK';
+};
+
+export const isAuthError = (error: unknown): boolean => {
+  return error instanceof AxiosError && error.response?.status === 401;
+};
+
+export const isForbiddenError = (error: unknown): boolean => {
+  return error instanceof AxiosError && error.response?.status === 403;
+};
+
+export const isNotFoundError = (error: unknown): boolean => {
+  return error instanceof AxiosError && error.response?.status === 404;
+};
+
+export const isServerError = (error: unknown): boolean => {
+  return error instanceof AxiosError && 
+    error.response?.status !== undefined && 
+    error.response.status >= 500;
+};
