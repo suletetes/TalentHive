@@ -7,6 +7,12 @@ interface AuthRequest extends Request {
 
 export const authorizeRoles = (...roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
+    console.log('🔐 Role Authorization Check:');
+    console.log('  User:', req.user?.email);
+    console.log('  User Role:', req.user?.role);
+    console.log('  User Roles Array:', req.user?.roles);
+    console.log('  Required Roles:', roles);
+    
     if (!req.user) {
       return next(new AppError('Not authenticated', 401));
     }
@@ -14,6 +20,9 @@ export const authorizeRoles = (...roles: string[]) => {
     // Check if user has any of the required roles
     const userRoles = req.user.roles || [req.user.role];
     const hasRole = userRoles.some((role: string) => roles.includes(role));
+
+    console.log('  User Roles to Check:', userRoles);
+    console.log('  Has Permission:', hasRole);
 
     if (!hasRole) {
       return next(
