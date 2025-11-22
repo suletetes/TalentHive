@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { Conversation } from '@/models/Conversation';
 import { Message } from '@/models/Message';
+import { User } from '@/models/User';
 import { AppError } from '@/middleware/errorHandler';
 import { socketService } from '@/services/socket.service';
+import { notificationService } from '@/services/notification.service';
 
 /**
  * Get all conversations for the authenticated user
@@ -173,13 +175,28 @@ export const sendMessage = async (
 
     await conversation.save();
 
-    // Emit socket event for real-time delivery
-    conversation.participants.forEach((participantId) => {
+    // Emit socket event for real-time delivery and send notifications
+    const sender = await User.findById(userId);
+    const senderName = `${sender?.profile.firstName} ${sender?.profile.lastName}`;
+
+    conversation.participants.forEach(async (participantId) => {
       if (participantId.toString() !== userId.toString()) {
         socketService.emitToUser(participantId.toString(), 'new_message', {
           conversationId,
           message,
         });
+
+        // Send notification
+        try {
+          await notificationService.notifyNewMessage(
+            participantId.toString(),
+            userId,
+            senderName,
+            conversationId
+          );
+        } catch (error) {
+          console.error('Failed to send message notification:', error);
+        }
       }
     });
 
@@ -240,5 +257,172 @@ export const markAsRead = async (
     });
   } catch (error: any) {
     next(new AppError(error.message || 'Failed to mark messages as read', 500));
+  }
+};
+
+
+/**
+ * Get all conversations (Admin only)
+ */
+export const getAllConversations = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { page = 1, limit = 20, search } = req.query;
+    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+
+    let query: any = {};
+    
+    if (search) {
+      // Search by participant name or email
+      const users = await import('@/models/User').then(m => m.User);
+      const searchedUsers = await users.find({
+        $or: [
+          { 'profile.firstName': { $regex: search, $options: 'i' } },
+          { 'profile.lastName': { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+        ],
+      }).select('_id');
+      
+      const userIds = searchedUsers.map(u => u._id);
+      query.participants = { $in: userIds };
+    }
+
+    const [conversations, total] = await Promise.all([
+      Conversation.find(query)
+        .populate('participants', 'profile email role')
+        .populate('lastMessage')
+        .sort({ lastMessageAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit as string)),
+      Conversation.countDocuments(query),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: conversations,
+      pagination: {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        total,
+        pages: Math.ceil(total / parseInt(limit as string)),
+      },
+    });
+  } catch (error: any) {
+    next(new AppError(error.message || 'Failed to fetch conversations', 500));
+  }
+};
+
+/**
+ * Admin create conversation with any user
+ */
+export const adminCreateConversation = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId } = req.body;
+    const adminId = req.user!._id;
+
+    if (!userId) {
+      return next(new AppError('User ID is required', 400));
+    }
+
+    // Check if conversation already exists
+    let conversation = await Conversation.findOne({
+      participants: { $all: [adminId, userId] },
+    })
+      .populate('participants', 'profile email role')
+      .populate('lastMessage');
+
+    if (!conversation) {
+      // Create new conversation
+      conversation = await Conversation.create({
+        participants: [adminId, userId],
+        unreadCount: new Map(),
+      });
+
+      await conversation.populate('participants', 'profile email role');
+    }
+
+    res.status(200).json({
+      success: true,
+      data: conversation,
+    });
+  } catch (error: any) {
+    next(new AppError(error.message || 'Failed to create conversation', 500));
+  }
+};
+
+/**
+ * Send admin message (with priority)
+ */
+export const sendAdminMessage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { conversationId } = req.params;
+    const { content, priority = 'normal' } = req.body;
+    const userId = req.user!._id.toString();
+
+    if (!content || content.trim().length === 0) {
+      return next(new AppError('Message content is required', 400));
+    }
+
+    // Verify conversation exists
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return next(new AppError('Conversation not found', 404));
+    }
+
+    // Create message with admin flag
+    const message = await Message.create({
+      conversation: conversationId,
+      sender: userId,
+      content: content.trim(),
+      isAdminMessage: true,
+      priority,
+      readBy: [userId],
+    });
+
+    await message.populate('sender', 'profile role');
+
+    // Update conversation
+    conversation.lastMessage = message._id as any;
+    conversation.lastMessageAt = new Date();
+
+    // Update unread count for other participants
+    conversation.participants.forEach((participantId) => {
+      if (participantId.toString() !== userId.toString()) {
+        const currentCount = conversation.unreadCount.get(participantId.toString()) || 0;
+        conversation.unreadCount.set(participantId.toString(), currentCount + 1);
+      }
+    });
+
+    await conversation.save();
+
+    // Emit socket event for real-time delivery
+    conversation.participants.forEach((participantId) => {
+      if (participantId.toString() !== userId.toString()) {
+        socketService.emitToUser(participantId.toString(), 'new_message', {
+          conversationId,
+          message,
+          isAdminMessage: true,
+          priority,
+        });
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      data: message,
+    });
+  } catch (error: any) {
+    next(new AppError(error.message || 'Failed to send message', 500));
   }
 };
