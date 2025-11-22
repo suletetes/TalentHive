@@ -1,23 +1,22 @@
-import { Router } from 'express';
+import express from 'express';
 import {
   getNotifications,
+  getUnreadCount,
   markAsRead,
   markAllAsRead,
   deleteNotification,
-  getPreferences,
-  updatePreferences,
 } from '@/controllers/notificationController';
 import { authenticate } from '@/middleware/auth';
 
-const router = Router();
+const router = express.Router();
 
+// All routes require authentication
 router.use(authenticate);
 
 router.get('/', getNotifications);
-router.post('/:notificationId/read', markAsRead);
-router.post('/read-all', markAllAsRead);
-router.delete('/:notificationId', deleteNotification);
-router.get('/preferences', getPreferences);
-router.put('/preferences', updatePreferences);
+router.get('/unread-count', getUnreadCount);
+router.put('/:id/read', markAsRead);
+router.put('/mark-all-read', markAllAsRead);
+router.delete('/:id', deleteNotification);
 
 export default router;

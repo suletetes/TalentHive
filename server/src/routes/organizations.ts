@@ -1,37 +1,30 @@
-import { Router } from 'express';
-import { authenticate, authorize } from '@/middleware/auth';
+import express from 'express';
 import {
   createOrganization,
-  getOrganization,
+  getOrganizations,
+  getOrganizationById,
   updateOrganization,
-  inviteMember,
+  deleteOrganization,
+  addMember,
   removeMember,
-  updateMemberRole,
-  createBudgetApproval,
-  reviewBudgetApproval,
-  getBudgetApprovals,
-  getUserOrganizations,
+  updateBudget,
+  getOrganizationProjects,
 } from '@/controllers/organizationController';
+import { authenticate } from '@/middleware/auth';
 
-const router = Router();
+const router = express.Router();
 
 // All routes require authentication
 router.use(authenticate);
 
-// Organization routes
-router.post('/', authorize('client'), createOrganization);
-router.get('/my-organizations', getUserOrganizations);
-router.get('/:organizationId', getOrganization);
-router.patch('/:organizationId', updateOrganization);
-
-// Member management
-router.post('/:organizationId/members/invite', inviteMember);
-router.delete('/:organizationId/members/:memberId', removeMember);
-router.patch('/:organizationId/members/:memberId/role', updateMemberRole);
-
-// Budget approval routes
-router.post('/budget-approvals', createBudgetApproval);
-router.get('/budget-approvals', getBudgetApprovals);
-router.patch('/budget-approvals/:approvalId/review', reviewBudgetApproval);
+router.post('/', createOrganization);
+router.get('/', getOrganizations);
+router.get('/:id', getOrganizationById);
+router.put('/:id', updateOrganization);
+router.delete('/:id', deleteOrganization);
+router.post('/:id/members', addMember);
+router.delete('/:id/members/:userId', removeMember);
+router.put('/:id/budget', updateBudget);
+router.get('/:id/projects', getOrganizationProjects);
 
 export default router;

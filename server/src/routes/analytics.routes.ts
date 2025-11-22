@@ -1,25 +1,19 @@
 import express from 'express';
-import {
-  getUserGrowth,
-  getRevenueMetrics,
-  getProjectStats,
-  getTopUsers,
-  getCategoryDistribution
-} from '@/controllers/analyticsController';
-import { protect } from '@/middleware/auth';
-import { authorizeRoles } from '@/middleware/roleAuth';
+import { analyticsController } from '@/controllers/analyticsController';
+import { auth } from '@/middleware/auth';
+import { roleAuth } from '@/middleware/roleAuth';
 
 const router = express.Router();
 
 // All analytics routes require authentication and admin role
-router.use(protect);
-router.use(authorizeRoles('admin'));
+router.use(auth);
+router.use(roleAuth(['admin']));
 
 // Analytics endpoints
-router.get('/user-growth', getUserGrowth);
-router.get('/revenue', getRevenueMetrics);
-router.get('/projects', getProjectStats);
-router.get('/top-users', getTopUsers);
-router.get('/categories', getCategoryDistribution);
+router.get('/revenue', analyticsController.getRevenueAnalytics);
+router.get('/user-growth', analyticsController.getUserGrowthAnalytics);
+router.get('/projects', analyticsController.getProjectStats);
+router.get('/payments', analyticsController.getPaymentAnalytics);
+router.get('/dashboard', analyticsController.getDashboardOverview);
 
 export default router;
