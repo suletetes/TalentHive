@@ -1645,630 +1645,6 @@
                               ]
                  },
                  {
-                     "name":  "Messages",
-                     "item":  [
-                                  {
-                                      "name":  "Get Conversations",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/conversations",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "conversations"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Get or Create Conversation",
-                                      "request":  {
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/conversations",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "conversations"
-                                                                           ]
-                                                              },
-                                                      "method":  "POST",
-                                                      "body":  {
-                                                                   "raw":  "{\"participantId\":\"{{userId}}\"}",
-                                                                   "options":  {
-                                                                                   "raw":  {
-                                                                                               "language":  "json"
-                                                                                           }
-                                                                               },
-                                                                   "mode":  "raw"
-                                                               },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Get Messages",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/conversations/{{conversationId}}/messages",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "conversations",
-                                                                               "{{conversationId}}",
-                                                                               "messages"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Send Message",
-                                      "request":  {
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/conversations/{{conversationId}}/messages",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "conversations",
-                                                                               "{{conversationId}}",
-                                                                               "messages"
-                                                                           ]
-                                                              },
-                                                      "method":  "POST",
-                                                      "body":  {
-                                                                   "raw":  "{\"content\":\"Hello, how are you?\"}",
-                                                                   "options":  {
-                                                                                   "raw":  {
-                                                                                               "language":  "json"
-                                                                                           }
-                                                                               },
-                                                                   "mode":  "raw"
-                                                               },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Edit Message",
-                                      "request":  {
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/messages/{{messageId}}",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "messages",
-                                                                               "{{messageId}}"
-                                                                           ]
-                                                              },
-                                                      "method":  "PUT",
-                                                      "body":  {
-                                                                   "raw":  "{\"content\":\"Updated message\"}",
-                                                                   "options":  {
-                                                                                   "raw":  {
-                                                                                               "language":  "json"
-                                                                                           }
-                                                                               },
-                                                                   "mode":  "raw"
-                                                               },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Delete Message",
-                                      "request":  {
-                                                      "method":  "DELETE",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/messages/{{messageId}}",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "messages",
-                                                                               "{{messageId}}"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Mark as Read",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/conversations/{{conversationId}}/read",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "conversations",
-                                                                               "{{conversationId}}",
-                                                                               "read"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Add Reaction",
-                                      "request":  {
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/messages/{{messageId}}/reactions",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "messages",
-                                                                               "{{messageId}}",
-                                                                               "reactions"
-                                                                           ]
-                                                              },
-                                                      "method":  "POST",
-                                                      "body":  {
-                                                                   "raw":  "{\"emoji\":\"\"}",
-                                                                   "options":  {
-                                                                                   "raw":  {
-                                                                                               "language":  "json"
-                                                                                           }
-                                                                               },
-                                                                   "mode":  "raw"
-                                                               },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Remove Reaction",
-                                      "request":  {
-                                                      "method":  "DELETE",
-                                                      "url":  {
-                                                                  "query":  [
-                                                                                {
-                                                                                    "key":  "emoji",
-                                                                                    "value":  ""
-                                                                                }
-                                                                            ],
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/messages/{{messageId}}/reactions?emoji=",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "messages",
-                                                                               "{{messageId}}",
-                                                                               "reactions"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Emit Typing",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/conversations/{{conversationId}}/typing",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "conversations",
-                                                                               "{{conversationId}}",
-                                                                               "typing"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  }
-                              ]
-                 },
-                 {
-                     "name":  "Notifications",
-                     "item":  [
-                                  {
-                                      "name":  "Get Notifications",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/notifications",
-                                                                  "path":  [
-                                                                               "notifications"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Get Unread Count",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/notifications/unread-count",
-                                                                  "path":  [
-                                                                               "notifications",
-                                                                               "unread-count"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Mark as Read",
-                                      "request":  {
-                                                      "method":  "PUT",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/notifications/{{notificationId}}/read",
-                                                                  "path":  [
-                                                                               "notifications",
-                                                                               "{{notificationId}}",
-                                                                               "read"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Mark All as Read",
-                                      "request":  {
-                                                      "method":  "PUT",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/notifications/mark-all-read",
-                                                                  "path":  [
-                                                                               "notifications",
-                                                                               "mark-all-read"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Delete Notification",
-                                      "request":  {
-                                                      "method":  "DELETE",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/notifications/{{notificationId}}",
-                                                                  "path":  [
-                                                                               "notifications",
-                                                                               "{{notificationId}}"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  }
-                              ]
-                 },
-                 {
-                     "name":  "Messages",
-                     "item":  [
-                                  {
-                                      "name":  "Get Conversations",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/conversations",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "conversations"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Get or Create Conversation",
-                                      "request":  {
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/conversations",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "conversations"
-                                                                           ]
-                                                              },
-                                                      "method":  "POST",
-                                                      "body":  {
-                                                                   "raw":  "{\"participantId\":\"{{userId}}\"}",
-                                                                   "options":  {
-                                                                                   "raw":  {
-                                                                                               "language":  "json"
-                                                                                           }
-                                                                               },
-                                                                   "mode":  "raw"
-                                                               },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Get Messages",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/conversations/{{conversationId}}/messages",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "conversations",
-                                                                               "{{conversationId}}",
-                                                                               "messages"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Send Message",
-                                      "request":  {
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/conversations/{{conversationId}}/messages",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "conversations",
-                                                                               "{{conversationId}}",
-                                                                               "messages"
-                                                                           ]
-                                                              },
-                                                      "method":  "POST",
-                                                      "body":  {
-                                                                   "raw":  "{\"content\":\"Hello, how are you?\"}",
-                                                                   "options":  {
-                                                                                   "raw":  {
-                                                                                               "language":  "json"
-                                                                                           }
-                                                                               },
-                                                                   "mode":  "raw"
-                                                               },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Edit Message",
-                                      "request":  {
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/messages/{{messageId}}",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "messages",
-                                                                               "{{messageId}}"
-                                                                           ]
-                                                              },
-                                                      "method":  "PUT",
-                                                      "body":  {
-                                                                   "raw":  "{\"content\":\"Updated message\"}",
-                                                                   "options":  {
-                                                                                   "raw":  {
-                                                                                               "language":  "json"
-                                                                                           }
-                                                                               },
-                                                                   "mode":  "raw"
-                                                               },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Delete Message",
-                                      "request":  {
-                                                      "method":  "DELETE",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/messages/{{messageId}}",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "messages",
-                                                                               "{{messageId}}"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Mark as Read",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/messages/conversations/{{conversationId}}/read",
-                                                                  "path":  [
-                                                                               "messages",
-                                                                               "conversations",
-                                                                               "{{conversationId}}",
-                                                                               "read"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  }
-                              ]
-                 },
-                 {
-                     "name":  "Notifications",
-                     "item":  [
-                                  {
-                                      "name":  "Get Notifications",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/notifications",
-                                                                  "path":  [
-                                                                               "notifications"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Get Unread Count",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/notifications/unread-count",
-                                                                  "path":  [
-                                                                               "notifications",
-                                                                               "unread-count"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Mark as Read",
-                                      "request":  {
-                                                      "method":  "PUT",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/notifications/{{notificationId}}/read",
-                                                                  "path":  [
-                                                                               "notifications",
-                                                                               "{{notificationId}}",
-                                                                               "read"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Mark All as Read",
-                                      "request":  {
-                                                      "method":  "PUT",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/notifications/mark-all-read",
-                                                                  "path":  [
-                                                                               "notifications",
-                                                                               "mark-all-read"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Delete Notification",
-                                      "request":  {
-                                                      "method":  "DELETE",
-                                                      "url":  {
-                                                                  "host":  [
-                                                                               "{{baseUrl}}"
-                                                                           ],
-                                                                  "raw":  "{{baseUrl}}/notifications/{{notificationId}}",
-                                                                  "path":  [
-                                                                               "notifications",
-                                                                               "{{notificationId}}"
-                                                                           ]
-                                                              },
-                                                      "header":  [
-
-                                                                 ]
-                                                  }
-                                  }
-                              ]
-                 },
-                 {
                      "name":  "Users",
                      "item":  [
                                   {
@@ -3606,6 +2982,819 @@
                                                               },
                                                       "header":  [
 
+                                                                 ]
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Time Tracking",
+                     "item":  [
+                                  {
+                                      "name":  "Start Work Session",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/time-tracking/sessions/start",
+                                                                  "path":  [
+                                                                               "time-tracking",
+                                                                               "sessions",
+                                                                               "start"
+                                                                           ]
+                                                              },
+                                                      "method":  "POST",
+                                                      "body":  {
+                                                                   "raw":  "{\"contractId\":\"{{contractId}}\"}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Stop Work Session",
+                                      "request":  {
+                                                      "method":  "PATCH",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/time-tracking/sessions/sessionId/stop",
+                                                                  "path":  [
+                                                                               "time-tracking",
+                                                                               "sessions",
+                                                                               "sessionId",
+                                                                               "stop"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Create Time Entry",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/time-tracking/entries",
+                                                                  "path":  [
+                                                                               "time-tracking",
+                                                                               "entries"
+                                                                           ]
+                                                              },
+                                                      "method":  "POST",
+                                                      "body":  {
+                                                                   "raw":  "{\"contractId\":\"{{contractId}}\",\"date\":\"2024-01-15\",\"hours\":8,\"description\":\"Development work\"}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Update Time Entry",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/time-tracking/entries/entryId",
+                                                                  "path":  [
+                                                                               "time-tracking",
+                                                                               "entries",
+                                                                               "entryId"
+                                                                           ]
+                                                              },
+                                                      "method":  "PATCH",
+                                                      "body":  {
+                                                                   "raw":  "{\"hours\":9,\"description\":\"Updated description\"}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Submit Time Entries",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/time-tracking/entries/submit",
+                                                                  "path":  [
+                                                                               "time-tracking",
+                                                                               "entries",
+                                                                               "submit"
+                                                                           ]
+                                                              },
+                                                      "method":  "POST",
+                                                      "body":  {
+                                                                   "raw":  "{\"entryIds\":[\"id1\",\"id2\"]}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Get Time Entries",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/time-tracking/entries",
+                                                                  "path":  [
+                                                                               "time-tracking",
+                                                                               "entries"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Review Time Entry",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/time-tracking/entries/entryId/review",
+                                                                  "path":  [
+                                                                               "time-tracking",
+                                                                               "entries",
+                                                                               "entryId",
+                                                                               "review"
+                                                                           ]
+                                                              },
+                                                      "method":  "PATCH",
+                                                      "body":  {
+                                                                   "raw":  "{\"status\":\"approved\",\"feedback\":\"Looks good\"}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Get Time Report",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/time-tracking/reports",
+                                                                  "path":  [
+                                                                               "time-tracking",
+                                                                               "reports"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Categories",
+                     "item":  [
+                                  {
+                                      "name":  "Get Categories",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/categories",
+                                                                  "path":  [
+                                                                               "categories"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Create Category",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/categories",
+                                                                  "path":  [
+                                                                               "categories"
+                                                                           ]
+                                                              },
+                                                      "method":  "POST",
+                                                      "body":  {
+                                                                   "raw":  "{\"name\":\"Web Development\",\"description\":\"Web development projects\"}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Update Category",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/categories/categoryId",
+                                                                  "path":  [
+                                                                               "categories",
+                                                                               "categoryId"
+                                                                           ]
+                                                              },
+                                                      "method":  "PUT",
+                                                      "body":  {
+                                                                   "raw":  "{\"name\":\"Updated Name\",\"description\":\"Updated description\"}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Delete Category",
+                                      "request":  {
+                                                      "method":  "DELETE",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/categories/categoryId",
+                                                                  "path":  [
+                                                                               "categories",
+                                                                               "categoryId"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Skills",
+                     "item":  [
+                                  {
+                                      "name":  "Get Skills",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/skills",
+                                                                  "path":  [
+                                                                               "skills"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Create Skill",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/skills",
+                                                                  "path":  [
+                                                                               "skills"
+                                                                           ]
+                                                              },
+                                                      "method":  "POST",
+                                                      "body":  {
+                                                                   "raw":  "{\"name\":\"React\",\"category\":\"Frontend\"}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Update Skill",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/skills/skillId",
+                                                                  "path":  [
+                                                                               "skills",
+                                                                               "skillId"
+                                                                           ]
+                                                              },
+                                                      "method":  "PUT",
+                                                      "body":  {
+                                                                   "raw":  "{\"name\":\"React.js\",\"category\":\"Frontend\"}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Delete Skill",
+                                      "request":  {
+                                                      "method":  "DELETE",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/skills/skillId",
+                                                                  "path":  [
+                                                                               "skills",
+                                                                               "skillId"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Service Packages",
+                     "item":  [
+                                  {
+                                      "name":  "Create Service Package",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/services/packages",
+                                                                  "path":  [
+                                                                               "services",
+                                                                               "packages"
+                                                                           ]
+                                                              },
+                                                      "method":  "POST",
+                                                      "body":  {
+                                                                   "raw":  "{\"title\":\"Web Development\",\"description\":\"Full stack web development\",\"price\":5000,\"deliveryTime\":30}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Get Service Packages",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/services/packages",
+                                                                  "path":  [
+                                                                               "services",
+                                                                               "packages"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Update Service Package",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/services/packages/packageId",
+                                                                  "path":  [
+                                                                               "services",
+                                                                               "packages",
+                                                                               "packageId"
+                                                                           ]
+                                                              },
+                                                      "method":  "PATCH",
+                                                      "body":  {
+                                                                   "raw":  "{\"price\":6000,\"deliveryTime\":25}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Create Project Template",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/services/templates",
+                                                                  "path":  [
+                                                                               "services",
+                                                                               "templates"
+                                                                           ]
+                                                              },
+                                                      "method":  "POST",
+                                                      "body":  {
+                                                                   "raw":  "{\"name\":\"E-commerce Template\",\"description\":\"Template for e-commerce projects\",\"requirements\":\"React, Node.js, MongoDB\"}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Get Project Templates",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/services/templates",
+                                                                  "path":  [
+                                                                               "services",
+                                                                               "templates"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Create Project from Template",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/services/templates/templateId/create-project",
+                                                                  "path":  [
+                                                                               "services",
+                                                                               "templates",
+                                                                               "templateId",
+                                                                               "create-project"
+                                                                           ]
+                                                              },
+                                                      "method":  "POST",
+                                                      "body":  {
+                                                                   "raw":  "{\"title\":\"My E-commerce Project\",\"budget\":10000}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Add Preferred Vendor",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/services/preferred-vendors",
+                                                                  "path":  [
+                                                                               "services",
+                                                                               "preferred-vendors"
+                                                                           ]
+                                                              },
+                                                      "method":  "POST",
+                                                      "body":  {
+                                                                   "raw":  "{\"freelancerId\":\"{{freelancerId}}\",\"notes\":\"Preferred for React projects\"}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Get Preferred Vendors",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/services/preferred-vendors",
+                                                                  "path":  [
+                                                                               "services",
+                                                                               "preferred-vendors"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Update Preferred Vendor",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/services/preferred-vendors/vendorId",
+                                                                  "path":  [
+                                                                               "services",
+                                                                               "preferred-vendors",
+                                                                               "vendorId"
+                                                                           ]
+                                                              },
+                                                      "method":  "PATCH",
+                                                      "body":  {
+                                                                   "raw":  "{\"notes\":\"Updated notes\"}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Remove Preferred Vendor",
+                                      "request":  {
+                                                      "method":  "DELETE",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/services/preferred-vendors/vendorId",
+                                                                  "path":  [
+                                                                               "services",
+                                                                               "preferred-vendors",
+                                                                               "vendorId"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Hire Now",
+                     "item":  [
+                                  {
+                                      "name":  "Create Hire Now Request",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/hire-now/{{freelancerId}}",
+                                                                  "path":  [
+                                                                               "hire-now",
+                                                                               "{{freelancerId}}"
+                                                                           ]
+                                                              },
+                                                      "method":  "POST",
+                                                      "body":  {
+                                                                   "raw":  "{\"projectTitle\":\"Quick Project\",\"description\":\"Need quick help\",\"budget\":2000,\"timeline\":7}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Get Sent Requests",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/hire-now/sent",
+                                                                  "path":  [
+                                                                               "hire-now",
+                                                                               "sent"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Get Received Requests",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/hire-now/received",
+                                                                  "path":  [
+                                                                               "hire-now",
+                                                                               "received"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Accept Hire Now Request",
+                                      "request":  {
+                                                      "method":  "PUT",
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/hire-now/requestId/accept",
+                                                                  "path":  [
+                                                                               "hire-now",
+                                                                               "requestId",
+                                                                               "accept"
+                                                                           ]
+                                                              },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Reject Hire Now Request",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/hire-now/requestId/reject",
+                                                                  "path":  [
+                                                                               "hire-now",
+                                                                               "requestId",
+                                                                               "reject"
+                                                                           ]
+                                                              },
+                                                      "method":  "PUT",
+                                                      "body":  {
+                                                                   "raw":  "{\"reason\":\"Not available\"}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+
+                                                                 ]
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Webhooks",
+                     "item":  [
+                                  {
+                                      "name":  "Stripe Webhook",
+                                      "request":  {
+                                                      "url":  {
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "raw":  "{{baseUrl}}/webhooks/stripe",
+                                                                  "path":  [
+                                                                               "webhooks",
+                                                                               "stripe"
+                                                                           ]
+                                                              },
+                                                      "method":  "POST",
+                                                      "body":  {
+                                                                   "raw":  "{\"id\":\"evt_test\",\"type\":\"payment_intent.succeeded\",\"data\":{\"object\":{\"id\":\"pi_test\",\"amount\":1500}}}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               },
+                                                                   "mode":  "raw"
+                                                               },
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "stripe-signature",
+                                                                         "value":  "signature_value"
+                                                                     }
                                                                  ]
                                                   }
                                   }
