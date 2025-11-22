@@ -10,7 +10,7 @@ export const transactionController = {
   createPaymentIntent: async (req: AuthRequest, res: Response) => {
     try {
       const { contractId, milestoneId, amount } = req.body;
-      const userId = req.user?.userId;
+      const userId = req.user?._id;
 
       if (!contractId || !amount) {
         return res.status(400).json({
@@ -106,7 +106,7 @@ export const transactionController = {
   releaseEscrow: async (req: AuthRequest, res: Response) => {
     try {
       const { transactionId } = req.params;
-      const userId = req.user?.userId;
+      const userId = req.user?._id;
 
       const transaction = await Transaction.findById(transactionId).populate('contract');
 
@@ -159,7 +159,7 @@ export const transactionController = {
     try {
       const { transactionId } = req.params;
       const { reason } = req.body;
-      const userId = req.user?.userId;
+      const userId = req.user?._id;
 
       const transaction = await Transaction.findById(transactionId).populate('contract');
 
@@ -199,7 +199,7 @@ export const transactionController = {
   // Get transaction history
   getTransactionHistory: async (req: AuthRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?._id;
       const role = req.user?.role as 'client' | 'freelancer';
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;

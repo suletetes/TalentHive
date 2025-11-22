@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Request, Response } from 'express';
 import TimeEntry from '@/models/TimeEntry';
 import WorkSession from '@/models/WorkSession';
@@ -9,7 +8,13 @@ import { logger } from '@/utils/logger';
 export const startWorkSession = async (req: Request, res: Response) => {
   try {
     const { projectId, contractId } = req.body;
-    const freelancerId = req.user._id;
+    const freelancerId = req.user?._id;
+    if (!freelancerId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     // Check if there's an active session
     const activeSession = await WorkSession.findOne({
@@ -64,7 +69,13 @@ export const startWorkSession = async (req: Request, res: Response) => {
 export const stopWorkSession = async (req: Request, res: Response) => {
   try {
     const { sessionId } = req.params;
-    const freelancerId = req.user._id;
+    const freelancerId = req.user?._id;
+    if (!freelancerId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const session = await WorkSession.findOne({
       _id: sessionId,
@@ -100,7 +111,13 @@ export const stopWorkSession = async (req: Request, res: Response) => {
 export const createTimeEntry = async (req: Request, res: Response) => {
   try {
     const { projectId, contractId, milestoneId, description, duration, hourlyRate } = req.body;
-    const freelancerId = req.user._id;
+    const freelancerId = req.user?._id;
+    if (!freelancerId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     // Verify contract
     const contract = await Contract.findOne({
@@ -145,7 +162,13 @@ export const updateTimeEntry = async (req: Request, res: Response) => {
   try {
     const { entryId } = req.params;
     const { description, duration, activityLevel } = req.body;
-    const freelancerId = req.user._id;
+    const freelancerId = req.user?._id;
+    if (!freelancerId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const timeEntry = await TimeEntry.findOne({
       _id: entryId,
@@ -183,7 +206,13 @@ export const updateTimeEntry = async (req: Request, res: Response) => {
 export const submitTimeEntries = async (req: Request, res: Response) => {
   try {
     const { entryIds } = req.body;
-    const freelancerId = req.user._id;
+    const freelancerId = req.user?._id;
+    if (!freelancerId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const result = await TimeEntry.updateMany(
       {
@@ -217,7 +246,13 @@ export const reviewTimeEntry = async (req: Request, res: Response) => {
   try {
     const { entryId } = req.params;
     const { status, reviewNotes } = req.body;
-    const clientId = req.user._id;
+    const clientId = req.user?._id;
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     if (!['approved', 'rejected'].includes(status)) {
       return res.status(400).json({

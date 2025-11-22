@@ -8,7 +8,7 @@ export const verificationController = {
   // Send verification email
   sendVerificationEmail: async (req: AuthRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?._id;
 
       const user = await User.findById(userId);
 
@@ -173,7 +173,7 @@ export const verificationController = {
   // Resend verification email
   resendVerificationEmail: async (req: AuthRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?._id;
 
       const user = await User.findById(userId);
 
@@ -254,7 +254,7 @@ export const verificationController = {
   // Check verification status
   checkVerificationStatus: async (req: AuthRequest, res: Response) => {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?._id;
 
       const user = await User.findById(userId).select('isVerified email');
 

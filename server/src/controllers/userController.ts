@@ -9,7 +9,12 @@ interface AuthRequest extends Request {
 }
 
 export const getProfile = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const user = await User.findById(req.user._id).populate('clientProfile.preferredVendors', 'profile rating');
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  const user = await User.findById(userId).populate('clientProfile.preferredVendors', 'profile rating');
   
   if (!user) {
     return next(new AppError('User not found', 404));
@@ -167,9 +172,12 @@ export const getFreelancerById = catchAsync(async (req: Request, res: Response, 
 
 export const addSkill = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { skill, rate } = req.body;
-  const userId = req.user._id;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
-  if (req.user.role !== 'freelancer') {
+  if (req.user?.role !== 'freelancer') {
     return next(new AppError('Only freelancers can add skills', 403));
   }
 
@@ -213,9 +221,12 @@ export const addSkill = catchAsync(async (req: AuthRequest, res: Response, next:
 
 export const removeSkill = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { skill } = req.params;
-  const userId = req.user._id;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
-  if (req.user.role !== 'freelancer') {
+  if (req.user?.role !== 'freelancer') {
     return next(new AppError('Only freelancers can remove skills', 403));
   }
 
@@ -249,9 +260,12 @@ export const removeSkill = catchAsync(async (req: AuthRequest, res: Response, ne
 
 export const updateAvailability = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { status, schedule, calendar } = req.body;
-  const userId = req.user._id;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
-  if (req.user.role !== 'freelancer') {
+  if (req.user?.role !== 'freelancer') {
     return next(new AppError('Only freelancers can update availability', 403));
   }
 
@@ -291,9 +305,12 @@ export const updateAvailability = catchAsync(async (req: AuthRequest, res: Respo
 
 export const addPortfolioItem = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { title, description, images, projectUrl, technologies, completedAt } = req.body;
-  const userId = req.user._id;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
-  if (req.user.role !== 'freelancer') {
+  if (req.user?.role !== 'freelancer') {
     return next(new AppError('Only freelancers can add portfolio items', 403));
   }
 
@@ -331,9 +348,12 @@ export const addPortfolioItem = catchAsync(async (req: AuthRequest, res: Respons
 export const updatePortfolioItem = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { itemId } = req.params;
   const updateData = req.body;
-  const userId = req.user._id;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
-  if (req.user.role !== 'freelancer') {
+  if (req.user?.role !== 'freelancer') {
     return next(new AppError('Only freelancers can update portfolio items', 403));
   }
 
@@ -362,9 +382,12 @@ export const updatePortfolioItem = catchAsync(async (req: AuthRequest, res: Resp
 
 export const deletePortfolioItem = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { itemId } = req.params;
-  const userId = req.user._id;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
-  if (req.user.role !== 'freelancer') {
+  if (req.user?.role !== 'freelancer') {
     return next(new AppError('Only freelancers can delete portfolio items', 403));
   }
 
@@ -413,7 +436,12 @@ export const changePassword = catchAsync(async (req: AuthRequest, res: Response,
   const { currentPassword, newPassword } = req.body;
 
   // Get user with password field
-  const user = await User.findById(req.user._id).select('+password');
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  const user = await User.findById(userId).select('+password');
   
   if (!user) {
     return next(new AppError('User not found', 404));
