@@ -4,7 +4,7 @@ import { verifyToken } from '@/utils/jwt';
 import { AppError } from './errorHandler';
 import { getCache, setCache } from '@/config/redis';
 
-interface AuthRequest extends Request {
+export interface AuthRequest extends Request {
   user?: any;
 }
 
