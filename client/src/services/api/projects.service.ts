@@ -27,6 +27,16 @@ export interface Project {
       avatar?: string;
     };
   };
+  organization?: {
+    _id: string;
+    name: string;
+    logo?: string;
+    budget?: {
+      total: number;
+      spent: number;
+      remaining: number;
+    };
+  };
   requirements: string[];
   attachments: string[];
   proposalCount: number;
@@ -50,6 +60,7 @@ export interface CreateProjectDto {
   };
   requirements: string[];
   attachments?: string[];
+  organization?: string;
 }
 
 export interface UpdateProjectDto extends Partial<CreateProjectDto> {

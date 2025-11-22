@@ -1,45 +1,112 @@
 import { apiCore } from './core';
 
-export interface Payment {
+export interface Transaction {
   _id: string;
   contract: string;
   milestone?: string;
-  payer: string;
-  payee: string;
+  client: string;
+  freelancer: string;
   amount: number;
+  platformCommission: number;
+  processingFee: number;
+  tax: number;
+  freelancerAmount: number;
   currency: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+  status: 'pending' | 'processing' | 'held_in_escrow' | 'released' | 'refunded' | 'failed' | 'cancelled';
   paymentMethod: string;
   stripePaymentIntentId?: string;
-  createdAt: Date;
-  completedAt?: Date;
+  stripeChargeId?: string;
+  stripeRefundId?: string;
+  escrowReleaseDate?: string;
+  releasedAt?: string;
+  refundedAt?: string;
+  failureReason?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface ProcessPaymentDto {
+export interface CreatePaymentIntentDto {
   contractId: string;
   milestoneId?: string;
   amount: number;
-  paymentMethodId: string;
 }
 
-export interface PayoutRequest {
-  amount: number;
-  bankAccountId: string;
+export interface ConfirmPaymentDto {
+  paymentIntentId: string;
+}
+
+export interface RefundPaymentDto {
+  reason?: string;
 }
 
 export class PaymentsService {
-  private basePath = '/payments';
+  private basePath = '/transactions';
 
-  async processPayment(data: ProcessPaymentDto): Promise<{ data: Payment }> {
-    return apiCore.post<{ data: Payment }>(this.basePath, data);
+  /**
+   * Create a payment intent for a milestone
+   */
+  async createPaymentIntent(data: CreatePaymentIntentDto): Promise<{
+    status: string;
+    message: string;
+    data: {
+      transaction: Transaction;
+      clientSecret: string;
+    };
+  }> {
+    return apiCore.post(`${this.basePath}/payment-intent`, data);
   }
 
-  async getPaymentHistory(params?: {
+  /**
+   * Confirm a payment after Stripe processing
+   */
+  async confirmPayment(data: ConfirmPaymentDto): Promise<{
+    status: string;
+    message: string;
+    data: Transaction;
+  }> {
+    return apiCore.post(`${this.basePath}/confirm`, data);
+  }
+
+  /**
+   * Release payment from escrow to freelancer
+   */
+  async releaseEscrow(transactionId: string): Promise<{
+    status: string;
+    message: string;
+    data: Transaction;
+  }> {
+    return apiCore.post(`${this.basePath}/${transactionId}/release`, {});
+  }
+
+  /**
+   * Refund a payment
+   */
+  async refundPayment(transactionId: string, data: RefundPaymentDto): Promise<{
+    status: string;
+    message: string;
+    data: Transaction;
+  }> {
+    return apiCore.post(`${this.basePath}/${transactionId}/refund`, data);
+  }
+
+  /**
+   * Get transaction history for the current user
+   */
+  async getTransactionHistory(params?: {
     page?: number;
     limit?: number;
-    startDate?: string;
-    endDate?: string;
-  }): Promise<{ data: Payment[]; pagination: any }> {
+    status?: string;
+  }): Promise<{
+    status: string;
+    data: Transaction[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }> {
     const queryParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -48,31 +115,34 @@ export class PaymentsService {
         }
       });
     }
-    return apiCore.get<{ data: Payment[]; pagination: any }>(
-      `${this.basePath}/history?${queryParams.toString()}`
-    );
+    return apiCore.get(`${this.basePath}/history?${queryParams.toString()}`);
   }
 
-  async getEscrowBalance(): Promise<{ data: { balance: number; currency: string } }> {
-    return apiCore.get<{ data: { balance: number; currency: string } }>(
-      `${this.basePath}/escrow`
-    );
+  /**
+   * Get a specific transaction by ID
+   */
+  async getTransaction(transactionId: string): Promise<{
+    status: string;
+    data: Transaction;
+  }> {
+    return apiCore.get(`${this.basePath}/${transactionId}`);
   }
 
-  async requestPayout(data: PayoutRequest): Promise<{ data: any }> {
-    return apiCore.post<{ data: any }>(`${this.basePath}/payout`, data);
-  }
-
-  async getPaymentMethods(): Promise<{ data: any[] }> {
-    return apiCore.get<{ data: any[] }>(`${this.basePath}/methods`);
-  }
-
-  async addPaymentMethod(data: { paymentMethodId: string }): Promise<{ data: any }> {
-    return apiCore.post<{ data: any }>(`${this.basePath}/methods`, data);
-  }
-
-  async removePaymentMethod(methodId: string): Promise<{ message: string }> {
-    return apiCore.delete<{ message: string }>(`${this.basePath}/methods/${methodId}`);
+  /**
+   * Calculate fees for a given amount
+   */
+  async calculateFees(amount: number): Promise<{
+    status: string;
+    data: {
+      amount: number;
+      commission: number;
+      processingFee: number;
+      tax: number;
+      freelancerAmount: number;
+      currency: string;
+    };
+  }> {
+    return apiCore.post(`${this.basePath}/calculate-fees`, { amount });
   }
 }
 

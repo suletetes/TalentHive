@@ -116,6 +116,25 @@ export class ContractsService {
   async cancelContract(contractId: string, data: { reason: string }) {
     return apiCore.post(`${this.basePath}/${contractId}/cancel`, data);
   }
+
+  async pauseContract(contractId: string, data: { reason?: string }) {
+    return apiCore.post(`${this.basePath}/${contractId}/pause`, data);
+  }
+
+  async resumeContract(contractId: string) {
+    return apiCore.post(`${this.basePath}/${contractId}/resume`, {});
+  }
+
+  async createDispute(
+    contractId: string,
+    data: {
+      reason: string;
+      description: string;
+      evidence?: string;
+    }
+  ) {
+    return apiCore.post(`${this.basePath}/${contractId}/dispute`, data);
+  }
 }
 
 export const contractsService = new ContractsService();
