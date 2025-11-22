@@ -1,66 +1,45 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-hot-toast';
-import { contractsService, CreateContractDto } from '@/services/api';
+import { contractsService } from '@/services/api/contracts.service';
 
-export const contractKeys = {
-  all: ['contracts'] as const,
-  lists: () => [...contractKeys.all, 'list'] as const,
-  list: () => [...contractKeys.lists()] as const,
-  details: () => [...contractKeys.all, 'detail'] as const,
-  detail: (id: string) => [...contractKeys.details(), id] as const,
-  my: () => [...contractKeys.all, 'my'] as const,
+export const useMyContracts = (params?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  role?: string;
+}) => {
+  return useQuery({
+    queryKey: ['contracts', 'my', params],
+    queryFn: async () => {
+      const response = await contractsService.getMyContracts(params);
+      return response;
+    },
+  });
 };
 
-export function useContract(id: string, enabled = true) {
+export const useContract = (id: string) => {
   return useQuery({
-    queryKey: contractKeys.detail(id),
-    queryFn: () => contractsService.getContract(id),
-    enabled: !!id && enabled,
-    staleTime: 5 * 60 * 1000,
+    queryKey: ['contracts', id],
+    queryFn: async () => {
+      const response = await contractsService.getContractById(id);
+      return response.data;
+    },
+    enabled: !!id,
   });
-}
+};
 
-export function useMyContracts() {
-  return useQuery({
-    queryKey: contractKeys.my(),
-    queryFn: () => contractsService.getMyContracts(),
-    staleTime: 2 * 60 * 1000,
-  });
-}
-
-export function useCreateContract() {
+export const useSignContract = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ proposalId, data }: { proposalId: string; data: CreateContractDto }) =>
-      contractsService.createContract(proposalId, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      contractsService.signContract(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: contractKeys.my() });
-      toast.success('Contract created successfully!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create contract');
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
     },
   });
-}
+};
 
-export function useSignContract() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => contractsService.signContract(id),
-    onSuccess: (response, id) => {
-      queryClient.invalidateQueries({ queryKey: contractKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: contractKeys.my() });
-      toast.success('Contract signed!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to sign contract');
-    },
-  });
-}
-
-export function useSubmitMilestone() {
+export const useSubmitMilestone = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -71,19 +50,15 @@ export function useSubmitMilestone() {
     }: {
       contractId: string;
       milestoneId: string;
-      data: { notes?: string; attachments?: string[] };
+      data: any;
     }) => contractsService.submitMilestone(contractId, milestoneId, data),
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: contractKeys.detail(variables.contractId) });
-      toast.success('Milestone submitted!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to submit milestone');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
     },
   });
-}
+};
 
-export function useApproveMilestone() {
+export const useApproveMilestone = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -94,19 +69,15 @@ export function useApproveMilestone() {
     }: {
       contractId: string;
       milestoneId: string;
-      data: { feedback?: string };
+      data: any;
     }) => contractsService.approveMilestone(contractId, milestoneId, data),
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: contractKeys.detail(variables.contractId) });
-      toast.success('Milestone approved!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to approve milestone');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
     },
   });
-}
+};
 
-export function useRejectMilestone() {
+export const useRejectMilestone = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -117,75 +88,10 @@ export function useRejectMilestone() {
     }: {
       contractId: string;
       milestoneId: string;
-      data: { reason: string };
+      data: any;
     }) => contractsService.rejectMilestone(contractId, milestoneId, data),
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: contractKeys.detail(variables.contractId) });
-      toast.success('Milestone rejected');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to reject milestone');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
     },
   });
-}
-
-export function useProposeAmendment() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      contractId,
-      data,
-    }: {
-      contractId: string;
-      data: { changes: any; reason: string };
-    }) => contractsService.proposeAmendment(contractId, data),
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: contractKeys.detail(variables.contractId) });
-      toast.success('Amendment proposed!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to propose amendment');
-    },
-  });
-}
-
-export function useRespondToAmendment() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      contractId,
-      amendmentId,
-      data,
-    }: {
-      contractId: string;
-      amendmentId: string;
-      data: { accept: boolean; notes?: string };
-    }) => contractsService.respondToAmendment(contractId, amendmentId, data),
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: contractKeys.detail(variables.contractId) });
-      toast.success('Response submitted!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to respond to amendment');
-    },
-  });
-}
-
-export function useCancelContract() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
-      contractsService.cancelContract(id, reason),
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: contractKeys.detail(variables.id) });
-      queryClient.invalidateQueries({ queryKey: contractKeys.my() });
-      toast.success('Contract cancelled');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to cancel contract');
-    },
-  });
-}
+};
