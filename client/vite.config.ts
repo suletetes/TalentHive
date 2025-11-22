@@ -54,21 +54,4 @@ export default defineConfig({
     logHeapUsage: false,
     css: false,
   },
-});
-
-
-
-/**
- * 
- * 
- * est.tsx 2>&1 | grep -E "Test Files|Tests|FAIL|PASS" | head -10
-⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
- FAIL  src/test/proposal.test.tsx > ProposalForm > renders proposal form correctly
- FAIL  src/test/proposal.test.tsx > ProposalForm > validates cover letter length
- FAIL  src/test/proposal.test.tsx > ProposalForm > submits proposal successfully
- FAIL  src/test/proposal.test.tsx > ProposalForm > adds and removes milestones
- FAIL  src/test/proposal.test.tsx > ProposalCard > calls action handlers
- FAIL  src/test/proposal.test.tsx > ProposalList > renders proposal list for client
- FAIL  src/test/proposal.test.tsx > ProposalList > renders proposal list for freelancer
- FAIL  src/test/proposal.test.tsx > ProposalList > filters proposals by status
- FAIL  src/test/proposal.test.tsx > ProposalList > searches proposals */ 
+}); 
