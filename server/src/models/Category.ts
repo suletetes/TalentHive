@@ -57,8 +57,7 @@ const categorySchema = new Schema<ICategory>({
 });
 
 // Indexes
-categorySchema.index({ name: 1 });
-categorySchema.index({ slug: 1 });
+// Note: name and slug already have unique indexes from schema definition
 categorySchema.index({ isActive: 1 });
 categorySchema.index({ projectCount: -1 });
 

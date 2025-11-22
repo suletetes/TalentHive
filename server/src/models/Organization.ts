@@ -1,31 +1,32 @@
-import mongoose, { Schema } from 'mongoose';
-import { IOrganization } from '@/types/organization';
+import mongoose, { Document, Schema } from 'mongoose';
 
-const addressSchema = new Schema(
-  {
-    street: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    country: { type: String, required: true },
-    zipCode: { type: String, required: true },
-  },
-  { _id: false }
-);
-
-const organizationMemberSchema = new Schema(
-  {
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    role: {
-      type: String,
-      enum: ['owner', 'admin', 'member', 'viewer'],
-      required: true,
-    },
-    permissions: [String],
-    spendingLimit: { type: Number, min: 0 },
-    joinedAt: { type: Date, default: Date.now },
-  },
-  { _id: false }
-);
+export interface IOrganization extends Document {
+  name: string;
+  description: string;
+  logo?: string;
+  owner: mongoose.Types.ObjectId;
+  members: Array<{
+    user: mongoose.Types.ObjectId;
+    role: 'owner' | 'admin' | 'member';
+    permissions: string[];
+    joinedAt: Date;
+  }>;
+  budget: {
+    total: number;
+    spent: number;
+    remaining: number;
+    currency: string;
+  };
+  settings: {
+    requireApproval: boolean;
+    maxProjectBudget: number;
+    allowedCategories: mongoose.Types.ObjectId[];
+  };
+  projects: mongoose.Types.ObjectId[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const organizationSchema = new Schema<IOrganization>(
   {
@@ -33,131 +34,107 @@ const organizationSchema = new Schema<IOrganization>(
       type: String,
       required: true,
       trim: true,
-      maxlength: 100,
     },
     description: {
       type: String,
       trim: true,
-      maxlength: 500,
     },
-    logo: String,
-    website: String,
-    industry: {
+    logo: {
       type: String,
-      trim: true,
-    },
-    size: {
-      type: String,
-      enum: ['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'],
     },
     owner: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
-    members: [organizationMemberSchema],
-    budgetSettings: {
-      monthlyBudget: { type: Number, min: 0 },
-      approvalThreshold: { type: Number, default: 1000, min: 0 },
-      autoApproveBelow: { type: Number, min: 0 },
-    },
-    billingInfo: {
-      companyName: String,
-      taxId: String,
-      address: addressSchema,
-    },
-    subscription: {
-      plan: {
-        type: String,
-        enum: ['free', 'basic', 'professional', 'enterprise'],
-        default: 'free',
+    members: [
+      {
+        user: {
+          type: Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        role: {
+          type: String,
+          enum: ['owner', 'admin', 'member'],
+          default: 'member',
+        },
+        permissions: [
+          {
+            type: String,
+          },
+        ],
+        joinedAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
-      status: {
-        type: String,
-        enum: ['active', 'cancelled', 'expired'],
-        default: 'active',
+    ],
+    budget: {
+      total: {
+        type: Number,
+        default: 0,
+        min: 0,
       },
-      startDate: { type: Date, default: Date.now },
-      endDate: Date,
+      spent: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      remaining: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      currency: {
+        type: String,
+        default: 'USD',
+        uppercase: true,
+      },
     },
     settings: {
-      requireApproval: { type: Boolean, default: true },
-      allowMemberInvites: { type: Boolean, default: false },
-      defaultSpendingLimit: { type: Number, default: 5000, min: 0 },
+      requireApproval: {
+        type: Boolean,
+        default: true,
+      },
+      maxProjectBudget: {
+        type: Number,
+        default: 0,
+      },
+      allowedCategories: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: 'Category',
+        },
+      ],
+    },
+    projects: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Project',
+      },
+    ],
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
   }
 );
 
 // Indexes
 organizationSchema.index({ owner: 1 });
-organizationSchema.index({ 'members.userId': 1 });
-organizationSchema.index({ isActive: 1 });
+organizationSchema.index({ 'members.user': 1 });
+organizationSchema.index({ name: 'text', description: 'text' });
 
-// Virtual for member count
-organizationSchema.virtual('memberCount').get(function() {
-  return this.members.length;
+// Update remaining budget before save
+organizationSchema.pre('save', function (next) {
+  if (this.isModified('budget.total') || this.isModified('budget.spent')) {
+    this.budget.remaining = this.budget.total - this.budget.spent;
+  }
+  next();
 });
-
-// Method to add member
-organizationSchema.methods.addMember = function (
-  userId: string,
-  role: string,
-  permissions: string[] = [],
-  spendingLimit?: number
-) {
-  const existingMember = this.members.find((member: any) => member.user.toString() === userId);
-  if (existingMember) {
-    throw new Error('User is already a member of this organization');
-  }
-
-  this.members.push({
-    user: userId,
-    role,
-    permissions,
-    spendingLimit,
-    joinedAt: new Date(),
-  });
-};
-
-// Method to remove member
-organizationSchema.methods.removeMember = function (userId: string) {
-  this.members = this.members.filter((member: any) => member.user.toString() !== userId);
-};
-
-// Method to update member role
-organizationSchema.methods.updateMemberRole = function (
-  userId: string,
-  role: string,
-  permissions: string[] = [],
-  spendingLimit?: number
-) {
-  const member = this.members.find((member: any) => member.user.toString() === userId);
-  if (!member) {
-    throw new Error('User is not a member of this organization');
-  }
-
-  member.role = role;
-  member.permissions = permissions;
-  if (spendingLimit !== undefined) {
-    member.spendingLimit = spendingLimit;
-  }
-};
-
-// Method to check if user has permission
-organizationSchema.methods.hasPermission = function (userId: string, permission: string): boolean {
-  const member = this.members.find((member: any) => member.user.toString() === userId);
-  if (!member) return false;
-
-  // Owner and admin have all permissions
-  if (member.role === 'owner' || member.role === 'admin') return true;
-
-  return member.permissions.includes(permission);
-};
 
 export const Organization = mongoose.model<IOrganization>('Organization', organizationSchema);

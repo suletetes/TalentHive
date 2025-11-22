@@ -6,6 +6,17 @@ export interface IMessage extends Document {
   content: string;
   attachments: string[];
   readBy: mongoose.Types.ObjectId[];
+  isAdminMessage: boolean;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  isEdited: boolean;
+  editedAt?: Date;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  reactions: Array<{
+    user: mongoose.Types.ObjectId;
+    emoji: string;
+    createdAt: Date;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +45,44 @@ const messageSchema = new Schema<IMessage>({
   readBy: [{
     type: Schema.Types.ObjectId,
     ref: 'User',
+  }],
+  isAdminMessage: {
+    type: Boolean,
+    default: false,
+  },
+  priority: {
+    type: String,
+    enum: ['low', 'normal', 'high', 'urgent'],
+    default: 'normal',
+  },
+  isEdited: {
+    type: Boolean,
+    default: false,
+  },
+  editedAt: {
+    type: Date,
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
+  deletedAt: {
+    type: Date,
+  },
+  reactions: [{
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    emoji: {
+      type: String,
+      required: true,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
   }],
 }, {
   timestamps: true,
