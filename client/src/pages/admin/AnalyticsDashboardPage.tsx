@@ -1,423 +1,258 @@
 import React, { useState } from 'react';
 import {
   Container,
-  Typography,
   Grid,
-  Card,
-  CardContent,
-  Box,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Avatar,
+  Typography,
+  Box,
+  Button,
   TextField,
   MenuItem,
-  Skeleton,
+  Card,
+  CardContent,
+  CircularProgress,
 } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
-import { apiService } from '@/services/api';
 import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
-import { TrendingUp, People, Work, AttachMoney } from '@mui/icons-material';
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+  Refresh as RefreshIcon,
+  Download as DownloadIcon,
+  TrendingUp as TrendingUpIcon,
+  People as PeopleIcon,
+  Work as WorkIcon,
+  Payment as PaymentIcon,
+} from '@mui/icons-material';
+import { RevenueChart } from '@/components/analytics/RevenueChart';
+import { UserGrowthChart } from '@/components/analytics/UserGrowthChart';
+import { ProjectStatsChart } from '@/components/analytics/ProjectStatsChart';
+import { PaymentAnalyticsChart } from '@/components/analytics/PaymentAnalyticsChart';
+import {
+  useRevenueAnalytics,
+  useUserGrowthAnalytics,
+  useProjectStats,
+  usePaymentAnalytics,
+  useDashboardOverview,
+} from '@/hooks/api/useAnalytics';
 
 export const AnalyticsDashboardPage: React.FC = () => {
-  const [dateRange, setDateRange] = useState('30');
+  const [dateRange, setDateRange] = useState({
+    startDate: '',
+    endDate: '',
+  });
+  const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month' | 'year'>('day');
 
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - parseInt(dateRange));
-
-  // Fetch user growth data
-  const { data: userGrowthData, isLoading: loadingUserGrowth } = useQuery({
-    queryKey: ['analytics-user-growth', dateRange],
-    queryFn: async () => {
-      const response = await apiService.get('/analytics/user-growth', {
-        params: {
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-        },
-      });
-      return response.data.data;
-    },
+  const { data: overview, isLoading: overviewLoading, refetch: refetchOverview } = useDashboardOverview();
+  const { data: revenueData, isLoading: revenueLoading, refetch: refetchRevenue } = useRevenueAnalytics({
+    startDate: dateRange.startDate || undefined,
+    endDate: dateRange.endDate || undefined,
+    groupBy,
+  });
+  const { data: userGrowthData, isLoading: userGrowthLoading, refetch: refetchUserGrowth } = useUserGrowthAnalytics({
+    startDate: dateRange.startDate || undefined,
+    endDate: dateRange.endDate || undefined,
+    groupBy,
+  });
+  const { data: projectStats, isLoading: projectStatsLoading, refetch: refetchProjectStats } = useProjectStats({
+    startDate: dateRange.startDate || undefined,
+    endDate: dateRange.endDate || undefined,
+  });
+  const { data: paymentAnalytics, isLoading: paymentLoading, refetch: refetchPaymentAnalytics } = usePaymentAnalytics({
+    startDate: dateRange.startDate || undefined,
+    endDate: dateRange.endDate || undefined,
   });
 
-  // Fetch revenue metrics
-  const { data: revenueData, isLoading: loadingRevenue } = useQuery({
-    queryKey: ['analytics-revenue', dateRange],
-    queryFn: async () => {
-      const response = await apiService.get('/analytics/revenue', {
-        params: {
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-        },
-      });
-      return response.data.data;
-    },
-  });
+  const handleRefresh = () => {
+    refetchOverview();
+    refetchRevenue();
+    refetchUserGrowth();
+    refetchProjectStats();
+    refetchPaymentAnalytics();
+  };
 
-  // Fetch project stats
-  const { data: projectStats, isLoading: loadingProjects } = useQuery({
-    queryKey: ['analytics-projects'],
-    queryFn: async () => {
-      const response = await apiService.get('/analytics/projects');
-      return response.data.data;
-    },
-  });
+  const handleExport = () => {
+    // TODO: Implement export functionality
+    console.log('Export data');
+  };
 
-  // Fetch top users
-  const { data: topUsersData, isLoading: loadingTopUsers } = useQuery({
-    queryKey: ['analytics-top-users'],
-    queryFn: async () => {
-      const response = await apiService.get('/analytics/top-users', {
-        params: { limit: 10 },
-      });
-      return response.data.data;
-    },
-  });
-
-  // Fetch category distribution
-  const { data: categoryData, isLoading: loadingCategories } = useQuery({
-    queryKey: ['analytics-categories'],
-    queryFn: async () => {
-      const response = await apiService.get('/analytics/categories');
-      return response.data.data;
-    },
-  });
-
-  const isLoading =
-    loadingUserGrowth || loadingRevenue || loadingProjects || loadingTopUsers || loadingCategories;
-
-  const revenue = revenueData || { total: 0, byCategory: [], trend: [] };
-  const projects = projectStats || { total: 0, completed: 0, inProgress: 0, completionRate: 0, averageTimeline: 0 };
-  const topFreelancers = topUsersData?.topFreelancers || [];
-  const topClients = topUsersData?.topClients || [];
-  const categories = categoryData || [];
+  const formatCurrency = (value: number) => {
+    return `$${(value / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" component="h1">
-          Platform Analytics
-        </Typography>
-        <TextField
-          select
-          label="Date Range"
-          value={dateRange}
-          onChange={(e) => setDateRange(e.target.value)}
-          sx={{ minWidth: 150 }}
-        >
-          <MenuItem value="7">Last 7 days</MenuItem>
-          <MenuItem value="30">Last 30 days</MenuItem>
-          <MenuItem value="90">Last 90 days</MenuItem>
-          <MenuItem value="365">Last year</MenuItem>
-        </TextField>
+      {/* Header */}
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4">Analytics Dashboard</Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button startIcon={<RefreshIcon />} onClick={handleRefresh} variant="outlined">
+            Refresh
+          </Button>
+          <Button startIcon={<DownloadIcon />} onClick={handleExport} variant="contained">
+            Export
+          </Button>
+        </Box>
       </Box>
 
-      {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <AttachMoney sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
-                <Box>
-                  <Typography variant="h5" component="div">
-                    {isLoading ? <Skeleton width={100} /> : `$${revenue.total.toFixed(2)}`}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total Revenue
-                  </Typography>
+      {/* Filters */}
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={3}>
+            <TextField
+              fullWidth
+              label="Start Date"
+              type="date"
+              value={dateRange.startDate}
+              onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              fullWidth
+              label="End Date"
+              type="date"
+              value={dateRange.endDate}
+              onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              fullWidth
+              select
+              label="Group By"
+              value={groupBy}
+              onChange={(e) => setGroupBy(e.target.value as any)}
+            >
+              <MenuItem value="day">Day</MenuItem>
+              <MenuItem value="week">Week</MenuItem>
+              <MenuItem value="month">Month</MenuItem>
+              <MenuItem value="year">Year</MenuItem>
+            </TextField>
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={() => setDateRange({ startDate: '', endDate: '' })}
+            >
+              Clear Filters
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Overview Cards */}
+      {overviewLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : overview ? (
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <PeopleIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
+                  <Box>
+                    <Typography variant="h4">{overview.users.total}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Users
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+                <Typography variant="caption" color="success.main">
+                  +{overview.users.recent} in last 30 days
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Work sx={{ fontSize: 40, color: 'success.main', mr: 2 }} />
-                <Box>
-                  <Typography variant="h5" component="div">
-                    {isLoading ? <Skeleton width={100} /> : projects.total}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total Projects
-                  </Typography>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <WorkIcon sx={{ fontSize: 40, color: 'info.main', mr: 2 }} />
+                  <Box>
+                    <Typography variant="h4">{overview.projects.total}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Projects
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+                <Typography variant="caption" color="success.main">
+                  +{overview.projects.recent} in last 30 days
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingUp sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
-                <Box>
-                  <Typography variant="h5" component="div">
-                    {isLoading ? <Skeleton width={100} /> : `${projects.completionRate}%`}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Completion Rate
-                  </Typography>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <TrendingUpIcon sx={{ fontSize: 40, color: 'success.main', mr: 2 }} />
+                  <Box>
+                    <Typography variant="h4">{overview.contracts.active}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Active Contracts
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+                <Typography variant="caption" color="text.secondary">
+                  {overview.contracts.total} total
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <People sx={{ fontSize: 40, color: 'info.main', mr: 2 }} />
-                <Box>
-                  <Typography variant="h5" component="div">
-                    {isLoading ? <Skeleton width={100} /> : `${projects.averageTimeline} days`}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Avg. Timeline
-                  </Typography>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <PaymentIcon sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
+                  <Box>
+                    <Typography variant="h4">{formatCurrency(overview.revenue.total)}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Revenue
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
+                <Typography variant="caption" color="text.secondary">
+                  Platform commission
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
-      </Grid>
+      ) : null}
 
-      {/* Charts */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* User Growth Chart */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                User Growth
-              </Typography>
-              {loadingUserGrowth ? (
-                <Skeleton variant="rectangular" height={300} />
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={userGrowthData || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="count" stroke="#8884d8" name="New Users" />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* Revenue Chart */}
+      <Box sx={{ mb: 4 }}>
+        <RevenueChart
+          data={revenueData?.timeline || []}
+          isLoading={revenueLoading}
+          title="Revenue Overview"
+          type="area"
+        />
+      </Box>
 
-        {/* Revenue Trend Chart */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Revenue Trend
-              </Typography>
-              {loadingRevenue ? (
-                <Skeleton variant="rectangular" height={300} />
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={revenue.trend || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="count" stroke="#82ca9d" name="Revenue ($)" />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* User Growth Chart */}
+      <Box sx={{ mb: 4 }}>
+        <UserGrowthChart
+          data={userGrowthData?.timeline || []}
+          isLoading={userGrowthLoading}
+          title="User Growth"
+        />
+      </Box>
 
-        {/* Revenue by Category Chart */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Revenue by Category
-              </Typography>
-              {loadingRevenue ? (
-                <Skeleton variant="rectangular" height={300} />
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={revenue.byCategory || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="category" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="amount" fill="#8884d8" name="Revenue ($)" />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* Project Stats */}
+      <Box sx={{ mb: 4 }}>
+        <ProjectStatsChart data={projectStats} isLoading={projectStatsLoading} />
+      </Box>
 
-        {/* Category Distribution Chart */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Project Category Distribution
-              </Typography>
-              {loadingCategories ? (
-                <Skeleton variant="rectangular" height={300} />
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={categories}
-                      dataKey="count"
-                      nameKey="category"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      label={(entry) => `${entry.category}: ${entry.percentage}%`}
-                    >
-                      {categories.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Top Users Tables */}
-      <Grid container spacing={3}>
-        {/* Top Freelancers */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Top Freelancers
-              </Typography>
-              {loadingTopUsers ? (
-                <Skeleton variant="rectangular" height={400} />
-              ) : (
-                <TableContainer component={Paper} variant="outlined">
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Freelancer</TableCell>
-                        <TableCell align="right">Active Contracts</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {topFreelancers.map((freelancer: any) => (
-                        <TableRow key={freelancer._id}>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <Avatar src={freelancer.avatar} sx={{ mr: 2 }}>
-                                {freelancer.name.charAt(0)}
-                              </Avatar>
-                              <Box>
-                                <Typography variant="body2">{freelancer.name}</Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {freelancer.email}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Typography variant="body2" fontWeight="bold">
-                              {freelancer.metric}
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Top Clients */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Top Clients
-              </Typography>
-              {loadingTopUsers ? (
-                <Skeleton variant="rectangular" height={400} />
-              ) : (
-                <TableContainer component={Paper} variant="outlined">
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Client</TableCell>
-                        <TableCell align="right">Projects Posted</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {topClients.map((client: any) => (
-                        <TableRow key={client._id}>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <Avatar src={client.avatar} sx={{ mr: 2 }}>
-                                {client.name.charAt(0)}
-                              </Avatar>
-                              <Box>
-                                <Typography variant="body2">{client.name}</Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {client.email}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Typography variant="body2" fontWeight="bold">
-                              {client.metric}
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      {/* Payment Analytics */}
+      <Box sx={{ mb: 4 }}>
+        <PaymentAnalyticsChart data={paymentAnalytics} isLoading={paymentLoading} />
+      </Box>
     </Container>
   );
 };
