@@ -8,7 +8,13 @@ import { logger } from '@/utils/logger';
 // Create service package
 export const createServicePackage = async (req: Request, res: Response) => {
   try {
-    const freelancerId = req.user._id;
+    const freelancerId = req.user?._id;
+    if (!freelancerId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
     const packageData = { ...req.body, freelancer: freelancerId };
 
     const servicePackage = await ServicePackage.create(packageData);
@@ -63,7 +69,13 @@ export const getServicePackages = async (req: Request, res: Response) => {
 export const updateServicePackage = async (req: Request, res: Response) => {
   try {
     const { packageId } = req.params;
-    const freelancerId = req.user._id;
+    const freelancerId = req.user?._id;
+    if (!freelancerId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const servicePackage = await ServicePackage.findOne({
       _id: packageId,
@@ -96,7 +108,13 @@ export const updateServicePackage = async (req: Request, res: Response) => {
 // Create project template
 export const createProjectTemplate = async (req: Request, res: Response) => {
   try {
-    const clientId = req.user._id;
+    const clientId = req.user?._id;
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
     const templateData = { ...req.body, client: clientId };
 
     const template = await ProjectTemplate.create(templateData);
@@ -117,7 +135,13 @@ export const createProjectTemplate = async (req: Request, res: Response) => {
 // Get project templates
 export const getProjectTemplates = async (req: Request, res: Response) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const templates = await ProjectTemplate.find({ client: userId })
       .populate('preferredVendors', 'firstName lastName profilePicture rating')
@@ -141,7 +165,13 @@ export const getProjectTemplates = async (req: Request, res: Response) => {
 export const createProjectFromTemplate = async (req: Request, res: Response) => {
   try {
     const { templateId } = req.params;
-    const clientId = req.user._id;
+    const clientId = req.user?._id;
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const template = await ProjectTemplate.findOne({
       _id: templateId,
@@ -188,7 +218,13 @@ export const createProjectFromTemplate = async (req: Request, res: Response) => 
 // Add preferred vendor
 export const addPreferredVendor = async (req: Request, res: Response) => {
   try {
-    const clientId = req.user._id;
+    const clientId = req.user?._id;
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
     const { freelancerId, category, rating, notes, isPriority } = req.body;
 
     const vendor = await PreferredVendor.create({
@@ -216,7 +252,13 @@ export const addPreferredVendor = async (req: Request, res: Response) => {
 // Get preferred vendors
 export const getPreferredVendors = async (req: Request, res: Response) => {
   try {
-    const clientId = req.user._id;
+    const clientId = req.user?._id;
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
     const { category } = req.query;
 
     const query: any = { client: clientId };
@@ -244,7 +286,13 @@ export const getPreferredVendors = async (req: Request, res: Response) => {
 export const updatePreferredVendor = async (req: Request, res: Response) => {
   try {
     const { vendorId } = req.params;
-    const clientId = req.user._id;
+    const clientId = req.user?._id;
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const vendor = await PreferredVendor.findOne({
       _id: vendorId,
@@ -278,7 +326,13 @@ export const updatePreferredVendor = async (req: Request, res: Response) => {
 export const removePreferredVendor = async (req: Request, res: Response) => {
   try {
     const { vendorId } = req.params;
-    const clientId = req.user._id;
+    const clientId = req.user?._id;
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const result = await PreferredVendor.deleteOne({
       _id: vendorId,

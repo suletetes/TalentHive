@@ -74,7 +74,7 @@ export const createContract = catchAsync(async (req: Request, res: Response, nex
   const contractData = {
     project: project._id,
     client: project.client,
-    freelancer: proposal.freelancer._id,
+    freelancer: proposal.freelancer.toString(),
     proposal: proposalId,
     title,
     description,
@@ -108,7 +108,7 @@ export const createContract = catchAsync(async (req: Request, res: Response, nex
     const client = await User.findById(userId);
     if (client?.profile) {
       const clientName = `${client.profile.firstName} ${client.profile.lastName}`;
-      const freelancerId = typeof proposal.freelancer === 'object' ? proposal.freelancer._id : proposal.freelancer;
+      const freelancerId = proposal.freelancer.toString();
       await notificationService.notifyNewContract(
         freelancerId.toString(),
         clientName,
@@ -222,10 +222,10 @@ export const signContract = catchAsync(async (req: AuthRequest, res: Response, n
   }
 
   // Check if user is part of the contract
-  const clientId = typeof contract.client === 'object' ? contract.client._id : contract.client;
-  const freelancerId = typeof contract.freelancer === 'object' ? contract.freelancer._id : contract.freelancer;
+  const clientId = contract.client.toString();
+  const freelancerId = contract.freelancer.toString();
   
-  const isParticipant = [clientId.toString(), freelancerId.toString()]
+  const isParticipant = [clientId, freelancerId]
     .includes(userId.toString());
 
   if (!isParticipant) {

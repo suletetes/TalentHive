@@ -113,7 +113,12 @@ export const respondToReview = catchAsync(async (req: AuthRequest, res: Response
     return next(new AppError('Review not found', 404));
   }
 
-  if (review.reviewee.toString() !== req.user._id.toString()) {
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  if (review.reviewee.toString() !== userId.toString()) {
     return next(new AppError('Not authorized', 403));
   }
 

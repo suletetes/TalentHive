@@ -49,11 +49,16 @@ export const createSkill = catchAsync(async (req: AuthRequest, res: Response, ne
     return next(new AppError('Skill already exists', 400));
   }
   
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
   const skill = await Skill.create({
     name,
     slug,
     category,
-    createdBy: req.user._id,
+    createdBy: userId,
   });
   
   res.status(201).json({
