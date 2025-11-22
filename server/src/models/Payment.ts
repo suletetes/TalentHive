@@ -279,5 +279,4 @@ paymentSchema.pre('validate', function(next) {
 
 export const Payment = mongoose.model<IPayment>('Payment', paymentSchema);
 export const EscrowAccount = mongoose.model<IEscrowAccount>('EscrowAccount', escrowAccountSchema);
-export const Transaction = mongoose.model<ITransaction>('Transaction', transactionSchema);
 export const PaymentWebhook = mongoose.model<IPaymentWebhook>('PaymentWebhook', paymentWebhookSchema);

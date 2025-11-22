@@ -4,7 +4,7 @@ import { Transaction } from '@/models/Transaction';
 import { Contract } from '@/models/Contract';
 import { PlatformSettings } from '@/models/PlatformSettings';
 import { AuthRequest } from '@/types/auth';
-import { createNotification } from './notificationController';
+import { notificationService } from '@/services/notification.service';
 import { sendEmail } from '@/utils/email.resend';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -192,6 +192,18 @@ export const confirmPayment = async (req: Request, res: Response) => {
       }
 
       // Create notifications
+      try {
+        await notificationService.notifyPaymentReceived(
+          contract.freelancer._id.toString(),
+          transaction.amount,
+          contract._id.toString()
+        );
+      } catch (error) {
+        console.error('Failed to send payment notification:', error);
+      }
+      
+      // Old code - commented out
+      /*
       await createNotification({
         user: contract.freelancer._id.toString(),
         type: 'payment',
@@ -204,6 +216,7 @@ export const confirmPayment = async (req: Request, res: Response) => {
           amount: transaction.amount,
         },
       });
+      */
 
       // Send emails
       await sendEmail({
@@ -277,6 +290,18 @@ export const releasePayment = async (req: Request, res: Response) => {
     await transaction.save();
 
     // Create notification
+    try {
+      await notificationService.notifyEscrowReleased(
+        transaction.freelancer._id.toString(),
+        transaction.freelancerAmount,
+        transaction.contract.toString()
+      );
+    } catch (error) {
+      console.error('Failed to send escrow release notification:', error);
+    }
+    
+    // Old code - commented out
+    /*
     await createNotification({
       user: transaction.freelancer._id.toString(),
       type: 'payment',
@@ -288,6 +313,7 @@ export const releasePayment = async (req: Request, res: Response) => {
         amount: transaction.freelancerAmount,
       },
     });
+    */
 
     // Send email
     await sendEmail({
@@ -448,6 +474,20 @@ export const refundPayment = async (req: Request, res: Response) => {
     await transaction.save();
 
     // Create notifications
+    try {
+      await notificationService.notifySystem(
+        transaction.client.toString(),
+        'Payment Refunded',
+        `Payment of ${transaction.amount} has been refunded`,
+        '/dashboard/transactions',
+        'normal'
+      );
+    } catch (error) {
+      console.error('Failed to send refund notification:', error);
+    }
+    
+    // Old code - commented out
+    /*
     await createNotification({
       user: transaction.client.toString(),
       type: 'payment',
@@ -456,6 +496,7 @@ export const refundPayment = async (req: Request, res: Response) => {
       link: `/dashboard/transactions`,
       priority: 'normal',
     });
+    */
 
     res.status(200).json({
       status: 'success',
