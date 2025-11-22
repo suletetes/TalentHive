@@ -1310,9 +1310,18 @@ async function seedProposals(users: any[], projects: any[]) {
   ];
   
   // Add enhanced proposals (200+ total)
+  // Note: We generate proposals carefully to avoid duplicate project-freelancer combinations
   const freelancers = users.filter(u => u.role === 'freelancer');
   const additionalProposals = generateAdditionalProposals(freelancers, projects);
-  proposals.push(...additionalProposals);
+  
+  // Filter out any proposals that would create duplicates with hardcoded proposals
+  const hardcodedCombinations = new Set(proposals.map(p => `${p.project}-${p.freelancer}`));
+  const filteredAdditionalProposals = additionalProposals.filter(p => {
+    const key = `${p.project}-${p.freelancer}`;
+    return !hardcodedCombinations.has(key);
+  });
+  
+  proposals.push(...filteredAdditionalProposals);
   
   const createdProposals = await Proposal.insertMany(proposals);
   logger.info(`✅ Created ${createdProposals.length} proposals`);
@@ -1791,7 +1800,9 @@ async function seedNotifications(users: any[]) {
       type: 'proposal',
       title: 'Proposal Accepted',
       message: 'Your proposal for "Backend API Development" has been accepted!',
+      link: '/proposals',
       isRead: false,
+      priority: 'high',
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
     },
     {
@@ -1799,7 +1810,9 @@ async function seedNotifications(users: any[]) {
       type: 'message',
       title: 'New Message',
       message: 'You have a new message from Sarah Johnson',
+      link: '/messages',
       isRead: false,
+      priority: 'normal',
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
     },
     {
@@ -1807,7 +1820,9 @@ async function seedNotifications(users: any[]) {
       type: 'proposal',
       title: 'New Proposal',
       message: 'You received a new proposal for "E-commerce Website Development"',
+      link: '/projects',
       isRead: true,
+      priority: 'normal',
       createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
     },
     {
@@ -1815,7 +1830,9 @@ async function seedNotifications(users: any[]) {
       type: 'contract',
       title: 'Contract Signed',
       message: 'Contract for "Mobile App UI/UX Design" has been signed by the client',
+      link: '/contracts',
       isRead: true,
+      priority: 'high',
       createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
     },
     {
@@ -1823,7 +1840,9 @@ async function seedNotifications(users: any[]) {
       type: 'payment',
       title: 'Payment Processed',
       message: 'Payment of $1,500 has been processed for milestone completion',
+      link: '/payments',
       isRead: true,
+      priority: 'high',
       createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
     },
     {
@@ -1831,15 +1850,19 @@ async function seedNotifications(users: any[]) {
       type: 'review',
       title: 'New Review',
       message: 'You received a 5-star review from Sarah Johnson',
+      link: '/profile',
       isRead: false,
+      priority: 'normal',
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
     },
     {
       user: alice._id,
-      type: 'project',
+      type: 'system',
       title: 'New Project Match',
       message: 'A new project matching your skills has been posted: "Python Data Analysis Script"',
+      link: '/projects',
       isRead: false,
+      priority: 'normal',
       createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
     },
   ];

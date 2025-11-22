@@ -169,6 +169,17 @@ export function generateAdditionalProjects(users: any[], categories: any[]) {
     'Need a reliable professional who can start immediately. Long-term collaboration possible for the right candidate.',
   ];
 
+  const skillSets = [
+    ['React', 'Node.js', 'MongoDB', 'TypeScript'],
+    ['React Native', 'Firebase', 'Redux'],
+    ['Figma', 'UI Design', 'Prototyping'],
+    ['Content Writing', 'SEO', 'Research'],
+    ['Python', 'Data Analysis', 'Machine Learning'],
+    ['Docker', 'Kubernetes', 'AWS'],
+    ['Video Editing', 'Adobe Premiere', 'After Effects'],
+    ['Solidity', 'Smart Contracts', 'Web3'],
+  ];
+
   // Generate 80 additional projects
   for (let i = 0; i < 80; i++) {
     const client = clients[i % clients.length];
@@ -187,7 +198,7 @@ export function generateAdditionalProjects(users: any[], categories: any[]) {
       description,
       client: client._id,
       category: category._id,
-      skills: category.skills.slice(0, 3 + (i % 5)),
+      skills: skillSets[i % skillSets.length],
       budget: {
         type: i % 2 === 0 ? 'fixed' : 'hourly',
         min: budgetMin,
@@ -216,6 +227,7 @@ export function generateAdditionalProjects(users: any[], categories: any[]) {
  */
 export function generateAdditionalProposals(freelancers: any[], projects: any[]) {
   const proposals = [];
+  const usedCombinations = new Set<string>();
   
   const coverLetters = [
     'I am very interested in this project and believe I am the perfect fit. With my extensive experience and proven track record, I can deliver exceptional results.',
@@ -225,16 +237,33 @@ export function generateAdditionalProposals(freelancers: any[], projects: any[])
     'Dear Client, I am a professional with extensive experience in this field. I guarantee timely delivery and excellent communication throughout the project.',
   ];
 
-  // Generate 150 additional proposals
-  for (let i = 0; i < 150; i++) {
-    const freelancer = freelancers[i % freelancers.length];
-    const project = projects[i % projects.length];
-    const coverLetter = coverLetters[i % coverLetters.length];
+  // Calculate maximum possible unique proposals (each freelancer can only submit one per project)
+  const maxPossibleProposals = Math.min(150, freelancers.length * projects.length);
+  
+  // Generate proposals, ensuring no duplicates per project-freelancer combination
+  let proposalCount = 0;
+
+  for (let i = 0; i < maxPossibleProposals && proposalCount < 150; i++) {
+    const freelancerIndex = i % freelancers.length;
+    const projectIndex = Math.floor(i / freelancers.length) % projects.length;
     
+    const freelancer = freelancers[freelancerIndex];
+    const project = projects[projectIndex];
+    const combinationKey = `${project._id}-${freelancer._id}`;
+    
+    // Skip if this combination already exists
+    if (usedCombinations.has(combinationKey)) {
+      continue;
+    }
+    
+    usedCombinations.add(combinationKey);
+    
+    const coverLetter = coverLetters[proposalCount % coverLetters.length];
     const statuses = ['submitted', 'accepted', 'rejected', 'withdrawn'];
-    const status = statuses[i % 4];
+    const status = statuses[proposalCount % 4];
     
-    const bidAmount = project.budget.min + (i * 100) % (project.budget.max - project.budget.min);
+    const budgetRange = project.budget.max - project.budget.min;
+    const bidAmount = project.budget.min + (proposalCount * 100) % Math.max(budgetRange, 1);
 
     proposals.push({
       project: project._id,
@@ -242,13 +271,15 @@ export function generateAdditionalProposals(freelancers: any[], projects: any[])
       coverLetter,
       bidAmount,
       timeline: {
-        duration: project.timeline.duration - (i % 10),
+        duration: Math.max(1, project.timeline.duration - (proposalCount % 10)),
         unit: project.timeline.unit,
       },
       milestones: [],
       status,
-      submittedAt: new Date(Date.now() - ((i + 1) * 12 * 60 * 60 * 1000)),
+      submittedAt: new Date(Date.now() - ((proposalCount + 1) * 12 * 60 * 60 * 1000)),
     });
+    
+    proposalCount++;
   }
 
   return proposals;
