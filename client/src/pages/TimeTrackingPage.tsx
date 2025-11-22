@@ -13,9 +13,9 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { TimeTracker } from '@/components/timeTracking/TimeTracker';
-import { TimeEntryList } from '@/components/timeTracking/TimeEntryList';
-import { TimeReport } from '@/components/timeTracking/TimeReport';
+import TimeTracker from '@/components/timeTracking/TimeTracker';
+import TimeEntryList from '@/components/timeTracking/TimeEntryList';
+import TimeReport from '@/components/timeTracking/TimeReport';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import axios from 'axios';

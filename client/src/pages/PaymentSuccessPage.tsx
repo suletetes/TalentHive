@@ -11,13 +11,13 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
-import { usePaymentHistory } from '@/hooks/api/usePayments';
+import { useTransactionHistory } from '@/hooks/api/usePayments';
 
 export const PaymentSuccessPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const paymentIntentId = searchParams.get('payment_intent');
-  const { data: payment, isLoading } = usePaymentHistory();
+  const { data: payment, isLoading } = useTransactionHistory();
 
   useEffect(() => {
     // Auto-redirect after 5 seconds if no payment intent

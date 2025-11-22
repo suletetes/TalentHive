@@ -18,7 +18,7 @@ import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/ico
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { ServicePackageForm } from '@/components/services/ServicePackageForm';
+import ServicePackageForm from '@/components/services/ServicePackageForm';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import toast from 'react-hot-toast';
