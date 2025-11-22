@@ -277,7 +277,7 @@ export const addMember = async (req: Request, res: Response) => {
 
     // Add member
     organization.members.push({
-      user: newUser._id,
+      user: newUser._id as any,
       role: role || 'member',
       permissions: permissions || [],
       joinedAt: new Date(),

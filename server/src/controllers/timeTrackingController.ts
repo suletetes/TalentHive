@@ -140,7 +140,7 @@ export const createTimeEntry = async (req: Request, res: Response) => {
       startTime: new Date(),
       duration: duration || 0,
       description,
-      hourlyRate: hourlyRate || contract.hourlyRate,
+      hourlyRate: hourlyRate || 0,
       status: 'stopped',
     });
 
@@ -284,7 +284,7 @@ export const reviewTimeEntry = async (req: Request, res: Response) => {
 
     timeEntry.status = status;
     timeEntry.reviewedAt = new Date();
-    timeEntry.reviewedBy = clientId;
+    timeEntry.reviewedBy = clientId as any;
     timeEntry.reviewNotes = reviewNotes;
 
     await timeEntry.save();
