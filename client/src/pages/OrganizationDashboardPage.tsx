@@ -27,7 +27,7 @@ import {
 } from '@/hooks/useOrganization';
 import { MemberManagement } from '@/components/organizations/MemberManagement';
 import { BudgetManager } from '@/components/organizations/BudgetManager';
-import { OrganizationForm } from '@/components/organizations/OrganizationForm';
+import OrganizationForm from '@/components/organizations/OrganizationForm';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 

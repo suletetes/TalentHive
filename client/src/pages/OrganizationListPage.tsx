@@ -21,7 +21,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useOrganizations } from '@/hooks/useOrganization';
-import { OrganizationForm } from '@/components/organizations/OrganizationForm';
+import OrganizationForm from '@/components/organizations/OrganizationForm';
 import { Organization } from '@/services/organizationService';
 
 export const OrganizationListPage: React.FC = () => {
