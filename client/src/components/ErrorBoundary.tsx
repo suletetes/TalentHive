@@ -1,49 +1,54 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Box, Button, Container, Typography, Paper } from '@mui/material';
-import { ErrorOutline as ErrorIcon } from '@mui/icons-material';
+import { Error as ErrorIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 
 interface Props {
   children: ReactNode;
-  fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
 interface State {
   hasError: boolean;
-  error?: Error;
-  errorInfo?: ErrorInfo;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    };
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return {
+      hasError: true,
+      error,
+      errorInfo: null,
+    };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console
-    console.error('Error boundary caught:', error, errorInfo);
+    // Log error to console in development
+    console.error('Error caught by boundary:', error, errorInfo);
 
-    // Call custom error handler if provided
-    if (this.props.onError) {
-      this.props.onError(error, errorInfo);
-    }
+    // In production, you would send this to an error tracking service
+    // Example: Sentry.captureException(error, { extra: errorInfo });
 
-    // Store error info in state
-    this.setState({ errorInfo });
-
-    // TODO: Log to error monitoring service (e.g., Sentry)
-    // if (import.meta.env.PROD) {
-    //   Sentry.captureException(error, { extra: errorInfo });
-    // }
+    this.setState({
+      error,
+      errorInfo,
+    });
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    });
   };
 
   handleReload = () => {
@@ -52,90 +57,86 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      // Use custom fallback if provided
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
-
-      // Default error UI
       return (
-        <Container maxWidth="md" sx={{ py: 8 }}>
-          <Paper
-            elevation={3}
+        <Container maxWidth="md">
+          <Box
             sx={{
-              p: 4,
-              textAlign: 'center',
-              borderTop: 4,
-              borderColor: 'error.main',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '100vh',
+              py: 4,
             }}
           >
-            <Box
+            <Paper
+              elevation={3}
               sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 3,
+                p: 4,
+                textAlign: 'center',
+                maxWidth: 600,
               }}
             >
-              <ErrorIcon sx={{ fontSize: 80, color: 'error.main' }} />
-
-              <Typography variant="h4" component="h1" gutterBottom>
+              <ErrorIcon
+                sx={{
+                  fontSize: 80,
+                  color: 'error.main',
+                  mb: 2,
+                }}
+              />
+              
+              <Typography variant="h4" gutterBottom>
                 Oops! Something went wrong
               </Typography>
-
-              <Typography variant="body1" color="text.secondary" maxWidth={600}>
-                We're sorry for the inconvenience. An unexpected error occurred. Please try
-                refreshing the page or contact support if the problem persists.
+              
+              <Typography variant="body1" color="text.secondary" paragraph>
+                We're sorry for the inconvenience. An unexpected error has occurred.
               </Typography>
 
-              {import.meta.env.DEV && this.state.error && (
+              {process.env.NODE_ENV === 'development' && this.state.error && (
                 <Box
                   sx={{
-                    mt: 2,
+                    mt: 3,
                     p: 2,
                     bgcolor: 'grey.100',
                     borderRadius: 1,
                     textAlign: 'left',
-                    width: '100%',
-                    maxHeight: 200,
                     overflow: 'auto',
+                    maxHeight: 200,
                   }}
                 >
-                  <Typography variant="caption" component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
+                  <Typography variant="caption" component="pre" sx={{ fontSize: '0.75rem' }}>
                     {this.state.error.toString()}
-                    {this.state.errorInfo && '\n\n' + this.state.errorInfo.componentStack}
+                    {this.state.errorInfo && this.state.errorInfo.componentStack}
                   </Typography>
                 </Box>
               )}
 
-              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                <Button variant="contained" onClick={this.handleReload} size="large">
-                  Reload Page
-                </Button>
-                <Button variant="outlined" onClick={this.handleReset} size="large">
+              <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'center' }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<RefreshIcon />}
+                  onClick={this.handleReset}
+                >
                   Try Again
                 </Button>
+                <Button
+                  variant="contained"
+                  onClick={this.handleReload}
+                >
+                  Reload Page
+                </Button>
               </Box>
-            </Box>
-          </Paper>
+
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 3, display: 'block' }}>
+                If this problem persists, please contact support.
+              </Typography>
+            </Paper>
+          </Box>
         </Container>
       );
     }
 
     return this.props.children;
   }
-}
-
-// Functional wrapper for easier use
-export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
-  fallback?: ReactNode
-) {
-  return function WithErrorBoundary(props: P) {
-    return (
-      <ErrorBoundary fallback={fallback}>
-        <Component {...props} />
-      </ErrorBoundary>
-    );
-  };
 }
