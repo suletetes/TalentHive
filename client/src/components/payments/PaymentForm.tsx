@@ -22,7 +22,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
-import { apiService } from '@/services/api';
+import { paymentsService } from '@/services/api/payments.service';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY!);
 
@@ -58,39 +58,46 @@ const PaymentFormContent: React.FC<PaymentFormProps> = ({
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
   const createPaymentMutation = useMutation({
-    mutationFn: (data: any) => apiService.post('/payments/intent', data),
+    mutationFn: (data: any) => paymentsService.createPaymentIntent(data),
     onSuccess: async (response) => {
-      const { paymentIntent } = response.data.data;
-      
-      if (paymentIntent.status === 'requires_action') {
-        // Handle 3D Secure or other authentication
-        const { error: confirmError } = await stripe!.confirmCardPayment(
-          paymentIntent.client_secret
-        );
-        
-        if (confirmError) {
-          setError(confirmError.message || 'Payment confirmation failed');
-          setProcessing(false);
-        } else {
-          // Payment succeeded
-          queryClient.invalidateQueries({ queryKey: ['contracts'] });
-          queryClient.invalidateQueries({ queryKey: ['payments'] });
-          toast.success('Payment completed successfully!');
-          onSuccess?.();
+      const { clientSecret: secret } = response.data;
+      setClientSecret(secret);
+
+      // Confirm the payment with Stripe
+      if (stripe && elements) {
+        const cardElement = elements.getElement(CardElement);
+        if (cardElement) {
+          const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(secret, {
+            payment_method: {
+              card: cardElement,
+            },
+          });
+
+          if (confirmError) {
+            setError(confirmError.message || 'Payment confirmation failed');
+            setProcessing(false);
+          } else if (paymentIntent?.status === 'succeeded') {
+            // Confirm payment on backend
+            try {
+              await paymentsService.confirmPayment({
+                paymentIntentId: paymentIntent.id,
+              });
+              queryClient.invalidateQueries({ queryKey: ['contracts'] });
+              queryClient.invalidateQueries({ queryKey: ['transactions'] });
+              toast.success('Payment completed successfully!');
+              onSuccess?.();
+            } catch (err: any) {
+              setError(err.response?.data?.message || 'Failed to confirm payment');
+            }
+            setProcessing(false);
+          }
         }
-      } else if (paymentIntent.status === 'succeeded') {
-        // Payment succeeded immediately
-        queryClient.invalidateQueries({ queryKey: ['contracts'] });
-        queryClient.invalidateQueries({ queryKey: ['payments'] });
-        toast.success('Payment completed successfully!');
-        onSuccess?.();
       }
-      
-      setProcessing(false);
     },
     onError: (error: any) => {
       setError(error.response?.data?.message || 'Payment failed');
@@ -108,35 +115,15 @@ const PaymentFormContent: React.FC<PaymentFormProps> = ({
     setProcessing(true);
     setError(null);
 
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
-      setError('Card element not found');
-      setProcessing(false);
-      return;
-    }
-
-    // Create payment method
-    const { error: paymentMethodError, paymentMethod } = await stripe.createPaymentMethod({
-      type: 'card',
-      card: cardElement,
-    });
-
-    if (paymentMethodError) {
-      setError(paymentMethodError.message || 'Failed to create payment method');
-      setProcessing(false);
-      return;
-    }
-
     // Create payment intent
     createPaymentMutation.mutate({
       contractId: contract._id,
       milestoneId: milestone._id,
       amount: milestone.amount,
-      paymentMethodId: paymentMethod.id,
     });
   };
 
-  const platformFee = Math.round(milestone.amount * 0.05); // 5% platform fee
+  const platformFee = Math.round(milestone.amount * 0.1); // 10% platform fee (default)
   const totalAmount = milestone.amount;
 
   return (

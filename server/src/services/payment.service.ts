@@ -5,7 +5,7 @@ import { Contract } from '../models/Contract';
 import mongoose from 'mongoose';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2023-10-16',
 });
 
 export class PaymentService {
@@ -257,7 +257,8 @@ export class PaymentService {
 
       // This is a simplified check - in reality, you'd compare with actual milestones
       if (transactions.length > 0) {
-        contract.paymentStatus = 'paid';
+        // Update contract status if all milestones are paid
+        contract.status = 'completed';
         await contract.save();
       }
     } catch (error) {
