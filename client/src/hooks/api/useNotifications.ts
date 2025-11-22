@@ -1,6 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationsService } from '@/services/api/notifications.service';
 
+// Query keys for cache management
+export const notificationKeys = {
+  all: ['notifications'] as const,
+  unreadCount: () => [...notificationKeys.all, 'unreadCount'] as const,
+};
+
 export const useNotifications = (params?: {
   page?: number;
   limit?: number;

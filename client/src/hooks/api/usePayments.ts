@@ -9,6 +9,12 @@ export const transactionKeys = {
   fees: (amount: number) => [...transactionKeys.all, 'fees', amount] as const,
 };
 
+// Alias for test compatibility
+export const paymentKeys = {
+  all: ['payments'] as const,
+  escrow: () => [...paymentKeys.all, 'escrow'] as const,
+};
+
 export function useTransactionHistory(params?: {
   page?: number;
   limit?: number;

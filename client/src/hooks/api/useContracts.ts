@@ -1,6 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { contractsService } from '@/services/api/contracts.service';
 
+// Query keys for cache management
+export const contractKeys = {
+  all: ['contracts'] as const,
+  lists: () => [...contractKeys.all, 'list'] as const,
+  detail: (id: string) => [...contractKeys.all, 'detail', id] as const,
+  my: () => [...contractKeys.all, 'my'] as const,
+};
+
 export const useMyContracts = (params?: {
   page?: number;
   limit?: number;

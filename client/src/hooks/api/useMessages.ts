@@ -1,6 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { messagesService } from '@/services/api/messages.service';
 
+// Query keys for cache management
+export const messageKeys = {
+  all: ['messages'] as const,
+  conversations: () => [...messageKeys.all, 'conversations'] as const,
+  detail: (id: string) => [...messageKeys.all, 'detail', id] as const,
+};
+
 export const useConversations = () => {
   return useQuery({
     queryKey: ['conversations'],
