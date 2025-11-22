@@ -2,136 +2,119 @@ import { apiCore } from './core';
 
 export interface Contract {
   _id: string;
-  project: string;
+  project: any;
+  client: any;
+  freelancer: any;
   proposal: string;
-  client: string;
-  freelancer: string;
   title: string;
   description: string;
-  budget: {
-    amount: number;
-    type: 'fixed' | 'hourly';
-  };
-  milestones: Array<{
-    _id: string;
-    title: string;
-    description: string;
-    amount: number;
-    dueDate: Date;
-    status: 'pending' | 'in_progress' | 'submitted' | 'approved' | 'rejected';
-    submittedAt?: Date;
-    approvedAt?: Date;
-  }>;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
-  startDate: Date;
-  endDate?: Date;
-  signatures: {
-    client: { signed: boolean; signedAt?: Date };
-    freelancer: { signed: boolean; signedAt?: Date };
-  };
-  createdAt: Date;
-  updatedAt: Date;
+  totalAmount: number;
+  currency: string;
+  startDate: string;
+  endDate: string;
+  status: 'draft' | 'active' | 'completed' | 'cancelled' | 'disputed';
+  milestones: Milestone[];
+  terms: any;
+  deliverables: any[];
+  amendments: any[];
+  signatures: any[];
+  progress: number;
+  totalPaid: number;
+  remainingAmount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface CreateContractDto {
-  title: string;
-  description: string;
-  milestones: Array<{
-    title: string;
-    description: string;
-    amount: number;
-    dueDate: Date;
-  }>;
-}
-
-export interface Amendment {
+export interface Milestone {
   _id: string;
-  proposedBy: string;
-  changes: any;
-  reason: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  createdAt: Date;
+  title: string;
+  description: string;
+  amount: number;
+  dueDate: string;
+  status: 'pending' | 'in_progress' | 'submitted' | 'approved' | 'rejected' | 'paid';
+  deliverables: any[];
+  submittedAt?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  paidAt?: string;
+  clientFeedback?: string;
+  freelancerNotes?: string;
 }
 
 export class ContractsService {
   private basePath = '/contracts';
 
-  async createContract(
-    proposalId: string,
-    data: CreateContractDto
-  ): Promise<{ data: Contract }> {
-    return apiCore.post<{ data: Contract }>(`${this.basePath}/proposal/${proposalId}`, data);
+  async getMyContracts(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    role?: string;
+  }) {
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value));
+        }
+      });
+    }
+    return apiCore.get(`${this.basePath}/my/contracts?${queryParams.toString()}`);
   }
 
-  async getContract(id: string): Promise<{ data: Contract }> {
-    return apiCore.get<{ data: Contract }>(`${this.basePath}/${id}`);
+  async getContractById(id: string) {
+    return apiCore.get(`${this.basePath}/${id}`);
   }
 
-  async getMyContracts(): Promise<{ data: Contract[] }> {
-    const response = await apiCore.get<{ status: string; data: { contracts: Contract[]; pagination: any } }>(`${this.basePath}/my`);
-    return { data: response.data.contracts };
-  }
-
-  async signContract(id: string): Promise<{ data: Contract }> {
-    return apiCore.post<{ data: Contract }>(`${this.basePath}/${id}/sign`);
-  }
-
-  async cancelContract(id: string, reason: string): Promise<{ data: Contract }> {
-    return apiCore.post<{ data: Contract }>(`${this.basePath}/${id}/cancel`, { reason });
+  async signContract(id: string, data: { ipAddress: string; userAgent: string }) {
+    return apiCore.post(`${this.basePath}/${id}/sign`, data);
   }
 
   async submitMilestone(
     contractId: string,
     milestoneId: string,
-    data: { notes?: string; attachments?: string[] }
-  ): Promise<{ data: Contract }> {
-    return apiCore.post<{ data: Contract }>(
-      `${this.basePath}/${contractId}/milestones/${milestoneId}/submit`,
-      data
-    );
+    data: { deliverables: any[]; freelancerNotes?: string }
+  ) {
+    return apiCore.post(`${this.basePath}/${contractId}/milestones/${milestoneId}/submit`, data);
   }
 
   async approveMilestone(
     contractId: string,
     milestoneId: string,
-    data: { feedback?: string }
-  ): Promise<{ data: Contract }> {
-    return apiCore.post<{ data: Contract }>(
-      `${this.basePath}/${contractId}/milestones/${milestoneId}/approve`,
-      data
-    );
+    data: { clientFeedback?: string }
+  ) {
+    return apiCore.post(`${this.basePath}/${contractId}/milestones/${milestoneId}/approve`, data);
   }
 
   async rejectMilestone(
     contractId: string,
     milestoneId: string,
-    data: { reason: string }
-  ): Promise<{ data: Contract }> {
-    return apiCore.post<{ data: Contract }>(
-      `${this.basePath}/${contractId}/milestones/${milestoneId}/reject`,
-      data
-    );
+    data: { clientFeedback: string }
+  ) {
+    return apiCore.post(`${this.basePath}/${contractId}/milestones/${milestoneId}/reject`, data);
   }
 
   async proposeAmendment(
     contractId: string,
-    data: { changes: any; reason: string }
-  ): Promise<{ data: Amendment }> {
-    return apiCore.post<{ data: Amendment }>(
-      `${this.basePath}/${contractId}/amendments`,
-      data
-    );
+    data: {
+      type: string;
+      description: string;
+      changes: any;
+      reason: string;
+    }
+  ) {
+    return apiCore.post(`${this.basePath}/${contractId}/amendments`, data);
   }
 
   async respondToAmendment(
     contractId: string,
     amendmentId: string,
-    data: { accept: boolean; notes?: string }
-  ): Promise<{ data: Amendment }> {
-    return apiCore.post<{ data: Amendment }>(
-      `${this.basePath}/${contractId}/amendments/${amendmentId}/respond`,
-      data
-    );
+    data: { status: 'accepted' | 'rejected'; responseNotes?: string }
+  ) {
+    return apiCore.post(`${this.basePath}/${contractId}/amendments/${amendmentId}/respond`, data);
+  }
+
+  async cancelContract(contractId: string, data: { reason: string }) {
+    return apiCore.post(`${this.basePath}/${contractId}/cancel`, data);
   }
 }
 

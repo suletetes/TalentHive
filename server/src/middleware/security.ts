@@ -1,63 +1,132 @@
 import { Request, Response, NextFunction } from 'express';
-import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
-import { rateLimit } from 'express-rate-limit';
+import helmet from 'helmet';
 
-// Security headers
-export const securityHeaders = helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
-      scriptSrc: ["'self'"],
-      connectSrc: ["'self'", process.env.CLIENT_URL || 'http://localhost:3000'],
+/**
+ * Rate limiting configuration
+ */
+export const createRateLimiter = (windowMs: number = 15 * 60 * 1000, max: number = 100) => {
+  return rateLimit({
+    windowMs,
+    max,
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+};
+
+/**
+ * Strict rate limiter for sensitive endpoints
+ */
+export const strictRateLimiter = createRateLimiter(15 * 60 * 1000, 5); // 5 requests per 15 minutes
+
+/**
+ * Auth rate limiter
+ */
+export const authRateLimiter = createRateLimiter(15 * 60 * 1000, 10); // 10 requests per 15 minutes
+
+/**
+ * API rate limiter
+ */
+export const apiRateLimiter = createRateLimiter(15 * 60 * 1000, 100); // 100 requests per 15 minutes
+
+/**
+ * Input sanitization middleware
+ */
+export const sanitizeInput = () => {
+  return mongoSanitize({
+    replaceWith: '_',
+    onSanitize: ({ req, key }) => {
+      console.warn(`Sanitized input detected: ${key} in ${req.method} ${req.path}`);
     },
-  },
-  crossOriginEmbedderPolicy: false,
-});
+  });
+};
 
-// Sanitize MongoDB queries
-export const sanitizeData = mongoSanitize({
-  replaceWith: '_',
-});
+/**
+ * Security headers middleware
+ */
+export const securityHeaders = () => {
+  return helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+      },
+    },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+  });
+};
 
-// Input validation middleware
-export const validateInput = (req: Request, res: Response, next: NextFunction) => {
-  // Remove any null bytes
-  const sanitize = (obj: any): any => {
-    if (typeof obj === 'string') {
-      return obj.replace(/\0/g, '');
+/**
+ * CORS configuration
+ */
+export const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'];
+    
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) {
+      return callback(null, true);
     }
-    if (typeof obj === 'object' && obj !== null) {
-      Object.keys(obj).forEach(key => {
-        obj[key] = sanitize(obj[key]);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+/**
+ * Request validation middleware
+ */
+export const validateRequest = (req: Request, res: Response, next: NextFunction) => {
+  // Check for required headers
+  if (!req.headers['content-type'] && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Content-Type header is required',
+    });
+  }
+
+  // Validate JSON body
+  if (req.headers['content-type']?.includes('application/json') && req.body) {
+    try {
+      JSON.stringify(req.body);
+    } catch (error) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid JSON in request body',
       });
     }
-    return obj;
-  };
-
-  req.body = sanitize(req.body);
-  req.query = sanitize(req.query);
-  req.params = sanitize(req.params);
+  }
 
   next();
 };
 
-// API rate limiting
-export const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+/**
+ * IP tracking middleware
+ */
+export const trackIP = (req: Request, res: Response, next: NextFunction) => {
+  const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  req.clientIP = ip as string;
+  next();
+};
 
-// Strict rate limiting for auth endpoints
-export const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: 'Too many authentication attempts, please try again later.',
-  skipSuccessfulRequests: true,
-});
+// Extend Express Request type
+declare global {
+  namespace Express {
+    interface Request {
+      clientIP?: string;
+    }
+  }
+}

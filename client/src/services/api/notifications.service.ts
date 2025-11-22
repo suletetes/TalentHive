@@ -3,26 +3,37 @@ import { apiCore } from './core';
 export interface Notification {
   _id: string;
   user: string;
-  type: string;
+  type: 'message' | 'proposal' | 'contract' | 'payment' | 'review' | 'system';
   title: string;
   message: string;
-  data?: any;
+  link: string;
   isRead: boolean;
-  createdAt: Date;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  metadata: {
+    projectId?: string;
+    proposalId?: string;
+    contractId?: string;
+    senderId?: {
+      _id: string;
+      profile: {
+        firstName: string;
+        lastName: string;
+        avatar?: string;
+      };
+    };
+    amount?: number;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface NotificationPreferences {
-  email: {
-    messages: boolean;
-    proposals: boolean;
-    contracts: boolean;
-    payments: boolean;
-  };
-  push: {
-    messages: boolean;
-    proposals: boolean;
-    contracts: boolean;
-    payments: boolean;
+export interface NotificationResponse {
+  data: Notification[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
   };
 }
 
@@ -30,10 +41,11 @@ export class NotificationsService {
   private basePath = '/notifications';
 
   async getNotifications(params?: {
-    unread?: boolean;
     page?: number;
     limit?: number;
-  }): Promise<{ data: Notification[]; pagination: any }> {
+    type?: string;
+    isRead?: boolean;
+  }): Promise<NotificationResponse> {
     const queryParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -42,34 +54,28 @@ export class NotificationsService {
         }
       });
     }
-    return apiCore.get<{ data: Notification[]; pagination: any }>(
+    return apiCore.get<NotificationResponse>(
       `${this.basePath}?${queryParams.toString()}`
     );
-  }
-
-  async markAsRead(notificationId: string): Promise<{ message: string }> {
-    return apiCore.patch<{ message: string }>(`${this.basePath}/${notificationId}/read`);
-  }
-
-  async markAllAsRead(): Promise<{ message: string }> {
-    return apiCore.patch<{ message: string }>(`${this.basePath}/read-all`);
   }
 
   async getUnreadCount(): Promise<{ data: { count: number } }> {
     return apiCore.get<{ data: { count: number } }>(`${this.basePath}/unread-count`);
   }
 
-  async getPreferences(): Promise<{ data: NotificationPreferences }> {
-    return apiCore.get<{ data: NotificationPreferences }>(`${this.basePath}/preferences`);
+  async markAsRead(notificationId: string): Promise<{ data: Notification }> {
+    return apiCore.put<{ data: Notification }>(
+      `${this.basePath}/${notificationId}/read`,
+      {}
+    );
   }
 
-  async updatePreferences(
-    preferences: NotificationPreferences
-  ): Promise<{ data: NotificationPreferences }> {
-    return apiCore.put<{ data: NotificationPreferences }>(
-      `${this.basePath}/preferences`,
-      preferences
-    );
+  async markAllAsRead(): Promise<{ message: string }> {
+    return apiCore.put<{ message: string }>(`${this.basePath}/mark-all-read`, {});
+  }
+
+  async deleteNotification(notificationId: string): Promise<{ message: string }> {
+    return apiCore.delete<{ message: string }>(`${this.basePath}/${notificationId}`);
   }
 }
 
