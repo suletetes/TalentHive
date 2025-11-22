@@ -11,7 +11,7 @@ export interface IContract extends Document {
   currency: string;
   startDate: Date;
   endDate: Date;
-  status: 'draft' | 'active' | 'completed' | 'cancelled' | 'disputed';
+  status: 'draft' | 'active' | 'completed' | 'cancelled' | 'disputed' | 'paused';
   milestones: IMilestone[];
   terms: IContractTerms;
   deliverables: IDeliverable[];
