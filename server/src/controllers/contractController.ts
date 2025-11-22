@@ -289,7 +289,7 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
     return next(new AppError('You cannot submit this milestone', 403));
   }
 
-  const milestone = contract.milestones.id(milestoneId);
+  const milestone = contract.milestones.find((m: any) => m._id.toString() === milestoneId);
   if (!milestone) {
     return next(new AppError('Milestone not found', 404));
   }
@@ -362,7 +362,7 @@ export const approveMilestone = catchAsync(async (req: AuthRequest, res: Respons
     return next(new AppError('You cannot approve this milestone', 403));
   }
 
-  const milestone = contract.milestones.id(milestoneId);
+  const milestone = contract.milestones.find((m: any) => m._id.toString() === milestoneId);
   if (!milestone) {
     return next(new AppError('Milestone not found', 404));
   }
@@ -431,7 +431,7 @@ export const rejectMilestone = catchAsync(async (req: AuthRequest, res: Response
     return next(new AppError('You cannot reject this milestone', 403));
   }
 
-  const milestone = contract.milestones.id(milestoneId);
+  const milestone = contract.milestones.find((m: any) => m._id.toString() === milestoneId);
   if (!milestone) {
     return next(new AppError('Milestone not found', 404));
   }
@@ -520,7 +520,7 @@ export const respondToAmendment = catchAsync(async (req: AuthRequest, res: Respo
     return next(new AppError('Contract not found', 404));
   }
 
-  const amendment = contract.amendments.id(amendmentId);
+  const amendment = contract.amendments.find((a: any) => a._id.toString() === amendmentId);
   if (!amendment) {
     return next(new AppError('Amendment not found', 404));
   }

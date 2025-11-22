@@ -24,6 +24,11 @@ export interface IContract extends Document {
   totalPaid: number;
   remainingAmount: number;
   overdueMilestones: IMilestone[];
+  
+  // Methods
+  isFullySigned(): boolean;
+  canSubmitMilestone(milestoneId: string, userId: string): boolean;
+  canApproveMilestone(milestoneId: string, userId: string): boolean;
 }
 
 export interface IMilestone extends Document {
