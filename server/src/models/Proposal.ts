@@ -4,23 +4,23 @@ import { IProposal } from '@/types/proposal';
 const milestoneSchema = new Schema({
   title: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
     maxlength: 200,
   },
   description: {
     type: String,
-    required: true,
+    required: false,
     maxlength: 1000,
   },
   amount: {
     type: Number,
-    required: true,
+    required: false,
     min: 0,
   },
   dueDate: {
     type: Date,
-    required: true,
+    required: false,
   },
   deliverables: [String],
 }, { _id: false });

@@ -1,0 +1,139 @@
+import mongoose, { Document, Schema } from 'mongoose';
+
+export interface ITransaction extends Document {
+  contract: mongoose.Types.ObjectId;
+  milestone?: mongoose.Types.ObjectId;
+  client: mongoose.Types.ObjectId;
+  freelancer: mongoose.Types.ObjectId;
+  amount: number; // Total amount in cents
+  platformCommission: number; // Commission in cents
+  processingFee: number; // Processing fee in cents
+  tax: number; // Tax in cents
+  freelancerAmount: number; // Amount freelancer receives in cents
+  currency: string;
+  status: 'pending' | 'processing' | 'held_in_escrow' | 'released' | 'refunded' | 'failed' | 'cancelled';
+  paymentMethod: 'stripe' | 'paypal' | 'bank_transfer' | 'other';
+  stripePaymentIntentId?: string;
+  stripeChargeId?: string;
+  stripeRefundId?: string;
+  escrowReleaseDate?: Date;
+  releasedAt?: Date;
+  refundedAt?: Date;
+  failureReason?: string;
+  metadata?: Record<string, any>;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const transactionSchema = new Schema<ITransaction>(
+  {
+    contract: {
+      type: Schema.Types.ObjectId,
+      ref: 'Contract',
+      required: true,
+      index: true,
+    },
+    milestone: {
+      type: Schema.Types.ObjectId,
+      ref: 'Milestone',
+    },
+    client: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+    freelancer: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+    amount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    platformCommission: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+    processingFee: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+    tax: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+    freelancerAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    currency: {
+      type: String,
+      required: true,
+      default: 'USD',
+      uppercase: true,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'processing', 'held_in_escrow', 'released', 'refunded', 'failed', 'cancelled'],
+      default: 'pending',
+      index: true,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ['stripe', 'paypal', 'bank_transfer', 'other'],
+      default: 'stripe',
+    },
+    stripePaymentIntentId: {
+      type: String,
+      sparse: true,
+    },
+    stripeChargeId: {
+      type: String,
+      sparse: true,
+    },
+    stripeRefundId: {
+      type: String,
+      sparse: true,
+    },
+    escrowReleaseDate: {
+      type: Date,
+    },
+    releasedAt: {
+      type: Date,
+    },
+    refundedAt: {
+      type: Date,
+    },
+    failureReason: {
+      type: String,
+    },
+    metadata: {
+      type: Schema.Types.Mixed,
+    },
+    description: {
+      type: String,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Indexes for efficient queries
+transactionSchema.index({ createdAt: -1 });
+transactionSchema.index({ status: 1, createdAt: -1 });
+transactionSchema.index({ stripePaymentIntentId: 1 }, { sparse: true });
+
+export const Transaction = mongoose.model<ITransaction>('Transaction', transactionSchema);
