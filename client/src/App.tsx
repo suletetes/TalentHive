@@ -14,6 +14,7 @@ import { ProjectDetailPage } from '@/pages/ProjectDetailPage';
 import { NewProjectPage } from '@/pages/NewProjectPage';
 import { MessagesPage } from '@/pages/MessagesPage';
 import { ProposalsPage } from '@/pages/ProposalsPage';
+import { ProjectProposalsPage } from '@/pages/ProjectProposalsPage';
 import { ContractsPage } from '@/pages/ContractsPage';
 import { PaymentsPage } from '@/pages/PaymentsPage';
 import { ReviewsPage } from '@/pages/ReviewsPage';
@@ -80,6 +81,7 @@ function App() {
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/new" element={<NewProjectPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="projects/:projectId/proposals" element={<ProjectProposalsPage />} />
           <Route path="proposals" element={<ProposalsPage />} />
           <Route path="contracts" element={<ContractsPage />} />
           <Route path="payments" element={<PaymentsPage />} />

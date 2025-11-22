@@ -45,11 +45,14 @@ export const FreelancerDetailPage = () => {
   const isClient = user?.role === 'client';
 
   // Fetch reviews for this freelancer
-  const { data: reviewsData } = useQuery({
+  const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
     queryKey: ['freelancer-reviews', id],
     queryFn: async () => {
+      console.log('🔍 Fetching reviews for freelancer:', id);
       const response = await apiService.get(`/reviews/freelancer/${id}`);
-      return response.data.data;
+      console.log('📦 Reviews response:', response.data);
+      // Handle both response.data.data and response.data formats
+      return response.data.data || response.data;
     },
     enabled: !!id,
   });
@@ -433,13 +436,17 @@ export const FreelancerDetailPage = () => {
         )}
 
         {/* Reviews Section */}
-        {reviews.length > 0 && (
-          <Grid item xs={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Reviews ({reviews.length})
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Reviews ({reviews.length})
+              </Typography>
+              {reviewsLoading ? (
+                <Typography variant="body2" color="text.secondary">
+                  Loading reviews...
                 </Typography>
+              ) : reviews.length > 0 ? (
                 <List>
                   {reviews.map((review: any, index: number) => (
                     <Box key={review._id}>
@@ -447,26 +454,27 @@ export const FreelancerDetailPage = () => {
                         <ListItemText
                           primary={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                              <Avatar src={review.client?.profile?.avatar} sx={{ width: 40, height: 40 }}>
-                                {review.client?.profile?.firstName?.[0]}
+                              <Avatar src={review.client?.profile?.avatar || review.reviewer?.profile?.avatar} sx={{ width: 40, height: 40 }}>
+                                {(review.client?.profile?.firstName || review.reviewer?.profile?.firstName)?.[0]}
                               </Avatar>
                               <Box>
                                 <Typography variant="subtitle1">
-                                  {review.client?.profile?.firstName} {review.client?.profile?.lastName}
+                                  {review.client?.profile?.firstName || review.reviewer?.profile?.firstName}{' '}
+                                  {review.client?.profile?.lastName || review.reviewer?.profile?.lastName}
                                 </Typography>
                                 <Rating value={review.rating} readOnly size="small" />
                               </Box>
                             </Box>
                           }
                           secondary={
-                            <>
-                              <Typography variant="body2" sx={{ mt: 1 }}>
-                                {review.comment}
+                            <Box component="span">
+                              <Typography variant="body2" component="span" sx={{ mt: 1, display: 'block' }}>
+                                {review.feedback || review.comment}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                              <Typography variant="caption" color="text.secondary" component="span" sx={{ mt: 1, display: 'block' }}>
                                 {formatDate(review.createdAt)}
                               </Typography>
-                            </>
+                            </Box>
                           }
                         />
                       </ListItem>
@@ -474,10 +482,14 @@ export const FreelancerDetailPage = () => {
                     </Box>
                   ))}
                 </List>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No reviews yet
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
 
       {/* Hire Now Modal */}

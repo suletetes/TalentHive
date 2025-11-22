@@ -8,6 +8,7 @@ import {
   AppBar,
   Toolbar,
   CircularProgress,
+  Chip,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -123,21 +124,31 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
             alignItems: isOwnMessage ? 'flex-end' : 'flex-start',
           }}
         >
-          <Paper
-            elevation={1}
-            sx={{
-              p: 1.5,
-              bgcolor: isOwnMessage ? 'primary.main' : 'background.paper',
-              color: isOwnMessage ? 'primary.contrastText' : 'text.primary',
-              borderRadius: 2,
-              borderTopRightRadius: isOwnMessage ? 0 : 2,
-              borderTopLeftRadius: isOwnMessage ? 2 : 0,
-            }}
-          >
-            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-              {message.content}
-            </Typography>
-          </Paper>
+          <Box>
+            {(message as any).sender?.role === 'admin' && (
+              <Chip 
+                label="Support" 
+                size="small" 
+                color="primary" 
+                sx={{ mb: 0.5 }}
+              />
+            )}
+            <Paper
+              elevation={1}
+              sx={{
+                p: 1.5,
+                bgcolor: isOwnMessage ? 'primary.main' : 'background.paper',
+                color: isOwnMessage ? 'primary.contrastText' : 'text.primary',
+                borderRadius: 2,
+                borderTopRightRadius: isOwnMessage ? 0 : 2,
+                borderTopLeftRadius: isOwnMessage ? 2 : 0,
+              }}
+            >
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                {message.content}
+              </Typography>
+            </Paper>
+          </Box>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, px: 1 }}>
             {formatMessageTime(message.createdAt)}
           </Typography>
