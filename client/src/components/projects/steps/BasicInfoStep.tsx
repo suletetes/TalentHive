@@ -11,6 +11,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
 import { useToast } from '@/components/ui/ToastProvider';
+import { useOrganizations } from '@/hooks/useOrganization';
 
 interface BasicInfoStepProps {
   formik: any;
@@ -21,6 +22,9 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
   const [categoryInput, setCategoryInput] = useState('');
   const toast = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch organizations
+  const { data: organizationsData, isLoading: loadingOrganizations } = useOrganizations();
 
   // Fetch categories
   const { data: categoriesData, isLoading: loadingCategories } = useQuery({
@@ -74,6 +78,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
 
   const categories = categoriesData || [];
   const skills = skillsData || [];
+  const organizations = organizationsData?.data || [];
 
   const handleSkillAdd = (skillId: string) => {
     if (skillId && !formik.values.skills.includes(skillId)) {
@@ -306,6 +311,35 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
             {formik.errors.skills}
           </FormHelperText>
         )}
+      </Box>
+
+      <Box sx={{ mt: 3 }}>
+        <Autocomplete
+          options={organizations}
+          getOptionLabel={(option: any) => option.name || ''}
+          value={organizations.find((org: any) => org._id === formik.values.organization) || null}
+          onChange={(event, newValue) => {
+            formik.setFieldValue('organization', newValue?._id || '');
+          }}
+          loading={loadingOrganizations}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Organization (Optional)"
+              placeholder="Select an organization to link this project"
+              helperText="Link this project to an organization for budget tracking"
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {loadingOrganizations && <CircularProgress color="inherit" size={20} />}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+        />
       </Box>
     </Box>
   );

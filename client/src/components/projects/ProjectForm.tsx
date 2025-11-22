@@ -18,7 +18,7 @@ import { BudgetTimelineStep } from './steps/BudgetTimelineStep';
 import { RequirementsStep } from './steps/RequirementsStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { useCreateProject, useUpdateProject } from '@/hooks/api/useProjects';
-import { ErrorHandler, ValidationErrorHandler } from '@/utils/errorHandler';
+import { getErrorMessage } from '@/utils/errorHandler';
 import { useToast } from '@/components/ui/ToastProvider';
 
 const steps = ['Basic Information', 'Budget & Timeline', 'Requirements', 'Review'];
@@ -37,6 +37,7 @@ const projectSchema = yup.object({
     duration: yup.number().min(1, 'Duration must be at least 1').required(),
     unit: yup.string().oneOf(['days', 'weeks', 'months']).required(),
   }),
+  organization: yup.string().optional(),
 });
 
 interface ProjectFormProps {
@@ -61,16 +62,9 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       onSuccess?.();
     },
     onError: (error) => {
-      const apiError = ErrorHandler.handle(error);
-      setSubmitError(apiError.message);
-      
-      // Extract field-specific errors
-      const fieldErrors = ValidationErrorHandler.extractFieldErrors(apiError);
-      Object.entries(fieldErrors).forEach(([field, message]) => {
-        formik.setFieldError(field, message);
-      });
-      
-      ErrorHandler.showToast(apiError);
+      const errorMessage = getErrorMessage(error);
+      setSubmitError(errorMessage);
+      toast.error(errorMessage);
     },
   });
 
@@ -80,15 +74,9 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       onSuccess?.();
     },
     onError: (error) => {
-      const apiError = ErrorHandler.handle(error);
-      setSubmitError(apiError.message);
-      
-      const fieldErrors = ValidationErrorHandler.extractFieldErrors(apiError);
-      Object.entries(fieldErrors).forEach(([field, message]) => {
-        formik.setFieldError(field, message);
-      });
-      
-      ErrorHandler.showToast(apiError);
+      const errorMessage = getErrorMessage(error);
+      setSubmitError(errorMessage);
+      toast.error(errorMessage);
     },
   });
 
@@ -114,6 +102,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       isUrgent: initialData?.isUrgent || false,
       applicationDeadline: initialData?.applicationDeadline || '',
       status: initialData?.status || 'open',
+      organization: initialData?.organization?._id || '',
     },
     validationSchema: projectSchema,
     onSubmit: (values) => {
