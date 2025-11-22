@@ -17,6 +17,7 @@ import { socketService } from '@/services/socket';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { format, isToday, isYesterday } from 'date-fns';
+import { MessageAttachment } from './MessageAttachment';
 
 interface MessageListProps {
   conversation: Conversation;
@@ -144,9 +145,61 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
                 borderTopLeftRadius: isOwnMessage ? 2 : 0,
               }}
             >
-              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                {message.content}
-              </Typography>
+              {message.content && (
+                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {message.content}
+                </Typography>
+              )}
+              
+              {/* Attachments */}
+              {message.attachments && message.attachments.length > 0 && (
+                <Box sx={{ mt: message.content ? 1 : 0 }}>
+                  {message.attachments.map((attachment, idx) => (
+                    <Box key={idx} sx={{ mb: idx < message.attachments!.length - 1 ? 1 : 0 }}>
+                      {attachment.type === 'image' ? (
+                        <Box
+                          component="img"
+                          src={attachment.url}
+                          alt={attachment.filename}
+                          sx={{
+                            maxWidth: '100%',
+                            maxHeight: 300,
+                            borderRadius: 1,
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => window.open(attachment.url, '_blank')}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            p: 1,
+                            bgcolor: isOwnMessage ? 'rgba(255,255,255,0.2)' : 'action.hover',
+                            borderRadius: 1,
+                            cursor: 'pointer',
+                            '&:hover': {
+                              bgcolor: isOwnMessage ? 'rgba(255,255,255,0.3)' : 'action.selected',
+                            },
+                          }}
+                          onClick={() => window.open(attachment.url, '_blank')}
+                        >
+                          <Typography variant="caption" sx={{ flex: 1, wordBreak: 'break-word' }}>
+                            📎 {attachment.filename}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              )}
+
+              {message.isEdited && (
+                <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.7 }}>
+                  (edited)
+                </Typography>
+              )}
             </Paper>
           </Box>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, px: 1 }}>

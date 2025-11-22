@@ -4,7 +4,14 @@ export interface IMessage extends Document {
   conversation: mongoose.Types.ObjectId;
   sender: mongoose.Types.ObjectId;
   content: string;
-  attachments: string[];
+  attachments: Array<{
+    url: string;
+    filename: string;
+    size: number;
+    mimeType: string;
+    type: 'image' | 'document' | 'video';
+    publicId?: string;
+  }>;
   readBy: mongoose.Types.ObjectId[];
   isAdminMessage: boolean;
   priority: 'low' | 'normal' | 'high' | 'urgent';
@@ -39,8 +46,30 @@ const messageSchema = new Schema<IMessage>({
     maxlength: [5000, 'Message cannot exceed 5000 characters'],
   },
   attachments: [{
-    type: String,
-    trim: true,
+    url: {
+      type: String,
+      required: true,
+    },
+    filename: {
+      type: String,
+      required: true,
+    },
+    size: {
+      type: Number,
+      required: true,
+    },
+    mimeType: {
+      type: String,
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ['image', 'document', 'video'],
+      required: true,
+    },
+    publicId: {
+      type: String,
+    },
   }],
   readBy: [{
     type: Schema.Types.ObjectId,
