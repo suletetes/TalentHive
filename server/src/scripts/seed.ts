@@ -18,6 +18,8 @@ import BudgetApproval from '@/models/BudgetApproval';
 import { Category } from '@/models/Category';
 import { Skill } from '@/models/Skill';
 import { HireNowRequest } from '@/models/HireNowRequest';
+import { PlatformSettings } from '@/models/PlatformSettings';
+import { generateEnhancedUsers, generateAdditionalProjects, generateAdditionalProposals } from './enhancedSeedData';
 
 // Load environment variables
 dotenv.config();
@@ -47,6 +49,7 @@ async function clearDatabase() {
   
   const { Conversation } = await import('@/models/Conversation');
   const { Payment } = await import('@/models/Payment');
+  const { Transaction } = await import('@/models/Transaction');
   
   await User.deleteMany({});
   await Organization.deleteMany({});
@@ -66,6 +69,8 @@ async function clearDatabase() {
   await Category.deleteMany({});
   await Skill.deleteMany({});
   await HireNowRequest.deleteMany({});
+  await PlatformSettings.deleteMany({});
+  await Transaction.deleteMany({});
   
   logger.info('✅ Database cleared');
 }
@@ -456,7 +461,13 @@ async function seedUsers() {
     },
   ];
   
+  // Add enhanced users (50+ total)
+  const enhancedUsers = await generateEnhancedUsers();
+  users.push(...enhancedUsers);
+  
   const createdUsers = await User.insertMany(users);
+  
+  logger.info(`✅ Created ${createdUsers.length} users`);
   
   // Mark some freelancers as featured
   const alice = createdUsers.find(u => u.email === 'alice.dev@example.com');
@@ -1031,6 +1042,11 @@ async function seedProjects(users: any[], organizations: any[]) {
     },
   ];
   
+  // Add enhanced projects (100+ total)
+  const categories = await Category.find();
+  const additionalProjects = generateAdditionalProjects(users, categories);
+  projects.push(...additionalProjects);
+  
   const createdProjects = await Project.insertMany(projects);
   logger.info(`✅ Created ${createdProjects.length} projects (${projects.filter(p => p.isDraft).length} drafts)`);
   
@@ -1292,6 +1308,11 @@ async function seedProposals(users: any[], projects: any[]) {
       status: 'withdrawn',
     },
   ];
+  
+  // Add enhanced proposals (200+ total)
+  const freelancers = users.filter(u => u.role === 'freelancer');
+  const additionalProposals = generateAdditionalProposals(freelancers, projects);
+  proposals.push(...additionalProposals);
   
   const createdProposals = await Proposal.insertMany(proposals);
   logger.info(`✅ Created ${createdProposals.length} proposals`);
@@ -1829,6 +1850,30 @@ async function seedNotifications(users: any[]) {
   return createdNotifications;
 }
 
+async function seedPlatformSettings(adminId: any) {
+  logger.info('⚙️ Seeding platform settings...');
+  
+  const settings = await PlatformSettings.create({
+    commissionRate: 10, // 10%
+    minCommission: 100, // $1.00
+    maxCommission: 1000000, // $10,000
+    paymentProcessingFee: 2.9, // 2.9%
+    currency: 'USD',
+    taxRate: 0,
+    withdrawalMinAmount: 1000, // $10.00
+    withdrawalFee: 0,
+    escrowHoldDays: 7,
+    refundPolicy: 'Refunds are processed within 7-14 business days after approval.',
+    termsOfService: 'By using TalentHive, you agree to our terms of service.',
+    privacyPolicy: 'We respect your privacy and protect your personal information.',
+    isActive: true,
+    updatedBy: adminId,
+  });
+  
+  logger.info(`✅ Created platform settings`);
+  return settings;
+}
+
 async function seedPayments(users: any[], contracts: any[]) {
   logger.info('💰 Seeding payments...');
   
@@ -1891,6 +1936,7 @@ async function seedDatabase() {
     // Seed data in order (due to dependencies)
     const users = await seedUsers();
     const admin = users.find(u => u.role === 'admin');
+    const platformSettings = await seedPlatformSettings(admin._id);
     const categories = await seedCategories(admin._id);
     const skills = await seedSkills(categories, admin._id);
     const organizations = await seedOrganizations(users);
@@ -1907,6 +1953,7 @@ async function seedDatabase() {
     
     logger.info('✅ Database seeding completed successfully');
     logger.info(`📊 Summary:
+    - Platform Settings: Created
     - Categories: ${categories.length}
     - Skills: ${skills.length}
     - Users: ${users.length}

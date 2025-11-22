@@ -1,372 +1,349 @@
 import Stripe from 'stripe';
-import { logger } from '@/utils/logger';
+import { Transaction } from '../models/Transaction';
+import { PlatformSettings } from '../models/PlatformSettings';
+import { Contract } from '../models/Contract';
+import mongoose from 'mongoose';
 
-// Initialize Stripe
-let stripe: Stripe | null = null;
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2024-11-20.acacia',
+});
 
-if (process.env.STRIPE_SECRET_KEY) {
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2023-10-16',
-  });
-  logger.info('Stripe initialized successfully');
-} else {
-  logger.warn('Stripe secret key not configured. Payment functionality will be disabled.');
-}
-
-interface PaymentIntentData {
-  amount: number;
-  currency?: string;
-  customerId?: string;
-  metadata?: Record<string, string>;
-}
-
-interface TransferData {
-  amount: number;
-  currency?: string;
-  destination: string;
-  metadata?: Record<string, string>;
-}
-
-class PaymentService {
-  private stripe: Stripe | null;
-
-  constructor() {
-    this.stripe = stripe;
-  }
-
+export class PaymentService {
   /**
-   * Check if Stripe is configured
+   * Calculate commission and fees for a payment
    */
-  private ensureConfigured(): void {
-    if (!this.stripe) {
-      throw new Error('Stripe is not configured');
+  async calculateFees(amount: number) {
+    const settings = await PlatformSettings.findOne({ isActive: true });
+    
+    if (!settings) {
+      throw new Error('Platform settings not found');
     }
-  }
 
-  /**
-   * Create a Stripe customer
-   */
-  async createCustomer(email: string, name: string, metadata?: Record<string, string>): Promise<string> {
-    this.ensureConfigured();
-
-    try {
-      const customer = await this.stripe!.customers.create({
-        email,
-        name,
-        metadata,
-      });
-
-      logger.info(`Stripe customer created: ${customer.id}`);
-      return customer.id;
-    } catch (error: any) {
-      logger.error('Stripe create customer error:', error);
-      throw new Error(`Failed to create customer: ${error.message}`);
+    // Calculate commission
+    let commission = Math.round((amount * settings.commissionRate) / 100);
+    
+    // Apply min/max limits
+    if (commission < settings.minCommission) {
+      commission = settings.minCommission;
     }
+    if (commission > settings.maxCommission) {
+      commission = settings.maxCommission;
+    }
+
+    // Calculate processing fee
+    const processingFee = Math.round((amount * settings.paymentProcessingFee) / 100);
+
+    // Calculate tax
+    const tax = Math.round((amount * settings.taxRate) / 100);
+
+    // Calculate freelancer amount
+    const freelancerAmount = amount - commission - processingFee - tax;
+
+    return {
+      amount,
+      commission,
+      processingFee,
+      tax,
+      freelancerAmount,
+      currency: settings.currency,
+    };
   }
 
   /**
-   * Add payment method to customer
+   * Create a Stripe payment intent
    */
-  async addPaymentMethod(customerId: string, paymentMethodId: string): Promise<void> {
-    this.ensureConfigured();
-
+  async createPaymentIntent(
+    contractId: string,
+    amount: number,
+    clientId: string,
+    freelancerId: string,
+    milestoneId?: string
+  ) {
     try {
-      await this.stripe!.paymentMethods.attach(paymentMethodId, {
-        customer: customerId,
-      });
+      // Calculate fees
+      const fees = await this.calculateFees(amount);
 
-      // Set as default payment method
-      await this.stripe!.customers.update(customerId, {
-        invoice_settings: {
-          default_payment_method: paymentMethodId,
+      // Create payment intent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: fees.amount,
+        currency: fees.currency.toLowerCase(),
+        metadata: {
+          contractId,
+          clientId,
+          freelancerId,
+          milestoneId: milestoneId || '',
+          platformCommission: fees.commission.toString(),
+          processingFee: fees.processingFee.toString(),
+          tax: fees.tax.toString(),
+          freelancerAmount: fees.freelancerAmount.toString(),
         },
+        description: `Payment for contract ${contractId}`,
       });
 
-      logger.info(`Payment method ${paymentMethodId} added to customer ${customerId}`);
-    } catch (error: any) {
-      logger.error('Stripe add payment method error:', error);
-      throw new Error(`Failed to add payment method: ${error.message}`);
-    }
-  }
-
-  /**
-   * Get customer payment methods
-   */
-  async getPaymentMethods(customerId: string): Promise<Stripe.PaymentMethod[]> {
-    this.ensureConfigured();
-
-    try {
-      const paymentMethods = await this.stripe!.paymentMethods.list({
-        customer: customerId,
-        type: 'card',
+      // Create transaction record
+      const transaction = await Transaction.create({
+        contract: contractId,
+        milestone: milestoneId,
+        client: clientId,
+        freelancer: freelancerId,
+        amount: fees.amount,
+        platformCommission: fees.commission,
+        processingFee: fees.processingFee,
+        tax: fees.tax,
+        freelancerAmount: fees.freelancerAmount,
+        currency: fees.currency,
+        status: 'pending',
+        paymentMethod: 'stripe',
+        stripePaymentIntentId: paymentIntent.id,
+        description: `Payment for contract ${contractId}`,
       });
 
-      return paymentMethods.data;
-    } catch (error: any) {
-      logger.error('Stripe get payment methods error:', error);
-      throw new Error(`Failed to get payment methods: ${error.message}`);
-    }
-  }
-
-  /**
-   * Delete payment method
-   */
-  async deletePaymentMethod(paymentMethodId: string): Promise<void> {
-    this.ensureConfigured();
-
-    try {
-      await this.stripe!.paymentMethods.detach(paymentMethodId);
-      logger.info(`Payment method ${paymentMethodId} deleted`);
-    } catch (error: any) {
-      logger.error('Stripe delete payment method error:', error);
-      throw new Error(`Failed to delete payment method: ${error.message}`);
-    }
-  }
-
-  /**
-   * Create payment intent for escrow
-   */
-  async createPaymentIntent(data: PaymentIntentData): Promise<{ clientSecret: string; paymentIntentId: string }> {
-    this.ensureConfigured();
-
-    try {
-      const paymentIntent = await this.stripe!.paymentIntents.create({
-        amount: Math.round(data.amount * 100), // Convert to cents
-        currency: data.currency || 'usd',
-        customer: data.customerId,
-        metadata: data.metadata || {},
-        capture_method: 'manual', // Hold funds in escrow
-      });
-
-      logger.info(`Payment intent created: ${paymentIntent.id}`);
       return {
-        clientSecret: paymentIntent.client_secret!,
-        paymentIntentId: paymentIntent.id,
+        transaction,
+        paymentIntent,
+        clientSecret: paymentIntent.client_secret,
       };
     } catch (error: any) {
-      logger.error('Stripe create payment intent error:', error);
+      console.error('Create payment intent error:', error);
       throw new Error(`Failed to create payment intent: ${error.message}`);
     }
   }
 
   /**
-   * Capture payment (release from escrow)
+   * Confirm payment and move to escrow
    */
-  async capturePayment(paymentIntentId: string): Promise<void> {
-    this.ensureConfigured();
-
+  async confirmPayment(paymentIntentId: string) {
     try {
-      await this.stripe!.paymentIntents.capture(paymentIntentId);
-      logger.info(`Payment captured: ${paymentIntentId}`);
+      // Retrieve payment intent from Stripe
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+      if (paymentIntent.status !== 'succeeded') {
+        throw new Error('Payment has not succeeded');
+      }
+
+      // Find transaction
+      const transaction = await Transaction.findOne({ stripePaymentIntentId: paymentIntentId });
+
+      if (!transaction) {
+        throw new Error('Transaction not found');
+      }
+
+      // Get platform settings for escrow hold days
+      const settings = await PlatformSettings.findOne({ isActive: true });
+      const escrowHoldDays = settings?.escrowHoldDays || 7;
+
+      // Calculate escrow release date
+      const escrowReleaseDate = new Date();
+      escrowReleaseDate.setDate(escrowReleaseDate.getDate() + escrowHoldDays);
+
+      // Update transaction
+      transaction.status = 'held_in_escrow';
+      transaction.stripeChargeId = paymentIntent.latest_charge as string;
+      transaction.escrowReleaseDate = escrowReleaseDate;
+      await transaction.save();
+
+      return transaction;
     } catch (error: any) {
-      logger.error('Stripe capture payment error:', error);
-      throw new Error(`Failed to capture payment: ${error.message}`);
+      console.error('Confirm payment error:', error);
+      throw new Error(`Failed to confirm payment: ${error.message}`);
     }
   }
 
   /**
-   * Cancel payment intent
+   * Release payment from escrow to freelancer
    */
-  async cancelPayment(paymentIntentId: string): Promise<void> {
-    this.ensureConfigured();
-
+  async releaseEscrow(transactionId: string) {
     try {
-      await this.stripe!.paymentIntents.cancel(paymentIntentId);
-      logger.info(`Payment cancelled: ${paymentIntentId}`);
+      const transaction = await Transaction.findById(transactionId);
+
+      if (!transaction) {
+        throw new Error('Transaction not found');
+      }
+
+      if (transaction.status !== 'held_in_escrow') {
+        throw new Error('Transaction is not in escrow');
+      }
+
+      // In a real implementation, you would transfer funds to freelancer's Stripe Connect account
+      // For now, we'll just update the status
+
+      transaction.status = 'released';
+      transaction.releasedAt = new Date();
+      await transaction.save();
+
+      // Update contract status if all milestones are paid
+      await this.updateContractPaymentStatus(transaction.contract.toString());
+
+      return transaction;
     } catch (error: any) {
-      logger.error('Stripe cancel payment error:', error);
-      throw new Error(`Failed to cancel payment: ${error.message}`);
+      console.error('Release escrow error:', error);
+      throw new Error(`Failed to release escrow: ${error.message}`);
     }
   }
 
   /**
-   * Create connected account for freelancer
+   * Refund a payment
    */
-  async createConnectedAccount(email: string, metadata?: Record<string, string>): Promise<string> {
-    this.ensureConfigured();
-
+  async refundPayment(transactionId: string, reason?: string) {
     try {
-      const account = await this.stripe!.accounts.create({
-        type: 'express',
-        email,
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
+      const transaction = await Transaction.findById(transactionId);
+
+      if (!transaction) {
+        throw new Error('Transaction not found');
+      }
+
+      if (!transaction.stripeChargeId) {
+        throw new Error('No charge ID found for refund');
+      }
+
+      // Create refund in Stripe
+      const refund = await stripe.refunds.create({
+        charge: transaction.stripeChargeId,
+        reason: 'requested_by_customer',
+      });
+
+      // Update transaction
+      transaction.status = 'refunded';
+      transaction.stripeRefundId = refund.id;
+      transaction.refundedAt = new Date();
+      transaction.failureReason = reason;
+      await transaction.save();
+
+      return transaction;
+    } catch (error: any) {
+      console.error('Refund payment error:', error);
+      throw new Error(`Failed to refund payment: ${error.message}`);
+    }
+  }
+
+  /**
+   * Handle payment failure
+   */
+  async handlePaymentFailure(paymentIntentId: string, reason: string) {
+    try {
+      const transaction = await Transaction.findOne({ stripePaymentIntentId: paymentIntentId });
+
+      if (!transaction) {
+        throw new Error('Transaction not found');
+      }
+
+      transaction.status = 'failed';
+      transaction.failureReason = reason;
+      await transaction.save();
+
+      return transaction;
+    } catch (error: any) {
+      console.error('Handle payment failure error:', error);
+      throw new Error(`Failed to handle payment failure: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update contract payment status based on transactions
+   */
+  private async updateContractPaymentStatus(contractId: string) {
+    try {
+      const contract = await Contract.findById(contractId);
+      
+      if (!contract) {
+        return;
+      }
+
+      // Check if all milestones are paid
+      const transactions = await Transaction.find({
+        contract: contractId,
+        status: 'released',
+      });
+
+      // This is a simplified check - in reality, you'd compare with actual milestones
+      if (transactions.length > 0) {
+        contract.paymentStatus = 'paid';
+        await contract.save();
+      }
+    } catch (error) {
+      console.error('Update contract payment status error:', error);
+    }
+  }
+
+  /**
+   * Get transaction history for a user
+   */
+  async getTransactionHistory(
+    userId: string,
+    role: 'client' | 'freelancer',
+    page = 1,
+    limit = 20
+  ) {
+    try {
+      const skip = (page - 1) * limit;
+      const query = role === 'client' ? { client: userId } : { freelancer: userId };
+
+      const transactions = await Transaction.find(query)
+        .populate('contract', 'title')
+        .populate('client', 'profile.firstName profile.lastName email')
+        .populate('freelancer', 'profile.firstName profile.lastName email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+      const total = await Transaction.countDocuments(query);
+
+      return {
+        transactions,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
         },
-        metadata,
-      });
-
-      logger.info(`Connected account created: ${account.id}`);
-      return account.id;
+      };
     } catch (error: any) {
-      logger.error('Stripe create connected account error:', error);
-      throw new Error(`Failed to create connected account: ${error.message}`);
+      console.error('Get transaction history error:', error);
+      throw new Error(`Failed to get transaction history: ${error.message}`);
     }
   }
 
   /**
-   * Create account link for onboarding
+   * Verify Stripe webhook signature
    */
-  async createAccountLink(accountId: string, refreshUrl: string, returnUrl: string): Promise<string> {
-    this.ensureConfigured();
-
+  verifyWebhookSignature(payload: any, signature: string) {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+    
     try {
-      const accountLink = await this.stripe!.accountLinks.create({
-        account: accountId,
-        refresh_url: refreshUrl,
-        return_url: returnUrl,
-        type: 'account_onboarding',
-      });
-
-      return accountLink.url;
+      const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+      return event;
     } catch (error: any) {
-      logger.error('Stripe create account link error:', error);
-      throw new Error(`Failed to create account link: ${error.message}`);
+      throw new Error(`Webhook signature verification failed: ${error.message}`);
     }
   }
 
   /**
-   * Transfer funds to freelancer
+   * Handle Stripe webhook events
    */
-  async transferToFreelancer(data: TransferData): Promise<string> {
-    this.ensureConfigured();
-
-    try {
-      const transfer = await this.stripe!.transfers.create({
-        amount: Math.round(data.amount * 100), // Convert to cents
-        currency: data.currency || 'usd',
-        destination: data.destination,
-        metadata: data.metadata || {},
-      });
-
-      logger.info(`Transfer created: ${transfer.id}`);
-      return transfer.id;
-    } catch (error: any) {
-      logger.error('Stripe transfer error:', error);
-      throw new Error(`Failed to transfer funds: ${error.message}`);
-    }
-  }
-
-  /**
-   * Create refund
-   */
-  async createRefund(paymentIntentId: string, amount?: number): Promise<string> {
-    this.ensureConfigured();
-
-    try {
-      const refund = await this.stripe!.refunds.create({
-        payment_intent: paymentIntentId,
-        amount: amount ? Math.round(amount * 100) : undefined,
-      });
-
-      logger.info(`Refund created: ${refund.id}`);
-      return refund.id;
-    } catch (error: any) {
-      logger.error('Stripe refund error:', error);
-      throw new Error(`Failed to create refund: ${error.message}`);
-    }
-  }
-
-  /**
-   * Verify webhook signature
-   */
-  verifyWebhookSignature(payload: string | Buffer, signature: string): Stripe.Event {
-    this.ensureConfigured();
-
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      throw new Error('Stripe webhook secret not configured');
-    }
-
-    try {
-      return this.stripe!.webhooks.constructEvent(payload, signature, webhookSecret);
-    } catch (error: any) {
-      logger.error('Stripe webhook verification error:', error);
-      throw new Error(`Webhook verification failed: ${error.message}`);
-    }
-  }
-
-  /**
-   * Handle webhook event
-   */
-  async handleWebhook(event: Stripe.Event): Promise<void> {
-    logger.info(`Processing webhook event: ${event.type}`);
-
+  async handleWebhook(event: any) {
     try {
       switch (event.type) {
         case 'payment_intent.succeeded':
-          await this.handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
+          await this.confirmPayment(event.data.object.id);
           break;
 
         case 'payment_intent.payment_failed':
-          await this.handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
+          await this.handlePaymentFailure(
+            event.data.object.id,
+            event.data.object.last_payment_error?.message || 'Payment failed'
+          );
           break;
 
-        case 'charge.refunded':
-          await this.handleChargeRefunded(event.data.object as Stripe.Charge);
-          break;
-
-        case 'account.updated':
-          await this.handleAccountUpdated(event.data.object as Stripe.Account);
+        case 'payment_intent.canceled':
+          await this.handlePaymentFailure(event.data.object.id, 'Payment canceled');
           break;
 
         default:
-          logger.info(`Unhandled webhook event type: ${event.type}`);
+          console.log(`Unhandled webhook event type: ${event.type}`);
       }
     } catch (error: any) {
-      logger.error(`Error handling webhook event ${event.type}:`, error);
+      console.error('Webhook handling error:', error);
       throw error;
-    }
-  }
-
-  /**
-   * Handle successful payment intent
-   */
-  private async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent): Promise<void> {
-    logger.info(`Payment intent succeeded: ${paymentIntent.id}`);
-    // Additional logic will be added when integrating with contract/payment models
-  }
-
-  /**
-   * Handle failed payment intent
-   */
-  private async handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {
-    logger.error(`Payment intent failed: ${paymentIntent.id}`);
-    // Additional logic will be added when integrating with contract/payment models
-  }
-
-  /**
-   * Handle charge refunded
-   */
-  private async handleChargeRefunded(charge: Stripe.Charge): Promise<void> {
-    logger.info(`Charge refunded: ${charge.id}`);
-    // Additional logic will be added when integrating with payment models
-  }
-
-  /**
-   * Handle account updated
-   */
-  private async handleAccountUpdated(account: Stripe.Account): Promise<void> {
-    logger.info(`Account updated: ${account.id}`);
-    // Additional logic will be added when integrating with user models
-  }
-
-  /**
-   * Create setup intent for saving payment method
-   */
-  async createSetupIntent(customerId: string): Promise<string> {
-    this.ensureConfigured();
-
-    try {
-      const setupIntent = await this.stripe!.setupIntents.create({
-        customer: customerId,
-        payment_method_types: ['card'],
-      });
-
-      return setupIntent.client_secret!;
-    } catch (error: any) {
-      logger.error('Stripe create setup intent error:', error);
-      throw new Error(`Failed to create setup intent: ${error.message}`);
     }
   }
 }
