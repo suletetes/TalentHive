@@ -1478,11 +1478,21 @@ async function seedContracts(users: any[], projects: any[], proposals: any[]) {
   return createdContracts;
 }
 
-async function seedReviews(users: any[], contracts: any[]) {
+async function seedReviews(users: any[], contracts: any[], projects: any[]) {
   logger.info('⭐ Seeding reviews...');
   
-  const reviews = [
-    {
+  const alice = users.find(u => u.email === 'alice.dev@example.com');
+  const bob = users.find(u => u.email === 'bob.designer@example.com');
+  const carol = users.find(u => u.email === 'carol.writer@example.com');
+  const client1 = users.find(u => u.email === 'john.client@example.com');
+  const client2 = users.find(u => u.email === 'sarah.manager@example.com');
+  
+  // Only create reviews for contracts that exist and have the proper structure
+  const reviews = [];
+  
+  // Review from contract 0 (if exists)
+  if (contracts[0]) {
+    reviews.push({
       contract: contracts[0]._id,
       project: contracts[0].project,
       reviewer: contracts[0].client,
@@ -1496,8 +1506,12 @@ async function seedReviews(users: any[], contracts: any[]) {
         deadlines: 5,
       },
       isPublic: true,
-    },
-    {
+    });
+  }
+  
+  // Review from contract 1 (if exists)
+  if (contracts[1]) {
+    reviews.push({
       contract: contracts[1]._id,
       project: contracts[1].project,
       reviewer: contracts[1].client,
@@ -1511,8 +1525,114 @@ async function seedReviews(users: any[], contracts: any[]) {
         deadlines: 4,
       },
       isPublic: true,
+    });
+  }
+  
+  // Create mock reviews without contracts for display purposes
+  // These reviews will show on freelancer profiles but aren't tied to actual contracts
+  const mockProject = projects[0];
+  
+  // Additional reviews for Alice (using mock data)
+  reviews.push(
+    {
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: client2._id,
+      reviewee: alice._id,
+      rating: 5,
+      feedback: 'Alice is an exceptional developer! She built our entire backend infrastructure from scratch and it has been running flawlessly. Her attention to detail and proactive communication made the entire process smooth.',
+      categories: {
+        communication: 5,
+        quality: 5,
+        professionalism: 5,
+        deadlines: 5,
+      },
+      isPublic: true,
     },
-  ];
+    {
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: client1._id,
+      reviewee: alice._id,
+      rating: 4,
+      feedback: 'Very skilled developer with great problem-solving abilities. Alice completed the project ahead of schedule and was always available for questions. Would definitely hire again!',
+      categories: {
+        communication: 4,
+        quality: 5,
+        professionalism: 5,
+        deadlines: 5,
+      },
+      isPublic: true,
+    }
+  );
+  
+  // Additional reviews for Bob
+  reviews.push(
+    {
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: client1._id,
+      reviewee: bob._id,
+      rating: 5,
+      feedback: 'Bob created an amazing UI/UX design for our mobile app. His creativity and understanding of user experience principles really shined through. The design has received excellent feedback from our users.',
+      categories: {
+        communication: 5,
+        quality: 5,
+        professionalism: 5,
+        deadlines: 4,
+      },
+      isPublic: true,
+    },
+    {
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: client2._id,
+      reviewee: bob._id,
+      rating: 4,
+      feedback: 'Professional designer who delivered high-quality mockups. Bob was patient with our revision requests and always provided thoughtful explanations for his design choices.',
+      categories: {
+        communication: 4,
+        quality: 4,
+        professionalism: 5,
+        deadlines: 4,
+      },
+      isPublic: true,
+    }
+  );
+  
+  // Reviews for Carol
+  reviews.push(
+    {
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: client1._id,
+      reviewee: carol._id,
+      rating: 5,
+      feedback: 'Carol is an outstanding content writer! She delivered well-researched, engaging articles that perfectly matched our brand voice. Her SEO expertise really helped improve our search rankings.',
+      categories: {
+        communication: 5,
+        quality: 5,
+        professionalism: 5,
+        deadlines: 5,
+      },
+      isPublic: true,
+    },
+    {
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: client2._id,
+      reviewee: carol._id,
+      rating: 4,
+      feedback: 'Great writer with excellent attention to detail. Carol produced high-quality content consistently and was very receptive to feedback. Highly recommended!',
+      categories: {
+        communication: 4,
+        quality: 5,
+        professionalism: 4,
+        deadlines: 4,
+      },
+      isPublic: true,
+    }
+  );
   
   const createdReviews = await Review.insertMany(reviews);
   logger.info(`✅ Created ${createdReviews.length} reviews`);
@@ -1779,7 +1899,7 @@ async function seedDatabase() {
     const proposals = await seedProposals(users, projects);
     const hireNowRequests = await seedHireNowRequests(users);
     const contracts = await seedContracts(users, projects, proposals);
-    const reviews = await seedReviews(users, contracts);
+    const reviews = await seedReviews(users, contracts, projects);
     const timeEntries = await seedTimeEntries(users, contracts);
     const payments = await seedPayments(users, contracts);
     const messages = await seedMessages(users);

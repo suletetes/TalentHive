@@ -299,16 +299,32 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           </Typography>
         )}
 
-        {/* Action Button */}
-        <Button
-          variant="contained"
-          component={Link}
-          to={`/projects/${project._id}`}
-          fullWidth
-          size="small"
-        >
-          View Details
-        </Button>
+        {/* Action Buttons */}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="contained"
+            component={Link}
+            to={`/projects/${project._id}`}
+            fullWidth
+            size="small"
+          >
+            View Details
+          </Button>
+          
+          {/* View Proposals Button for Clients */}
+          {project.proposalCount > 0 && project.client && (
+            <Button
+              variant="outlined"
+              component={Link}
+              to={`/dashboard/projects/${project._id}/proposals`}
+              fullWidth
+              size="small"
+              color="secondary"
+            >
+              Proposals ({project.proposalCount})
+            </Button>
+          )}
+        </Box>
       </CardContent>
     </Card>
   );

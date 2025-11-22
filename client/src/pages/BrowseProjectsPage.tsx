@@ -38,7 +38,7 @@ export const BrowseProjectsPage = () => {
     queryKey: ['categories'],
     queryFn: async () => {
       const response = await apiService.get('/categories');
-      return response.data.data;
+      return response.data.data || response.data || [];
     },
   });
 
