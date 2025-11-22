@@ -18,6 +18,13 @@ export interface IProposal extends Document {
   respondedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  // Methods
+  isExpired(): boolean;
+  canBeModified(): boolean;
+  canBeWithdrawn(): boolean;
+  withdraw(): Promise<IProposal>;
+  accept(feedback?: string): Promise<IProposal>;
+  reject(feedback?: string): Promise<IProposal>;
 }
 
 export interface IMilestone {

@@ -1,6 +1,58 @@
 import { AxiosError } from 'axios';
 
 /**
+ * API Error interface
+ */
+export interface ApiError {
+  message: string;
+  status?: number;
+  code?: string;
+  details?: Record<string, any>;
+}
+
+/**
+ * ErrorHandler class for backward compatibility
+ */
+export class ErrorHandler {
+  static handle(error: unknown): ApiError {
+    const message = getErrorMessage(error);
+    const status = error instanceof AxiosError ? error.response?.status : undefined;
+    const code = error instanceof AxiosError ? error.code : undefined;
+    
+    return {
+      message,
+      status,
+      code,
+    };
+  }
+
+  static isNetworkError(error: unknown): boolean {
+    return isNetworkError(error);
+  }
+
+  static isServerError(error: unknown): boolean {
+    return isServerError(error);
+  }
+
+  static showToast(error: ApiError) {
+    // This would be handled by the component using the error
+    console.error('API Error:', error.message);
+  }
+}
+
+/**
+ * ValidationErrorHandler class for backward compatibility
+ */
+export class ValidationErrorHandler {
+  static extractFieldErrors(error: ApiError): Record<string, string> {
+    if (error.details && typeof error.details === 'object') {
+      return error.details as Record<string, string>;
+    }
+    return {};
+  }
+}
+
+/**
  * Extract user-friendly error message from API error
  */
 export const getErrorMessage = (error: unknown): string => {

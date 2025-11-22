@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Notification, NotificationPreference } from '@/models/Notification';
 import { User } from '@/models/User';
 import { emitToUser } from '@/config/socket';
