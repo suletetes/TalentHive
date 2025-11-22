@@ -1,4 +1,4 @@
-import { Notification, NotificationPreference } from '@/models/Notification';
+import { Notification } from '@/models/Notification';
 import { User } from '@/models/User';
 import { emitToUser } from '@/config/socket';
 import { sendEmail } from './email';
@@ -6,7 +6,7 @@ import { logger } from './logger';
 
 interface NotificationData {
   userId: string;
-  type: 'project' | 'proposal' | 'contract' | 'payment' | 'message' | 'review' | 'system';
+  type: 'message' | 'proposal' | 'contract' | 'payment' | 'review' | 'system';
   title: string;
   message: string;
   link?: string;
@@ -20,24 +20,20 @@ export const createNotification = async (notificationData: NotificationData) => 
     // Emit real-time notification
     emitToUser(notificationData.userId, 'notification', notification);
 
-    // Check preferences and send email if enabled
-    const preferences = await NotificationPreference.findOne({ user: notificationData.userId });
+    // Check user preferences and send email if enabled
     const user = await User.findById(notificationData.userId);
 
-    if (user && preferences) {
-      const emailKey = getEmailPreferenceKey(notificationData.type);
-      if (preferences.email[emailKey]) {
-        await sendEmail({
-          to: user.email,
-          subject: notificationData.title,
-          text: notificationData.message,
-          html: `
-            <h2>${notificationData.title}</h2>
-            <p>${notificationData.message}</p>
-            ${notificationData.link ? `<p><a href="${process.env.CLIENT_URL}${notificationData.link}">View Details</a></p>` : ''}
-          `,
-        });
-      }
+    if (user && user.isActive) {
+      await sendEmail({
+        to: user.email,
+        subject: notificationData.title,
+        text: notificationData.message,
+        html: `
+          <h2>${notificationData.title}</h2>
+          <p>${notificationData.message}</p>
+          ${notificationData.link ? `<p><a href="${process.env.CLIENT_URL}${notificationData.link}">View Details</a></p>` : ''}
+        `,
+      });
     }
 
     return notification;
@@ -47,8 +43,8 @@ export const createNotification = async (notificationData: NotificationData) => 
   }
 };
 
-const getEmailPreferenceKey = (type: string): keyof INotificationPreference['email'] => {
-  const mapping: Record<string, keyof INotificationPreference['email']> = {
+const getEmailPreferenceKey = (type: string): string => {
+  const mapping: Record<string, string> = {
     project: 'projectUpdates',
     proposal: 'proposalUpdates',
     contract: 'contractUpdates',
@@ -63,7 +59,7 @@ const getEmailPreferenceKey = (type: string): keyof INotificationPreference['ema
 export const notifyProjectUpdate = async (userId: string, projectTitle: string, action: string) => {
   await createNotification({
     userId,
-    type: 'project',
+    type: 'system',
     title: 'Project Update',
     message: `${action} on project: ${projectTitle}`,
     link: '/projects',
