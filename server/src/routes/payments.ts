@@ -7,8 +7,7 @@ import {
   getBalance,
   refundPayment,
 } from '@/controllers/paymentController';
-import { authenticate } from '@/middleware/auth';
-import { authorize } from '@/middleware/roleAuth';
+import { authenticate, authorize } from '@/middleware/auth';
 
 const router = express.Router();
 

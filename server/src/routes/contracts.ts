@@ -11,6 +11,9 @@ import {
   proposeAmendment,
   respondToAmendment,
   cancelContract,
+  createDispute,
+  pauseContract,
+  resumeContract,
 } from '@/controllers/contractController';
 import { authenticate, authorize } from '@/middleware/auth';
 
@@ -31,8 +34,11 @@ router.get('/:id', getContract);
 // Sign contract
 router.post('/:id/sign', signContract);
 
-// Cancel contract
+// Contract status management
 router.post('/:id/cancel', cancelContract);
+router.post('/:id/pause', pauseContract);
+router.post('/:id/resume', resumeContract);
+router.post('/:id/dispute', createDispute);
 
 // Milestone management
 router.post('/:id/milestones/:milestoneId/submit', submitMilestone);
