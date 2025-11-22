@@ -14,12 +14,13 @@ import {
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { AccountCircle, Notifications, Message } from '@mui/icons-material';
+import { AccountCircle, Message } from '@mui/icons-material';
 import { RootState } from '@/store';
 import { useAuth } from '@/hooks/useAuth';
 import { useUnreadCount } from '@/hooks/api/useMessages';
 import { socketService } from '@/services/socket';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 interface NavigationItem {
   label: string;
@@ -32,6 +33,7 @@ const navigationConfig: NavigationItem[] = [
   { label: 'Find Work', path: '/projects', roles: ['freelancer'] },
   { label: 'My Proposals', path: '/dashboard/proposals', roles: ['freelancer'] },
   { label: 'My Contracts', path: '/dashboard/contracts', roles: ['freelancer'] },
+  { label: 'My Services', path: '/dashboard/services', roles: ['freelancer'] },
   
   // Client-specific
   { label: 'Post Project', path: '/dashboard/projects/new', roles: ['client'] },
@@ -43,9 +45,11 @@ const navigationConfig: NavigationItem[] = [
   { label: 'Admin Dashboard', path: '/admin/dashboard', roles: ['admin'] },
   { label: 'Users', path: '/admin/users', roles: ['admin'] },
   { label: 'Projects', path: '/admin/projects', roles: ['admin'] },
+  { label: 'Settings', path: '/admin/settings', roles: ['admin'] },
   
   // Common authenticated
   { label: 'Messages', path: '/dashboard/messages', roles: ['freelancer', 'client', 'admin'] },
+  { label: 'Time Tracking', path: '/dashboard/time-tracking', roles: ['freelancer', 'client'] },
   
   // Unauthenticated
   { label: 'Find Work', path: '/projects' },
@@ -59,6 +63,9 @@ export const Header: React.FC = () => {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const { data: unreadCount, refetch: refetchUnreadCount } = useUnreadCount(isAuthenticated);
+
+  // Ensure unreadCount is a valid number
+  const displayUnreadCount = typeof unreadCount === 'number' ? unreadCount : 0;
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -157,13 +164,11 @@ export const Header: React.FC = () => {
                   component={Link}
                   to="/dashboard/messages"
                 >
-                  <Badge badgeContent={unreadCount || 0} color="error">
+                  <Badge badgeContent={displayUnreadCount} color="error">
                     <Message />
                   </Badge>
                 </IconButton>
-                <IconButton color="inherit">
-                  <Notifications />
-                </IconButton>
+                <NotificationBell />
                 <IconButton
                   size="large"
                   aria-label="account of current user"
