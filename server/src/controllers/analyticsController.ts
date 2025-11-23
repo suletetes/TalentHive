@@ -215,8 +215,17 @@ export const analyticsController = {
         { $match: matchStage },
         { $unwind: '$category' },
         {
+          $lookup: {
+            from: 'categories',
+            localField: 'category',
+            foreignField: '_id',
+            as: 'categoryInfo',
+          },
+        },
+        { $unwind: { path: '$categoryInfo', preserveNullAndEmptyArrays: true } },
+        {
           $group: {
-            _id: '$category',
+            _id: '$categoryInfo.name',
             count: { $sum: 1 },
           },
         },
