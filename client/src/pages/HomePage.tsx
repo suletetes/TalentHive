@@ -36,7 +36,9 @@ export const HomePage: React.FC = () => {
     queryKey: ['featured-freelancers'],
     queryFn: async () => {
       const response = await apiService.get('/featured-freelancers');
-      return response.data.data.freelancers;
+      // Handle both response structures
+      const freelancers = response.data?.data?.freelancers || response.data?.freelancers || [];
+      return freelancers;
     },
   });
 

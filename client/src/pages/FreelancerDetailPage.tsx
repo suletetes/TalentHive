@@ -48,11 +48,10 @@ export const FreelancerDetailPage = () => {
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
     queryKey: ['freelancer-reviews', id],
     queryFn: async () => {
-      console.log('🔍 Fetching reviews for freelancer:', id);
       const response = await apiService.get(`/reviews/freelancer/${id}`);
-      console.log('📦 Reviews response:', response.data);
-      // Handle both response.data.data and response.data formats
-      return response.data.data || response.data;
+      // Handle both response structures
+      const reviews = response.data?.data || response.data || [];
+      return Array.isArray(reviews) ? reviews : [];
     },
     enabled: !!id,
   });
