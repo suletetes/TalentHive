@@ -10,18 +10,47 @@ import { deleteCache } from '@/config/redis';
 export const registerValidation = [
   body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
-  body('firstName').trim().isLength({ min: 1 }).withMessage('First name is required'),
-  body('lastName').trim().isLength({ min: 1 }).withMessage('Last name is required'),
   body('role').isIn(['freelancer', 'client', 'admin']).withMessage('Invalid role'),
+  body().custom((value, { req }) => {
+    const firstName = req.body.firstName || req.body.profile?.firstName;
+    const lastName = req.body.lastName || req.body.profile?.lastName;
+    
+    if (!firstName || !firstName.toString().trim()) {
+      throw new Error('First name is required');
+    }
+    if (!lastName || !lastName.toString().trim()) {
+      throw new Error('Last name is required');
+    }
+    return true;
+  }),
 ];
 
+
 export const register = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  console.log('📝 Register request body:', JSON.stringify(req.body, null, 2));
+  
   const errors = validationResult(req);
+  console.log('🔍 Validation errors:', errors.array());
+
   if (!errors.isEmpty()) {
+    console.log('❌ Validation failed with errors:', errors.array());
     return next(new AppError('Validation failed', 400));
   }
 
-  const { email, password, firstName, lastName, role, companyName, title } = req.body;
+  const { email, password, firstName, lastName, role, companyName, title, profile } = req.body;
+
+  console.log('📋 Extracted fields:', { email, firstName, lastName, role, profile });
+
+  // Support both root-level and nested profile format
+  const finalFirstName = firstName || profile?.firstName;
+  const finalLastName = lastName || profile?.lastName;
+
+  console.log('✅ Final names:', { finalFirstName, finalLastName });
+
+  if (!finalFirstName || !finalLastName) {
+    console.log('❌ Missing names - finalFirstName:', finalFirstName, 'finalLastName:', finalLastName);
+    return next(new AppError('First name and last name are required', 400));
+  }
 
   // Check if user already exists
   const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -39,8 +68,8 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
     password,
     role,
     profile: {
-      firstName,
-      lastName,
+      firstName: finalFirstName,
+      lastName: finalLastName,
     },
     emailVerificationToken,
     emailVerificationExpires,

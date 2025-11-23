@@ -19,7 +19,11 @@ import { authRateLimiter, passwordResetRateLimiter } from '@/middleware/rateLimi
 const router = Router();
 
 // Registration
-router.post('/register', authRateLimiter, registerValidation, register);
+router.post('/register', authRateLimiter, (req, res, next) => {
+  console.log('📝 Register endpoint hit');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  next();
+}, registerValidation, register);
 
 // Login
 router.post('/login', authRateLimiter, loginValidation, login);
