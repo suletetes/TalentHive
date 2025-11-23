@@ -6,6 +6,7 @@ import { generateTokens, verifyToken } from '@/utils/jwt';
 import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from '@/utils/email.resend';
 import { AppError, catchAsync } from '@/middleware/errorHandler';
 import { deleteCache } from '@/config/redis';
+import { logger } from '@/utils/logger';
 
 export const registerValidation = [
   body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
@@ -114,10 +115,19 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
 
   // Send verification email
   try {
+    console.log('📧 [REGISTER] Sending verification email');
+    console.log('📧 [REGISTER] Email:', email);
+    console.log('📧 [REGISTER] Token:', emailVerificationToken);
+    console.log('📧 [REGISTER] Token length:', emailVerificationToken.length);
+    console.log('📧 [REGISTER] Verification URL will be:', `${process.env.CLIENT_URL}/verify-email?token=${emailVerificationToken}`);
+    
     await sendVerificationEmail(email, emailVerificationToken);
-  } catch (error) {
+    
+    console.log('✅ [REGISTER] Verification email sent successfully');
+  } catch (error: any) {
     // If email fails, still return success but log the error
-    console.error('Failed to send verification email:', error);
+    console.error('❌ [REGISTER] Failed to send verification email:', error.message);
+    logger.warn(`Email verification failed for ${email}, but user was created. Token: ${emailVerificationToken}`);
   }
 
   res.status(201).json({
@@ -157,6 +167,10 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
 
   if (!user.isActive) {
     return next(new AppError('Account is deactivated', 401));
+  }
+
+  if (!user.isVerified) {
+    return next(new AppError('Please verify your email before logging in. Check your inbox for the verification link.', 403));
   }
 
   // Update last login
@@ -243,21 +257,57 @@ export const logout = catchAsync(async (req: any, res: Response, next: NextFunct
 export const verifyEmail = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { token } = req.params;
 
+  if (!token) {
+    return next(new AppError('No verification token provided', 400));
+  }
+
+  // First, check if user is already verified (idempotent - handles duplicate requests)
+  const alreadyVerifiedUser = await User.findOne({
+    isVerified: true,
+  }).select('+emailVerificationToken');
+
+  // Search for user with this token
   const user = await User.findOne({
     emailVerificationToken: token,
     emailVerificationExpires: { $gt: Date.now() },
   });
 
   if (!user) {
-    return next(new AppError('Invalid or expired verification token', 400));
+    // Check if token was already used (user is verified)
+    const verifiedUser = await User.findOne({
+      emailVerificationToken: token,
+      isVerified: true,
+    });
+
+    if (verifiedUser) {
+      // Token was already used - return success (idempotent)
+      return res.status(200).json({
+        status: 'success',
+        message: 'Email already verified',
+      });
+    }
+
+    // Check if token is expired
+    const userWithExpiredToken = await User.findOne({
+      emailVerificationToken: token,
+    });
+
+    if (userWithExpiredToken) {
+      return next(new AppError('Verification token has expired. Please request a new verification email.', 400));
+    }
+
+    // Token doesn't exist
+    return next(new AppError('Invalid verification token', 400));
   }
 
+  // Token is valid and not expired - verify the user
   user.isVerified = true;
   user.emailVerificationToken = undefined;
   user.emailVerificationExpires = undefined;
+
   await user.save();
 
-  res.json({
+  res.status(200).json({
     status: 'success',
     message: 'Email verified successfully',
   });

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, Container, Typography, CircularProgress, Alert, Button, Card, CardContent } from '@mui/material';
 import { CheckCircle as CheckCircleIcon, Error as ErrorIcon } from '@mui/icons-material';
@@ -9,55 +9,51 @@ export const EmailVerificationPage: React.FC = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Verifying your email...');
-  const verificationAttempted = useRef(false);
 
   useEffect(() => {
-    // Prevent double verification using ref
-    if (verificationAttempted.current) {
-      console.log('⚠️ [EMAIL_VERIFY] Verification already attempted, skipping...');
-      return;
-    }
+    let isMounted = true;
 
     const verifyEmail = async () => {
       try {
-        console.log('🔍 [EMAIL_VERIFY] Starting verification process');
-        
         // Extract token from URL search params
         const params = new URLSearchParams(location.search);
         const token = params.get('token');
-        
-        console.log('📍 [EMAIL_VERIFY] Location search:', location.search);
-        console.log('🔑 [EMAIL_VERIFY] Token extracted:', token);
-        
+
         if (!token) {
-          console.log('❌ [EMAIL_VERIFY] No token found in URL');
-          setStatus('error');
-          setMessage('No verification token provided. Please check your email link.');
+          if (isMounted) {
+            setStatus('error');
+            setMessage('No verification token provided. Please check your email link.');
+          }
           return;
         }
 
-        console.log('📤 [EMAIL_VERIFY] Calling verification API...');
+        // Call verification API
         await authService.verifyEmail(token);
-        
-        console.log('✅ [EMAIL_VERIFY] Verification successful');
-        setStatus('success');
-        setMessage('Email verified successfully! Redirecting to login...');
-        
-        setTimeout(() => {
-          console.log('🔄 [EMAIL_VERIFY] Redirecting to login...');
-          navigate('/login');
-        }, 3000);
+
+        if (isMounted) {
+          setStatus('success');
+          setMessage('Email verified successfully! Redirecting to login...');
+
+          // Redirect after 2 seconds
+          const timer = setTimeout(() => {
+            navigate('/login');
+          }, 2000);
+
+          return () => clearTimeout(timer);
+        }
       } catch (error: any) {
-        console.error('❌ [EMAIL_VERIFY] Verification error:', error);
-        console.error('📋 [EMAIL_VERIFY] Error response:', error.response?.data);
-        setStatus('error');
-        setMessage(error.response?.data?.message || 'Failed to verify email. The link may have expired.');
-      } finally {
-        verificationAttempted.current = true;
+        if (isMounted) {
+          setStatus('error');
+          setMessage(error.response?.data?.message || 'Failed to verify email. The link may have expired.');
+        }
       }
     };
 
     verifyEmail();
+
+    return () => {
+      isMounted = false;
+    };
   }, [location.search, navigate]);
 
   return (
