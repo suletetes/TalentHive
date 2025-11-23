@@ -1946,6 +1946,48 @@ async function seedPayments(users: any[], contracts: any[]) {
   return createdPayments;
 }
 
+async function seedTransactions(users: any[], contracts: any[]) {
+  logger.info('💳 Seeding transactions...');
+  
+  const { Transaction } = await import('@/models/Transaction');
+  
+  const transactions = [];
+  const now = new Date();
+  
+  // Create transactions for contracts
+  for (let i = 0; i < Math.min(contracts.length, 10); i++) {
+    const contract = contracts[i];
+    const amount = contract.totalAmount || 5000;
+    const platformCommission = Math.round(amount * 0.2); // 20% commission
+    const freelancerAmount = amount - platformCommission;
+    
+    // Vary the dates
+    const daysAgo = Math.floor(Math.random() * 30);
+    const transactionDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    
+    transactions.push({
+      contract: contract._id,
+      milestone: contract.milestones?.[0]?._id || null,
+      amount,
+      platformCommission,
+      freelancerAmount,
+      status: i % 3 === 0 ? 'pending' : i % 3 === 1 ? 'held_in_escrow' : 'released',
+      stripePaymentIntentId: `pi_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      stripeTransferId: i % 3 === 2 ? `tr_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : null,
+      client: contract.client,
+      freelancer: contract.freelancer,
+      paidAt: i % 3 === 2 ? transactionDate : null,
+      releasedAt: i % 3 === 2 ? transactionDate : null,
+      createdAt: transactionDate,
+    });
+  }
+  
+  const createdTransactions = await Transaction.insertMany(transactions);
+  logger.info(`✅ Created ${createdTransactions.length} transactions`);
+  
+  return createdTransactions;
+}
+
 async function seedDatabase() {
   try {
     logger.info('🌱 Starting database seeding...');
@@ -1971,6 +2013,7 @@ async function seedDatabase() {
     const reviews = await seedReviews(users, contracts, projects);
     const timeEntries = await seedTimeEntries(users, contracts);
     const payments = await seedPayments(users, contracts);
+    const transactions = await seedTransactions(users, contracts);
     const messages = await seedMessages(users);
     const notifications = await seedNotifications(users);
     
@@ -1989,6 +2032,7 @@ async function seedDatabase() {
     - Reviews: ${reviews.length}
     - Time Entries: ${timeEntries.length}
     - Payments: ${payments.length}
+    - Transactions: ${transactions.length}
     - Messages: ${messages.length}
     - Notifications: ${notifications.length}`);
     

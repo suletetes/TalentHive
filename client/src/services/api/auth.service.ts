@@ -64,7 +64,7 @@ export class AuthService {
   }
 
   async logout(): Promise<{ status: string; message: string }> {
-    return apiCore.post<{ status: string; message: string }>(`${this.basePath}/logout`);
+    return apiCore.post<{ status: string; message: string }>(`${this.basePath}/logout`, {});
   }
 
   async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
