@@ -613,7 +613,7 @@ async function seedOrganizations(users: any[]) {
   const organizations = [
     {
       name: 'TechCorp Solutions',
-      description: 'Leading technology solutions provider',
+      description: 'Leading technology solutions provider specializing in enterprise software',
       industry: 'Technology',
       size: '51-200',
       website: 'https://techcorp.com',
@@ -626,6 +626,11 @@ async function seedOrganizations(users: any[]) {
           joinedAt: new Date(),
         },
       ],
+      budget: {
+        total: 50000,
+        spent: 12500,
+        remaining: 37500,
+      },
       budgetSettings: {
         monthlyBudget: 50000,
         approvalThreshold: 5000,
@@ -634,7 +639,7 @@ async function seedOrganizations(users: any[]) {
     },
     {
       name: 'StartupXYZ',
-      description: 'Innovative startup disrupting the market',
+      description: 'Innovative startup disrupting the market with AI solutions',
       industry: 'Startup',
       size: '11-50',
       owner: client2._id,
@@ -646,9 +651,114 @@ async function seedOrganizations(users: any[]) {
           joinedAt: new Date(),
         },
       ],
+      budget: {
+        total: 20000,
+        spent: 8000,
+        remaining: 12000,
+      },
       budgetSettings: {
         monthlyBudget: 20000,
         approvalThreshold: 2000,
+        autoApproveBelow: 500,
+      },
+    },
+    {
+      name: 'Digital Marketing Pro',
+      description: 'Full-service digital marketing agency',
+      industry: 'Marketing',
+      size: '11-50',
+      owner: client1._id,
+      members: [
+        {
+          user: client1._id,
+          role: 'owner',
+          permissions: ['*'],
+          joinedAt: new Date(),
+        },
+      ],
+      budget: {
+        total: 35000,
+        spent: 15000,
+        remaining: 20000,
+      },
+      budgetSettings: {
+        monthlyBudget: 35000,
+        approvalThreshold: 3500,
+        autoApproveBelow: 750,
+      },
+    },
+    {
+      name: 'CloudFirst Systems',
+      description: 'Cloud infrastructure and DevOps consulting',
+      industry: 'Technology',
+      size: '51-200',
+      owner: client2._id,
+      members: [
+        {
+          user: client2._id,
+          role: 'owner',
+          permissions: ['*'],
+          joinedAt: new Date(),
+        },
+      ],
+      budget: {
+        total: 75000,
+        spent: 22500,
+        remaining: 52500,
+      },
+      budgetSettings: {
+        monthlyBudget: 75000,
+        approvalThreshold: 7500,
+        autoApproveBelow: 1500,
+      },
+    },
+    {
+      name: 'Creative Studios Inc',
+      description: 'Design and creative content production',
+      industry: 'Design',
+      size: '11-50',
+      owner: client1._id,
+      members: [
+        {
+          user: client1._id,
+          role: 'owner',
+          permissions: ['*'],
+          joinedAt: new Date(),
+        },
+      ],
+      budget: {
+        total: 30000,
+        spent: 9000,
+        remaining: 21000,
+      },
+      budgetSettings: {
+        monthlyBudget: 30000,
+        approvalThreshold: 3000,
+        autoApproveBelow: 600,
+      },
+    },
+    {
+      name: 'DataViz Analytics',
+      description: 'Business intelligence and data visualization services',
+      industry: 'Analytics',
+      size: '1-10',
+      owner: client2._id,
+      members: [
+        {
+          user: client2._id,
+          role: 'owner',
+          permissions: ['*'],
+          joinedAt: new Date(),
+        },
+      ],
+      budget: {
+        total: 25000,
+        spent: 5000,
+        remaining: 20000,
+      },
+      budgetSettings: {
+        monthlyBudget: 25000,
+        approvalThreshold: 2500,
         autoApproveBelow: 500,
       },
     },
@@ -1990,7 +2100,7 @@ async function seedTransactions(users: any[], contracts: any[]) {
 
 async function seedDatabase() {
   try {
-    logger.info('🌱 Starting database seeding...');
+    logger.info('🌱 Starting database seeding (Foundation Data Only)...');
     
     // Connect to database
     await connectDB();
@@ -1998,43 +2108,30 @@ async function seedDatabase() {
     // Clear existing data
     await clearDatabase();
     
-    // Seed data in order (due to dependencies)
-    const users = await seedUsers();
-    const admin = users.find(u => u.role === 'admin');
-    const platformSettings = await seedPlatformSettings(admin._id);
-    const categories = await seedCategories(admin._id);
-    const skills = await seedSkills(categories, admin._id);
-    const organizations = await seedOrganizations(users);
-    const projects = await seedProjects(users, organizations);
-    const servicePackages = await seedServicePackages(users);
-    const proposals = await seedProposals(users, projects);
-    const hireNowRequests = await seedHireNowRequests(users);
-    const contracts = await seedContracts(users, projects, proposals);
-    const reviews = await seedReviews(users, contracts, projects);
-    const timeEntries = await seedTimeEntries(users, contracts);
-    const payments = await seedPayments(users, contracts);
-    const transactions = await seedTransactions(users, contracts);
-    const messages = await seedMessages(users);
-    const notifications = await seedNotifications(users);
+    // Create a system user ID for seeding (won't be a real user)
+    const systemUserId = new mongoose.Types.ObjectId();
+    
+    // Seed only foundational data (no users)
+    const platformSettings = await seedPlatformSettings(systemUserId);
+    const categories = await seedCategories(systemUserId);
+    const skills = await seedSkills(categories, systemUserId);
     
     logger.info('✅ Database seeding completed successfully');
     logger.info(`📊 Summary:
     - Platform Settings: Created
     - Categories: ${categories.length}
     - Skills: ${skills.length}
-    - Users: ${users.length}
-    - Organizations: ${organizations.length}
-    - Projects: ${projects.length}
-    - Service Packages: ${servicePackages.length}
-    - Proposals: ${proposals.length}
-    - Hire Now Requests: ${hireNowRequests.length}
-    - Contracts: ${contracts.length}
-    - Reviews: ${reviews.length}
-    - Time Entries: ${timeEntries.length}
-    - Payments: ${payments.length}
-    - Transactions: ${transactions.length}
-    - Messages: ${messages.length}
-    - Notifications: ${notifications.length}`);
+    - Users: 0 (Ready for manual registration)
+    - Organizations: 0 (Ready for user creation)
+    - Projects: 0 (Ready for user creation)
+    - Service Packages: 0 (Ready for user creation)
+    - Proposals: 0 (Ready for user creation)
+    - Contracts: 0 (Ready for user creation)
+    - Reviews: 0 (Ready for user creation)
+    - Payments: 0 (Ready for user creation)
+    - Transactions: 0 (Ready for user creation)
+    - Messages: 0 (Ready for user creation)
+    - Notifications: 0 (Ready for user creation)`);
     
   } catch (error) {
     logger.error('❌ Database seeding failed:', error);
