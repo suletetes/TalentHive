@@ -22,7 +22,7 @@ import ServicePackageForm from '@/components/services/ServicePackageForm';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import toast from 'react-hot-toast';
-import axios from 'axios';
+import { apiCore } from '@/services/api/core';
 
 interface ServicePackage {
   _id: string;
@@ -47,7 +47,7 @@ export const ServicesPage: React.FC = () => {
   const { data: packagesData, isLoading, error, refetch } = useQuery({
     queryKey: ['service-packages'],
     queryFn: async () => {
-      const response = await axios.get('/api/v1/services');
+      const response = await apiCore.get('/services/packages');
       return response.data.data;
     },
     enabled: !!user,
@@ -57,10 +57,10 @@ export const ServicesPage: React.FC = () => {
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
       if (isEditing && selectedPackage) {
-        const response = await axios.put(`/api/v1/services/${selectedPackage._id}`, data);
+        const response = await apiCore.patch(`/services/packages/${selectedPackage._id}`, data);
         return response.data.data;
       } else {
-        const response = await axios.post('/api/v1/services', data);
+        const response = await apiCore.post('/services/packages', data);
         return response.data.data;
       }
     },
@@ -77,7 +77,7 @@ export const ServicesPage: React.FC = () => {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`/api/v1/services/${id}`);
+      await apiCore.delete(`/services/packages/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-packages'] });
