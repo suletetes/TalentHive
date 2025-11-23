@@ -65,6 +65,38 @@ export const authorize = (...roles: string[]) => {
   };
 };
 
+// Lenient authentication for logout - allows expired tokens
+export const authenticateForLogout = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return next(new AppError('Access token is required', 401));
+    }
+
+    // Try to verify token, but don't fail if expired
+    try {
+      const decoded = verifyToken(token);
+      let user = await getCache(`user:${decoded.userId}`);
+      
+      if (!user) {
+        user = await User.findById(decoded.userId).select('-password');
+      }
+      
+      if (user) {
+        req.user = user;
+      }
+    } catch (tokenError: any) {
+      // If token is expired or invalid, allow logout anyway
+      console.log('Token verification failed for logout, but allowing:', tokenError.message);
+    }
+
+    next();
+  } catch (error) {
+    next(new AppError('Invalid token', 401));
+  }
+};
+
 // Aliases for compatibility
 export const protect = authenticate;
 export const restrictTo = authorize;

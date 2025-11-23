@@ -239,6 +239,7 @@ async function seedUsers() {
       role: 'admin',
       accountStatus: 'active',
       isEmailVerified: true,
+      isVerified: true,
       profile: {
         firstName: 'Admin',
         lastName: 'User',
@@ -251,6 +252,7 @@ async function seedUsers() {
       role: 'client',
       accountStatus: 'active',
       isEmailVerified: true,
+      isVerified: true,
       profile: {
         firstName: 'John',
         lastName: 'Smith',
@@ -265,6 +267,7 @@ async function seedUsers() {
       role: 'client',
       accountStatus: 'active',
       isEmailVerified: true,
+      isVerified: true,
       profile: {
         firstName: 'Sarah',
         lastName: 'Johnson',
@@ -2100,7 +2103,7 @@ async function seedTransactions(users: any[], contracts: any[]) {
 
 async function seedDatabase() {
   try {
-    logger.info('🌱 Starting database seeding (Foundation Data Only)...');
+    logger.info('🌱 Starting database seeding (Full Comprehensive Data)...');
     
     // Connect to database
     await connectDB();
@@ -2108,30 +2111,43 @@ async function seedDatabase() {
     // Clear existing data
     await clearDatabase();
     
-    // Create a system user ID for seeding (won't be a real user)
-    const systemUserId = new mongoose.Types.ObjectId();
-    
-    // Seed only foundational data (no users)
-    const platformSettings = await seedPlatformSettings(systemUserId);
-    const categories = await seedCategories(systemUserId);
-    const skills = await seedSkills(categories, systemUserId);
+    // Seed data in order (due to dependencies)
+    const users = await seedUsers();
+    const admin = users.find(u => u.role === 'admin');
+    const platformSettings = await seedPlatformSettings(admin._id);
+    const categories = await seedCategories(admin._id);
+    const skills = await seedSkills(categories, admin._id);
+    const organizations = await seedOrganizations(users);
+    const projects = await seedProjects(users, organizations);
+    const servicePackages = await seedServicePackages(users);
+    const proposals = await seedProposals(users, projects);
+    const hireNowRequests = await seedHireNowRequests(users);
+    const contracts = await seedContracts(users, projects, proposals);
+    const reviews = await seedReviews(users, contracts, projects);
+    const timeEntries = await seedTimeEntries(users, contracts);
+    const payments = await seedPayments(users, contracts);
+    const transactions = await seedTransactions(users, contracts);
+    const messages = await seedMessages(users);
+    const notifications = await seedNotifications(users);
     
     logger.info('✅ Database seeding completed successfully');
     logger.info(`📊 Summary:
     - Platform Settings: Created
     - Categories: ${categories.length}
     - Skills: ${skills.length}
-    - Users: 0 (Ready for manual registration)
-    - Organizations: 0 (Ready for user creation)
-    - Projects: 0 (Ready for user creation)
-    - Service Packages: 0 (Ready for user creation)
-    - Proposals: 0 (Ready for user creation)
-    - Contracts: 0 (Ready for user creation)
-    - Reviews: 0 (Ready for user creation)
-    - Payments: 0 (Ready for user creation)
-    - Transactions: 0 (Ready for user creation)
-    - Messages: 0 (Ready for user creation)
-    - Notifications: 0 (Ready for user creation)`);
+    - Users: ${users.length}
+    - Organizations: ${organizations.length}
+    - Projects: ${projects.length}
+    - Service Packages: ${servicePackages.length}
+    - Proposals: ${proposals.length}
+    - Hire Now Requests: ${hireNowRequests.length}
+    - Contracts: ${contracts.length}
+    - Reviews: ${reviews.length}
+    - Time Entries: ${timeEntries.length}
+    - Payments: ${payments.length}
+    - Transactions: ${transactions.length}
+    - Messages: ${messages.length}
+    - Notifications: ${notifications.length}`);
     
   } catch (error) {
     logger.error('❌ Database seeding failed:', error);

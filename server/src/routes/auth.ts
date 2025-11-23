@@ -12,8 +12,10 @@ import {
   resetPassword,
   resetPasswordValidation,
   verifyResetToken,
+  changePassword,
+  changePasswordValidation,
 } from '@/controllers/authController';
-import { authenticate } from '@/middleware/auth';
+import { authenticate, authenticateForLogout } from '@/middleware/auth';
 import { authRateLimiter, passwordResetRateLimiter } from '@/middleware/rateLimiter';
 
 const router = Router();
@@ -28,8 +30,11 @@ router.post('/register', authRateLimiter, (req, res, next) => {
 // Login
 router.post('/login', authRateLimiter, loginValidation, login);
 
-// Logout (requires authentication)
-router.post('/logout', authenticate, logout);
+// Logout (requires authentication, but allows expired tokens)
+router.post('/logout', authenticateForLogout, logout);
+
+// Change password (requires authentication)
+router.post('/change-password', authenticate, changePasswordValidation, changePassword);
 
 // Refresh token
 router.post('/refresh-token', refreshToken);
