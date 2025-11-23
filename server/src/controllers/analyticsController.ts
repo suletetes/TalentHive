@@ -213,7 +213,7 @@ export const analyticsController = {
       // Projects by category
       const categoryDistribution = await Project.aggregate([
         { $match: matchStage },
-        { $unwind: '$category' },
+        { $unwind: { path: '$category', preserveNullAndEmptyArrays: false } },
         {
           $lookup: {
             from: 'categories',
@@ -222,13 +222,14 @@ export const analyticsController = {
             as: 'categoryInfo',
           },
         },
-        { $unwind: { path: '$categoryInfo', preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: '$categoryInfo', preserveNullAndEmptyArrays: false } },
         {
           $group: {
             _id: '$categoryInfo.name',
             count: { $sum: 1 },
           },
         },
+        { $match: { _id: { $ne: null } } },
         { $sort: { count: -1 } },
         { $limit: 10 },
       ]);

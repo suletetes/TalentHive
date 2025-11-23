@@ -186,6 +186,7 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
     Project.find(query)
       .populate('client', 'profile rating clientProfile')
       .populate('organization', 'name logo budget')
+      .populate('category', 'name')
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit as string))

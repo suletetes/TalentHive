@@ -22,7 +22,7 @@ router.use(authenticate);
 // Specific routes must come before parameterized routes
 router.get('/my', authorize('freelancer'), getMyProposals);
 router.get('/stats', getProposalStats);
-router.get('/project/:projectId', authorize('client'), getProposalsForProject);
+router.get('/project/:projectId', authenticate, getProposalsForProject);
 router.post('/project/:projectId', authorize('freelancer'), createProposalValidation, createProposal);
 
 // Freelancer routes with :id parameter
