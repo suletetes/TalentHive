@@ -4,85 +4,53 @@ import {
   Card,
   CardContent,
   Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Button,
-  Avatar,
-  IconButton,
-  Chip,
-  Grid,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  ListItemSecondaryAction,
-  Rating,
+  TextField,
+  CircularProgress,
+  Chip,
+  Avatar,
 } from '@mui/material';
-import {
-  DragIndicator,
-  Delete as DeleteIcon,
-  Add as AddIcon,
-  Star as StarIcon,
-} from '@mui/icons-material';
+import { Star as StarIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiService } from '@/services/api';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { useToast } from '@/components/ui/ToastProvider';
-
-interface Freelancer {
-  _id: string;
-  profile: {
-    firstName: string;
-    lastName: string;
-    avatar?: string;
-  };
-  freelancerProfile: {
-    title?: string;
-    hourlyRate?: number;
-  };
-  rating: {
-    average: number;
-    count: number;
-  };
-  isFeatured?: boolean;
-}
+import toast from 'react-hot-toast';
+import { adminService, AdminUser } from '@/services/api/admin.service';
 
 export const FeaturedFreelancersManager: React.FC = () => {
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
-  const toast = useToast();
+  const [searchEmail, setSearchEmail] = useState('');
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Fetch featured freelancers
-  const { data: featuredData, isLoading: featuredLoading } = useQuery({
-    queryKey: ['admin-featured-freelancers'],
+  // Fetch all freelancers
+  const { data: allFreelancers, isLoading: isLoadingFreelancers } = useQuery({
+    queryKey: ['admin-freelancers'],
     queryFn: async () => {
-      const response = await apiService.get('/admin/featured-freelancers');
-      return response.data.data.freelancers;
+      const response = await adminService.getUsers({
+        role: 'freelancer',
+        limit: 100,
+      });
+      return response.data.users;
     },
-  });
-
-  // Fetch all freelancers for adding
-  const { data: allFreelancersData, isLoading: allLoading } = useQuery({
-    queryKey: ['all-freelancers'],
-    queryFn: async () => {
-      const response = await apiService.get('/users/freelancers');
-      return response.data.data;
-    },
-    enabled: addDialogOpen,
   });
 
   // Feature freelancer mutation
   const featureMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      await apiService.post(`/admin/featured-freelancers/${userId}/feature`);
-    },
+    mutationFn: (userId: string) => adminService.featureFreelancer(userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-featured-freelancers'] });
-      queryClient.invalidateQueries({ queryKey: ['featured-freelancers'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-freelancers'] });
       toast.success('Freelancer featured successfully');
-      setAddDialogOpen(false);
+      setDialogOpen(false);
+      setSelectedUser(null);
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to feature freelancer');
@@ -91,12 +59,9 @@ export const FeaturedFreelancersManager: React.FC = () => {
 
   // Unfeature freelancer mutation
   const unfeatureMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      await apiService.delete(`/admin/featured-freelancers/${userId}/unfeature`);
-    },
+    mutationFn: (userId: string) => adminService.unfeatureFreelancer(userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-featured-freelancers'] });
-      queryClient.invalidateQueries({ queryKey: ['featured-freelancers'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-freelancers'] });
       toast.success('Freelancer unfeatured successfully');
     },
     onError: (error: any) => {
@@ -104,142 +69,171 @@ export const FeaturedFreelancersManager: React.FC = () => {
     },
   });
 
-  const featuredFreelancers: Freelancer[] = featuredData || [];
-  const allFreelancers: Freelancer[] = allFreelancersData || [];
-  const availableFreelancers = allFreelancers.filter(
-    (f) => !featuredFreelancers.some((ff) => ff._id === f._id)
-  );
+  const filteredFreelancers = allFreelancers?.filter((f) =>
+    f.email.toLowerCase().includes(searchEmail.toLowerCase())
+  ) || [];
 
-  if (featuredLoading) {
-    return <LoadingSpinner />;
-  }
+  const featuredFreelancers = filteredFreelancers.filter((f: any) => f.isFeatured);
+  const availableFreelancers = filteredFreelancers.filter((f: any) => !f.isFeatured);
 
   return (
-    <Card>
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h6">Featured Freelancers</Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setAddDialogOpen(true)}
-            disabled={featuredFreelancers.length >= 10}
-          >
-            Add Featured
-          </Button>
-        </Box>
-
-        {featuredFreelancers.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="body2" color="text.secondary">
-              No featured freelancers yet. Add some to showcase on the homepage.
-            </Typography>
-          </Box>
-        ) : (
-          <Grid container spacing={2}>
-            {featuredFreelancers.map((freelancer) => (
-              <Grid item xs={12} sm={6} md={4} key={freelancer._id}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                      <Avatar
-                        src={freelancer.profile.avatar}
-                        sx={{ width: 56, height: 56, mr: 2 }}
-                      >
-                        {freelancer.profile.firstName[0]}
-                      </Avatar>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle1">
-                          {freelancer.profile.firstName} {freelancer.profile.lastName}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" noWrap>
-                          {freelancer.freelancerProfile?.title || 'Freelancer'}
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                          <Rating value={freelancer.rating.average} readOnly size="small" />
-                          <Typography variant="caption" sx={{ ml: 0.5 }}>
-                            ({freelancer.rating.count})
-                          </Typography>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {/* Featured Freelancers */}
+      <Card>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Featured Freelancers ({featuredFreelancers.length})
+          </Typography>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Featured Since</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {featuredFreelancers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                      <Typography color="text.secondary">No featured freelancers yet</Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  featuredFreelancers.map((freelancer: any) => (
+                    <TableRow key={freelancer._id}>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar src={freelancer.profile?.avatar} sx={{ width: 32, height: 32 }} />
+                          {freelancer.profile?.firstName} {freelancer.profile?.lastName}
                         </Box>
-                      </Box>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => unfeatureMutation.mutate(freelancer._id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                    <Chip
-                      icon={<StarIcon />}
-                      label="Featured"
-                      color="primary"
-                      size="small"
-                    />
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        )}
+                      </TableCell>
+                      <TableCell>{freelancer.email}</TableCell>
+                      <TableCell>
+                        {freelancer.featuredSince
+                          ? new Date(freelancer.featuredSince).toLocaleDateString()
+                          : '-'}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Button
+                          size="small"
+                          color="error"
+                          startIcon={<DeleteIcon />}
+                          onClick={() => unfeatureMutation.mutate(freelancer._id)}
+                          disabled={unfeatureMutation.isPending}
+                        >
+                          Unfeature
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
 
-        {/* Add Featured Freelancer Dialog */}
-        <Dialog
-          open={addDialogOpen}
-          onClose={() => setAddDialogOpen(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Add Featured Freelancer</DialogTitle>
-          <DialogContent>
-            {allLoading ? (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <LoadingSpinner />
-              </Box>
-            ) : availableFreelancers.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                No available freelancers to feature.
-              </Typography>
-            ) : (
-              <List>
-                {availableFreelancers.map((freelancer) => (
-                  <ListItem key={freelancer._id} divider>
-                    <ListItemAvatar>
-                      <Avatar src={freelancer.profile.avatar}>
-                        {freelancer.profile.firstName[0]}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={`${freelancer.profile.firstName} ${freelancer.profile.lastName}`}
-                      secondary={
-                        <>
-                          {freelancer.freelancerProfile?.title || 'Freelancer'}
-                          <br />
-                          <Rating value={freelancer.rating.average} readOnly size="small" />
-                          {` (${freelancer.rating.count} reviews)`}
-                        </>
-                      }
-                    />
-                    <ListItemSecondaryAction>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => featureMutation.mutate(freelancer._id)}
-                        disabled={featureMutation.isPending}
-                      >
-                        Feature
-                      </Button>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                ))}
-              </List>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setAddDialogOpen(false)}>Close</Button>
-          </DialogActions>
-        </Dialog>
-      </CardContent>
-    </Card>
+      {/* Available Freelancers */}
+      <Card>
+        <CardContent>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Available Freelancers ({availableFreelancers.length})
+            </Typography>
+            <TextField
+              size="small"
+              placeholder="Search by email..."
+              value={searchEmail}
+              onChange={(e) => setSearchEmail(e.target.value)}
+              sx={{ width: '100%', maxWidth: 300 }}
+            />
+          </Box>
+
+          {isLoadingFreelancers ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Joined</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {availableFreelancers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                        <Typography color="text.secondary">No available freelancers</Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    availableFreelancers.map((freelancer: any) => (
+                      <TableRow key={freelancer._id}>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Avatar src={freelancer.profile?.avatar} sx={{ width: 32, height: 32 }} />
+                            {freelancer.profile?.firstName} {freelancer.profile?.lastName}
+                          </Box>
+                        </TableCell>
+                        <TableCell>{freelancer.email}</TableCell>
+                        <TableCell>
+                          {new Date(freelancer.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Button
+                            size="small"
+                            color="primary"
+                            startIcon={<StarIcon />}
+                            onClick={() => {
+                              setSelectedUser(freelancer);
+                              setDialogOpen(true);
+                            }}
+                            disabled={featureMutation.isPending}
+                          >
+                            Feature
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
+        <DialogTitle>Feature Freelancer</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to feature{' '}
+            <strong>
+              {selectedUser?.profile?.firstName} {selectedUser?.profile?.lastName}
+            </strong>
+            ?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+          <Button
+            onClick={() => selectedUser && featureMutation.mutate(selectedUser._id)}
+            variant="contained"
+            disabled={featureMutation.isPending}
+          >
+            {featureMutation.isPending ? <CircularProgress size={24} /> : 'Feature'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };

@@ -94,6 +94,27 @@ export class AdminService {
       `${this.basePath}/reports?${queryParams.toString()}`
     );
   }
+
+  async featureFreelancer(userId: string): Promise<{ data: { user: AdminUser } }> {
+    return apiCore.post<{ data: { user: AdminUser } }>(
+      `${this.basePath}/users/${userId}/feature`,
+      {}
+    );
+  }
+
+  async unfeatureFreelancer(userId: string): Promise<{ data: { user: AdminUser } }> {
+    return apiCore.post<{ data: { user: AdminUser } }>(
+      `${this.basePath}/users/${userId}/unfeature`,
+      {}
+    );
+  }
+
+  async reorderFeaturedFreelancers(order: string[]): Promise<{ data: { message: string } }> {
+    return apiCore.post<{ data: { message: string } }>(
+      `${this.basePath}/featured-freelancers/reorder`,
+      { order }
+    );
+  }
 }
 
 export const adminService = new AdminService();
