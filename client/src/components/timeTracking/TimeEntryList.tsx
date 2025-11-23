@@ -54,9 +54,11 @@ const TimeEntryList: React.FC = () => {
         params.status = filterStatus;
       }
       const response = await api.get('/time-tracking/entries', { params });
-      setEntries(response.data.data.timeEntries);
-    } catch (error) {
-      console.error('Error fetching time entries:', error);
+      console.log('✅ TimeEntryList response:', response.data);
+      const timeEntries = response.data?.data?.timeEntries || response.data?.data || [];
+      setEntries(Array.isArray(timeEntries) ? timeEntries : []);
+    } catch (error: any) {
+      console.error('❌ Error fetching time entries:', error.response?.status, error.response?.data);
     } finally {
       setLoading(false);
     }

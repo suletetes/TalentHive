@@ -18,7 +18,7 @@ import TimeEntryList from '@/components/timeTracking/TimeEntryList';
 import TimeReport from '@/components/timeTracking/TimeReport';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
-import axios from 'axios';
+import { apiCore } from '@/services/api/core';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -50,8 +50,14 @@ export const TimeTrackingPage: React.FC = () => {
   const { data: entriesData, isLoading, error, refetch } = useQuery({
     queryKey: ['time-entries'],
     queryFn: async () => {
-      const response = await axios.get('/api/v1/time-tracking/entries');
-      return response.data.data;
+      try {
+        const response = await apiCore.get('/time-tracking/entries');
+        console.log('✅ Time entries response:', response.data);
+        return response.data?.data?.timeEntries || response.data?.data || [];
+      } catch (err: any) {
+        console.error('❌ Error fetching time entries:', err.response?.status, err.response?.data);
+        throw err;
+      }
     },
     enabled: !!user,
   });
@@ -60,8 +66,14 @@ export const TimeTrackingPage: React.FC = () => {
   const { data: reportsData } = useQuery({
     queryKey: ['time-reports'],
     queryFn: async () => {
-      const response = await axios.get('/api/v1/time-tracking/reports');
-      return response.data.data;
+      try {
+        const response = await apiCore.get('/time-tracking/reports');
+        console.log('✅ Time reports response:', response.data);
+        return response.data?.data || [];
+      } catch (err: any) {
+        console.error('❌ Error fetching time reports:', err.response?.status, err.response?.data);
+        throw err;
+      }
     },
     enabled: !!user,
   });
