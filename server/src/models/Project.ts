@@ -141,11 +141,12 @@ projectSchema.index({
 
 // Virtual for proposal count
 projectSchema.virtual('proposalCount').get(function() {
-  return this.proposals.length;
+  return this.proposals?.length || 0;
 });
 
 // Virtual for budget range display
 projectSchema.virtual('budgetDisplay').get(function() {
+  if (!this.budget) return 'N/A';
   const { type, min, max } = this.budget;
   if (type === 'fixed') {
     return min === max ? `$${min}` : `$${min} - $${max}`;
@@ -156,6 +157,7 @@ projectSchema.virtual('budgetDisplay').get(function() {
 
 // Virtual for timeline display
 projectSchema.virtual('timelineDisplay').get(function() {
+  if (!this.timeline) return 'N/A';
   const { duration, unit } = this.timeline;
   return `${duration} ${unit}`;
 });

@@ -64,10 +64,13 @@ export const ProjectStatsChart: React.FC<ProjectStatsChartProps> = ({ data, isLo
   }));
 
   // Transform category distribution data
-  const categoryData = data.categoryDistribution.slice(0, 8).map((item) => ({
-    name: item._id,
-    count: item.count,
-  }));
+  const categoryData = (data.categoryDistribution || [])
+    .filter((item) => item._id && item._id !== null && item._id !== 'null')
+    .slice(0, 8)
+    .map((item) => ({
+      name: item._id || 'Uncategorized',
+      count: item.count,
+    }));
 
   // Transform budget distribution data
   const budgetData = data.budgetDistribution.map((item) => ({
