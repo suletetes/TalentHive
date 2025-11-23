@@ -64,6 +64,9 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
   const emailVerificationToken = crypto.randomBytes(32).toString('hex');
   const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
+  // Hash the token before storing
+  const hashedToken = crypto.createHash('sha256').update(emailVerificationToken).digest('hex');
+
   // Create user object
   const userData: any = {
     email,
@@ -73,7 +76,7 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
       firstName: finalFirstName,
       lastName: finalLastName,
     },
-    emailVerificationToken,
+    emailVerificationToken: hashedToken,
     emailVerificationExpires,
   };
 
@@ -114,26 +117,18 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
   const user = new User(userData);
   await user.save();
 
-  // Send verification email
-  try {
-    console.log('📧 [REGISTER] Sending verification email');
-    console.log('📧 [REGISTER] Email:', email);
-    console.log('📧 [REGISTER] Token:', emailVerificationToken);
-    console.log('📧 [REGISTER] Token length:', emailVerificationToken.length);
-    console.log('📧 [REGISTER] Verification URL will be:', `${process.env.CLIENT_URL}/verify-email?token=${emailVerificationToken}`);
-    
-    await sendVerificationEmail(email, emailVerificationToken);
-    
-    console.log('✅ [REGISTER] Verification email sent successfully');
-  } catch (error: any) {
-    // If email fails, still return success but log the error
-    console.error('❌ [REGISTER] Failed to send verification email:', error.message);
-    logger.warn(`Email verification failed for ${email}, but user was created. Token: ${emailVerificationToken}`);
-  }
+  // TODO: Re-enable email verification when email service is fixed
+  // await sendVerificationEmail(email, emailVerificationToken);
+
+  // Auto-verify user for now (email verification disabled)
+  user.isVerified = true;
+  user.emailVerificationToken = undefined;
+  user.emailVerificationExpires = undefined;
+  await user.save();
 
   res.status(201).json({
     status: 'success',
-    message: 'User registered successfully. Please check your email for verification.',
+    message: 'User registered successfully. You can now login.',
     data: {
       user: {
         id: user._id,
@@ -317,52 +312,53 @@ export const verifyEmail = catchAsync(async (req: Request, res: Response, next: 
     return next(new AppError('No verification token provided', 400));
   }
 
-  // Search for user with this token
-  console.log('🔎 [VERIFY_EMAIL] Searching for user with token...');
-  const user = await User.findOne({
-    emailVerificationToken: token,
-    emailVerificationExpires: { $gt: Date.now() },
+  // Hash the token to compare with stored hash
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+  console.log('🔐 [VERIFY_EMAIL] Plain token:', token);
+  console.log('🔐 [VERIFY_EMAIL] Hashed token:', hashedToken);
+
+  // Search for user with this token hash (new format) OR plain token (old format for backward compatibility)
+  console.log('🔎 [VERIFY_EMAIL] Searching for user with this token in database...');
+  
+  // First try to find with hashed token
+  let userWithToken = await User.findOne({
+    emailVerificationToken: hashedToken,
   });
 
-  if (user) {
-    console.log('✅ [VERIFY_EMAIL] User found with valid token:', user.email);
-    console.log('📋 [VERIFY_EMAIL] User ID:', user._id);
-    console.log('📋 [VERIFY_EMAIL] Current isVerified status:', user.isVerified);
-
-    // Check if already verified
-    if (user.isVerified) {
-      console.log('⚠️ [VERIFY_EMAIL] User already verified, returning success');
-      return res.status(200).json({
-        status: 'success',
-        message: 'Email already verified',
-      });
-    }
-
-    // Token is valid and not expired - verify the user
-    user.isVerified = true;
-    user.emailVerificationToken = undefined;
-    user.emailVerificationExpires = undefined;
-
-    await user.save();
-
-    console.log('✅ [VERIFY_EMAIL] User verified successfully');
-    return res.status(200).json({
-      status: 'success',
-      message: 'Email verified successfully',
+  // If not found, try with plain token (backward compatibility)
+  if (!userWithToken) {
+    console.log('🔎 [VERIFY_EMAIL] Hashed token not found, trying plain token...');
+    userWithToken = await User.findOne({
+      emailVerificationToken: token,
     });
   }
 
-  console.log('❌ [VERIFY_EMAIL] No user found with valid token');
+  if (!userWithToken) {
+    console.log('❌ [VERIFY_EMAIL] Token does not exist in database');
+    console.log('💡 [VERIFY_EMAIL] Searched for:');
+    console.log('   - Hashed:', hashedToken);
+    console.log('   - Plain:', token);
+    
+    // Debug: Check if there are ANY users with verification tokens
+    const usersWithTokens = await User.find({
+      emailVerificationToken: { $exists: true, $ne: null }
+    }).select('email emailVerificationToken');
+    console.log('📊 [VERIFY_EMAIL] Users with tokens in DB:', usersWithTokens.length);
+    if (usersWithTokens.length > 0) {
+      console.log('📊 [VERIFY_EMAIL] Sample tokens:', usersWithTokens.slice(0, 3).map(u => ({ email: u.email, tokenLength: u.emailVerificationToken?.length })));
+    }
+    
+    return next(new AppError('Invalid or already used verification token', 400));
+  }
 
-  // Check if token was already used (user is verified)
-  console.log('🔎 [VERIFY_EMAIL] Checking if token was already used...');
-  const verifiedUser = await User.findOne({
-    emailVerificationToken: token,
-    isVerified: true,
-  });
+  console.log('✅ [VERIFY_EMAIL] User found with token:', userWithToken.email);
+  console.log('📋 [VERIFY_EMAIL] User ID:', userWithToken._id);
+  console.log('📋 [VERIFY_EMAIL] Current isVerified status:', userWithToken.isVerified);
+  console.log('📋 [VERIFY_EMAIL] Token expires at:', userWithToken.emailVerificationExpires);
 
-  if (verifiedUser) {
-    console.log('⚠️ [VERIFY_EMAIL] Token already used - user already verified:', verifiedUser.email);
+  // Check if already verified
+  if (userWithToken.isVerified) {
+    console.log('⚠️ [VERIFY_EMAIL] User already verified, returning success');
     return res.status(200).json({
       status: 'success',
       message: 'Email already verified',
@@ -370,26 +366,24 @@ export const verifyEmail = catchAsync(async (req: Request, res: Response, next: 
   }
 
   // Check if token is expired
-  console.log('🔎 [VERIFY_EMAIL] Checking if token is expired...');
-  const userWithExpiredToken = await User.findOne({
-    emailVerificationToken: token,
-  });
-
-  if (userWithExpiredToken) {
-    console.log('⚠️ [VERIFY_EMAIL] Token expired for user:', userWithExpiredToken.email);
-    console.log('📅 [VERIFY_EMAIL] Token expires at:', userWithExpiredToken.emailVerificationExpires);
-    console.log('📅 [VERIFY_EMAIL] Current time:', new Date(Date.now()));
+  if (userWithToken.emailVerificationExpires && userWithToken.emailVerificationExpires < new Date()) {
+    console.log('⚠️ [VERIFY_EMAIL] Token has expired');
     return next(new AppError('Verification token has expired. Please request a new verification email.', 400));
   }
 
-  // Token doesn't exist in database
-  console.log('❌ [VERIFY_EMAIL] Token does not exist in database');
-  console.log('💡 [VERIFY_EMAIL] Possible causes:');
-  console.log('   1. Token was never created (user registered without email verification)');
-  console.log('   2. User was deleted');
-  console.log('   3. Token is completely invalid');
-  
-  return next(new AppError('Invalid verification token', 400));
+  // Token is valid and not expired - verify the user
+  console.log('🔄 [VERIFY_EMAIL] Verifying user...');
+  userWithToken.isVerified = true;
+  userWithToken.emailVerificationToken = undefined;
+  userWithToken.emailVerificationExpires = undefined;
+
+  await userWithToken.save();
+
+  console.log('✅ [VERIFY_EMAIL] User verified successfully');
+  res.status(200).json({
+    status: 'success',
+    message: 'Email verified successfully',
+  });
 });
 
 // Forgot password validation

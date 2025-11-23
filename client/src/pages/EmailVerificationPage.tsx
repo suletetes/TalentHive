@@ -9,23 +9,37 @@ export const EmailVerificationPage: React.FC = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Verifying your email...');
+  const [hasAttempted, setHasAttempted] = React.useState(false);
 
   useEffect(() => {
     let isMounted = true;
+    let timer: NodeJS.Timeout | null = null;
+
+    // Prevent double verification attempts
+    if (hasAttempted) {
+      return;
+    }
 
     const verifyEmail = async () => {
       try {
         // Extract token from URL search params
         const params = new URLSearchParams(location.search);
-        const token = params.get('token');
+        let token = params.get('token');
 
         if (!token) {
           if (isMounted) {
             setStatus('error');
             setMessage('No verification token provided. Please check your email link.');
+            setHasAttempted(true);
           }
           return;
         }
+
+        // Decode the token in case it's URL-encoded
+        token = decodeURIComponent(token);
+
+        console.log('🔍 [EMAIL_VERIFY_PAGE] Token extracted:', token);
+        console.log('🔍 [EMAIL_VERIFY_PAGE] Token length:', token.length);
 
         // Call verification API
         await authService.verifyEmail(token);
@@ -33,18 +47,23 @@ export const EmailVerificationPage: React.FC = () => {
         if (isMounted) {
           setStatus('success');
           setMessage('Email verified successfully! Redirecting to login...');
+          setHasAttempted(true);
 
           // Redirect after 2 seconds
-          const timer = setTimeout(() => {
-            navigate('/login');
+          timer = setTimeout(() => {
+            if (isMounted) {
+              navigate('/login');
+            }
           }, 2000);
-
-          return () => clearTimeout(timer);
         }
       } catch (error: any) {
         if (isMounted) {
+          console.error('❌ [EMAIL_VERIFY_PAGE] Verification error:', error);
+          console.error('📋 [EMAIL_VERIFY_PAGE] Error response:', error.response?.data);
+          console.error('📋 [EMAIL_VERIFY_PAGE] Error status:', error.response?.status);
           setStatus('error');
           setMessage(error.response?.data?.message || 'Failed to verify email. The link may have expired.');
+          setHasAttempted(true);
         }
       }
     };
@@ -53,8 +72,11 @@ export const EmailVerificationPage: React.FC = () => {
 
     return () => {
       isMounted = false;
+      if (timer) {
+        clearTimeout(timer);
+      }
     };
-  }, [location.search, navigate]);
+  }, [location.search, navigate, hasAttempted]);
 
   return (
     <Container maxWidth="sm" sx={{ py: 8 }}>
