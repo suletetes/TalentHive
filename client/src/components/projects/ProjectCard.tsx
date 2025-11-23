@@ -179,7 +179,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               </Tooltip>
             )}
             <Typography variant="body2" color="text.secondary">
-              {project.category}
+              {typeof project.category === 'object' ? project.category?.name : project.category}
             </Typography>
             {isDeadlineApproaching() && (
               <Chip

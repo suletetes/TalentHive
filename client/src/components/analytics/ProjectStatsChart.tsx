@@ -72,6 +72,11 @@ export const ProjectStatsChart: React.FC<ProjectStatsChartProps> = ({ data, isLo
       count: item.count,
     }));
 
+  // Fallback if no category data
+  const displayCategoryData = categoryData.length > 0 ? categoryData : [
+    { name: 'No Data', count: 0 }
+  ];
+
   // Transform budget distribution data
   const budgetData = data.budgetDistribution.map((item) => ({
     range: typeof item._id === 'number' ? `$${item._id / 100}+` : item._id,
@@ -118,15 +123,21 @@ export const ProjectStatsChart: React.FC<ProjectStatsChartProps> = ({ data, isLo
             Top Project Categories
           </Typography>
           <Box sx={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer>
-              <BarChart data={categoryData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={100} />
-                <Tooltip />
-                <Bar dataKey="count" fill="#4F46E5" />
-              </BarChart>
-            </ResponsiveContainer>
+            {displayCategoryData.length > 0 && displayCategoryData[0].count > 0 ? (
+              <ResponsiveContainer>
+                <BarChart data={displayCategoryData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis dataKey="name" type="category" width={100} />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#4F46E5" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                <Typography color="text.secondary">No category data available</Typography>
+              </Box>
+            )}
           </Box>
         </Paper>
       </Grid>
