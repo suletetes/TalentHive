@@ -7,6 +7,7 @@ import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from 
 import { AppError, catchAsync } from '@/middleware/errorHandler';
 import { deleteCache } from '@/config/redis';
 import { logger } from '@/utils/logger';
+import { AuthRequest } from '@/middleware/auth';
 
 export const registerValidation = [
   body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
@@ -254,63 +255,141 @@ export const logout = catchAsync(async (req: any, res: Response, next: NextFunct
   });
 });
 
+export const changePasswordValidation = [
+  body('currentPassword').notEmpty().withMessage('Current password is required'),
+  body('newPassword').isLength({ min: 8 }).withMessage('New password must be at least 8 characters long'),
+  body('confirmPassword').notEmpty().withMessage('Confirm password is required'),
+];
+
+export const changePassword = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new AppError('Validation failed', 400));
+  }
+
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+  const userId = req.user._id;
+
+  // Validate passwords match
+  if (newPassword !== confirmPassword) {
+    return next(new AppError('New password and confirm password do not match', 400));
+  }
+
+  // Validate new password is different from current
+  if (currentPassword === newPassword) {
+    return next(new AppError('New password must be different from current password', 400));
+  }
+
+  // Get user with password field
+  const user = await User.findById(userId).select('+password');
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  // Verify current password
+  const isPasswordCorrect = await user.comparePassword(currentPassword);
+  if (!isPasswordCorrect) {
+    return next(new AppError('Current password is incorrect', 401));
+  }
+
+  // Update password
+  user.password = newPassword;
+  await user.save();
+
+  // Clear user cache
+  await deleteCache(`user:${userId}`);
+
+  res.json({
+    status: 'success',
+    message: 'Password changed successfully',
+  });
+});
+
 export const verifyEmail = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { token } = req.params;
 
+  console.log('🔍 [VERIFY_EMAIL] Starting verification');
+  console.log('📝 [VERIFY_EMAIL] Token:', token);
+  console.log('⏰ [VERIFY_EMAIL] Current time:', new Date().toISOString());
+
   if (!token) {
+    console.log('❌ [VERIFY_EMAIL] No token provided');
     return next(new AppError('No verification token provided', 400));
   }
 
-  // First, check if user is already verified (idempotent - handles duplicate requests)
-  const alreadyVerifiedUser = await User.findOne({
-    isVerified: true,
-  }).select('+emailVerificationToken');
-
   // Search for user with this token
+  console.log('🔎 [VERIFY_EMAIL] Searching for user with token...');
   const user = await User.findOne({
     emailVerificationToken: token,
     emailVerificationExpires: { $gt: Date.now() },
   });
 
-  if (!user) {
-    // Check if token was already used (user is verified)
-    const verifiedUser = await User.findOne({
-      emailVerificationToken: token,
-      isVerified: true,
-    });
+  if (user) {
+    console.log('✅ [VERIFY_EMAIL] User found with valid token:', user.email);
+    console.log('📋 [VERIFY_EMAIL] User ID:', user._id);
+    console.log('📋 [VERIFY_EMAIL] Current isVerified status:', user.isVerified);
 
-    if (verifiedUser) {
-      // Token was already used - return success (idempotent)
+    // Check if already verified
+    if (user.isVerified) {
+      console.log('⚠️ [VERIFY_EMAIL] User already verified, returning success');
       return res.status(200).json({
         status: 'success',
         message: 'Email already verified',
       });
     }
 
-    // Check if token is expired
-    const userWithExpiredToken = await User.findOne({
-      emailVerificationToken: token,
+    // Token is valid and not expired - verify the user
+    user.isVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+
+    await user.save();
+
+    console.log('✅ [VERIFY_EMAIL] User verified successfully');
+    return res.status(200).json({
+      status: 'success',
+      message: 'Email verified successfully',
     });
-
-    if (userWithExpiredToken) {
-      return next(new AppError('Verification token has expired. Please request a new verification email.', 400));
-    }
-
-    // Token doesn't exist
-    return next(new AppError('Invalid verification token', 400));
   }
 
-  // Token is valid and not expired - verify the user
-  user.isVerified = true;
-  user.emailVerificationToken = undefined;
-  user.emailVerificationExpires = undefined;
+  console.log('❌ [VERIFY_EMAIL] No user found with valid token');
 
-  await user.save();
-
-  res.status(200).json({
-    status: 'success',
-    message: 'Email verified successfully',
+  // Check if token was already used (user is verified)
+  console.log('🔎 [VERIFY_EMAIL] Checking if token was already used...');
+  const verifiedUser = await User.findOne({
+    emailVerificationToken: token,
+    isVerified: true,
   });
+
+  if (verifiedUser) {
+    console.log('⚠️ [VERIFY_EMAIL] Token already used - user already verified:', verifiedUser.email);
+    return res.status(200).json({
+      status: 'success',
+      message: 'Email already verified',
+    });
+  }
+
+  // Check if token is expired
+  console.log('🔎 [VERIFY_EMAIL] Checking if token is expired...');
+  const userWithExpiredToken = await User.findOne({
+    emailVerificationToken: token,
+  });
+
+  if (userWithExpiredToken) {
+    console.log('⚠️ [VERIFY_EMAIL] Token expired for user:', userWithExpiredToken.email);
+    console.log('📅 [VERIFY_EMAIL] Token expires at:', userWithExpiredToken.emailVerificationExpires);
+    console.log('📅 [VERIFY_EMAIL] Current time:', new Date(Date.now()));
+    return next(new AppError('Verification token has expired. Please request a new verification email.', 400));
+  }
+
+  // Token doesn't exist in database
+  console.log('❌ [VERIFY_EMAIL] Token does not exist in database');
+  console.log('💡 [VERIFY_EMAIL] Possible causes:');
+  console.log('   1. Token was never created (user registered without email verification)');
+  console.log('   2. User was deleted');
+  console.log('   3. Token is completely invalid');
+  
+  return next(new AppError('Invalid verification token', 400));
 });
 
 // Forgot password validation

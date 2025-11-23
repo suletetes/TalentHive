@@ -76,6 +76,14 @@ export class AuthService {
   async verifyEmail(token: string): Promise<VerifyEmailResponse> {
     return apiCore.get<VerifyEmailResponse>(`${this.basePath}/verify-email/${token}`);
   }
+
+  async changePassword(currentPassword: string, newPassword: string, confirmPassword: string): Promise<{ status: string; message: string }> {
+    return apiCore.post<{ status: string; message: string }>(`${this.basePath}/change-password`, {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
+  }
 }
 
 export const authService = new AuthService();
