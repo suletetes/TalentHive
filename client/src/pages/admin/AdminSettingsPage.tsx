@@ -16,6 +16,7 @@ import { RootState } from '@/store';
 import { CommissionSettings } from '@/components/admin/CommissionSettings';
 import { PaymentSettings } from '@/components/admin/PaymentSettings';
 import { PlatformSettings } from '@/components/admin/PlatformSettings';
+import { FeaturedFreelancersManager } from '@/components/admin/FeaturedFreelancersManager';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import toast from 'react-hot-toast';
@@ -124,6 +125,7 @@ export const AdminSettingsPage: React.FC = () => {
             <Tab label="Commission Settings" id="admin-tab-0" aria-controls="admin-tabpanel-0" />
             <Tab label="Payment Settings" id="admin-tab-1" aria-controls="admin-tabpanel-1" />
             <Tab label="Platform Settings" id="admin-tab-2" aria-controls="admin-tabpanel-2" />
+            <Tab label="Featured Freelancers" id="admin-tab-3" aria-controls="admin-tabpanel-3" />
           </Tabs>
         </Box>
 
@@ -160,6 +162,12 @@ export const AdminSettingsPage: React.FC = () => {
                 })
               }
             />
+          </CardContent>
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={3}>
+          <CardContent>
+            <FeaturedFreelancersManager />
           </CardContent>
         </TabPanel>
       </Card>

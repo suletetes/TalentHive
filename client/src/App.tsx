@@ -40,6 +40,7 @@ import { OrganizationDashboardPage } from '@/pages/OrganizationDashboardPage';
 import { VerificationPage } from '@/pages/VerificationPage';
 import { VerificationSuccessPage } from '@/pages/VerificationSuccessPage';
 import { EmailVerificationPage } from '@/pages/EmailVerificationPage';
+import { ChangePasswordPage } from '@/pages/ChangePasswordPage';
 import { PaymentSuccessPage } from '@/pages/PaymentSuccessPage';
 import { PaymentErrorPage } from '@/pages/PaymentErrorPage';
 import { ContractDetailPage } from '@/pages/ContractDetailPage';
@@ -84,6 +85,7 @@ function App() {
           <Route path="verify-email" element={<EmailVerificationPage />} />
           <Route path="verification" element={<VerificationPage />} />
           <Route path="verification-success" element={<VerificationSuccessPage />} />
+          <Route path="change-password" element={<ChangePasswordPage />} />
         </Route>
 
         {/* Protected routes */}
