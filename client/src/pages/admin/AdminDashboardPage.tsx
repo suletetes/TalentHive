@@ -25,12 +25,17 @@ import {
   InputLabel,
   Alert,
   Avatar,
+  TextField,
+  CircularProgress,
 } from '@mui/material';
 import {
   People as PeopleIcon,
   Work as WorkIcon,
   Description as DescriptionIcon,
   AttachMoney as MoneyIcon,
+  Refresh as RefreshIcon,
+  Download as DownloadIcon,
+  TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
@@ -40,6 +45,17 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { RevenueChart } from '@/components/analytics/RevenueChart';
+import { UserGrowthChart } from '@/components/analytics/UserGrowthChart';
+import { ProjectStatsChart } from '@/components/analytics/ProjectStatsChart';
+import { PaymentAnalyticsChart } from '@/components/analytics/PaymentAnalyticsChart';
+import {
+  useRevenueAnalytics,
+  useUserGrowthAnalytics,
+  useProjectStats,
+  usePaymentAnalytics,
+  useDashboardOverview,
+} from '@/hooks/api/useAnalytics';
 
 export const AdminDashboardPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -47,6 +63,11 @@ export const AdminDashboardPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [newStatus, setNewStatus] = useState<'active' | 'suspended' | 'deactivated'>('active');
+  const [dateRange, setDateRange] = useState({
+    startDate: '',
+    endDate: '',
+  });
+  const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month' | 'year'>('day');
 
   // Fetch dashboard stats
   const { data: statsData, isLoading: statsLoading, error: statsError } = useQuery({
@@ -78,6 +99,27 @@ export const AdminDashboardPage: React.FC = () => {
     enabled: user?.role === 'admin',
   });
 
+  // Fetch analytics data
+  const { data: overview, isLoading: overviewLoading, refetch: refetchOverview } = useDashboardOverview();
+  const { data: revenueData, isLoading: revenueLoading, refetch: refetchRevenue } = useRevenueAnalytics({
+    startDate: dateRange.startDate || undefined,
+    endDate: dateRange.endDate || undefined,
+    groupBy,
+  });
+  const { data: userGrowthData, isLoading: userGrowthLoading, refetch: refetchUserGrowth } = useUserGrowthAnalytics({
+    startDate: dateRange.startDate || undefined,
+    endDate: dateRange.endDate || undefined,
+    groupBy,
+  });
+  const { data: projectStats, isLoading: projectStatsLoading, refetch: refetchProjectStats } = useProjectStats({
+    startDate: dateRange.startDate || undefined,
+    endDate: dateRange.endDate || undefined,
+  });
+  const { data: paymentAnalytics, isLoading: paymentLoading, refetch: refetchPaymentAnalytics } = usePaymentAnalytics({
+    startDate: dateRange.startDate || undefined,
+    endDate: dateRange.endDate || undefined,
+  });
+
   // Update user status mutation
   const updateStatusMutation = useMutation({
     mutationFn: ({ userId, status }: { userId: string; status: 'active' | 'suspended' | 'deactivated' }) =>
@@ -106,6 +148,19 @@ export const AdminDashboardPage: React.FC = () => {
         status: newStatus,
       });
     }
+  };
+
+  const handleRefresh = () => {
+    refetchOverview();
+    refetchRevenue();
+    refetchUserGrowth();
+    refetchProjectStats();
+    refetchPaymentAnalytics();
+    refetchUsers();
+  };
+
+  const handleExport = () => {
+    toast.info('Export functionality coming soon');
   };
 
   const getStatusColor = (status?: string) => {
@@ -326,44 +381,101 @@ export const AdminDashboardPage: React.FC = () => {
       </Card>
 
       {/* Analytics Section */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Platform Analytics
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Project Status Distribution
-              </Typography>
-              {reports.projectStats.map((stat) => (
-                <Box key={stat._id} display="flex" justifyContent="space-between" mb={1}>
-                  <Typography variant="body2">{stat._id}:</Typography>
-                  <Typography variant="body2" fontWeight="medium">
-                    {stat.count}
-                  </Typography>
-                </Box>
-              ))}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6">Analytics & Reports</Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button startIcon={<RefreshIcon />} onClick={handleRefresh} variant="outlined" size="small">
+              Refresh
+            </Button>
+            <Button startIcon={<DownloadIcon />} onClick={handleExport} variant="contained" size="small">
+              Export
+            </Button>
+          </Box>
+        </Box>
+
+        {/* Filters */}
+        <Paper sx={{ p: 3, mb: 4 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={3}>
+              <TextField
+                fullWidth
+                label="Start Date"
+                type="date"
+                value={dateRange.startDate}
+                onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+                size="small"
+              />
             </Grid>
-            <Grid item xs={12} md={4}>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Recent User Growth
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {reports.userGrowth.length} days of data
-              </Typography>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                fullWidth
+                label="End Date"
+                type="date"
+                value={dateRange.endDate}
+                onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+                size="small"
+              />
             </Grid>
-            <Grid item xs={12} md={4}>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Revenue Trends
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {reports.revenueData.length} days of data
-              </Typography>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                fullWidth
+                select
+                label="Group By"
+                value={groupBy}
+                onChange={(e) => setGroupBy(e.target.value as any)}
+                size="small"
+              >
+                <MenuItem value="day">Day</MenuItem>
+                <MenuItem value="week">Week</MenuItem>
+                <MenuItem value="month">Month</MenuItem>
+                <MenuItem value="year">Year</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={() => setDateRange({ startDate: '', endDate: '' })}
+                size="small"
+              >
+                Clear Filters
+              </Button>
             </Grid>
           </Grid>
-        </CardContent>
-      </Card>
+        </Paper>
+
+        {/* Revenue Chart */}
+        <Box sx={{ mb: 4 }}>
+          <RevenueChart
+            data={revenueData?.timeline || []}
+            isLoading={revenueLoading}
+            title="Revenue Overview"
+            type="area"
+          />
+        </Box>
+
+        {/* User Growth Chart */}
+        <Box sx={{ mb: 4 }}>
+          <UserGrowthChart
+            data={userGrowthData?.timeline || []}
+            isLoading={userGrowthLoading}
+            title="User Growth"
+          />
+        </Box>
+
+        {/* Project Stats */}
+        <Box sx={{ mb: 4 }}>
+          <ProjectStatsChart data={projectStats} isLoading={projectStatsLoading} />
+        </Box>
+
+        {/* Payment Analytics */}
+        <Box sx={{ mb: 4 }}>
+          <PaymentAnalyticsChart data={paymentAnalytics} isLoading={paymentLoading} />
+        </Box>
+      </Box>
 
       {/* Update User Status Dialog */}
       <Dialog
