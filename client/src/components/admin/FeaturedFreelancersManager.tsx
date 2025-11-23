@@ -48,6 +48,7 @@ export const FeaturedFreelancersManager: React.FC = () => {
     mutationFn: (userId: string) => adminService.featureFreelancer(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-freelancers'] });
+      queryClient.invalidateQueries({ queryKey: ['featured-freelancers'] });
       toast.success('Freelancer featured successfully');
       setDialogOpen(false);
       setSelectedUser(null);
@@ -62,6 +63,7 @@ export const FeaturedFreelancersManager: React.FC = () => {
     mutationFn: (userId: string) => adminService.unfeatureFreelancer(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-freelancers'] });
+      queryClient.invalidateQueries({ queryKey: ['featured-freelancers'] });
       toast.success('Freelancer unfeatured successfully');
     },
     onError: (error: any) => {

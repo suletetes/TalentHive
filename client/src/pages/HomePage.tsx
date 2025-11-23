@@ -637,22 +637,26 @@ export const HomePage: React.FC = () => {
             <Grid container spacing={4}>
               {displayFreelancers.map((freelancer: any) => (
                 <Grid item xs={12} sm={6} md={4} key={freelancer._id}>
-                  <Card 
-                    sx={{ 
-                      p: 3, 
-                      textAlign: 'center', 
-                      cursor: 'pointer', 
-                      height: '100%',
-                      transition: 'all 0.3s ease',
-                      '&:hover': { 
-                        boxShadow: 6,
-                        transform: 'translateY(-4px)',
-                      } 
-                    }}
-                    component={Link}
-                    to={`/freelancers/${freelancer._id}`}
-                    style={{ textDecoration: 'none' }}
-                  >
+                  {(() => {
+                    const isStatic = !freelancer._id || freelancer._id === '1' || freelancer._id === '2' || freelancer._id === '3';
+                    return (
+                      <Card 
+                        sx={{ 
+                          p: 3, 
+                          textAlign: 'center', 
+                          cursor: isStatic ? 'default' : 'pointer', 
+                          height: '100%',
+                          transition: isStatic ? 'none' : 'all 0.3s ease',
+                          '&:hover': isStatic ? {} : { 
+                            boxShadow: 6,
+                            transform: 'translateY(-4px)',
+                          } 
+                        }}
+                        component={isStatic ? 'div' : Link}
+                        to={isStatic ? undefined : `/freelancers/${freelancer._id}`}
+                        style={isStatic ? {} : { textDecoration: 'none' }}
+                      >
+                      
                     <Avatar
                       sx={{ width: 96, height: 96, mx: 'auto', mb: 2, border: 3, borderColor: 'primary.light' }}
                       src={freelancer.profile.avatar}
@@ -678,7 +682,9 @@ export const HomePage: React.FC = () => {
                         size="small"
                       />
                     )}
-                  </Card>
+                      </Card>
+                    );
+                  })()}
                 </Grid>
               ))}
             </Grid>

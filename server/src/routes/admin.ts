@@ -30,7 +30,9 @@ router.get('/reports', getReports);
 router.post('/users/:userId/roles', assignRole);
 router.delete('/users/:userId/roles', removeRole);
 
-// Featured freelancers
+// Featured freelancers - both route formats for compatibility
+router.post('/users/:userId/feature', featureFreelancer);
+router.post('/users/:userId/unfeature', unfeatureFreelancer);
 router.post('/featured-freelancers/:userId/feature', featureFreelancer);
 router.delete('/featured-freelancers/:userId/unfeature', unfeatureFreelancer);
 router.get('/featured-freelancers', getFeaturedFreelancers);
