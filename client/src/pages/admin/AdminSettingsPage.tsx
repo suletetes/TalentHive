@@ -14,6 +14,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { CommissionSettings } from '@/components/admin/CommissionSettings';
+import { PaymentSettings } from '@/components/admin/PaymentSettings';
+import { PlatformSettings } from '@/components/admin/PlatformSettings';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import toast from 'react-hot-toast';
@@ -135,23 +137,29 @@ export const AdminSettingsPage: React.FC = () => {
 
         <TabPanel value={tabValue} index={1}>
           <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Payment Settings
-            </Typography>
-            <Typography color="text.secondary">
-              Payment settings configuration coming soon...
-            </Typography>
+            <PaymentSettings
+              settings={settingsData?.payment || {}}
+              isLoading={updateSettingsMutation.isPending}
+              onSave={(settings) =>
+                updateSettingsMutation.mutate({
+                  payment: settings,
+                })
+              }
+            />
           </CardContent>
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>
           <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Platform Settings
-            </Typography>
-            <Typography color="text.secondary">
-              Platform settings configuration coming soon...
-            </Typography>
+            <PlatformSettings
+              settings={settingsData?.platform || {}}
+              isLoading={updateSettingsMutation.isPending}
+              onSave={(settings) =>
+                updateSettingsMutation.mutate({
+                  platform: settings,
+                })
+              }
+            />
           </CardContent>
         </TabPanel>
       </Card>
