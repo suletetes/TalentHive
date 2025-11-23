@@ -211,6 +211,9 @@ export const Header: React.FC = () => {
                   <MenuItem onClick={() => { navigate('/dashboard/projects'); handleClose(); }}>
                     My Projects
                   </MenuItem>
+                  <MenuItem onClick={() => { navigate('/change-password'); handleClose(); }}>
+                    Change Password
+                  </MenuItem>
                   <MenuItem onClick={handleLogout}>Logout</MenuItem>
                 </Menu>
               </>
