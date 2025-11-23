@@ -287,17 +287,25 @@ export const removeRole = catchAsync(async (req: AuthRequest, res: Response, nex
 // Feature a freelancer
 export const featureFreelancer = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { userId } = req.params;
+  console.log('⭐ [FEATURE_FREELANCER] Starting feature process for user:', userId);
 
   const user = await User.findById(userId);
   if (!user) {
+    console.log('❌ [FEATURE_FREELANCER] User not found:', userId);
     return next(new AppError('User not found', 404));
   }
 
+  console.log('✅ [FEATURE_FREELANCER] User found:', user.profile?.firstName, user.profile?.lastName);
+  console.log('📋 [FEATURE_FREELANCER] User role:', user.role);
+  console.log('📋 [FEATURE_FREELANCER] Current isFeatured status:', user.isFeatured);
+
   if (user.role !== 'freelancer') {
+    console.log('❌ [FEATURE_FREELANCER] User is not a freelancer');
     return next(new AppError('Only freelancers can be featured', 400));
   }
 
   if (user.isFeatured) {
+    console.log('⚠️ [FEATURE_FREELANCER] Freelancer is already featured');
     return next(new AppError('Freelancer is already featured', 400));
   }
 
@@ -306,14 +314,19 @@ export const featureFreelancer = catchAsync(async (req: AuthRequest, res: Respon
     .sort({ featuredOrder: -1 })
     .select('featuredOrder');
 
+  console.log('🔢 [FEATURE_FREELANCER] Highest featured order:', highestOrder?.featuredOrder);
+
   user.isFeatured = true;
   user.featuredOrder = highestOrder ? highestOrder.featuredOrder + 1 : 1;
   user.featuredSince = new Date();
   await user.save();
 
+  console.log('✅ [FEATURE_FREELANCER] User updated - isFeatured:', user.isFeatured, 'featuredOrder:', user.featuredOrder);
+
   // Clear cache
   await deleteCache('featured-freelancers');
   await deleteCache(`user:${userId}`);
+  console.log('💾 [FEATURE_FREELANCER] Cache cleared');
 
   res.json({
     status: 'success',
@@ -325,13 +338,19 @@ export const featureFreelancer = catchAsync(async (req: AuthRequest, res: Respon
 // Unfeature a freelancer
 export const unfeatureFreelancer = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { userId } = req.params;
+  console.log('⭐ [UNFEATURE_FREELANCER] Starting unfeature process for user:', userId);
 
   const user = await User.findById(userId);
   if (!user) {
+    console.log('❌ [UNFEATURE_FREELANCER] User not found:', userId);
     return next(new AppError('User not found', 404));
   }
 
+  console.log('✅ [UNFEATURE_FREELANCER] User found:', user.profile?.firstName, user.profile?.lastName);
+  console.log('📋 [UNFEATURE_FREELANCER] Current isFeatured status:', user.isFeatured);
+
   if (!user.isFeatured) {
+    console.log('⚠️ [UNFEATURE_FREELANCER] Freelancer is not featured');
     return next(new AppError('Freelancer is not featured', 400));
   }
 
@@ -340,9 +359,12 @@ export const unfeatureFreelancer = catchAsync(async (req: AuthRequest, res: Resp
   user.featuredSince = undefined;
   await user.save();
 
+  console.log('✅ [UNFEATURE_FREELANCER] User updated - isFeatured:', user.isFeatured);
+
   // Clear cache
   await deleteCache('featured-freelancers');
   await deleteCache(`user:${userId}`);
+  console.log('💾 [UNFEATURE_FREELANCER] Cache cleared');
 
   res.json({
     status: 'success',
@@ -353,23 +375,56 @@ export const unfeatureFreelancer = catchAsync(async (req: AuthRequest, res: Resp
 
 // Get featured freelancers
 export const getFeaturedFreelancers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  console.log('🔍 [GET_FEATURED] Fetching featured freelancers...');
+  
   // Check cache first
   let featuredFreelancers = await getCache('featured-freelancers');
+  console.log('💾 [GET_FEATURED] Cache hit:', !!featuredFreelancers);
 
   if (!featuredFreelancers) {
+    console.log('🔎 [GET_FEATURED] Querying database for featured freelancers...');
+    
+    // First, check how many freelancers are marked as featured
+    const totalFeatured = await User.countDocuments({
+      role: 'freelancer',
+      isFeatured: true,
+    });
+    console.log('📊 [GET_FEATURED] Total featured freelancers in DB:', totalFeatured);
+
+    // Check how many are active
+    const activeFeatured = await User.countDocuments({
+      role: 'freelancer',
+      isFeatured: true,
+      isActive: true,
+    });
+    console.log('📊 [GET_FEATURED] Active featured freelancers in DB:', activeFeatured);
+
     featuredFreelancers = await User.find({
       role: 'freelancer',
       isFeatured: true,
       isActive: true,
     })
       .sort({ featuredOrder: 1 })
-      .select('profile rating freelancerProfile')
+      .select('profile rating freelancerProfile isFeatured featuredOrder isActive')
       .limit(10);
+
+    console.log('✅ [GET_FEATURED] Found', featuredFreelancers.length, 'featured freelancers');
+    if (featuredFreelancers.length > 0) {
+      console.log('📋 [GET_FEATURED] Featured freelancers:', featuredFreelancers.map(f => ({
+        id: f._id,
+        name: f.profile?.firstName,
+        isFeatured: f.isFeatured,
+        featuredOrder: f.featuredOrder,
+        isActive: f.isActive,
+      })));
+    }
 
     // Cache for 1 hour
     await setCache('featured-freelancers', featuredFreelancers, 3600);
+    console.log('💾 [GET_FEATURED] Cached featured freelancers');
   }
 
+  console.log('📤 [GET_FEATURED] Returning', featuredFreelancers.length, 'freelancers to client');
   res.json({
     status: 'success',
     data: {

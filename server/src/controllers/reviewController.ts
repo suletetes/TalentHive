@@ -77,31 +77,45 @@ export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => 
   const { userId } = req.params;
   const { page = 1, limit = 10 } = req.query;
 
+  console.log('🔍 [GET_REVIEWS] Fetching reviews for user:', userId);
+  console.log('📊 [GET_REVIEWS] Page:', page, 'Limit:', limit);
+
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-  const [reviews, total] = await Promise.all([
-    Review.find({ reviewee: userId, isPublic: true })
-      .populate('reviewer', 'profile email')
-      .populate('project', 'title')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit as string)),
-    Review.countDocuments({ reviewee: userId, isPublic: true }),
-  ]);
+  try {
+    // Query for reviews - include both public and private (isPublic can be undefined or true)
+    const query = { reviewee: userId };
+    
+    const [reviews, total] = await Promise.all([
+      Review.find(query)
+        .populate('reviewer', 'profile email')
+        .populate('project', 'title')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit as string)),
+      Review.countDocuments(query),
+    ]);
 
-  // Map reviews to include 'client' field for frontend compatibility
-  const reviewsWithClient = reviews.map(review => {
-    const reviewObj = review.toObject();
-    return {
-      ...reviewObj,
-      client: reviewObj.reviewer, // Add client alias for reviewer
-    };
-  });
+    console.log('✅ [GET_REVIEWS] Found', reviews.length, 'reviews, total:', total);
 
-  res.json({
-    status: 'success',
-    data: reviewsWithClient,
-  });
+    // Map reviews to include 'client' field for frontend compatibility
+    const reviewsWithClient = reviews.map(review => {
+      const reviewObj = review.toObject();
+      return {
+        ...reviewObj,
+        client: reviewObj.reviewer, // Add client alias for reviewer
+      };
+    });
+
+    res.json({
+      status: 'success',
+      data: reviewsWithClient,
+    });
+  } catch (error: any) {
+    console.error('❌ [GET_REVIEWS] Error fetching reviews:', error.message);
+    console.error('📋 [GET_REVIEWS] Error details:', error);
+    throw error;
+  }
 });
 
 export const respondToReview = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
