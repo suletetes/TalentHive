@@ -58,7 +58,7 @@ export class ContractsService {
         }
       });
     }
-    return apiCore.get(`${this.basePath}/my/contracts?${queryParams.toString()}`);
+    return apiCore.get(`${this.basePath}/my?${queryParams.toString()}`);
   }
 
   async getContractById(id: string) {

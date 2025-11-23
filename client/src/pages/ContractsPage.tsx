@@ -36,7 +36,8 @@ export const ContractsPage: React.FC = () => {
     queryKey: ['my-contracts'],
     queryFn: async () => {
       const response = await contractsService.getMyContracts();
-      return response.data;
+      // Handle both response structures
+      return response.data?.contracts || response.data || [];
     },
   });
 
