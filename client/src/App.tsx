@@ -46,6 +46,7 @@ import { PaymentErrorPage } from '@/pages/PaymentErrorPage';
 import { ContractDetailPage } from '@/pages/ContractDetailPage';
 import { TimeTrackingPage } from '@/pages/TimeTrackingPage';
 import { ServicesPage } from '@/pages/ServicesPage';
+import { CreateProfilePage } from '@/pages/CreateProfilePage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { ToastProvider } from '@/components/ui/ToastProvider';
@@ -86,6 +87,7 @@ function App() {
           <Route path="verification" element={<VerificationPage />} />
           <Route path="verification-success" element={<VerificationSuccessPage />} />
           <Route path="change-password" element={<ChangePasswordPage />} />
+          <Route path="create-profile" element={<CreateProfilePage />} />
         </Route>
 
         {/* Protected routes */}
