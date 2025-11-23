@@ -89,11 +89,11 @@ export const FeaturedFreelancersManager: React.FC = () => {
           <TableContainer>
             <Table>
               <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Featured Since</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                  <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Name</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Email</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Featured Since</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600, color: 'text.primary' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -162,11 +162,11 @@ export const FeaturedFreelancersManager: React.FC = () => {
             <TableContainer>
               <Table>
                 <TableHead>
-                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Joined</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                  <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                    <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Name</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Joined</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600, color: 'text.primary' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

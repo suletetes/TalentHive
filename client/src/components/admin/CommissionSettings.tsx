@@ -185,14 +185,14 @@ export const CommissionSettings: React.FC<CommissionSettingsProps> = ({
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell>Name</TableCell>
-                <TableCell align="right">Commission %</TableCell>
-                <TableCell align="right">Min Amount</TableCell>
-                <TableCell align="right">Max Amount</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="center">Actions</TableCell>
+              <TableRow sx={{ bgcolor: 'action.hover' }}>
+                <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Name</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600, color: 'text.primary' }}>Commission %</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600, color: 'text.primary' }}>Min Amount</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600, color: 'text.primary' }}>Max Amount</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Description</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Status</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600, color: 'text.primary' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
