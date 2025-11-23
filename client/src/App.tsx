@@ -39,6 +39,7 @@ import { OrganizationListPage } from '@/pages/OrganizationListPage';
 import { OrganizationDashboardPage } from '@/pages/OrganizationDashboardPage';
 import { VerificationPage } from '@/pages/VerificationPage';
 import { VerificationSuccessPage } from '@/pages/VerificationSuccessPage';
+import { EmailVerificationPage } from '@/pages/EmailVerificationPage';
 import { PaymentSuccessPage } from '@/pages/PaymentSuccessPage';
 import { PaymentErrorPage } from '@/pages/PaymentErrorPage';
 import { ContractDetailPage } from '@/pages/ContractDetailPage';
@@ -80,6 +81,7 @@ function App() {
           {/* Payment & Verification pages (public) */}
           <Route path="payment-success" element={<PaymentSuccessPage />} />
           <Route path="payment-error" element={<PaymentErrorPage />} />
+          <Route path="verify-email" element={<EmailVerificationPage />} />
           <Route path="verification" element={<VerificationPage />} />
           <Route path="verification-success" element={<VerificationSuccessPage />} />
         </Route>
