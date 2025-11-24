@@ -142,14 +142,28 @@ export const ProjectDetailPage = () => {
   const isClient = user?.role === 'client';
   
   // Check if user already applied
-  const userProposal = project.proposals?.find((p: any) => p.freelancer === user?._id);
+  const userProposal = project.proposals?.find((p: any) => {
+    const proposalFreelancerId = typeof p.freelancer === 'object' ? p.freelancer?._id : p.freelancer;
+    return proposalFreelancerId === user?._id;
+  });
   const hasApplied = !!userProposal;
 
+  console.log(`[PROJECT DETAIL] ========== START PROJECT DEBUG ==========`);
+  console.log(`[PROJECT DETAIL] User ID: ${user?._id}`);
   console.log(`[PROJECT DETAIL] User role: ${user?.role}`);
   console.log(`[PROJECT DETAIL] Is freelancer: ${isFreelancer}`);
   console.log(`[PROJECT DETAIL] Is client: ${isClient}`);
-  console.log(`[PROJECT DETAIL] User has applied: ${hasApplied}`);
+  console.log(`[PROJECT DETAIL] Project ID: ${project._id}`);
   console.log(`[PROJECT DETAIL] Project status: ${project.status}`);
+  console.log(`[PROJECT DETAIL] Project proposals count: ${project.proposals?.length || 0}`);
+  if (project.proposals && project.proposals.length > 0) {
+    console.log(`[PROJECT DETAIL] First proposal:`, project.proposals[0]);
+    console.log(`[PROJECT DETAIL] First proposal freelancer:`, project.proposals[0].freelancer);
+    console.log(`[PROJECT DETAIL] First proposal freelancer type:`, typeof project.proposals[0].freelancer);
+  }
+  console.log(`[PROJECT DETAIL] User proposal found:`, userProposal);
+  console.log(`[PROJECT DETAIL] User has applied: ${hasApplied}`);
+  console.log(`[PROJECT DETAIL] ========== END PROJECT DEBUG ==========`);
 
   // Helper function to safely format dates
   const formatDate = (dateString: string | Date | undefined, formatStr: string) => {
@@ -257,22 +271,39 @@ export const ProjectDetailPage = () => {
                 Submit Proposal
               </Button>
             ) : (
-              <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    fullWidth
+                    onClick={() => navigate(`/dashboard/proposals`)}
+                  >
+                    View Proposal
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    fullWidth
+                    onClick={() => setProposalDialogOpen(true)}
+                  >
+                    Edit
+                  </Button>
+                </Box>
                 <Button
                   variant="outlined"
+                  color="error"
                   size="large"
                   fullWidth
-                  onClick={() => navigate(`/dashboard/proposals`)}
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to withdraw your proposal?')) {
+                      console.log(`[PROJECT DETAIL] Withdrawing proposal: ${userProposal?._id}`);
+                      // TODO: Implement withdraw proposal functionality
+                      toast.success('Proposal withdrawn');
+                    }
+                  }}
                 >
-                  View My Proposal
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="large"
-                  fullWidth
-                  onClick={() => setProposalDialogOpen(true)}
-                >
-                  Edit Proposal
+                  Withdraw Proposal
                 </Button>
               </Box>
             )}

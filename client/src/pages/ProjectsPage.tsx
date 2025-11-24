@@ -70,6 +70,35 @@ export const ProjectsPage: React.FC = () => {
   const projects = projectsData?.data || [];
   const pagination = null; // My projects doesn't have pagination
 
+  // Log projects data for debugging
+  React.useEffect(() => {
+    if (projects && projects.length > 0) {
+      console.log(`[PROJECTS PAGE] ========== START PROJECTS DEBUG ==========`);
+      console.log(`[PROJECTS PAGE] Total projects: ${projects.length}`);
+      const firstProject = projects[0];
+      console.log(`[PROJECTS PAGE] First project:`, firstProject);
+      console.log(`[PROJECTS PAGE] Category field:`, firstProject.category);
+      console.log(`[PROJECTS PAGE] Category type:`, typeof firstProject.category);
+      if (typeof firstProject.category === 'object') {
+        console.log(`[PROJECTS PAGE] ✅ Category is object with properties:`, Object.keys(firstProject.category));
+        console.log(`[PROJECTS PAGE] Category name:`, firstProject.category?.name);
+        console.log(`[PROJECTS PAGE] Category ID:`, firstProject.category?._id);
+      } else {
+        console.log(`[PROJECTS PAGE] ⚠️ Category is ${typeof firstProject.category}: ${firstProject.category}`);
+      }
+      console.log(`[PROJECTS PAGE] Skills:`, firstProject.skills);
+      console.log(`[PROJECTS PAGE] Skills type:`, typeof firstProject.skills);
+      if (Array.isArray(firstProject.skills)) {
+        console.log(`[PROJECTS PAGE] ✅ Skills is array with ${firstProject.skills.length} items`);
+        if (firstProject.skills.length > 0) {
+          console.log(`[PROJECTS PAGE] First skill type:`, typeof firstProject.skills[0]);
+          console.log(`[PROJECTS PAGE] First skill:`, firstProject.skills[0]);
+        }
+      }
+      console.log(`[PROJECTS PAGE] ========== END PROJECTS DEBUG ==========`);
+    }
+  }, [projects]);
+
   const handleFiltersChange = (newFilters: any) => {
     setFilters({ ...newFilters, page: 1 }); // Reset to first page when filters change
   };

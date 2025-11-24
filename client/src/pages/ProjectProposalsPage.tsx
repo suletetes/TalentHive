@@ -17,6 +17,7 @@ import {
   Divider,
   Rating,
   Alert,
+  Pagination,
 } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
@@ -45,15 +46,43 @@ export const ProjectProposalsPage: React.FC = () => {
   const { data: proposalsData, isLoading: proposalsLoading } = useQuery({
     queryKey: ['project-proposals', projectId],
     queryFn: async () => {
+      console.log(`[PROJECT PROPOSALS] ========== START FETCH ==========`);
       console.log(`[PROJECT PROPOSALS] Fetching proposals for project: ${projectId}`);
       try {
         const response = await apiService.get(`/proposals/project/${projectId}`);
-        console.log(`[PROJECT PROPOSALS] Response:`, response.data);
-        const proposals = response.data?.data?.proposals || response.data?.data || [];
-        console.log(`[PROJECT PROPOSALS] Found ${proposals.length} proposals`);
+        console.log(`[PROJECT PROPOSALS] Raw response:`, response);
+        console.log(`[PROJECT PROPOSALS] response.data:`, response.data);
+        console.log(`[PROJECT PROPOSALS] response.data type:`, typeof response.data);
+        console.log(`[PROJECT PROPOSALS] response.data.data:`, response.data?.data);
+        console.log(`[PROJECT PROPOSALS] response.data.proposals:`, response.data?.proposals);
+        
+        // Handle multiple response structures
+        let proposals = [];
+        if (response.data?.proposals && Array.isArray(response.data.proposals)) {
+          proposals = response.data.proposals;
+          console.log(`[PROJECT PROPOSALS] ✅ Using response.data.proposals (${proposals.length} items)`);
+        } else if (response.data?.data?.proposals && Array.isArray(response.data.data.proposals)) {
+          proposals = response.data.data.proposals;
+          console.log(`[PROJECT PROPOSALS] ✅ Using response.data.data.proposals (${proposals.length} items)`);
+        } else if (response.data?.data && Array.isArray(response.data.data)) {
+          proposals = response.data.data;
+          console.log(`[PROJECT PROPOSALS] ✅ Using response.data.data (${proposals.length} items)`);
+        } else if (Array.isArray(response.data)) {
+          proposals = response.data;
+          console.log(`[PROJECT PROPOSALS] ✅ Using response.data directly (${proposals.length} items)`);
+        } else {
+          console.warn(`[PROJECT PROPOSALS] ⚠️ No valid proposals array found in response`);
+          proposals = [];
+        }
+        
+        console.log(`[PROJECT PROPOSALS] Final result: Found ${proposals.length} proposals`);
+        if (proposals.length > 0) {
+          console.log(`[PROJECT PROPOSALS] First proposal:`, proposals[0]);
+        }
+        console.log(`[PROJECT PROPOSALS] ========== END FETCH ==========`);
         return proposals;
       } catch (error) {
-        console.error(`[PROJECT PROPOSALS ERROR]`, error);
+        console.error(`[PROJECT PROPOSALS ERROR] ❌ Error fetching proposals:`, error);
         throw error;
       }
     },
