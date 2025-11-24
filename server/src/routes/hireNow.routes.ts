@@ -6,21 +6,20 @@ import {
   acceptHireNowRequest,
   rejectHireNowRequest,
 } from '@/controllers/hireNowController';
-import { protect } from '@/middleware/auth';
-import { authorizeRoles } from '@/middleware/roleAuth';
+import { authenticate, authorize } from '@/middleware/auth';
 
 const router = Router();
 
 // All routes require authentication
-router.use(protect);
+router.use(authenticate);
 
 // Client routes
-router.post('/:freelancerId', authorizeRoles('client'), createHireNowRequest);
-router.get('/sent', authorizeRoles('client'), getSentRequests);
+router.post('/:freelancerId', authorize('client'), createHireNowRequest);
+router.get('/sent', authorize('client'), getSentRequests);
 
 // Freelancer routes
-router.get('/received', authorizeRoles('freelancer'), getReceivedRequests);
-router.put('/:id/accept', authorizeRoles('freelancer'), acceptHireNowRequest);
-router.put('/:id/reject', authorizeRoles('freelancer'), rejectHireNowRequest);
+router.get('/received', authorize('freelancer'), getReceivedRequests);
+router.put('/:id/accept', authorize('freelancer'), acceptHireNowRequest);
+router.put('/:id/reject', authorize('freelancer'), rejectHireNowRequest);
 
 export default router;
