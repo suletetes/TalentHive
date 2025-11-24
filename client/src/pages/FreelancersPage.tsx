@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -27,18 +27,36 @@ import { ErrorHandler } from '@/utils/errorHandler';
 
 export const FreelancersPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('rating');
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(1);
+  const [showAllSkills, setShowAllSkills] = useState(false);
+  const [skillSearch, setSkillSearch] = useState('');
   const limit = 12;
+  const debounceTimer = useRef<NodeJS.Timeout>();
+
+  // Debounce search term
+  useEffect(() => {
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPage(1);
+    }, 500); // 500ms debounce
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [searchTerm]);
 
   // Fetch skills from database
   const { data: skillsData } = useQuery({
     queryKey: ['skills'],
     queryFn: async () => {
       const response = await apiService.get('/skills');
-      return response.data.data;
+      return response.data?.data || response.data || [];
     },
   });
 
@@ -53,7 +71,7 @@ export const FreelancersPage = () => {
     refetch,
   } = useFreelancers({
     skills: selectedSkills.length > 0 ? selectedSkills : undefined,
-    search: searchTerm || undefined,
+    search: debouncedSearchTerm || undefined,
     sortBy,
     sortOrder,
     page,
@@ -190,17 +208,47 @@ export const FreelancersPage = () => {
             <Typography variant="subtitle2" gutterBottom>
               Filter by Skills:
             </Typography>
+            <TextField
+              size="small"
+              placeholder="Search skills..."
+              value={skillSearch}
+              onChange={(e) => setSkillSearch(e.target.value)}
+              sx={{ mb: 2, maxWidth: 300 }}
+            />
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              {skills.map((skill: any) => (
-                <Chip
-                  key={skill._id}
-                  label={skill.name}
-                  onClick={() => handleSkillToggle(skill._id)}
-                  color={selectedSkills.includes(skill._id) ? 'primary' : 'default'}
-                  sx={{ mb: 1 }}
-                />
-              ))}
+              {skills
+                .filter((skill: any) =>
+                  skill.name.toLowerCase().includes(skillSearch.toLowerCase())
+                )
+                .slice(0, showAllSkills ? undefined : 10)
+                .map((skill: any) => (
+                  <Chip
+                    key={skill._id}
+                    label={skill.name}
+                    onClick={() => handleSkillToggle(skill._id)}
+                    color={selectedSkills.includes(skill._id) ? 'primary' : 'default'}
+                    sx={{ mb: 1 }}
+                  />
+                ))}
             </Stack>
+            {!showAllSkills && skills.length > 10 && (
+              <Button
+                size="small"
+                onClick={() => setShowAllSkills(true)}
+                sx={{ mt: 1 }}
+              >
+                Show {skills.length - 10} more skills
+              </Button>
+            )}
+            {showAllSkills && skills.length > 10 && (
+              <Button
+                size="small"
+                onClick={() => setShowAllSkills(false)}
+                sx={{ mt: 1 }}
+              >
+                Show less
+              </Button>
+            )}
           </Box>
         )}
       </Box>

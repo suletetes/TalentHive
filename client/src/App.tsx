@@ -47,6 +47,7 @@ import { ContractDetailPage } from '@/pages/ContractDetailPage';
 import { TimeTrackingPage } from '@/pages/TimeTrackingPage';
 import { ServicesPage } from '@/pages/ServicesPage';
 import { CreateProfilePage } from '@/pages/CreateProfilePage';
+import { HireNowRequestsPage } from '@/pages/HireNowRequestsPage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { ToastProvider } from '@/components/ui/ToastProvider';
@@ -116,6 +117,7 @@ function App() {
           <Route path="contracts/:id" element={<ContractDetailPage />} />
           <Route path="time-tracking" element={<TimeTrackingPage />} />
           <Route path="services" element={<ServicesPage />} />
+          <Route path="hire-now-requests" element={<HireNowRequestsPage />} />
         </Route>
 
         {/* Admin routes */}

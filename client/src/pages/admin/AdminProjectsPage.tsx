@@ -156,7 +156,7 @@ export const AdminProjectsPage: React.FC = () => {
                         {project.title}
                       </Typography>
                     </TableCell>
-                    <TableCell>{project.category}</TableCell>
+                    <TableCell>{typeof project.category === 'object' ? project.category?.name : project.category}</TableCell>
                     <TableCell>
                       ${project.budget?.min} - ${project.budget?.max}
                     </TableCell>
