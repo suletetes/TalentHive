@@ -152,13 +152,18 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
 export const getFreelancerById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
 
+  console.log(`[FREELANCER DETAIL] Fetching freelancer with ID: ${id}`);
+
   const freelancer = await User.findOne({
     _id: id,
     role: 'freelancer',
     isActive: true,
   }).select('-password -emailVerificationToken -passwordResetToken');
 
+  console.log(`[FREELANCER DETAIL] Found freelancer:`, freelancer ? 'YES' : 'NO');
+
   if (!freelancer) {
+    console.log(`[FREELANCER DETAIL] Freelancer not found for ID: ${id}`);
     return next(new AppError('Freelancer not found', 404));
   }
 

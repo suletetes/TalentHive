@@ -77,8 +77,8 @@ export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => 
   const { userId } = req.params;
   const { page = 1, limit = 10 } = req.query;
 
-  console.log('🔍 [GET_REVIEWS] Fetching reviews for user:', userId);
-  console.log('📊 [GET_REVIEWS] Page:', page, 'Limit:', limit);
+  console.log('[GET_REVIEWS] Fetching reviews for user:', userId);
+  console.log('[GET_REVIEWS] Page:', page, 'Limit:', limit);
 
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
@@ -86,6 +86,8 @@ export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => 
     // Query for reviews - include both public and private (isPublic can be undefined or true)
     const query = { reviewee: userId };
     
+    console.log('[GET_REVIEWS] Query:', query);
+
     const [reviews, total] = await Promise.all([
       Review.find(query)
         .populate('reviewer', 'profile email')
@@ -96,7 +98,8 @@ export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => 
       Review.countDocuments(query),
     ]);
 
-    console.log('✅ [GET_REVIEWS] Found', reviews.length, 'reviews, total:', total);
+    console.log('[GET_REVIEWS] Found', reviews.length, 'reviews, total:', total);
+    console.log('[GET_REVIEWS] Reviews data:', JSON.stringify(reviews, null, 2));
 
     // Map reviews to include 'client' field for frontend compatibility
     const reviewsWithClient = reviews.map(review => {
@@ -107,13 +110,15 @@ export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => 
       };
     });
 
+    console.log('[GET_REVIEWS] Returning', reviewsWithClient.length, 'reviews');
+
     res.json({
       status: 'success',
       data: reviewsWithClient,
     });
   } catch (error: any) {
-    console.error('❌ [GET_REVIEWS] Error fetching reviews:', error.message);
-    console.error('📋 [GET_REVIEWS] Error details:', error);
+    console.error('[GET_REVIEWS ERROR] Error fetching reviews:', error.message);
+    console.error('[GET_REVIEWS ERROR] Stack:', error.stack);
     throw error;
   }
 });

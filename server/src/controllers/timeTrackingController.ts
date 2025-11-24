@@ -308,14 +308,18 @@ export const getTimeEntries = async (req: Request, res: Response) => {
     const userId = req.user._id;
     const { projectId, contractId, status, startDate, endDate } = req.query;
 
+    console.log(`[TIME TRACKING] Fetching entries for user: ${userId}, role: ${req.user.role}`);
+
     const query: any = {};
 
     // Filter by role
     if (req.user.role === 'freelancer') {
       query.freelancer = userId;
+      console.log(`[TIME TRACKING] Filtering by freelancer: ${userId}`);
     } else if (req.user.role === 'client') {
       // Get contracts where user is client
       const contracts = await Contract.find({ client: userId }).select('_id');
+      console.log(`[TIME TRACKING] Found ${contracts.length} contracts for client`);
       query.contract = { $in: contracts.map(c => c._id) };
     }
 
@@ -329,11 +333,15 @@ export const getTimeEntries = async (req: Request, res: Response) => {
       if (endDate) query.startTime.$lte = new Date(endDate as string);
     }
 
+    console.log(`[TIME TRACKING] Query:`, query);
+
     const timeEntries = await TimeEntry.find(query)
       .populate('freelancer', 'firstName lastName profilePicture')
       .populate('project', 'title')
       .populate('contract', 'title')
       .sort({ startTime: -1 });
+
+    console.log(`[TIME TRACKING] Found ${timeEntries.length} time entries`);
 
     res.json({
       status: 'success',
@@ -341,6 +349,7 @@ export const getTimeEntries = async (req: Request, res: Response) => {
       data: { timeEntries },
     });
   } catch (error) {
+    console.error('[TIME TRACKING ERROR]', error);
     logger.error('Error fetching time entries:', error);
     res.status(500).json({
       status: 'error',

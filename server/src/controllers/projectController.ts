@@ -36,6 +36,11 @@ export const createProject = catchAsync(async (req: AuthRequest, res: Response, 
     client: req.user._id,
   };
 
+  // Remove empty organization string
+  if (!projectData.organization || projectData.organization === '') {
+    delete projectData.organization;
+  }
+
   // If organization is provided, verify user is a member
   if (projectData.organization) {
     const { Organization } = await import('@/models/Organization');
@@ -106,12 +111,21 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
     organization,
   } = req.query;
 
+  console.log(`[GET PROJECTS] Fetching projects with filters:`, {
+    page,
+    limit,
+    category,
+    skills,
+    status,
+  });
+
   // Build cache key
   const cacheKey = `projects:${JSON.stringify(req.query)}`;
   
   // Try to get from cache first
   const cachedResult = await getCache(cacheKey);
   if (cachedResult) {
+    console.log(`[GET PROJECTS] Returning cached result`);
     return res.json({
       status: 'success',
       data: cachedResult,
@@ -131,11 +145,13 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
   // Add filters
   if (category) {
     query.category = category;
+    console.log(`[GET PROJECTS] Filtering by category: ${category}`);
   }
 
   if (skills) {
     const skillsArray = (skills as string).split(',');
     query.skills = { $in: skillsArray };
+    console.log(`[GET PROJECTS] Filtering by skills:`, skillsArray);
   }
 
   if (budgetMin || budgetMax) {
@@ -568,14 +584,20 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
   const userId = req.user._id;
   const userRole = req.user.role;
   
+  console.log(`[DASHBOARD STATS] Fetching stats for user: ${userId}, role: ${userRole}`);
+  
   const { Proposal } = await import('@/models/Proposal');
   const { Contract } = await import('@/models/Contract');
+  const { Review } = await import('@/models/Review');
   
   if (userRole === 'client') {
+    console.log(`[DASHBOARD STATS] Client stats requested`);
+    
     // Get all project IDs for this client
     const projectIds = await Project.find({ client: userId }).distinct('_id');
+    console.log(`[DASHBOARD STATS] Found ${projectIds.length} projects for client`);
     
-    const [totalProjects, activeProjects, completedProjects, pendingProposals, totalSpent] = await Promise.all([
+    const [totalProjects, activeProjects, completedProjects, pendingProposals, totalSpent, totalContracts] = await Promise.all([
       Project.countDocuments({ client: userId }),
       Project.countDocuments({ client: userId, status: 'open' }),
       Project.countDocuments({ client: userId, status: 'completed' }),
@@ -587,7 +609,17 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
         { $match: { client: userId, status: { $in: ['active', 'completed'] } } },
         { $group: { _id: null, total: { $sum: '$totalAmount' } } }
       ]).then(result => result[0]?.total || 0),
+      Contract.countDocuments({ client: userId }),
     ]);
+    
+    console.log(`[DASHBOARD STATS] Client stats:`, {
+      totalProjects,
+      activeProjects,
+      completedProjects,
+      pendingProposals,
+      totalSpent,
+      totalContracts,
+    });
     
     return res.json({
       status: 'success',
@@ -597,12 +629,15 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
         completedProjects,
         pendingProposals,
         totalSpent,
+        totalContracts,
       },
     });
   }
   
   if (userRole === 'freelancer') {
-    const [totalProposals, acceptedProposals, activeContracts, totalEarnings] = await Promise.all([
+    console.log(`[DASHBOARD STATS] Freelancer stats requested`);
+    
+    const [totalProposals, acceptedProposals, activeContracts, totalEarnings, totalContracts, totalReviews] = await Promise.all([
       Proposal.countDocuments({ freelancer: userId }),
       Proposal.countDocuments({ freelancer: userId, status: 'accepted' }),
       Contract.countDocuments({ freelancer: userId, status: 'active' }),
@@ -610,7 +645,18 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
         { $match: { freelancer: userId, status: 'completed' } },
         { $group: { _id: null, total: { $sum: '$totalAmount' } } }
       ]).then(result => result[0]?.total || 0),
+      Contract.countDocuments({ freelancer: userId }),
+      Review.countDocuments({ freelancer: userId }),
     ]);
+    
+    console.log(`[DASHBOARD STATS] Freelancer stats:`, {
+      totalProposals,
+      acceptedProposals,
+      activeContracts,
+      totalEarnings,
+      totalContracts,
+      totalReviews,
+    });
     
     return res.json({
       status: 'success',
@@ -619,6 +665,8 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
         acceptedProposals,
         activeProjects: activeContracts,
         totalEarnings,
+        totalContracts,
+        totalReviews,
       },
     });
   }

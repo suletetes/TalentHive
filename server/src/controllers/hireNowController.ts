@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { HireNowRequest } from '@/models/HireNowRequest';
 import { Contract } from '@/models/Contract';
 import { Project } from '@/models/Project';
+import { Notification } from '@/models/Notification';
 import { AppError } from '@/middleware/errorHandler';
 import { sendEmail } from '@/utils/email.resend';
 import { User } from '@/models/User';
@@ -46,6 +47,25 @@ export const createHireNowRequest = async (
 
     // Populate freelancer details
     await hireNowRequest.populate('freelancer', 'profile email');
+
+    // Create in-app notification for freelancer
+    try {
+      await Notification.create({
+        recipient: freelancerId,
+        type: 'hire_now',
+        title: `New Hire Now Request: ${projectTitle}`,
+        message: `You have received a new hire now request for "${projectTitle}" with a budget of $${budget}`,
+        data: {
+          hireNowRequestId: hireNowRequest._id,
+          projectTitle,
+          budget,
+          clientName: req.user?.profile?.firstName,
+        },
+        isRead: false,
+      });
+    } catch (notificationError) {
+      console.error('Failed to create hire now notification:', notificationError);
+    }
 
     // Send email notification to freelancer
     try {
@@ -183,6 +203,25 @@ export const acceptHireNowRequest = async (
       startDate: new Date(),
     });
 
+    // Create in-app notification for client
+    try {
+      await Notification.create({
+        recipient: hireNowRequest.client._id,
+        type: 'hire_now',
+        title: `Hire Now Request Accepted: ${hireNowRequest.projectTitle}`,
+        message: `${(hireNowRequest.freelancer as any).profile.firstName} ${(hireNowRequest.freelancer as any).profile.lastName} has accepted your hire now request. Contract created.`,
+        data: {
+          hireNowRequestId: hireNowRequest._id,
+          contractId: contract._id,
+          projectTitle: hireNowRequest.projectTitle,
+          freelancerName: `${(hireNowRequest.freelancer as any).profile.firstName} ${(hireNowRequest.freelancer as any).profile.lastName}`,
+        },
+        isRead: false,
+      });
+    } catch (notificationError) {
+      console.error('Failed to create acceptance notification:', notificationError);
+    }
+
     // Send email notification to client
     try {
       await sendEmail({
@@ -244,6 +283,25 @@ export const rejectHireNowRequest = async (
 
     // Reject the request
     await hireNowRequest.reject(responseMessage);
+
+    // Create in-app notification for client
+    try {
+      await Notification.create({
+        recipient: hireNowRequest.client._id,
+        type: 'hire_now',
+        title: `Hire Now Request Declined: ${hireNowRequest.projectTitle}`,
+        message: `${(hireNowRequest.freelancer as any).profile.firstName} ${(hireNowRequest.freelancer as any).profile.lastName} has declined your hire now request.`,
+        data: {
+          hireNowRequestId: hireNowRequest._id,
+          projectTitle: hireNowRequest.projectTitle,
+          freelancerName: `${(hireNowRequest.freelancer as any).profile.firstName} ${(hireNowRequest.freelancer as any).profile.lastName}`,
+          responseMessage,
+        },
+        isRead: false,
+      });
+    } catch (notificationError) {
+      console.error('Failed to create rejection notification:', notificationError);
+    }
 
     // Send email notification to client
     try {
