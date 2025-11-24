@@ -24,18 +24,45 @@ import { useToast } from '@/components/ui/ToastProvider';
 const steps = ['Basic Information', 'Budget & Timeline', 'Requirements', 'Review'];
 
 const projectSchema = yup.object({
-  title: yup.string().required('Title is required').max(200, 'Title too long'),
-  description: yup.string().required('Description is required').min(10, 'Description too short').max(5000, 'Description too long'),
-  category: yup.string().required('Category is required'),
-  skills: yup.array().of(yup.string()).min(1, 'At least one skill is required'),
+  title: yup.string()
+    .required('Title is required')
+    .min(5, 'Title must be at least 5 characters')
+    .max(200, 'Title must be at most 200 characters'),
+  description: yup.string()
+    .required('Description is required')
+    .min(20, 'Description must be at least 20 characters')
+    .max(5000, 'Description must be at most 5000 characters'),
+  category: yup.string()
+    .required('Category is required')
+    .min(1, 'Please select a valid category'),
+  skills: yup.array()
+    .of(yup.string())
+    .min(1, 'At least one skill is required')
+    .max(10, 'Maximum 10 skills allowed'),
   budget: yup.object({
-    type: yup.string().oneOf(['fixed', 'hourly']).required(),
-    min: yup.number().min(0, 'Budget must be positive').required(),
-    max: yup.number().min(0, 'Budget must be positive').required(),
+    type: yup.string()
+      .oneOf(['fixed', 'hourly'], 'Budget type must be fixed or hourly')
+      .required('Budget type is required'),
+    min: yup.number()
+      .min(1, 'Minimum budget must be at least $1')
+      .max(1000000, 'Minimum budget cannot exceed $1,000,000')
+      .required('Minimum budget is required'),
+    max: yup.number()
+      .min(1, 'Maximum budget must be at least $1')
+      .max(1000000, 'Maximum budget cannot exceed $1,000,000')
+      .required('Maximum budget is required')
+      .test('max-greater-than-min', 'Maximum budget must be greater than minimum budget', function(value) {
+        return !value || !this.parent.min || value >= this.parent.min;
+      }),
   }),
   timeline: yup.object({
-    duration: yup.number().min(1, 'Duration must be at least 1').required(),
-    unit: yup.string().oneOf(['days', 'weeks', 'months']).required(),
+    duration: yup.number()
+      .min(1, 'Duration must be at least 1')
+      .max(365, 'Duration cannot exceed 365 days')
+      .required('Duration is required'),
+    unit: yup.string()
+      .oneOf(['days', 'weeks', 'months'], 'Timeline unit must be days, weeks, or months')
+      .required('Timeline unit is required'),
   }),
   organization: yup.string().optional(),
 });

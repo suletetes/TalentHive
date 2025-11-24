@@ -52,7 +52,8 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
     },
     onSuccess: (newCategory) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      formik.setFieldValue('category', newCategory._id);
+      // Store the category name, not the ID
+      formik.setFieldValue('category', newCategory.name);
       toast.success('Category created successfully!');
     },
     onError: (error: any) => {
@@ -104,8 +105,8 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
       // User selected "Add new category"
       createCategoryMutation.mutate(newValue.inputValue);
     } else if (newValue) {
-      // User selected an existing category
-      formik.setFieldValue('category', newValue._id);
+      // User selected an existing category - store the name, not the ID
+      formik.setFieldValue('category', newValue.name);
     } else {
       // User cleared the selection
       formik.setFieldValue('category', '');
