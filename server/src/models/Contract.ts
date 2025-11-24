@@ -281,20 +281,25 @@ contractSchema.virtual('progress').get(function() {
 
 // Virtual for total paid amount
 contractSchema.virtual('totalPaid').get(function() {
+  if (!this.milestones || !Array.isArray(this.milestones) || this.milestones.length === 0) {
+    return 0;
+  }
   return this.milestones
-    .filter((milestone: any) => milestone.status === 'paid')
-    .reduce((total: number, milestone: any) => total + milestone.amount, 0);
+    .filter((milestone: any) => milestone && (milestone.status === 'paid' || milestone.status === 'completed'))
+    .reduce((total: number, milestone: any) => total + (milestone.amount || 0), 0);
 });
 
 // Virtual for remaining amount
 contractSchema.virtual('remainingAmount').get(function() {
-  return this.totalAmount - this.totalPaid;
+  if (!this.totalAmount) return 0;
+  return Math.max(0, this.totalAmount - (this.totalPaid || 0));
 });
 
 // Virtual for overdue milestones
 contractSchema.virtual('overdueMilestones').get(function() {
+  if (!this.milestones || !Array.isArray(this.milestones)) return [];
   const now = new Date();
-  return this.milestones.filter((milestone: any) => 
+  return this.milestones.filter((milestone: any) => milestone && 
     milestone.dueDate < now && 
     !['approved', 'paid'].includes(milestone.status)
   );
