@@ -34,17 +34,28 @@ const proposalSchema = yup.object({
   coverLetter: yup.string()
     .required('Cover letter is required')
     .min(50, 'Cover letter must be at least 50 characters')
-    .max(2000, 'Cover letter cannot exceed 2000 characters'),
+    .max(2000, 'Cover letter cannot exceed 2000 characters')
+    .test('no-spam', 'Cover letter appears to be spam', function(value) {
+      if (!value) return true;
+      // Check for excessive repetition
+      const words = value.split(' ');
+      const uniqueWords = new Set(words);
+      return uniqueWords.size > words.length * 0.3; // At least 30% unique words
+    }),
   bidAmount: yup.number()
     .required('Bid amount is required')
-    .min(1, 'Bid amount must be positive'),
+    .min(1, 'Bid amount must be at least $1')
+    .max(1000000, 'Bid amount cannot exceed $1,000,000')
+    .typeError('Bid amount must be a valid number'),
   timeline: yup.object({
     duration: yup.number()
       .required('Duration is required')
-      .min(1, 'Duration must be at least 1'),
+      .min(1, 'Duration must be at least 1')
+      .max(365, 'Duration cannot exceed 365 days')
+      .typeError('Duration must be a valid number'),
     unit: yup.string()
-      .required('Unit is required')
-      .oneOf(['days', 'weeks', 'months']),
+      .required('Timeline unit is required')
+      .oneOf(['days', 'weeks', 'months'], 'Timeline unit must be days, weeks, or months'),
   }),
 });
 
