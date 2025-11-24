@@ -75,7 +75,7 @@ export class UsersService {
 
   async getFreelancerById(id: string): Promise<{ data: Freelancer }> {
     const response = await apiCore.get<{ status: string; data: { freelancer: Freelancer } }>(
-      `${this.basePath}/freelancers/${id}`
+      `${this.basePath}/freelancer/${id}`
     );
     return { data: response.data.freelancer };
   }

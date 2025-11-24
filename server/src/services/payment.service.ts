@@ -276,8 +276,12 @@ export class PaymentService {
     limit = 20
   ) {
     try {
+      console.log(`[TRANSACTION HISTORY] Fetching for user: ${userId}, role: ${role}, page: ${page}, limit: ${limit}`);
+      
       const skip = (page - 1) * limit;
       const query = role === 'client' ? { client: userId } : { freelancer: userId };
+
+      console.log(`[TRANSACTION HISTORY] Query:`, query);
 
       const transactions = await Transaction.find(query)
         .populate('contract', 'title')
@@ -285,9 +289,14 @@ export class PaymentService {
         .populate('freelancer', 'profile.firstName profile.lastName email')
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit);
+        .limit(limit)
+        .lean();
+
+      console.log(`[TRANSACTION HISTORY] Found ${transactions.length} transactions`);
 
       const total = await Transaction.countDocuments(query);
+
+      console.log(`[TRANSACTION HISTORY] Total count: ${total}`);
 
       return {
         transactions,
@@ -299,7 +308,14 @@ export class PaymentService {
         },
       };
     } catch (error: any) {
-      console.error('Get transaction history error:', error);
+      console.error('[TRANSACTION HISTORY ERROR]', {
+        userId,
+        role,
+        page,
+        limit,
+        error: error.message,
+        stack: error.stack,
+      });
       throw new Error(`Failed to get transaction history: ${error.message}`);
     }
   }
