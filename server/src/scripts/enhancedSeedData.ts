@@ -197,7 +197,7 @@ export function generateAdditionalProjects(users: any[], categories: any[]) {
       title,
       description,
       client: client._id,
-      category: category._id,
+      category: category.name,
       skills: skillSets[i % skillSets.length],
       budget: {
         type: i % 2 === 0 ? 'fixed' : 'hourly',

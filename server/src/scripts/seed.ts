@@ -773,18 +773,29 @@ async function seedOrganizations(users: any[]) {
   return createdOrgs;
 }
 
-async function seedProjects(users: any[], organizations: any[]) {
+async function seedProjects(users: any[], organizations: any[], categories: any[]) {
   logger.info('📋 Seeding projects...');
   
   const client1 = users.find(u => u.email === 'john.client@example.com');
   const client2 = users.find(u => u.email === 'sarah.manager@example.com');
+  
+  // Get category IDs
+  const webDevCat = categories.find(c => c.slug === 'web-development')?._id;
+  const designCat = categories.find(c => c.slug === 'ui-ux-design')?._id;
+  const mobileCat = categories.find(c => c.slug === 'mobile-development')?._id;
+  const writingCat = categories.find(c => c.slug === 'content-writing')?._id;
+  const marketingCat = categories.find(c => c.slug === 'digital-marketing')?._id;
+  const dataScienceCat = categories.find(c => c.slug === 'data-science')?._id;
+  const devopsCat = categories.find(c => c.slug === 'devops')?._id;
+  const videoCat = categories.find(c => c.slug === 'video-animation')?._id;
+  const blockchainCat = categories.find(c => c.slug === 'blockchain')?._id;
   
   const projects = [
     // Open projects
     {
       title: 'E-commerce Website Development',
       description: 'Build a modern e-commerce platform with React and Node.js',
-      category: 'Web Development',
+      category: webDevCat,
       budget: { 
         type: 'fixed',
         min: 5000, 
@@ -807,7 +818,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'Mobile App UI/UX Design',
       description: 'Design user interface for iOS and Android mobile application',
-      category: 'Design',
+      category: designCat,
       budget: { 
         type: 'fixed',
         min: 2000, 
@@ -829,7 +840,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'Marketing Website Redesign',
       description: 'Redesign our company website with modern UI/UX',
-      category: 'Web Development',
+      category: webDevCat,
       budget: { 
         type: 'fixed',
         min: 3000, 
@@ -852,7 +863,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'Technical Documentation',
       description: 'Create comprehensive API documentation and user guides',
-      category: 'Writing',
+      category: writingCat,
       budget: { 
         type: 'fixed',
         min: 1500, 
@@ -874,7 +885,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'Backend API Development',
       description: 'Build RESTful API with Node.js and Express',
-      category: 'Web Development',
+      category: webDevCat,
       budget: { 
         type: 'hourly',
         min: 50, 
@@ -897,7 +908,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'Logo Design',
       description: 'Create a modern logo for our startup',
-      category: 'Design',
+      category: designCat,
       budget: { 
         type: 'fixed',
         min: 500, 
@@ -919,7 +930,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'WordPress Plugin Development',
       description: 'Custom WordPress plugin for e-commerce functionality',
-      category: 'Web Development',
+      category: webDevCat,
       budget: { 
         type: 'fixed',
         min: 2000, 
@@ -942,7 +953,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'Social Media Management',
       description: 'Manage social media accounts for 3 months',
-      category: 'Marketing',
+      category: marketingCat,
       budget: { 
         type: 'fixed',
         min: 1000, 
@@ -965,7 +976,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'Python Data Analysis Script',
       description: 'Create Python scripts for analyzing sales data and generating reports',
-      category: 'Data Science',
+      category: dataScienceCat,
       budget: { 
         type: 'fixed',
         min: 1500, 
@@ -988,7 +999,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'React Native Mobile App',
       description: 'Build a cross-platform mobile app for fitness tracking',
-      category: 'Mobile Development',
+      category: mobileCat,
       budget: { 
         type: 'fixed',
         min: 8000, 
@@ -1011,7 +1022,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'SEO Optimization for Website',
       description: 'Improve search engine rankings for e-commerce website',
-      category: 'Marketing',
+      category: marketingCat,
       budget: { 
         type: 'fixed',
         min: 2000, 
@@ -1034,7 +1045,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'DevOps CI/CD Pipeline Setup',
       description: 'Set up automated deployment pipeline with Docker and Kubernetes',
-      category: 'DevOps',
+      category: devopsCat,
       budget: { 
         type: 'fixed',
         min: 4000, 
@@ -1057,7 +1068,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'Video Editing for YouTube Channel',
       description: 'Edit 10 videos for educational YouTube channel',
-      category: 'Video & Animation',
+      category: videoCat,
       budget: { 
         type: 'fixed',
         min: 1000, 
@@ -1081,7 +1092,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'Machine Learning Model Development',
       description: 'Build a machine learning model for customer churn prediction',
-      category: 'Data Science',
+      category: dataScienceCat,
       budget: { 
         type: 'fixed',
         min: 5000, 
@@ -1106,7 +1117,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'Blockchain Smart Contract Development',
       description: 'Develop smart contracts for NFT marketplace',
-      category: 'Blockchain',
+      category: blockchainCat,
       budget: { 
         type: 'fixed',
         min: 10000, 
@@ -1131,7 +1142,7 @@ async function seedProjects(users: any[], organizations: any[]) {
     {
       title: 'Corporate Website Redesign',
       description: 'Complete redesign of corporate website with modern UI',
-      category: 'Web Development',
+      category: webDevCat,
       budget: { 
         type: 'fixed',
         min: 8000, 
@@ -1156,7 +1167,6 @@ async function seedProjects(users: any[], organizations: any[]) {
   ];
   
   // Add enhanced projects (100+ total)
-  const categories = await Category.find();
   const additionalProjects = generateAdditionalProjects(users, categories);
   projects.push(...additionalProjects);
   
@@ -1173,12 +1183,18 @@ async function seedServicePackages(users: any[]) {
   const bob = users.find(u => u.email === 'bob.designer@example.com');
   const carol = users.find(u => u.email === 'carol.writer@example.com');
   
+  // Get categories
+  const categories = await Category.find();
+  const webDevCat = categories.find(c => c.slug === 'web-development')?._id;
+  const designCat = categories.find(c => c.slug === 'ui-ux-design')?._id;
+  const writingCat = categories.find(c => c.slug === 'content-writing')?._id;
+  
   const packages = [
     {
       freelancer: alice._id,
       title: 'Full-Stack Web Application',
       description: 'Complete web application development with modern technologies',
-      category: 'Web Development',
+      category: webDevCat,
       pricing: {
         type: 'fixed',
         amount: 3000,
@@ -1198,7 +1214,7 @@ async function seedServicePackages(users: any[]) {
       freelancer: bob._id,
       title: 'UI/UX Design Package',
       description: 'Complete UI/UX design for web or mobile applications',
-      category: 'Design',
+      category: designCat,
       pricing: {
         type: 'fixed',
         amount: 1500,
@@ -1218,7 +1234,7 @@ async function seedServicePackages(users: any[]) {
       freelancer: carol._id,
       title: 'Content Writing Service',
       description: 'Professional content writing for websites and blogs',
-      category: 'Writing',
+      category: writingCat,
       pricing: {
         type: 'hourly',
         hourlyRate: 50,
@@ -1776,9 +1792,91 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
       isPublic: true,
     }
   );
+
+  // Add 20+ more reviews for each freelancer
+  const feedbackTemplates = [
+    'Excellent work! Delivered exactly what was needed on time and within budget.',
+    'Very professional and responsive. Great communication throughout the project.',
+    'Outstanding quality! Exceeded our expectations. Will definitely hire again.',
+    'Skilled professional who understands requirements perfectly.',
+    'Great attention to detail and very reliable. Highly recommended!',
+    'Delivered high-quality work with minimal revisions needed.',
+    'Very responsive and easy to work with. Great problem solver.',
+    'Exceptional talent! The work quality is outstanding.',
+    'Professional approach and excellent communication. Very satisfied!',
+    'Reliable and consistent. Always delivers on time.',
+    'Great work! Very impressed with the final deliverable.',
+    'Highly skilled and very professional. Would hire again!',
+    'Excellent communication and great work quality.',
+    'Very thorough and detail-oriented. Great to work with.',
+    'Outstanding results! Exceeded all expectations.',
+    'Professional and reliable. Great to work with.',
+    'Excellent quality work. Very satisfied with the results.',
+    'Great problem-solving skills and very responsive.',
+    'Delivered exactly as promised. Very professional.',
+    'Outstanding work! Highly recommended for future projects.',
+  ];
+
+  // Add 20 reviews for Alice
+  for (let i = 0; i < 20; i++) {
+    reviews.push({
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: i % 2 === 0 ? client1._id : client2._id,
+      reviewee: alice._id,
+      rating: 4 + Math.random(),
+      feedback: feedbackTemplates[i % feedbackTemplates.length],
+      categories: {
+        communication: 4 + Math.floor(Math.random() * 2),
+        quality: 4 + Math.floor(Math.random() * 2),
+        professionalism: 4 + Math.floor(Math.random() * 2),
+        deadlines: 4 + Math.floor(Math.random() * 2),
+      },
+      isPublic: true,
+    });
+  }
+
+  // Add 20 reviews for Bob
+  for (let i = 0; i < 20; i++) {
+    reviews.push({
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: i % 2 === 0 ? client1._id : client2._id,
+      reviewee: bob._id,
+      rating: 4 + Math.random(),
+      feedback: feedbackTemplates[i % feedbackTemplates.length],
+      categories: {
+        communication: 4 + Math.floor(Math.random() * 2),
+        quality: 4 + Math.floor(Math.random() * 2),
+        professionalism: 4 + Math.floor(Math.random() * 2),
+        deadlines: 4 + Math.floor(Math.random() * 2),
+      },
+      isPublic: true,
+    });
+  }
+
+  // Add 20 reviews for Carol
+  for (let i = 0; i < 20; i++) {
+    reviews.push({
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: i % 2 === 0 ? client1._id : client2._id,
+      reviewee: carol._id,
+      rating: 4 + Math.random(),
+      feedback: feedbackTemplates[i % feedbackTemplates.length],
+      categories: {
+        communication: 4 + Math.floor(Math.random() * 2),
+        quality: 4 + Math.floor(Math.random() * 2),
+        professionalism: 4 + Math.floor(Math.random() * 2),
+        deadlines: 4 + Math.floor(Math.random() * 2),
+      },
+      isPublic: true,
+    });
+  }
   
   const createdReviews = await Review.insertMany(reviews);
   logger.info(`✅ Created ${createdReviews.length} reviews`);
+  console.log(`[SEED REVIEWS] Total reviews created: ${createdReviews.length}`);
   
   return createdReviews;
 }
@@ -2118,7 +2216,9 @@ async function seedDatabase() {
     const categories = await seedCategories(admin._id);
     const skills = await seedSkills(categories, admin._id);
     const organizations = await seedOrganizations(users);
-    const projects = await seedProjects(users, organizations);
+    
+    // Organizations are created separately and linked through OrganizationMember model
+    const projects = await seedProjects(users, organizations, categories);
     const servicePackages = await seedServicePackages(users);
     const proposals = await seedProposals(users, projects);
     const hireNowRequests = await seedHireNowRequests(users);
