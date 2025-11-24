@@ -31,7 +31,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
     queryKey: ['categories'],
     queryFn: async () => {
       const response = await apiService.get('/categories');
-      return response.data.data;
+      return response.data?.data || response.data || [];
     },
   });
 
@@ -40,7 +40,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
     queryKey: ['skills'],
     queryFn: async () => {
       const response = await apiService.get('/skills');
-      return response.data.data;
+      return response.data?.data || response.data || [];
     },
   });
 

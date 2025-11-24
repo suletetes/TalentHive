@@ -38,7 +38,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik, onEditStep }) =>
     queryKey: ['skills'],
     queryFn: async () => {
       const response = await apiService.get('/skills');
-      return response.data.data;
+      return response.data?.data || response.data || [];
     },
   });
 
