@@ -26,6 +26,7 @@ import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 import { BrowseProjectsPage } from '@/pages/BrowseProjectsPage';
 import { FreelancersPage } from '@/pages/FreelancersPage';
 import { FreelancerDetailPage } from '@/pages/FreelancerDetailPage';
+import { FreelancerReviewsPage } from '@/pages/FreelancerReviewsPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { HelpCenterPage } from '@/pages/HelpCenterPage';
 import { ContactPage } from '@/pages/ContactPage';
@@ -48,6 +49,7 @@ import { TimeTrackingPage } from '@/pages/TimeTrackingPage';
 import { ServicesPage } from '@/pages/ServicesPage';
 import { CreateProfilePage } from '@/pages/CreateProfilePage';
 import { HireNowRequestsPage } from '@/pages/HireNowRequestsPage';
+import { HireNowSentPage } from '@/pages/HireNowSentPage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { ToastProvider } from '@/components/ui/ToastProvider';
@@ -79,7 +81,8 @@ function App() {
           <Route path="projects/:id" element={<ProjectDetailPage />} />
           <Route path="find-work" element={<BrowseProjectsPage />} />
           <Route path="freelancers" element={<FreelancersPage />} />
-          <Route path="freelancers/:id" element={<FreelancerDetailPage />} />
+          <Route path="freelancer/:id" element={<FreelancerDetailPage />} />
+          <Route path="freelancer/:id/reviews" element={<FreelancerReviewsPage />} />
           
           {/* Payment & Verification pages (public) */}
           <Route path="payment-success" element={<PaymentSuccessPage />} />
@@ -118,6 +121,7 @@ function App() {
           <Route path="time-tracking" element={<TimeTrackingPage />} />
           <Route path="services" element={<ServicesPage />} />
           <Route path="hire-now-requests" element={<HireNowRequestsPage />} />
+          <Route path="hire-now-sent" element={<HireNowSentPage />} />
         </Route>
 
         {/* Admin routes */}

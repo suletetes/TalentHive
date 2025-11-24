@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Typography,
@@ -27,11 +27,27 @@ import { ErrorHandler } from '@/utils/errorHandler';
 
 export const BrowseProjectsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(1);
   const limit = 12;
+  const debounceTimer = useRef<NodeJS.Timeout>();
+
+  // Debounce search term (500ms)
+  useEffect(() => {
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPage(1);
+    }, 500);
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [searchTerm]);
 
   // Fetch categories from database
   const { data: categoriesData } = useQuery({
@@ -52,7 +68,7 @@ export const BrowseProjectsPage = () => {
     error,
     refetch,
   } = useProjects({
-    search: searchTerm,
+    search: debouncedSearchTerm,
     category: selectedCategory,
     status: 'open', // Only show open projects (not drafts)
     sortBy,
@@ -132,10 +148,7 @@ export const BrowseProjectsPage = () => {
               fullWidth
               placeholder="Search projects..."
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(1);
-              }}
+              onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

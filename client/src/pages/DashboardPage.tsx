@@ -177,7 +177,7 @@ export const DashboardPage: React.FC = () => {
                   <Typography variant="h6">Proposals</Typography>
                 </Box>
                 <Typography variant="h4" color="secondary">
-                  {stats.totalProposals || 0}
+                  {stats.totalProposals ?? 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Submitted
@@ -194,7 +194,7 @@ export const DashboardPage: React.FC = () => {
                   <Typography variant="h6">Contracts</Typography>
                 </Box>
                 <Typography variant="h4" color="primary">
-                  {stats.activeProjects || 0}
+                  {stats.activeProjects ?? 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Ongoing
@@ -211,7 +211,7 @@ export const DashboardPage: React.FC = () => {
                   <Typography variant="h6">Earnings</Typography>
                 </Box>
                 <Typography variant="h4" color="success.main">
-                  ${stats.totalEarnings || 0}
+                  ${(stats.totalEarnings ?? 0).toFixed(2)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   All time
@@ -235,6 +235,23 @@ export const DashboardPage: React.FC = () => {
                     ? `${profile.rating.count} reviews`
                     : 'No reviews yet'
                   }
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ cursor: 'pointer' }} onClick={() => navigate('/dashboard/hire-now-requests')}>
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <Work color="info" sx={{ mr: 1 }} />
+                  <Typography variant="h6">Hire Now</Typography>
+                </Box>
+                <Typography variant="h4" color="info.main">
+                  New
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Direct hire requests
                 </Typography>
               </CardContent>
             </Card>

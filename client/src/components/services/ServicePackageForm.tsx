@@ -11,12 +11,61 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Chip,
   IconButton,
+  CircularProgress,
 } from '@mui/material';
 import { Add, Delete } from '@mui/icons-material';
 import api from '@/services/api';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import * as yup from 'yup';
+
+const validationSchema = yup.object({
+  title: yup.string()
+    .required('Title is required')
+    .min(5, 'Title must be at least 5 characters')
+    .max(100, 'Title must be at most 100 characters'),
+  description: yup.string()
+    .required('Description is required')
+    .min(20, 'Description must be at least 20 characters')
+    .max(1000, 'Description must be at most 1000 characters'),
+  category: yup.string()
+    .required('Category is required'),
+  amount: yup.number()
+    .when('pricingType', {
+      is: 'fixed',
+      then: (schema) => schema
+        .required('Fixed price is required')
+        .min(1, 'Price must be at least $1')
+        .max(100000, 'Price cannot exceed $100,000'),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+  hourlyRate: yup.number()
+    .when('pricingType', {
+      is: 'hourly',
+      then: (schema) => schema
+        .required('Hourly rate is required')
+        .min(1, 'Rate must be at least $1')
+        .max(500, 'Rate cannot exceed $500/hr'),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+  deliveryTime: yup.number()
+    .required('Delivery time is required')
+    .min(1, 'Delivery time must be at least 1 day')
+    .max(365, 'Delivery time cannot exceed 365 days'),
+  revisions: yup.number()
+    .required('Revisions is required')
+    .min(0, 'Revisions cannot be negative')
+    .max(20, 'Revisions cannot exceed 20'),
+  features: yup.array()
+    .of(yup.string().min(1, 'Feature cannot be empty'))
+    .min(1, 'At least one feature is required')
+    .max(10, 'Maximum 10 features allowed'),
+  skills: yup.array()
+    .of(yup.string().min(1, 'Skill cannot be empty'))
+    .min(1, 'At least one skill is required')
+    .max(10, 'Maximum 10 skills allowed'),
+});
 
 const ServicePackageForm: React.FC = () => {
   const navigate = useNavigate();
@@ -33,6 +82,8 @@ const ServicePackageForm: React.FC = () => {
     requirements: [''],
     skills: [''],
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
@@ -56,6 +107,27 @@ const ServicePackageForm: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
+      setIsSubmitting(true);
+      setErrors({});
+
+      console.log('[SERVICE PACKAGE] Submitting form data:', formData);
+
+      // Validate form data
+      const validationData = {
+        ...formData,
+        amount: formData.amount ? parseFloat(formData.amount) : '',
+        hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : '',
+        deliveryTime: formData.deliveryTime ? parseInt(formData.deliveryTime) : '',
+        revisions: formData.revisions ? parseInt(formData.revisions) : '',
+        features: formData.features.filter(f => f.trim()),
+        skills: formData.skills.filter(s => s.trim()),
+      };
+
+      console.log('[SERVICE PACKAGE] Validation data:', validationData);
+
+      await validationSchema.validate(validationData, { abortEarly: false });
+      console.log('[SERVICE PACKAGE] Validation passed');
+
       const packageData = {
         title: formData.title,
         description: formData.description,
@@ -73,10 +145,23 @@ const ServicePackageForm: React.FC = () => {
       };
 
       await api.post('/services/packages', packageData);
-      alert('Service package created successfully!');
+      toast.success('Service package created successfully!');
       navigate('/dashboard');
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to create service package');
+      if (error.inner) {
+        // Yup validation errors
+        const newErrors: Record<string, string> = {};
+        error.inner.forEach((err: any) => {
+          newErrors[err.path] = err.message;
+        });
+        setErrors(newErrors);
+        toast.error('Please fix the validation errors');
+      } else {
+        const message = error.response?.data?.message || 'Failed to create service package';
+        toast.error(message);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -94,6 +179,8 @@ const ServicePackageForm: React.FC = () => {
               label="Package Title"
               value={formData.title}
               onChange={(e) => handleChange('title', e.target.value)}
+              error={!!errors.title}
+              helperText={errors.title}
               required
             />
           </Grid>
@@ -106,6 +193,8 @@ const ServicePackageForm: React.FC = () => {
               onChange={(e) => handleChange('description', e.target.value)}
               multiline
               rows={4}
+              error={!!errors.description}
+              helperText={errors.description}
               required
             />
           </Grid>
@@ -116,6 +205,8 @@ const ServicePackageForm: React.FC = () => {
               label="Category"
               value={formData.category}
               onChange={(e) => handleChange('category', e.target.value)}
+              error={!!errors.category}
+              helperText={errors.category}
               required
             />
           </Grid>
