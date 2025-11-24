@@ -48,10 +48,20 @@ export const FreelancerDetailPage = () => {
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
     queryKey: ['freelancer-reviews', id],
     queryFn: async () => {
-      const response = await apiService.get(`/reviews/freelancer/${id}`);
-      // Handle both response structures
-      const reviews = response.data?.data || response.data || [];
-      return Array.isArray(reviews) ? reviews : [];
+      console.log(`[FREELANCER REVIEWS] Fetching reviews for freelancer: ${id}`);
+      try {
+        const response = await apiService.get(`/reviews/freelancer/${id}`);
+        console.log(`[FREELANCER REVIEWS] Response:`, response.data);
+        // Handle both response structures
+        const reviews = response.data?.data || response.data || [];
+        console.log(`[FREELANCER REVIEWS] Parsed reviews:`, reviews);
+        console.log(`[FREELANCER REVIEWS] Is array:`, Array.isArray(reviews));
+        console.log(`[FREELANCER REVIEWS] Count:`, Array.isArray(reviews) ? reviews.length : 0);
+        return Array.isArray(reviews) ? reviews : [];
+      } catch (error) {
+        console.error(`[FREELANCER REVIEWS ERROR]`, error);
+        throw error;
+      }
     },
     enabled: !!id,
   });
@@ -232,30 +242,22 @@ export const FreelancerDetailPage = () => {
                 <List>
                   {freelancer.freelancerProfile.workExperience.map((exp: any, index: number) => (
                     <Box key={exp._id || index}>
-                      <ListItem alignItems="flex-start" sx={{ px: 0 }}>
-                        <ListItemText
-                          primary={
-                            <Typography variant="h6" component="div">
-                              {exp.title}
-                            </Typography>
-                          }
-                          secondary={
-                            <>
-                              <Typography variant="body1" color="text.primary" component="div">
-                                {exp.company}
-                                {exp.location && ` • ${exp.location}`}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary" component="div">
-                                {formatDate(exp.startDate)} - {exp.current ? 'Present' : formatDate(exp.endDate)}
-                              </Typography>
-                              {exp.description && (
-                                <Typography variant="body2" sx={{ mt: 1 }}>
-                                  {exp.description}
-                                </Typography>
-                              )}
-                            </>
-                          }
-                        />
+                      <ListItem alignItems="flex-start" sx={{ px: 0, display: 'block' }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          {exp.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.primary" sx={{ mb: 0.5 }}>
+                          {exp.company}
+                          {exp.location && ` • ${exp.location}`}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                          {formatDate(exp.startDate)} - {exp.current ? 'Present' : formatDate(exp.endDate)}
+                        </Typography>
+                        {exp.description && (
+                          <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+                            {exp.description}
+                          </Typography>
+                        )}
                       </ListItem>
                       {index < freelancer.freelancerProfile.workExperience.length - 1 && <Divider />}
                     </Box>
@@ -278,30 +280,22 @@ export const FreelancerDetailPage = () => {
                 <List>
                   {freelancer.freelancerProfile.education.map((edu: any, index: number) => (
                     <Box key={edu._id || index}>
-                      <ListItem alignItems="flex-start" sx={{ px: 0 }}>
-                        <ListItemText
-                          primary={
-                            <Typography variant="h6" component="div">
-                              {edu.degree}
-                            </Typography>
-                          }
-                          secondary={
-                            <>
-                              <Typography variant="body1" color="text.primary" component="div">
-                                {edu.institution}
-                                {edu.fieldOfStudy && ` • ${edu.fieldOfStudy}`}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary" component="div">
-                                {formatDate(edu.startDate)} - {edu.endDate ? formatDate(edu.endDate) : 'Present'}
-                              </Typography>
-                              {edu.description && (
-                                <Typography variant="body2" sx={{ mt: 1 }}>
-                                  {edu.description}
-                                </Typography>
-                              )}
-                            </>
-                          }
-                        />
+                      <ListItem alignItems="flex-start" sx={{ px: 0, display: 'block' }}>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          {edu.degree}
+                        </Typography>
+                        <Typography variant="body1" color="text.primary" sx={{ mb: 0.5 }}>
+                          {edu.institution}
+                          {edu.fieldOfStudy && ` • ${edu.fieldOfStudy}`}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                          {formatDate(edu.startDate)} - {edu.endDate ? formatDate(edu.endDate) : 'Present'}
+                        </Typography>
+                        {edu.description && (
+                          <Typography variant="body2" sx={{ mt: 1 }}>
+                            {edu.description}
+                          </Typography>
+                        )}
                       </ListItem>
                       {index < freelancer.freelancerProfile.education.length - 1 && <Divider />}
                     </Box>
@@ -438,49 +432,72 @@ export const FreelancerDetailPage = () => {
         <Grid item xs={12}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Reviews ({reviews.length})
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">
+                  Reviews ({reviews.length})
+                </Typography>
+                {reviews.length > 5 && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => window.location.href = `/freelancer/${id}/reviews`}
+                  >
+                    View All Reviews
+                  </Button>
+                )}
+              </Box>
               {reviewsLoading ? (
                 <Typography variant="body2" color="text.secondary">
                   Loading reviews...
                 </Typography>
               ) : reviews.length > 0 ? (
-                <List>
-                  {reviews.map((review: any, index: number) => (
-                    <Box key={review._id}>
-                      <ListItem alignItems="flex-start" sx={{ px: 0 }}>
-                        <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                              <Avatar src={review.client?.profile?.avatar || review.reviewer?.profile?.avatar} sx={{ width: 40, height: 40 }}>
-                                {(review.client?.profile?.firstName || review.reviewer?.profile?.firstName)?.[0]}
-                              </Avatar>
-                              <Box>
-                                <Typography variant="subtitle1">
-                                  {review.client?.profile?.firstName || review.reviewer?.profile?.firstName}{' '}
-                                  {review.client?.profile?.lastName || review.reviewer?.profile?.lastName}
-                                </Typography>
-                                <Rating value={review.rating} readOnly size="small" />
+                <>
+                  <List>
+                    {reviews.slice(0, 5).map((review: any, index: number) => (
+                      <Box key={review._id}>
+                        <ListItem alignItems="flex-start" sx={{ px: 0 }}>
+                          <ListItemText
+                            primary={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                <Avatar src={review.client?.profile?.avatar || review.reviewer?.profile?.avatar} sx={{ width: 40, height: 40 }}>
+                                  {(review.client?.profile?.firstName || review.reviewer?.profile?.firstName)?.[0]}
+                                </Avatar>
+                                <Box>
+                                  <Typography variant="subtitle1">
+                                    {review.client?.profile?.firstName || review.reviewer?.profile?.firstName}{' '}
+                                    {review.client?.profile?.lastName || review.reviewer?.profile?.lastName}
+                                  </Typography>
+                                  <Rating value={review.rating} readOnly size="small" />
+                                </Box>
                               </Box>
-                            </Box>
-                          }
-                          secondary={
-                            <Box component="span">
-                              <Typography variant="body2" component="span" sx={{ mt: 1, display: 'block' }}>
-                                {review.feedback || review.comment}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary" component="span" sx={{ mt: 1, display: 'block' }}>
-                                {formatDate(review.createdAt)}
-                              </Typography>
-                            </Box>
-                          }
-                        />
-                      </ListItem>
-                      {index < reviews.length - 1 && <Divider />}
+                            }
+                            secondary={
+                              <Box component="span">
+                                <Typography variant="body2" component="span" sx={{ mt: 1, display: 'block' }}>
+                                  {review.feedback || review.comment}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" component="span" sx={{ mt: 1, display: 'block' }}>
+                                  {formatDate(review.createdAt)}
+                                </Typography>
+                              </Box>
+                            }
+                          />
+                        </ListItem>
+                        {index < Math.min(5, reviews.length) - 1 && <Divider />}
+                      </Box>
+                    ))}
+                  </List>
+                  {reviews.length > 5 && (
+                    <Box sx={{ textAlign: 'center', mt: 2 }}>
+                      <Button
+                        variant="text"
+                        onClick={() => window.location.href = `/freelancer/${id}/reviews`}
+                      >
+                        Load More Reviews ({reviews.length - 5} more)
+                      </Button>
                     </Box>
-                  ))}
-                </List>
+                  )}
+                </>
               ) : (
                 <Typography variant="body2" color="text.secondary">
                   No reviews yet
