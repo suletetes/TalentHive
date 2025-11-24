@@ -17,6 +17,7 @@ export const createHireNowRequest = async (
 ): Promise<void> => {
   try {
     const { freelancerId } = req.params;
+    const clientId = req.user!._id;
     const {
       projectTitle,
       projectDescription,
@@ -26,15 +27,21 @@ export const createHireNowRequest = async (
       message,
     } = req.body;
 
+    console.log(`[HIRE NOW SEND] Client ${clientId} sending request to freelancer ${freelancerId}`);
+    console.log(`[HIRE NOW SEND] Project: ${projectTitle}, Budget: ${budget}`);
+
     // Validate freelancer exists
     const freelancer = await User.findById(freelancerId);
     if (!freelancer || freelancer.role !== 'freelancer') {
+      console.log(`[HIRE NOW SEND ERROR] Freelancer not found: ${freelancerId}`);
       return next(new AppError('Freelancer not found', 404));
     }
 
+    console.log(`[HIRE NOW SEND] Freelancer found: ${freelancer.profile.firstName} ${freelancer.profile.lastName}`);
+
     // Create hire now request
     const hireNowRequest = await HireNowRequest.create({
-      client: req.user!._id,
+      client: clientId,
       freelancer: freelancerId,
       projectTitle,
       projectDescription,
@@ -44,6 +51,8 @@ export const createHireNowRequest = async (
       message,
       status: 'pending',
     });
+
+    console.log(`[HIRE NOW SEND] Request created: ${hireNowRequest._id}`);
 
     // Populate freelancer details
     await hireNowRequest.populate('freelancer', 'profile email');
@@ -123,7 +132,13 @@ export const getReceivedRequests = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const requests = await HireNowRequest.findByFreelancer(req.user!._id.toString());
+    const freelancerId = req.user!._id.toString();
+    console.log(`[HIRE NOW RECEIVED] Fetching requests for freelancer: ${freelancerId}`);
+    
+    const requests = await HireNowRequest.findByFreelancer(freelancerId);
+    
+    console.log(`[HIRE NOW RECEIVED] Found ${requests.length} requests`);
+    console.log(`[HIRE NOW RECEIVED] Requests:`, requests);
 
     res.status(200).json({
       success: true,

@@ -210,6 +210,16 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
     Project.countDocuments(query),
   ]);
 
+  console.log(`[GET PROJECTS] Found ${projects.length} projects`);
+  
+  // Log first project to check data format
+  if (projects.length > 0) {
+    const firstProject = projects[0];
+    console.log(`[GET PROJECTS] First project category type:`, typeof firstProject.category);
+    console.log(`[GET PROJECTS] First project category:`, firstProject.category);
+    console.log(`[GET PROJECTS] First project skills:`, firstProject.skills);
+  }
+
   // Add proposal counts to each project
   const { Proposal } = await import('@/models/Proposal');
   const projectsWithCounts = await Promise.all(
@@ -230,6 +240,8 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
       pages: Math.ceil(total / parseInt(limit as string)),
     },
   };
+
+  console.log(`[GET PROJECTS] Returning ${projectsWithCounts.length} projects with counts`);
 
   // Cache the result for 5 minutes
   await setCache(cacheKey, result, 300);
