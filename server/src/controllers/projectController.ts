@@ -186,7 +186,7 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
     Project.find(query)
       .populate('client', 'profile rating clientProfile')
       .populate('organization', 'name logo budget')
-      .populate('category', 'name')
+      .populate('category', '_id name')
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit as string))
@@ -230,6 +230,7 @@ export const getProjectById = catchAsync(async (req: Request, res: Response, nex
   const project = await Project.findById(id)
     .populate('client', 'profile rating clientProfile')
     .populate('organization', 'name logo budget members')
+    .populate('category', '_id name')
     .populate('selectedFreelancer', 'profile rating freelancerProfile')
     .populate({
       path: 'proposals',
@@ -308,7 +309,8 @@ export const updateProject = catchAsync(async (req: AuthRequest, res: Response, 
     { ...req.body, updatedAt: new Date() },
     { new: true, runValidators: true }
   ).populate('client', 'profile rating clientProfile')
-   .populate('organization', 'name logo budget');
+   .populate('organization', 'name logo budget')
+   .populate('category', '_id name');
 
   // Clear cache
   await deleteCache('projects:*');
@@ -388,6 +390,7 @@ const getMyProjects = catchAsync(async (req: AuthRequest, res: Response, next: N
     Project.find(query)
       .populate('selectedFreelancer', 'profile rating freelancerProfile')
       .populate('client', 'profile rating clientProfile')
+      .populate('category', '_id name')
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit as string))
