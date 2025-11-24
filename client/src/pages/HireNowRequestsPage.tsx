@@ -39,8 +39,17 @@ export const HireNowRequestsPage: React.FC = () => {
   const { data: requestsData, isLoading, isError } = useQuery({
     queryKey: ['hire-now-received', page],
     queryFn: async () => {
-      const response = await apiService.get('/hire-now/received');
-      return response.data?.data || [];
+      console.log(`[HIRE NOW REQUESTS] Fetching for freelancer: ${user?._id}`);
+      try {
+        const response = await apiService.get('/hire-now/received');
+        console.log(`[HIRE NOW REQUESTS] Response:`, response.data);
+        const requests = response.data?.data || [];
+        console.log(`[HIRE NOW REQUESTS] Found ${requests.length} requests`);
+        return requests;
+      } catch (error) {
+        console.error(`[HIRE NOW REQUESTS ERROR]`, error);
+        throw error;
+      }
     },
     enabled: user?.role === 'freelancer',
   });
