@@ -59,8 +59,9 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({ projectId, contractId }) => {
 
   const fetchProjects = async () => {
     try {
-      const response = await api.get('/projects?status=active');
-      setProjects(response?.data?.data?.projects || []);
+      const response = await api.get('/projects/my/projects');
+      const projectsList = response?.data?.data?.projects || response?.data?.data || [];
+      setProjects(Array.isArray(projectsList) ? projectsList : []);
     } catch (error) {
       console.error('Error fetching projects:', error);
       setProjects([]);
@@ -69,8 +70,9 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({ projectId, contractId }) => {
 
   const fetchContracts = async () => {
     try {
-      const response = await api.get('/contracts?status=active');
-      setContracts(response?.data?.data?.contracts || []);
+      const response = await api.get('/contracts/my');
+      const contractsList = response?.data?.data?.contracts || response?.data?.data || [];
+      setContracts(Array.isArray(contractsList) ? contractsList : []);
     } catch (error) {
       console.error('Error fetching contracts:', error);
       setContracts([]);
