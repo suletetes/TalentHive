@@ -45,8 +45,17 @@ export const ProjectProposalsPage: React.FC = () => {
   const { data: proposalsData, isLoading: proposalsLoading } = useQuery({
     queryKey: ['project-proposals', projectId],
     queryFn: async () => {
-      const response = await apiService.get(`/proposals/project/${projectId}`);
-      return response.data?.data?.proposals || response.data?.data || [];
+      console.log(`[PROJECT PROPOSALS] Fetching proposals for project: ${projectId}`);
+      try {
+        const response = await apiService.get(`/proposals/project/${projectId}`);
+        console.log(`[PROJECT PROPOSALS] Response:`, response.data);
+        const proposals = response.data?.data?.proposals || response.data?.data || [];
+        console.log(`[PROJECT PROPOSALS] Found ${proposals.length} proposals`);
+        return proposals;
+      } catch (error) {
+        console.error(`[PROJECT PROPOSALS ERROR]`, error);
+        throw error;
+      }
     },
     enabled: !!projectId,
   });

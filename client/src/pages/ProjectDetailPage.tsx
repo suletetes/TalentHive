@@ -139,6 +139,17 @@ export const ProjectDetailPage = () => {
 
   const project = projectResponse.data;
   const isFreelancer = user?.role === 'freelancer';
+  const isClient = user?.role === 'client';
+  
+  // Check if user already applied
+  const userProposal = project.proposals?.find((p: any) => p.freelancer === user?._id);
+  const hasApplied = !!userProposal;
+
+  console.log(`[PROJECT DETAIL] User role: ${user?.role}`);
+  console.log(`[PROJECT DETAIL] Is freelancer: ${isFreelancer}`);
+  console.log(`[PROJECT DETAIL] Is client: ${isClient}`);
+  console.log(`[PROJECT DETAIL] User has applied: ${hasApplied}`);
+  console.log(`[PROJECT DETAIL] Project status: ${project.status}`);
 
   // Helper function to safely format dates
   const formatDate = (dateString: string | Date | undefined, formatStr: string) => {
@@ -235,13 +246,47 @@ export const ProjectDetailPage = () => {
 
         {/* Action Button */}
         {isFreelancer && project.status === 'open' && (
+          <>
+            {!hasApplied ? (
+              <Button
+                variant="contained"
+                size="large"
+                fullWidth
+                onClick={() => setProposalDialogOpen(true)}
+              >
+                Submit Proposal
+              </Button>
+            ) : (
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  fullWidth
+                  onClick={() => navigate(`/dashboard/proposals`)}
+                >
+                  View My Proposal
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  fullWidth
+                  onClick={() => setProposalDialogOpen(true)}
+                >
+                  Edit Proposal
+                </Button>
+              </Box>
+            )}
+          </>
+        )}
+        
+        {isClient && (
           <Button
             variant="contained"
             size="large"
             fullWidth
-            onClick={() => setProposalDialogOpen(true)}
+            onClick={() => navigate(`/dashboard/projects/${id}/proposals`)}
           >
-            Submit Proposal
+            View Proposals ({project.proposals?.length || 0})
           </Button>
         )}
       </Paper>
