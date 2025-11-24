@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Typography,
@@ -39,9 +39,24 @@ export const ProjectsPage: React.FC = () => {
     page: 1,
     limit: 12,
   });
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
+  const debounceTimer = useRef<NodeJS.Timeout>();
 
   const { user } = useSelector((state: RootState) => state.auth);
   const isClient = user?.role === 'client';
+
+  // Debounce filter changes (500ms)
+  useEffect(() => {
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedFilters(filters);
+    }, 500);
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [filters]);
 
   const {
     data: projectsData,

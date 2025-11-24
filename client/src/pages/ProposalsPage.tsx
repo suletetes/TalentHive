@@ -21,6 +21,7 @@ import { RootState } from '@/store';
 import { proposalsService, Proposal } from '@/services/api/proposals.service';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { EditProposalForm } from '@/components/proposals/EditProposalForm';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -29,6 +30,7 @@ export const ProposalsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   // Fetch proposals
   const { data, isLoading, error, refetch } = useQuery({
@@ -170,14 +172,27 @@ export const ProposalsPage: React.FC = () => {
                       View Details
                     </Button>
                     {proposal.status === 'submitted' && (
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => handleWithdrawClick(proposal)}
-                      >
-                        Withdraw
-                      </Button>
+                      <>
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          size="small"
+                          onClick={() => {
+                            setSelectedProposal(proposal);
+                            setEditDialogOpen(true);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          size="small"
+                          onClick={() => handleWithdrawClick(proposal)}
+                        >
+                          Withdraw
+                        </Button>
+                      </>
                     )}
                   </Box>
                 </CardContent>
@@ -315,6 +330,34 @@ export const ProposalsPage: React.FC = () => {
             {withdrawMutation.isPending ? 'Withdrawing...' : 'Withdraw'}
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Edit Proposal Dialog */}
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false);
+          setSelectedProposal(null);
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Edit Proposal</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          {selectedProposal && (
+            <EditProposalForm
+              proposal={selectedProposal}
+              onSuccess={() => {
+                setEditDialogOpen(false);
+                setSelectedProposal(null);
+              }}
+              onCancel={() => {
+                setEditDialogOpen(false);
+                setSelectedProposal(null);
+              }}
+            />
+          )}
+        </DialogContent>
       </Dialog>
     </Container>
   );

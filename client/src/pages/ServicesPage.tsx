@@ -48,7 +48,8 @@ export const ServicesPage: React.FC = () => {
     queryKey: ['service-packages'],
     queryFn: async () => {
       const response = await apiCore.get('/services/packages');
-      return response.data.data;
+      const data = response.data?.data || response.data || [];
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!user,
   });
@@ -137,7 +138,7 @@ export const ServicesPage: React.FC = () => {
     );
   }
 
-  const packages = packagesData || [];
+  const packages = Array.isArray(packagesData) ? packagesData : [];
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>

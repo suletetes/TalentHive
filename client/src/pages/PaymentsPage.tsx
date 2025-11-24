@@ -79,7 +79,7 @@ export const PaymentsPage: React.FC = () => {
     );
   }
 
-  const transactions = transactionsData || [];
+  const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
