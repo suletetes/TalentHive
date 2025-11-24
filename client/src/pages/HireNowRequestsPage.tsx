@@ -37,17 +37,44 @@ export const HireNowRequestsPage: React.FC = () => {
 
   // Fetch received hire now requests
   const { data: requestsData, isLoading, isError } = useQuery({
-    queryKey: ['hire-now-received', page],
+    queryKey: ['hire-now-received', page, user?._id],
     queryFn: async () => {
+      console.log(`[HIRE NOW REQUESTS] ========== START FETCH ==========`);
+      console.log(`[HIRE NOW REQUESTS] User object:`, user);
+      console.log(`[HIRE NOW REQUESTS] User ID: ${user?._id}`);
+      console.log(`[HIRE NOW REQUESTS] User role: ${user?.role}`);
       console.log(`[HIRE NOW REQUESTS] Fetching for freelancer: ${user?._id}`);
       try {
         const response = await apiService.get('/hire-now/received');
-        console.log(`[HIRE NOW REQUESTS] Response:`, response.data);
-        const requests = response.data?.data || [];
-        console.log(`[HIRE NOW REQUESTS] Found ${requests.length} requests`);
+        console.log(`[HIRE NOW REQUESTS] Raw response:`, response);
+        console.log(`[HIRE NOW REQUESTS] response.data:`, response.data);
+        console.log(`[HIRE NOW REQUESTS] response.data type:`, typeof response.data);
+        console.log(`[HIRE NOW REQUESTS] response.data.data:`, response.data?.data);
+        
+        // Handle multiple response structures
+        let requests = [];
+        if (Array.isArray(response.data)) {
+          requests = response.data;
+          console.log(`[HIRE NOW REQUESTS] ✅ Using response.data directly (array with ${requests.length} items)`);
+        } else if (response.data?.data && Array.isArray(response.data.data)) {
+          requests = response.data.data;
+          console.log(`[HIRE NOW REQUESTS] ✅ Using response.data.data (array with ${requests.length} items)`);
+        } else if (response.data?.success && Array.isArray(response.data.data)) {
+          requests = response.data.data;
+          console.log(`[HIRE NOW REQUESTS] ✅ Using response.data.data with success flag (${requests.length} items)`);
+        } else {
+          console.warn(`[HIRE NOW REQUESTS] ⚠️ No valid requests array found in response`);
+          requests = [];
+        }
+        
+        console.log(`[HIRE NOW REQUESTS] Final result: Found ${requests.length} requests`);
+        if (requests.length > 0) {
+          console.log(`[HIRE NOW REQUESTS] First request:`, requests[0]);
+        }
+        console.log(`[HIRE NOW REQUESTS] ========== END FETCH ==========`);
         return requests;
       } catch (error) {
-        console.error(`[HIRE NOW REQUESTS ERROR]`, error);
+        console.error(`[HIRE NOW REQUESTS ERROR] ❌ Error fetching requests:`, error);
         throw error;
       }
     },

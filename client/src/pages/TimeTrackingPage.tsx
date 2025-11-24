@@ -50,12 +50,32 @@ export const TimeTrackingPage: React.FC = () => {
   const { data: entriesData, isLoading, error, refetch } = useQuery({
     queryKey: ['time-entries'],
     queryFn: async () => {
+      console.log(`[TIME TRACKING] ========== START FETCH ENTRIES ==========`);
+      console.log(`[TIME TRACKING] User ID: ${user?._id}`);
+      console.log(`[TIME TRACKING] User role: ${user?.role}`);
       try {
         const response = await apiCore.get('/time-tracking/entries');
-        console.log('✅ Time entries response:', response.data);
-        return response.data?.data?.timeEntries || response.data?.data || [];
+        console.log(`[TIME TRACKING] Raw response:`, response.data);
+        console.log(`[TIME TRACKING] response.data type:`, typeof response.data);
+        console.log(`[TIME TRACKING] response.data.data:`, response.data?.data);
+        
+        let entries = [];
+        if (response.data?.data?.timeEntries && Array.isArray(response.data.data.timeEntries)) {
+          entries = response.data.data.timeEntries;
+          console.log(`[TIME TRACKING] ✅ Using response.data.data.timeEntries (${entries.length} items)`);
+        } else if (response.data?.data && Array.isArray(response.data.data)) {
+          entries = response.data.data;
+          console.log(`[TIME TRACKING] ✅ Using response.data.data (${entries.length} items)`);
+        } else if (Array.isArray(response.data)) {
+          entries = response.data;
+          console.log(`[TIME TRACKING] ✅ Using response.data directly (${entries.length} items)`);
+        }
+        
+        console.log(`[TIME TRACKING] Final result: Found ${entries.length} time entries`);
+        console.log(`[TIME TRACKING] ========== END FETCH ENTRIES ==========`);
+        return entries;
       } catch (err: any) {
-        console.error('❌ Error fetching time entries:', err.response?.status, err.response?.data);
+        console.error(`[TIME TRACKING ERROR] ❌ Error fetching time entries:`, err.response?.status, err.response?.data);
         throw err;
       }
     },
@@ -66,12 +86,25 @@ export const TimeTrackingPage: React.FC = () => {
   const { data: reportsData } = useQuery({
     queryKey: ['time-reports'],
     queryFn: async () => {
+      console.log(`[TIME TRACKING] ========== START FETCH REPORTS ==========`);
       try {
         const response = await apiCore.get('/time-tracking/reports');
-        console.log('✅ Time reports response:', response.data);
-        return response.data?.data || [];
+        console.log(`[TIME TRACKING] Reports response:`, response.data);
+        
+        let reports = [];
+        if (response.data?.data && Array.isArray(response.data.data)) {
+          reports = response.data.data;
+          console.log(`[TIME TRACKING] ✅ Using response.data.data (${reports.length} items)`);
+        } else if (Array.isArray(response.data)) {
+          reports = response.data;
+          console.log(`[TIME TRACKING] ✅ Using response.data directly (${reports.length} items)`);
+        }
+        
+        console.log(`[TIME TRACKING] Final result: Found ${reports.length} reports`);
+        console.log(`[TIME TRACKING] ========== END FETCH REPORTS ==========`);
+        return reports;
       } catch (err: any) {
-        console.error('❌ Error fetching time reports:', err.response?.status, err.response?.data);
+        console.error(`[TIME TRACKING ERROR] ❌ Error fetching time reports:`, err.response?.status, err.response?.data);
         throw err;
       }
     },

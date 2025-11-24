@@ -26,14 +26,46 @@ export const DashboardPage: React.FC = () => {
   const { data: statsData, isLoading } = useQuery({
     queryKey: ['dashboard-stats', user?.role],
     queryFn: async () => {
-      if (user?.role === 'admin') {
-        const response = await adminService.getDashboardStats();
-        return response.data.stats;
-      } else if (user?.role === 'client' || user?.role === 'freelancer') {
-        const response = await apiService.get<any>('/projects/my/stats');
-        return response.data.data || {};
+      console.log(`[DASHBOARD] ========== START FETCH STATS ==========`);
+      console.log(`[DASHBOARD] User ID: ${user?._id}`);
+      console.log(`[DASHBOARD] User role: ${user?.role}`);
+      try {
+        if (user?.role === 'admin') {
+          console.log(`[DASHBOARD] Fetching admin stats...`);
+          const response = await adminService.getDashboardStats();
+          console.log(`[DASHBOARD] Admin response:`, response.data);
+          const stats = response.data.stats;
+          console.log(`[DASHBOARD] ✅ Admin stats:`, stats);
+          return stats;
+        } else if (user?.role === 'client' || user?.role === 'freelancer') {
+          console.log(`[DASHBOARD] Fetching ${user.role} stats...`);
+          const response = await apiService.get<any>('/projects/my/stats');
+          console.log(`[DASHBOARD] Raw response:`, response.data);
+          console.log(`[DASHBOARD] response.data type:`, typeof response.data);
+          console.log(`[DASHBOARD] response.data.data:`, response.data?.data);
+          
+          const stats = response.data?.data || response.data || {};
+          console.log(`[DASHBOARD] Parsed stats object:`, stats);
+          console.log(`[DASHBOARD] ✅ Stats values breakdown:`);
+          console.log(`  - totalProjects: ${stats.totalProjects} (type: ${typeof stats.totalProjects})`);
+          console.log(`  - activeProjects: ${stats.activeProjects} (type: ${typeof stats.activeProjects})`);
+          console.log(`  - totalProposals: ${stats.totalProposals} (type: ${typeof stats.totalProposals})`);
+          console.log(`  - totalContracts: ${stats.totalContracts} (type: ${typeof stats.totalContracts})`);
+          console.log(`  - totalEarnings: ${stats.totalEarnings} (type: ${typeof stats.totalEarnings})`);
+          console.log(`  - receivedProposals: ${stats.receivedProposals} (type: ${typeof stats.receivedProposals})`);
+          console.log(`  - ongoingContracts: ${stats.ongoingContracts} (type: ${typeof stats.ongoingContracts})`);
+          console.log(`  - totalSpent: ${stats.totalSpent} (type: ${typeof stats.totalSpent})`);
+          
+          return stats;
+        }
+        console.log(`[DASHBOARD] Unknown role, returning empty stats`);
+        return {};
+      } catch (error) {
+        console.error(`[DASHBOARD ERROR] ❌ Error fetching stats:`, error);
+        throw error;
+      } finally {
+        console.log(`[DASHBOARD] ========== END FETCH STATS ==========`);
       }
-      return {};
     },
     enabled: !!user,
   });
@@ -51,6 +83,28 @@ export const DashboardPage: React.FC = () => {
   }
 
   const stats = statsData || {};
+
+  // Log stats rendering - moved outside conditional renders to avoid hooks error
+  React.useEffect(() => {
+    if (Object.keys(stats).length > 0) {
+      console.log(`[DASHBOARD RENDER] ========== STATS RENDERING ==========`);
+      console.log(`[DASHBOARD RENDER] User role: ${user?.role}`);
+      console.log(`[DASHBOARD RENDER] Stats object:`, stats);
+      console.log(`[DASHBOARD RENDER] Stats keys:`, Object.keys(stats));
+      console.log(`[DASHBOARD RENDER] Stats values:`);
+      Object.entries(stats).forEach(([key, value]) => {
+        console.log(`  - ${key}: ${value} (type: ${typeof value})`);
+      });
+      
+      // Check which stats are zero or undefined
+      const zeroStats = Object.entries(stats).filter(([_, value]) => value === 0 || value === undefined || value === null);
+      if (zeroStats.length > 0) {
+        console.warn(`[DASHBOARD RENDER] ⚠️ Zero/undefined stats:`, zeroStats.map(([k]) => k).join(', '));
+      }
+      
+      console.log(`[DASHBOARD RENDER] ========== END STATS RENDERING ==========`);
+    }
+  }, [stats, user?.role]);
 
   // Admin Dashboard
   if (user?.role === 'admin') {
