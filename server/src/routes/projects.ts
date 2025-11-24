@@ -21,17 +21,19 @@ const router = Router();
 router.get('/', getProjects);
 router.get('/search', searchProjects);
 router.get('/categories', getProjectCategories);
-router.get('/:id', getProjectById);
 
 // Protected routes (require authentication)
 router.use(authenticate);
 
-// Client-only routes
+// Client-only routes - MUST come before /:id to avoid route matching issues
 router.post('/', authorize('client'), createProjectValidation, createProject);
 router.get('/my/projects', getMyProjects);
 router.get('/my/stats', getMyProjectStats);
 router.put('/:id', authorize('client'), updateProject);
 router.delete('/:id', authorize('client'), deleteProject);
 router.patch('/:id/status', authorize('client'), toggleProjectStatus);
+
+// Get project by ID - MUST come last
+router.get('/:id', getProjectById);
 
 export default router;

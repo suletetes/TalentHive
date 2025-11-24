@@ -161,7 +161,7 @@ export const ProjectDetailPage = () => {
               {project.title}
             </Typography>
             <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
-              <Chip label={project.category} color="primary" size="small" />
+              <Chip label={typeof project.category === 'object' ? project.category?.name : project.category} color="primary" size="small" />
               <Chip
                 label={project.status?.replace('_', ' ').toUpperCase()}
                 color={project.status === 'open' ? 'success' : 'default'}

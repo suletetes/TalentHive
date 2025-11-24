@@ -36,7 +36,7 @@ export const ProjectProposalsPage: React.FC = () => {
     queryKey: ['project', projectId],
     queryFn: async () => {
       const response = await apiService.get(`/projects/${projectId}`);
-      return response.data.data;
+      return response.data?.data || response.data || {};
     },
     enabled: !!projectId,
   });
@@ -46,7 +46,7 @@ export const ProjectProposalsPage: React.FC = () => {
     queryKey: ['project-proposals', projectId],
     queryFn: async () => {
       const response = await apiService.get(`/proposals/project/${projectId}`);
-      return response.data.data;
+      return response.data?.data?.proposals || response.data?.data || [];
     },
     enabled: !!projectId,
   });
