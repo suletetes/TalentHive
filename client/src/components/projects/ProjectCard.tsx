@@ -73,6 +73,18 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   isBookmarked = false,
   showBookmark = false,
 }) => {
+  // Log category and skills for debugging
+  React.useEffect(() => {
+    console.log(`[PROJECT CARD] Project: ${project.title}`);
+    console.log(`[PROJECT CARD] Category:`, project.category);
+    console.log(`[PROJECT CARD] Category type:`, typeof project.category);
+    if (typeof project.category === 'object') {
+      console.log(`[PROJECT CARD] Category name:`, project.category?.name);
+    }
+    console.log(`[PROJECT CARD] Skills:`, project.skills);
+    console.log(`[PROJECT CARD] Skills type:`, typeof project.skills);
+  }, [project._id]);
+
   const getBudgetDisplay = () => {
     const { type, min, max } = project.budget;
     const suffix = type === 'hourly' ? '/hr' : '';

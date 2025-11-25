@@ -161,23 +161,38 @@ export const acceptHireNowRequest = async (
     const { id } = req.params;
     const { responseMessage } = req.body;
 
+    console.log(`[HIRE NOW ACCEPT] ========== START ACCEPT ==========`);
+    console.log(`[HIRE NOW ACCEPT] Request ID: ${id}`);
+    console.log(`[HIRE NOW ACCEPT] User ID: ${req.user!._id}`);
+
     const hireNowRequest = await HireNowRequest.findById(id)
       .populate('client', 'profile email')
       .populate('freelancer', 'profile email');
 
     if (!hireNowRequest) {
+      console.log(`[HIRE NOW ACCEPT ERROR] Request not found: ${id}`);
       return next(new AppError('Hire now request not found', 404));
     }
 
+    console.log(`[HIRE NOW ACCEPT] Request found:`, {
+      id: hireNowRequest._id,
+      projectTitle: hireNowRequest.projectTitle,
+      budget: hireNowRequest.budget,
+      status: hireNowRequest.status,
+    });
+
     // Verify the freelancer is accepting their own request
     if (hireNowRequest.freelancer._id.toString() !== req.user!._id.toString()) {
+      console.log(`[HIRE NOW ACCEPT ERROR] Unauthorized - freelancer mismatch`);
       return next(new AppError('Not authorized to accept this request', 403));
     }
 
     if (hireNowRequest.status !== 'pending') {
+      console.log(`[HIRE NOW ACCEPT ERROR] Request already responded - status: ${hireNowRequest.status}`);
       return next(new AppError('Request has already been responded to', 400));
     }
 
+    console.log(`[HIRE NOW ACCEPT] Accepting request...`);
     // Accept the request
     await hireNowRequest.accept(responseMessage);
 
@@ -198,13 +213,28 @@ export const acceptHireNowRequest = async (
       selectedFreelancer: hireNowRequest.freelancer._id,
     });
 
-    // Create contract
+    // Create contract with all required fields
+    console.log(`[HIRE NOW ACCEPT] Creating contract for hire now request: ${id}`);
+    console.log(`[HIRE NOW ACCEPT] Contract data:`, {
+      project: project._id,
+      client: hireNowRequest.client._id,
+      freelancer: hireNowRequest.freelancer._id,
+      terms: hireNowRequest.projectDescription || 'To be discussed',
+      endDate: new Date(Date.now() + 30*24*60*60*1000),
+      totalAmount: hireNowRequest.budget,
+      proposal: null,
+    });
+
     const contract = await Contract.create({
       project: project._id,
       client: hireNowRequest.client._id,
       freelancer: hireNowRequest.freelancer._id,
       title: hireNowRequest.projectTitle,
       description: hireNowRequest.projectDescription,
+      terms: hireNowRequest.projectDescription || 'To be discussed', // Required field
+      endDate: new Date(Date.now() + 30*24*60*60*1000), // Required field - 30 days from now
+      totalAmount: hireNowRequest.budget, // Required field
+      proposal: null, // Required field
       budget: hireNowRequest.budget,
       timeline: hireNowRequest.timeline,
       milestones: hireNowRequest.milestones.map((m: any) => ({
@@ -217,6 +247,8 @@ export const acceptHireNowRequest = async (
       status: 'active',
       startDate: new Date(),
     });
+
+    console.log(`[HIRE NOW ACCEPT] Contract created successfully: ${contract._id}`);
 
     // Create in-app notification for client
     try {
@@ -254,6 +286,11 @@ export const acceptHireNowRequest = async (
       console.error('Failed to send acceptance notification email:', emailError);
     }
 
+    console.log(`[HIRE NOW ACCEPT] ✅ Success - Project and contract created`);
+    console.log(`[HIRE NOW ACCEPT] Project ID: ${project._id}`);
+    console.log(`[HIRE NOW ACCEPT] Contract ID: ${contract._id}`);
+    console.log(`[HIRE NOW ACCEPT] ========== END ACCEPT ==========`);
+
     res.status(200).json({
       success: true,
       data: {
@@ -263,6 +300,8 @@ export const acceptHireNowRequest = async (
       },
     });
   } catch (error: any) {
+    console.error(`[HIRE NOW ACCEPT ERROR] ❌ Error:`, error.message);
+    console.error(`[HIRE NOW ACCEPT ERROR] Stack:`, error.stack);
     next(new AppError(error.message || 'Failed to accept hire now request', 500));
   }
 };
