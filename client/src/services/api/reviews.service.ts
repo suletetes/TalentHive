@@ -3,6 +3,7 @@ import { apiCore } from './core';
 export interface Review {
   _id: string;
   contract: string;
+  project?: any;
   reviewer: {
     _id: string;
     profile: {
@@ -11,12 +12,19 @@ export interface Review {
       avatar?: string;
     };
   };
-  reviewee: string;
+  reviewee: string | { _id: string };
   rating: number;
-  comment: string;
+  comment?: string;
+  feedback?: string; // Backend uses 'feedback' field
   response?: {
     content: string;
     createdAt: Date;
+  };
+  categories?: {
+    communication?: number;
+    quality?: number;
+    professionalism?: number;
+    deadlines?: number;
   };
   createdAt: Date;
 }

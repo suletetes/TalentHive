@@ -154,7 +154,7 @@ export const ReviewsPage: React.FC = () => {
             </Box>
 
             <Typography variant="body1" paragraph sx={{ whiteSpace: 'pre-wrap' }}>
-              {review.comment}
+              {review.feedback || review.comment || 'No feedback provided'}
             </Typography>
 
             {review.response && (
@@ -269,7 +269,7 @@ export const ReviewsPage: React.FC = () => {
                   </Box>
                 </Box>
                 <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
-                  {selectedReview.comment}
+                  {selectedReview.feedback || selectedReview.comment || 'No feedback provided'}
                 </Typography>
               </Box>
 
