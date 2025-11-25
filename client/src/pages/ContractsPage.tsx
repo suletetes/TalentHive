@@ -15,9 +15,13 @@ import {
   LinearProgress,
   Divider,
   Alert,
+  Avatar,
+  Rating,
 } from '@mui/material';
+import { Message as MessageIcon } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { RootState } from '@/store';
 import { contractsService, Contract } from '@/services/api/contracts.service';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -28,8 +32,17 @@ import toast from 'react-hot-toast';
 export const ContractsPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [signDialogOpen, setSignDialogOpen] = useState(false);
+
+  // Helper to get the other party in the contract
+  const getOtherParty = (contract: Contract) => {
+    if (user?.role === 'client') {
+      return contract.freelancer;
+    }
+    return contract.client;
+  };
 
   // Fetch contracts
   const { data, isLoading, error, refetch } = useQuery({
@@ -176,8 +189,37 @@ export const ContractsPage: React.FC = () => {
                           />
                         )}
                       </Box>
+                      
+                      {/* Other Party Info */}
+                      {(() => {
+                        const otherParty = getOtherParty(contract);
+                        if (!otherParty) return null;
+                        return (
+                          <Box display="flex" alignItems="center" gap={1.5} mt={1.5}>
+                            <Avatar
+                              src={(otherParty as any)?.profile?.avatar}
+                              sx={{ width: 40, height: 40 }}
+                            >
+                              {(otherParty as any)?.profile?.firstName?.[0]}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" fontWeight={500}>
+                                {user?.role === 'client' ? 'Freelancer' : 'Client'}: {(otherParty as any)?.profile?.firstName} {(otherParty as any)?.profile?.lastName}
+                              </Typography>
+                              {(otherParty as any)?.rating?.average > 0 && (
+                                <Box display="flex" alignItems="center" gap={0.5}>
+                                  <Rating value={(otherParty as any)?.rating?.average || 0} readOnly size="small" precision={0.5} />
+                                  <Typography variant="caption" color="text.secondary">
+                                    ({(otherParty as any)?.rating?.count || 0})
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Box>
+                          </Box>
+                        );
+                      })()}
                     </Box>
-                    <Box>
+                    <Box textAlign="right">
                       <Typography variant="h6" color="primary">
                         ${contract.budget?.amount || 0}
                       </Typography>
@@ -226,6 +268,21 @@ export const ContractsPage: React.FC = () => {
                         Sign Contract
                       </Button>
                     )}
+                    {/* Message Button */}
+                    {(() => {
+                      const otherParty = getOtherParty(contract);
+                      if (!otherParty) return null;
+                      return (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<MessageIcon />}
+                          onClick={() => navigate(`/dashboard/messages?userId=${(otherParty as any)?._id}`)}
+                        >
+                          Message
+                        </Button>
+                      );
+                    })()}
                   </Box>
                 </CardContent>
               </Card>

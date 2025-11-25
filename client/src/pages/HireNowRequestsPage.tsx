@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Container,
   Typography,
@@ -16,21 +16,34 @@ import {
   Grid,
   Pagination,
   CircularProgress,
+  Avatar,
+  Tabs,
+  Tab,
+  Paper,
+  Stepper,
+  Step,
+  StepLabel,
+  Divider,
+  Rating,
 } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { RootState } from '@/store';
 import { apiService } from '@/services/api';
 import { useToast } from '@/components/ui/ToastProvider';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Check, Close } from '@mui/icons-material';
+import { Check, Close, Message as MessageIcon, Work as WorkIcon, AccessTime as TimeIcon } from '@mui/icons-material';
+import { format } from 'date-fns';
 
 export const HireNowRequestsPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [responseMessage, setResponseMessage] = useState('');
   const [actionType, setActionType] = useState<'accept' | 'reject' | null>(null);
+  const [tabValue, setTabValue] = useState(0); // 0 = pending, 1 = accepted, 2 = rejected
   const toast = useToast();
   const queryClient = useQueryClient();
   const limit = 10;
@@ -152,8 +165,29 @@ export const HireNowRequestsPage: React.FC = () => {
   }
 
   const requests = requestsData || [];
-  const totalPages = Math.ceil(requests.length / limit);
-  const paginatedRequests = requests.slice((page - 1) * limit, page * limit);
+  
+  // Filter requests by tab
+  const filteredRequests = useMemo(() => {
+    switch (tabValue) {
+      case 0: return requests.filter((r: any) => r.status === 'pending');
+      case 1: return requests.filter((r: any) => r.status === 'accepted');
+      case 2: return requests.filter((r: any) => r.status === 'rejected');
+      default: return requests;
+    }
+  }, [requests, tabValue]);
+
+  const pendingCount = requests.filter((r: any) => r.status === 'pending').length;
+  const acceptedCount = requests.filter((r: any) => r.status === 'accepted').length;
+  const rejectedCount = requests.filter((r: any) => r.status === 'rejected').length;
+
+  const totalPages = Math.ceil(filteredRequests.length / limit);
+  const paginatedRequests = filteredRequests.slice((page - 1) * limit, page * limit);
+
+  // Reset page when tab changes
+  const handleTabChange = (_: any, newValue: number) => {
+    setTabValue(newValue);
+    setPage(1);
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -164,6 +198,36 @@ export const HireNowRequestsPage: React.FC = () => {
         Review and respond to direct hire requests from clients
       </Typography>
 
+      {/* How It Works Section */}
+      <Paper sx={{ p: 3, mb: 3, bgcolor: 'primary.50' }}>
+        <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+          How Hire Now Works
+        </Typography>
+        <Stepper alternativeLabel sx={{ mt: 2 }}>
+          <Step completed>
+            <StepLabel>Client sends request</StepLabel>
+          </Step>
+          <Step>
+            <StepLabel>You review & respond</StepLabel>
+          </Step>
+          <Step>
+            <StepLabel>Contract created on accept</StepLabel>
+          </Step>
+          <Step>
+            <StepLabel>Start working</StepLabel>
+          </Step>
+        </Stepper>
+      </Paper>
+
+      {/* Tabs for filtering */}
+      <Paper sx={{ mb: 3 }}>
+        <Tabs value={tabValue} onChange={handleTabChange} variant="fullWidth">
+          <Tab label={`Pending (${pendingCount})`} />
+          <Tab label={`Accepted (${acceptedCount})`} />
+          <Tab label={`Declined (${rejectedCount})`} />
+        </Tabs>
+      </Paper>
+
       {requests.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 8, bgcolor: 'grey.50', borderRadius: 2 }}>
           <Typography variant="h6" gutterBottom>
@@ -173,58 +237,103 @@ export const HireNowRequestsPage: React.FC = () => {
             When clients send you direct hire requests, they will appear here.
           </Typography>
         </Box>
+      ) : filteredRequests.length === 0 ? (
+        <Box sx={{ textAlign: 'center', py: 6, bgcolor: 'grey.50', borderRadius: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            No {tabValue === 0 ? 'pending' : tabValue === 1 ? 'accepted' : 'declined'} requests
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {tabValue === 0 
+              ? 'New hire requests from clients will appear here.'
+              : tabValue === 1 
+              ? 'Requests you accept will appear here with contract links.'
+              : 'Requests you decline will be archived here.'}
+          </Typography>
+        </Box>
       ) : (
         <>
           <Grid container spacing={3}>
             {paginatedRequests.map((request: any) => (
               <Grid item xs={12} key={request._id}>
-                <Card>
+                <Card sx={{ 
+                  borderLeft: request.status === 'pending' ? '4px solid' : 'none',
+                  borderLeftColor: 'warning.main'
+                }}>
                   <CardContent>
-                    <Box sx={{ mb: 2 }}>
-                      <Box display="flex" justifyContent="space-between" alignItems="start" mb={1}>
+                    {/* Header with client info */}
+                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                      <Box display="flex" gap={2} alignItems="center">
+                        <Avatar
+                          src={request.client?.profile?.avatar}
+                          sx={{ width: 50, height: 50 }}
+                        >
+                          {request.client?.profile?.firstName?.[0]}
+                        </Avatar>
                         <Box>
-                          <Typography variant="h6" gutterBottom>
+                          <Typography variant="h6">
                             {request.projectTitle}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary" gutterBottom>
-                            From: {request.client?.profile?.firstName} {request.client?.profile?.lastName}
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <Typography variant="body2" color="text.secondary">
+                              {request.client?.profile?.firstName} {request.client?.profile?.lastName}
+                            </Typography>
+                            {request.client?.rating?.average > 0 && (
+                              <>
+                                <Typography variant="body2" color="text.secondary">•</Typography>
+                                <Rating value={request.client?.rating?.average || 0} readOnly size="small" />
+                              </>
+                            )}
+                          </Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Received {format(new Date(request.createdAt), 'MMM d, yyyy')}
                           </Typography>
                         </Box>
-                        <Chip
-                          label={request.status === 'pending' ? 'Pending' : request.status}
-                          color={request.status === 'pending' ? 'warning' : 'default'}
-                          size="small"
-                        />
                       </Box>
+                      <Chip
+                        label={request.status === 'pending' ? 'Action Required' : request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                        color={request.status === 'pending' ? 'warning' : request.status === 'accepted' ? 'success' : 'default'}
+                        size="small"
+                      />
                     </Box>
 
-                    <Typography variant="body2" paragraph>
+                    <Divider sx={{ my: 2 }} />
+
+                    <Typography variant="body2" paragraph sx={{ color: 'text.secondary' }}>
                       {request.projectDescription}
                     </Typography>
 
+                    {/* Budget and Timeline Cards */}
                     <Grid container spacing={2} sx={{ mb: 2 }}>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Budget
-                        </Typography>
-                        <Typography variant="body1">
-                          ${request.budget}
-                        </Typography>
+                      <Grid item xs={6} sm={3}>
+                        <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                          <Typography variant="h6" color="primary">${request.budget}</Typography>
+                          <Typography variant="caption" color="text.secondary">Budget</Typography>
+                        </Paper>
                       </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Timeline
-                        </Typography>
-                        <Typography variant="body1">
-                          {request.timeline?.duration} {request.timeline?.unit}
-                        </Typography>
+                      <Grid item xs={6} sm={3}>
+                        <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                          <Typography variant="h6">{request.timeline?.duration} {request.timeline?.unit}</Typography>
+                          <Typography variant="caption" color="text.secondary">Timeline</Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid item xs={6} sm={3}>
+                        <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                          <Typography variant="h6">{request.milestones?.length || 0}</Typography>
+                          <Typography variant="caption" color="text.secondary">Milestones</Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid item xs={6} sm={3}>
+                        <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                          <Typography variant="h6">{request.skills?.length || 0}</Typography>
+                          <Typography variant="caption" color="text.secondary">Skills Required</Typography>
+                        </Paper>
                       </Grid>
                     </Grid>
 
                     {request.message && (
-                      <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                          Message from Client
+                      <Box sx={{ mb: 2, p: 2, bgcolor: 'info.50', borderRadius: 1, border: '1px solid', borderColor: 'info.200' }}>
+                        <Typography variant="subtitle2" color="info.main" gutterBottom>
+                          💬 Message from Client
                         </Typography>
                         <Typography variant="body2">
                           {request.message}
@@ -235,55 +344,86 @@ export const HireNowRequestsPage: React.FC = () => {
                     {request.milestones && request.milestones.length > 0 && (
                       <Box sx={{ mb: 2 }}>
                         <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                          Milestones
+                          Proposed Milestones
                         </Typography>
-                        {request.milestones.map((milestone: any, index: number) => (
-                          <Box key={index} sx={{ ml: 2, mb: 1 }}>
-                            <Typography variant="body2">
-                              {index + 1}. {milestone.title} - ${milestone.amount}
-                            </Typography>
-                            {milestone.dueDate && (
-                              <Typography variant="caption" color="text.secondary">
-                                Due: {new Date(milestone.dueDate).toLocaleDateString()}
-                              </Typography>
-                            )}
-                          </Box>
-                        ))}
+                        <Grid container spacing={1}>
+                          {request.milestones.map((milestone: any, index: number) => (
+                            <Grid item xs={12} sm={6} key={index}>
+                              <Paper variant="outlined" sx={{ p: 1.5 }}>
+                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                  <Typography variant="body2" fontWeight={500}>
+                                    {index + 1}. {milestone.title}
+                                  </Typography>
+                                  <Chip label={`$${milestone.amount}`} size="small" color="primary" variant="outlined" />
+                                </Box>
+                                {milestone.dueDate && (
+                                  <Typography variant="caption" color="text.secondary">
+                                    Due: {format(new Date(milestone.dueDate), 'MMM d, yyyy')}
+                                  </Typography>
+                                )}
+                              </Paper>
+                            </Grid>
+                          ))}
+                        </Grid>
                       </Box>
                     )}
 
-                    {request.status === 'pending' && (
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button
-                          variant="contained"
-                          color="success"
-                          startIcon={<Check />}
-                          onClick={() => handleOpenDialog(request, 'accept')}
-                        >
-                          Accept
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          startIcon={<Close />}
-                          onClick={() => handleOpenDialog(request, 'reject')}
-                        >
-                          Decline
-                        </Button>
-                      </Box>
-                    )}
+                    {/* Action Buttons */}
+                    <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                      {request.status === 'pending' && (
+                        <>
+                          <Button
+                            variant="contained"
+                            color="success"
+                            startIcon={<Check />}
+                            onClick={() => handleOpenDialog(request, 'accept')}
+                            sx={{ flex: 1 }}
+                          >
+                            Accept & Create Contract
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            startIcon={<Close />}
+                            onClick={() => handleOpenDialog(request, 'reject')}
+                          >
+                            Decline
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            startIcon={<MessageIcon />}
+                            onClick={() => navigate(`/dashboard/messages?userId=${request.client?._id}`)}
+                          >
+                            Message
+                          </Button>
+                        </>
+                      )}
 
-                    {request.status === 'accepted' && (
-                      <Alert severity="success">
-                        You accepted this request. A contract has been created.
-                      </Alert>
-                    )}
+                      {request.status === 'accepted' && (
+                        <>
+                          <Button
+                            variant="contained"
+                            startIcon={<WorkIcon />}
+                            onClick={() => navigate('/dashboard/contracts')}
+                          >
+                            View Contract
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            startIcon={<MessageIcon />}
+                            onClick={() => navigate(`/dashboard/messages?userId=${request.client?._id}`)}
+                          >
+                            Message Client
+                          </Button>
+                        </>
+                      )}
 
-                    {request.status === 'rejected' && (
-                      <Alert severity="info">
-                        You declined this request.
-                      </Alert>
-                    )}
+                      {request.status === 'rejected' && (
+                        <Typography variant="body2" color="text.secondary">
+                          You declined this request on {format(new Date(request.updatedAt || request.createdAt), 'MMM d, yyyy')}
+                        </Typography>
+                      )}
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>
