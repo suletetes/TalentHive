@@ -57,6 +57,9 @@ export const ServicesPage: React.FC = () => {
   // Create/Update mutation
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
+      console.log(`[SERVICE PACKAGE] Form data:`, data);
+      console.log(`[SERVICE PACKAGE] Submitting to API...`);
+      
       if (isEditing && selectedPackage) {
         const response = await apiCore.patch(`/services/packages/${selectedPackage._id}`, data);
         return response.data.data;
@@ -66,12 +69,26 @@ export const ServicesPage: React.FC = () => {
       }
     },
     onSuccess: () => {
+      console.log(`[SERVICE PACKAGE] ✅ Success`);
       queryClient.invalidateQueries({ queryKey: ['service-packages'] });
       toast.success(isEditing ? 'Service package updated' : 'Service package created');
       handleCloseDialog();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to save service package');
+      console.error(`[SERVICE PACKAGE] ❌ Error:`, error.response?.data);
+      
+      // Show specific error messages
+      const errorData = error.response?.data;
+      if (errorData?.errors && typeof errorData.errors === 'object') {
+        Object.entries(errorData.errors).forEach(([field, message]) => {
+          console.error(`  - ${field}: ${message}`);
+          toast.error(`${field}: ${message}`);
+        });
+      } else if (errorData?.message) {
+        toast.error(errorData.message);
+      } else {
+        toast.error('Failed to save service package');
+      }
     },
   });
 

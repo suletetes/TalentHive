@@ -31,6 +31,10 @@ export const ProjectProposalsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedProposal, setSelectedProposal] = useState<any>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'accept' | 'reject'; proposalId: string } | null>(null);
+  const limit = 10;
 
   // Fetch project details
   const { data: projectData, isLoading: projectLoading } = useQuery({
@@ -125,15 +129,24 @@ export const ProjectProposalsPage: React.FC = () => {
   };
 
   const handleAccept = (proposalId: string) => {
-    if (window.confirm('Are you sure you want to accept this proposal? This will create a contract.')) {
-      acceptMutation.mutate(proposalId);
-    }
+    setConfirmAction({ type: 'accept', proposalId });
+    setConfirmOpen(true);
   };
 
   const handleReject = (proposalId: string) => {
-    if (window.confirm('Are you sure you want to reject this proposal?')) {
-      rejectMutation.mutate(proposalId);
+    setConfirmAction({ type: 'reject', proposalId });
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmAction = () => {
+    if (!confirmAction) return;
+    if (confirmAction.type === 'accept') {
+      acceptMutation.mutate(confirmAction.proposalId);
+    } else {
+      rejectMutation.mutate(confirmAction.proposalId);
     }
+    setConfirmOpen(false);
+    setConfirmAction(null);
   };
 
   if (projectLoading || proposalsLoading) {
@@ -142,6 +155,8 @@ export const ProjectProposalsPage: React.FC = () => {
 
   const project = projectData;
   const proposals = proposalsData || [];
+  const totalPages = Math.ceil(proposals.length / limit);
+  const paginatedProposals = proposals.slice((page - 1) * limit, page * limit);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -162,8 +177,9 @@ export const ProjectProposalsPage: React.FC = () => {
           No proposals have been submitted for this project yet.
         </Alert>
       ) : (
-        <Grid container spacing={3}>
-          {proposals.map((proposal: any) => (
+        <>
+          <Grid container spacing={3}>
+            {paginatedProposals.map((proposal: any) => (
             <Grid item xs={12} key={proposal._id}>
               <Card>
                 <CardContent>
@@ -281,9 +297,46 @@ export const ProjectProposalsPage: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-          ))}
-        </Grid>
+            ))}
+          </Grid>
+
+          {totalPages > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={(e, value) => setPage(value)}
+                color="primary"
+              />
+            </Box>
+          )}
+        </>
       )}
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {confirmAction?.type === 'accept' ? 'Accept Proposal' : 'Reject Proposal'}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            {confirmAction?.type === 'accept'
+              ? 'Are you sure you want to accept this proposal? This will create a contract.'
+              : 'Are you sure you want to reject this proposal?'}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handleConfirmAction}
+            variant="contained"
+            color={confirmAction?.type === 'accept' ? 'success' : 'error'}
+            disabled={acceptMutation.isPending || rejectMutation.isPending}
+          >
+            {confirmAction?.type === 'accept' ? 'Accept' : 'Reject'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Proposal Details Dialog */}
       <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} maxWidth="md" fullWidth>

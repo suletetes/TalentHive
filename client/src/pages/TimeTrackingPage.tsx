@@ -19,6 +19,7 @@ import TimeReport from '@/components/timeTracking/TimeReport';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { apiCore } from '@/services/api/core';
+import { apiService } from '@/services/api';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -77,6 +78,44 @@ export const TimeTrackingPage: React.FC = () => {
       } catch (err: any) {
         console.error(`[TIME TRACKING ERROR] ❌ Error fetching time entries:`, err.response?.status, err.response?.data);
         throw err;
+      }
+    },
+    enabled: !!user,
+  });
+
+  // Fetch projects for dropdown
+  const { data: projectsData } = useQuery({
+    queryKey: ['time-tracking-projects'],
+    queryFn: async () => {
+      console.log(`[TIME TRACKING] Fetching projects for dropdown...`);
+      try {
+        const response = await apiService.get('/projects/my');
+        console.log(`[TIME TRACKING] Projects response:`, response.data);
+        const projects = response.data?.data?.projects || response.data?.data || [];
+        console.log(`[TIME TRACKING] ✅ Found ${projects.length} projects`);
+        return projects;
+      } catch (err: any) {
+        console.error(`[TIME TRACKING] Error fetching projects:`, err);
+        return [];
+      }
+    },
+    enabled: !!user,
+  });
+
+  // Fetch contracts for dropdown
+  const { data: contractsData } = useQuery({
+    queryKey: ['time-tracking-contracts'],
+    queryFn: async () => {
+      console.log(`[TIME TRACKING] Fetching contracts for dropdown...`);
+      try {
+        const response = await apiService.get('/contracts/my');
+        console.log(`[TIME TRACKING] Contracts response:`, response.data);
+        const contracts = response.data?.data?.contracts || response.data?.data || [];
+        console.log(`[TIME TRACKING] ✅ Found ${contracts.length} contracts`);
+        return contracts;
+      } catch (err: any) {
+        console.error(`[TIME TRACKING] Error fetching contracts:`, err);
+        return [];
       }
     },
     enabled: !!user,
@@ -160,7 +199,7 @@ export const TimeTrackingPage: React.FC = () => {
         </Box>
 
         <TabPanel value={tabValue} index={0}>
-          <TimeTracker />
+          <TimeTracker projects={projectsData || []} contracts={contractsData || []} />
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>
