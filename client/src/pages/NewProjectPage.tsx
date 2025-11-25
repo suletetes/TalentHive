@@ -68,7 +68,7 @@ export const NewProjectPage = () => {
               ))}
             </Grid>
 
-            <Paper sx={{ p: 2, mt: 3, bgcolor: 'grey.50' }}>
+            <Paper sx={{ p: 2, mt: 3, bgcolor: 'action.hover' }}>
               <Typography variant="subtitle2" gutterBottom>
                 What happens next?
               </Typography>

@@ -37,9 +37,11 @@ export const FreelancerReviewsPage: React.FC = () => {
     queryKey: ['freelancer', id],
     queryFn: async () => {
       console.log(`[FREELANCER REVIEWS] Fetching freelancer: ${id}`);
-      const response = await apiService.get(`/users/freelancer/${id}`);
-      console.log(`[FREELANCER REVIEWS] Freelancer response:`, response.data);
-      const freelancer = response.data?.data || response.data;
+      // apiService.get returns response.data directly
+      const response: any = await apiService.get(`/users/freelancer/${id}`);
+      console.log(`[FREELANCER REVIEWS] Freelancer response:`, response);
+      // Handle response structure
+      const freelancer = response?.data?.user || response?.data || response?.user || response;
       console.log(`[FREELANCER REVIEWS] Freelancer name:`, freelancer?.profile?.firstName, freelancer?.profile?.lastName);
       return freelancer;
     },
@@ -53,16 +55,17 @@ export const FreelancerReviewsPage: React.FC = () => {
       console.log(`[FREELANCER REVIEWS] ========== START FETCH REVIEWS ==========`);
       console.log(`[FREELANCER REVIEWS] Fetching all reviews for freelancer: ${id}`);
       try {
-        const response = await apiService.get(`/reviews/freelancer/${id}?limit=1000`);
-        console.log(`[FREELANCER REVIEWS] Response:`, response.data);
-        const reviews = response.data?.data || response.data || [];
+        // apiService.get returns response.data directly
+        const response: any = await apiService.get(`/reviews/freelancer/${id}?limit=1000`);
+        console.log(`[FREELANCER REVIEWS] Response:`, response);
+        // Handle response structure
+        const reviews = response?.data?.reviews || response?.reviews || response?.data || response || [];
         console.log(`[FREELANCER REVIEWS] Parsed reviews count:`, Array.isArray(reviews) ? reviews.length : 0);
         
         if (Array.isArray(reviews) && reviews.length > 0) {
           console.log(`[FREELANCER REVIEWS] First review:`, reviews[0]);
           console.log(`[FREELANCER REVIEWS] Review client:`, reviews[0].client);
           console.log(`[FREELANCER REVIEWS] Review reviewer:`, reviews[0].reviewer);
-          console.log(`[FREELANCER REVIEWS] Client name:`, reviews[0].client?.profile?.firstName, reviews[0].client?.profile?.lastName);
         }
         
         console.log(`[FREELANCER REVIEWS] ========== END FETCH REVIEWS ==========`);

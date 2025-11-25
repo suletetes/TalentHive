@@ -1593,7 +1593,87 @@ async function seedContracts(users: any[], projects: any[], proposals: any[]) {
     const endDate = new Date();
     endDate.setDate(startDate.getDate() + (proposal.estimatedDuration || 30));
     
-    logger.info(`Creating contract for proposal: ${proposal._id}, amount: ${proposal.bidAmount}`);
+    const totalAmount = proposal.bidAmount || 1000;
+    
+    // Create milestones ensuring they sum to totalAmount
+    let milestones = [];
+    if (proposal.milestones && proposal.milestones.length > 0) {
+      // Use proposal milestones but ensure amounts sum correctly
+      const proposalMilestoneTotal = proposal.milestones.reduce((sum: number, m: any) => sum + (m.amount || 0), 0);
+      
+      if (proposalMilestoneTotal === totalAmount) {
+        // Amounts already match, use as-is
+        milestones = proposal.milestones.map((milestone: any, index: number) => {
+          const dueDate = new Date();
+          dueDate.setDate(startDate.getDate() + (milestone.durationDays || 7) + (index * 7));
+          return {
+            title: milestone.title || `Milestone ${index + 1}`,
+            description: milestone.description || `Milestone ${index + 1} description`,
+            amount: milestone.amount,
+            dueDate: milestone.dueDate || dueDate,
+            status: 'pending',
+          };
+        });
+      } else {
+        // Adjust amounts proportionally to match totalAmount
+        const ratio = totalAmount / (proposalMilestoneTotal || 1);
+        let runningTotal = 0;
+        milestones = proposal.milestones.map((milestone: any, index: number) => {
+          const dueDate = new Date();
+          dueDate.setDate(startDate.getDate() + (milestone.durationDays || 7) + (index * 7));
+          
+          let amount;
+          if (index === proposal.milestones.length - 1) {
+            // Last milestone gets the remainder to ensure exact total
+            amount = totalAmount - runningTotal;
+          } else {
+            amount = Math.round((milestone.amount || 0) * ratio);
+            runningTotal += amount;
+          }
+          
+          return {
+            title: milestone.title || `Milestone ${index + 1}`,
+            description: milestone.description || `Milestone ${index + 1} description`,
+            amount: amount,
+            dueDate: milestone.dueDate || dueDate,
+            status: 'pending',
+          };
+        });
+      }
+    } else {
+      // No milestones in proposal, create default ones that sum to totalAmount
+      const milestoneCount = 3;
+      const baseAmount = Math.floor(totalAmount / milestoneCount);
+      const remainder = totalAmount - (baseAmount * (milestoneCount - 1));
+      
+      milestones = [
+        {
+          title: 'Phase 1 - Initial Development',
+          description: 'Initial setup and core functionality',
+          amount: baseAmount,
+          dueDate: new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000),
+          status: 'pending',
+        },
+        {
+          title: 'Phase 2 - Main Development',
+          description: 'Main features and integration',
+          amount: baseAmount,
+          dueDate: new Date(startDate.getTime() + 14 * 24 * 60 * 60 * 1000),
+          status: 'pending',
+        },
+        {
+          title: 'Phase 3 - Final Delivery',
+          description: 'Testing, refinement, and delivery',
+          amount: remainder,
+          dueDate: new Date(startDate.getTime() + 21 * 24 * 60 * 60 * 1000),
+          status: 'pending',
+        },
+      ];
+    }
+    
+    // Verify milestone total matches contract total
+    const milestoneTotal = milestones.reduce((sum, m) => sum + m.amount, 0);
+    logger.info(`Creating contract for proposal: ${proposal._id}, totalAmount: ${totalAmount}, milestoneTotal: ${milestoneTotal}`);
     
     const contractData = {
       project: proposal.project,
@@ -1602,23 +1682,12 @@ async function seedContracts(users: any[], projects: any[], proposals: any[]) {
       proposal: proposal._id,
       title: `Contract for ${project.title}`,
       description: project.description,
-      totalAmount: proposal.bidAmount || 1000, // Fallback amount
+      totalAmount: totalAmount,
       currency: 'USD',
       startDate: startDate,
       endDate: endDate,
       status: 'active',
-      milestones: (proposal.milestones || []).map((milestone: any, index: number) => {
-        const dueDate = new Date();
-        dueDate.setDate(startDate.getDate() + (milestone.durationDays || 7) + (index * 7));
-        
-        return {
-          title: milestone.title || `Milestone ${index + 1}`,
-          description: milestone.description || `Milestone ${index + 1} description`,
-          amount: milestone.amount || Math.floor((proposal.bidAmount || 1000) / (proposal.milestones?.length || 1)),
-          dueDate: dueDate,
-          status: 'pending',
-        };
-      }),
+      milestones: milestones,
       terms: {
         paymentTerms: 'Payment will be released upon milestone completion and client approval.',
         cancellationPolicy: 'Either party may cancel this contract with 7 days written notice.',
