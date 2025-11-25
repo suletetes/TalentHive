@@ -36,8 +36,12 @@ export const FreelancerReviewsPage: React.FC = () => {
   const { data: freelancerResponse, isLoading: freelancerLoading } = useQuery({
     queryKey: ['freelancer', id],
     queryFn: async () => {
+      console.log(`[FREELANCER REVIEWS] Fetching freelancer: ${id}`);
       const response = await apiService.get(`/users/freelancer/${id}`);
-      return response.data?.data || response.data;
+      console.log(`[FREELANCER REVIEWS] Freelancer response:`, response.data);
+      const freelancer = response.data?.data || response.data;
+      console.log(`[FREELANCER REVIEWS] Freelancer name:`, freelancer?.profile?.firstName, freelancer?.profile?.lastName);
+      return freelancer;
     },
     enabled: !!id,
   });
@@ -46,15 +50,25 @@ export const FreelancerReviewsPage: React.FC = () => {
   const { data: reviewsResponse, isLoading: reviewsLoading } = useQuery({
     queryKey: ['freelancer-reviews-all', id],
     queryFn: async () => {
-      console.log(`[REVIEWS PAGE] Fetching all reviews for freelancer: ${id}`);
+      console.log(`[FREELANCER REVIEWS] ========== START FETCH REVIEWS ==========`);
+      console.log(`[FREELANCER REVIEWS] Fetching all reviews for freelancer: ${id}`);
       try {
         const response = await apiService.get(`/reviews/freelancer/${id}?limit=1000`);
-        console.log(`[REVIEWS PAGE] Response:`, response.data);
+        console.log(`[FREELANCER REVIEWS] Response:`, response.data);
         const reviews = response.data?.data || response.data || [];
-        console.log(`[REVIEWS PAGE] Parsed reviews count:`, Array.isArray(reviews) ? reviews.length : 0);
+        console.log(`[FREELANCER REVIEWS] Parsed reviews count:`, Array.isArray(reviews) ? reviews.length : 0);
+        
+        if (Array.isArray(reviews) && reviews.length > 0) {
+          console.log(`[FREELANCER REVIEWS] First review:`, reviews[0]);
+          console.log(`[FREELANCER REVIEWS] Review client:`, reviews[0].client);
+          console.log(`[FREELANCER REVIEWS] Review reviewer:`, reviews[0].reviewer);
+          console.log(`[FREELANCER REVIEWS] Client name:`, reviews[0].client?.profile?.firstName, reviews[0].client?.profile?.lastName);
+        }
+        
+        console.log(`[FREELANCER REVIEWS] ========== END FETCH REVIEWS ==========`);
         return Array.isArray(reviews) ? reviews : [];
       } catch (error) {
-        console.error(`[REVIEWS PAGE ERROR]`, error);
+        console.error(`[FREELANCER REVIEWS ERROR]`, error);
         throw error;
       }
     },

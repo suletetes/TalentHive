@@ -155,6 +155,14 @@ export const ProjectDetailPage = () => {
   console.log(`[PROJECT DETAIL] Is client: ${isClient}`);
   console.log(`[PROJECT DETAIL] Project ID: ${project._id}`);
   console.log(`[PROJECT DETAIL] Project status: ${project.status}`);
+  console.log(`[PROJECT DETAIL] Project category:`, project.category);
+  console.log(`[PROJECT DETAIL] Category type:`, typeof project.category);
+  if (typeof project.category === 'object') {
+    console.log(`[PROJECT DETAIL] Category name:`, project.category?.name);
+    console.log(`[PROJECT DETAIL] Category ID:`, project.category?._id);
+  }
+  console.log(`[PROJECT DETAIL] Project skills:`, project.skills);
+  console.log(`[PROJECT DETAIL] Skills type:`, typeof project.skills);
   console.log(`[PROJECT DETAIL] Project proposals count: ${project.proposals?.length || 0}`);
   if (project.proposals && project.proposals.length > 0) {
     console.log(`[PROJECT DETAIL] First proposal:`, project.proposals[0]);
@@ -357,9 +365,16 @@ export const ProjectDetailPage = () => {
                 Required Skills
               </Typography>
               <Box display="flex" gap={1} flexWrap="wrap">
-                {project.skills.map((skill) => (
-                  <Chip key={skill} label={skill} variant="outlined" />
-                ))}
+                {project.skills.map((skill) => {
+                  console.log(`[PROJECT DETAIL SKILLS] Skill:`, skill, `Type:`, typeof skill);
+                  return (
+                    <Chip 
+                      key={typeof skill === 'object' ? skill?._id : skill} 
+                      label={typeof skill === 'object' ? skill?.name : skill} 
+                      variant="outlined" 
+                    />
+                  );
+                })}
               </Box>
             </Paper>
           )}
