@@ -150,22 +150,23 @@ export const WorkExperienceManager: React.FC<WorkExperienceManagerProps> = ({
                       {exp.title}
                     </Typography>
                   }
+                  secondaryTypographyProps={{ component: 'div' }}
                   secondary={
-                    <>
-                      <Typography variant="body1" color="text.primary" component="div">
+                    <Box>
+                      <Typography variant="body1" color="text.primary" component="span" display="block">
                         {exp.company}
                         {exp.location && ` • ${exp.location}`}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" component="div">
+                      <Typography variant="body2" color="text.secondary" component="span" display="block">
                         {format(new Date(exp.startDate), 'MMM yyyy')} -{' '}
                         {exp.current ? 'Present' : format(new Date(exp.endDate!), 'MMM yyyy')}
                       </Typography>
                       {exp.description && (
-                        <Typography variant="body2" sx={{ mt: 1 }}>
+                        <Typography variant="body2" component="span" display="block" sx={{ mt: 1 }}>
                           {exp.description}
                         </Typography>
                       )}
-                    </>
+                    </Box>
                   }
                 />
               </ListItem>

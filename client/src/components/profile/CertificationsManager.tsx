@@ -134,9 +134,10 @@ export const CertificationsManager: React.FC<CertificationsManagerProps> = ({
             >
               <ListItemText
                 primary={cert.name}
+                secondaryTypographyProps={{ component: 'div' }}
                 secondary={
-                  <>
-                    <Typography variant="body2" color="text.secondary" component="div">
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" component="span" display="block">
                       {cert.issuer} • {format(new Date(cert.dateEarned), 'MMM yyyy')}
                     </Typography>
                     {cert.verificationUrl && (
@@ -149,7 +150,7 @@ export const CertificationsManager: React.FC<CertificationsManagerProps> = ({
                         Verify <OpenInNew fontSize="small" />
                       </MuiLink>
                     )}
-                  </>
+                  </Box>
                 }
               />
             </ListItem>

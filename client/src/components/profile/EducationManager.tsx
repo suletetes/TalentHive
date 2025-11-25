@@ -142,22 +142,23 @@ export const EducationManager: React.FC<EducationManagerProps> = ({ education, i
                       {edu.degree}
                     </Typography>
                   }
+                  secondaryTypographyProps={{ component: 'div' }}
                   secondary={
-                    <>
-                      <Typography variant="body1" color="text.primary" component="div">
+                    <Box>
+                      <Typography variant="body1" color="text.primary" component="span" display="block">
                         {edu.institution}
                         {edu.fieldOfStudy && ` • ${edu.fieldOfStudy}`}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" component="div">
+                      <Typography variant="body2" color="text.secondary" component="span" display="block">
                         {format(new Date(edu.startDate), 'MMM yyyy')} -{' '}
                         {edu.endDate ? format(new Date(edu.endDate), 'MMM yyyy') : 'Present'}
                       </Typography>
                       {edu.description && (
-                        <Typography variant="body2" sx={{ mt: 1 }}>
+                        <Typography variant="body2" component="span" display="block" sx={{ mt: 1 }}>
                           {edu.description}
                         </Typography>
                       )}
-                    </>
+                    </Box>
                   }
                 />
               </ListItem>
