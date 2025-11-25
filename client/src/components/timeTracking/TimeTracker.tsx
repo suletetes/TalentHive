@@ -26,9 +26,16 @@ import api from '@/services/api';
 interface TimeTrackerProps {
   projectId?: string;
   contractId?: string;
+  projects?: any[];
+  contracts?: any[];
 }
 
-const TimeTracker: React.FC<TimeTrackerProps> = ({ projectId, contractId }) => {
+const TimeTracker: React.FC<TimeTrackerProps> = ({ 
+  projectId, 
+  contractId,
+  projects: propProjects = [],
+  contracts: propContracts = [],
+}) => {
   const { user } = useSelector((state: RootState) => state.auth);
   const [isTracking, setIsTracking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -36,16 +43,30 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({ projectId, contractId }) => {
   const [description, setDescription] = useState('');
   const [selectedProject, setSelectedProject] = useState(projectId || '');
   const [selectedContract, setSelectedContract] = useState(contractId || '');
-  const [projects, setProjects] = useState<any[]>([]);
-  const [contracts, setContracts] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>(propProjects);
+  const [contracts, setContracts] = useState<any[]>(propContracts);
   const [currentSession, setCurrentSession] = useState<any>(null);
 
+  // Update local state when props change
   useEffect(() => {
-    if (user?.role === 'freelancer') {
+    if (propProjects.length > 0) {
+      setProjects(propProjects);
+    }
+  }, [propProjects]);
+
+  useEffect(() => {
+    if (propContracts.length > 0) {
+      setContracts(propContracts);
+    }
+  }, [propContracts]);
+
+  // Fetch data only if not provided via props
+  useEffect(() => {
+    if (propProjects.length === 0 && propContracts.length === 0) {
       fetchProjects();
       fetchContracts();
     }
-  }, [user]);
+  }, [user, propProjects.length, propContracts.length]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -60,7 +81,8 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({ projectId, contractId }) => {
   const fetchProjects = async () => {
     try {
       const response = await api.get('/projects/my/projects');
-      const projectsList = response?.data?.data?.projects || response?.data?.data || [];
+      const projectsList = response?.data?.data?.projects || response?.data?.projects || response?.data?.data || [];
+      console.log('[TIME TRACKER] Fetched projects:', projectsList);
       setProjects(Array.isArray(projectsList) ? projectsList : []);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -71,7 +93,8 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({ projectId, contractId }) => {
   const fetchContracts = async () => {
     try {
       const response = await api.get('/contracts/my');
-      const contractsList = response?.data?.data?.contracts || response?.data?.data || [];
+      const contractsList = response?.data?.data?.contracts || response?.data?.contracts || response?.data?.data || [];
+      console.log('[TIME TRACKER] Fetched contracts:', contractsList);
       setContracts(Array.isArray(contractsList) ? contractsList : []);
     } catch (error) {
       console.error('Error fetching contracts:', error);

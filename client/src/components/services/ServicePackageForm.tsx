@@ -112,13 +112,13 @@ const ServicePackageForm: React.FC = () => {
 
       console.log('[SERVICE PACKAGE] Submitting form data:', formData);
 
-      // Validate form data
+      // Validate form data - handle empty strings properly
       const validationData = {
         ...formData,
-        amount: formData.amount ? parseFloat(formData.amount) : '',
-        hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : '',
-        deliveryTime: formData.deliveryTime ? parseInt(formData.deliveryTime) : '',
-        revisions: formData.revisions ? parseInt(formData.revisions) : '',
+        amount: formData.amount ? parseFloat(formData.amount) : undefined,
+        hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : undefined,
+        deliveryTime: formData.deliveryTime ? parseInt(formData.deliveryTime) : undefined,
+        revisions: formData.revisions ? parseInt(formData.revisions) : undefined,
         features: formData.features.filter(f => f.trim()),
         skills: formData.skills.filter(s => s.trim()),
       };
