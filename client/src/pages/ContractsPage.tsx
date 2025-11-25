@@ -43,7 +43,10 @@ export const ContractsPage: React.FC = () => {
 
   // Sign contract mutation
   const signMutation = useMutation({
-    mutationFn: (contractId: string) => contractsService.signContract(contractId),
+    mutationFn: (contractId: string) => contractsService.signContract(contractId, {
+      ipAddress: 'client-side',
+      userAgent: navigator.userAgent,
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-contracts'] });
       toast.success('Contract signed successfully');

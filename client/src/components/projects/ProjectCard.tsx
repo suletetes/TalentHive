@@ -21,6 +21,8 @@ import {
 } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 
 // Helper function to get category display name
 const getCategoryDisplay = (category: any): string => {
@@ -118,13 +120,16 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   isBookmarked = false,
   showBookmark = false,
 }) => {
-  // Log category and skills for debugging
+  const { user } = useSelector((state: RootState) => state.auth);
+  
+  // Check if current user is the project owner
+  const isProjectOwner = user?._id === project.client?._id;
+  const isClient = user?.role === 'client';
+
+  // Log category and skills for debugging (removed verbose logging)
   React.useEffect(() => {
-    console.log(`[PROJECT CARD] Project: ${project.title}`);
-    console.log(`[PROJECT CARD] Category:`, project.category);
-    console.log(`[PROJECT CARD] Category type:`, typeof project.category);
     if (typeof project.category === 'object') {
-      console.log(`[PROJECT CARD] Category name:`, project.category?.name);
+      // Category is populated
     }
     console.log(`[PROJECT CARD] Skills:`, project.skills);
     console.log(`[PROJECT CARD] Skills type:`, typeof project.skills);
@@ -372,8 +377,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             View Details
           </Button>
           
-          {/* View Proposals Button for Clients */}
-          {project.proposalCount > 0 && project.client && (
+          {/* View Proposals Button - Only for project owner */}
+          {project.proposalCount > 0 && isProjectOwner && (
             <Button
               variant="outlined"
               component={Link}
