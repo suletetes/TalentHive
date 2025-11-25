@@ -87,13 +87,26 @@ export const TimeTrackingPage: React.FC = () => {
   const { data: projectsData } = useQuery({
     queryKey: ['time-tracking-projects'],
     queryFn: async () => {
-      console.log(`[TIME TRACKING] Fetching projects for dropdown...`);
+      console.log(`[TIME TRACKING] Fetching projects for dropdown, user role: ${user?.role}`);
       try {
-        // apiService.get returns response.data directly, so we access .data.projects
-        const response: any = await apiService.get('/projects/my/projects');
+        // Use different endpoint based on role
+        const endpoint = user?.role === 'client' ? '/projects/my/projects' : '/projects';
+        const response: any = await apiService.get(endpoint);
         console.log(`[TIME TRACKING] Projects response:`, response);
-        const projects = response?.data?.projects || response?.projects || response?.data || [];
-        console.log(`[TIME TRACKING] ✅ Found ${projects.length} projects`);
+        
+        // apiService.get returns response.data directly
+        let projects = [];
+        if (response?.data?.projects && Array.isArray(response.data.projects)) {
+          projects = response.data.projects;
+        } else if (response?.projects && Array.isArray(response.projects)) {
+          projects = response.projects;
+        } else if (Array.isArray(response?.data)) {
+          projects = response.data;
+        } else if (Array.isArray(response)) {
+          projects = response;
+        }
+        
+        console.log(`[TIME TRACKING] Found ${projects.length} projects`);
         return projects;
       } catch (err: any) {
         console.error(`[TIME TRACKING] Error fetching projects:`, err);
@@ -109,11 +122,22 @@ export const TimeTrackingPage: React.FC = () => {
     queryFn: async () => {
       console.log(`[TIME TRACKING] Fetching contracts for dropdown...`);
       try {
-        // apiService.get returns response.data directly
         const response: any = await apiService.get('/contracts/my');
         console.log(`[TIME TRACKING] Contracts response:`, response);
-        const contracts = response?.data?.contracts || response?.contracts || response?.data || [];
-        console.log(`[TIME TRACKING] ✅ Found ${contracts.length} contracts`);
+        
+        // apiService.get returns response.data directly
+        let contracts = [];
+        if (response?.data?.contracts && Array.isArray(response.data.contracts)) {
+          contracts = response.data.contracts;
+        } else if (response?.contracts && Array.isArray(response.contracts)) {
+          contracts = response.contracts;
+        } else if (Array.isArray(response?.data)) {
+          contracts = response.data;
+        } else if (Array.isArray(response)) {
+          contracts = response;
+        }
+        
+        console.log(`[TIME TRACKING] Found ${contracts.length} contracts`);
         return contracts;
       } catch (err: any) {
         console.error(`[TIME TRACKING] Error fetching contracts:`, err);

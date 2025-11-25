@@ -53,8 +53,10 @@ export const BrowseProjectsPage = () => {
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const response = await apiService.get('/categories');
-      return response.data.data || response.data || [];
+      // apiService.get returns response.data directly
+      const response: any = await apiService.get('/categories');
+      const categories = response?.data?.categories || response?.categories || response?.data || response || [];
+      return Array.isArray(categories) ? categories : [];
     },
   });
 

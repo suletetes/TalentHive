@@ -62,8 +62,13 @@ export const ReviewsPage: React.FC = () => {
     queryKey: ['reviews', user?._id],
     queryFn: async () => {
       if (!user?._id) return [];
-      const response = await reviewsService.getReviews(user._id);
-      return response.data;
+      console.log(`[REVIEWS] Fetching reviews for user: ${user._id}`);
+      const response: any = await reviewsService.getReviews(user._id);
+      console.log(`[REVIEWS] Response:`, response);
+      // apiCore.get returns response.data directly
+      const reviews = response?.data?.reviews || response?.reviews || response?.data || response || [];
+      console.log(`[REVIEWS] Found ${reviews.length} reviews`);
+      return reviews;
     },
     enabled: !!user?._id,
   });
