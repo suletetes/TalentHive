@@ -30,8 +30,12 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
   const { data: categoriesData, isLoading: loadingCategories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const response = await apiService.get('/categories');
-      return response.data?.data || response.data || [];
+      // apiService.get returns response.data directly
+      const response: any = await apiService.get('/categories');
+      console.log('[CATEGORIES] Response:', response);
+      const categories = response?.data?.categories || response?.categories || response?.data || response || [];
+      console.log('[CATEGORIES] Parsed:', categories);
+      return Array.isArray(categories) ? categories : [];
     },
   });
 
@@ -39,8 +43,12 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
   const { data: skillsData, isLoading: loadingSkills } = useQuery({
     queryKey: ['skills'],
     queryFn: async () => {
-      const response = await apiService.get('/skills');
-      return response.data?.data || response.data || [];
+      // apiService.get returns response.data directly
+      const response: any = await apiService.get('/skills');
+      console.log('[SKILLS] Response:', response);
+      const skills = response?.data?.skills || response?.skills || response?.data || response || [];
+      console.log('[SKILLS] Parsed:', skills);
+      return Array.isArray(skills) ? skills : [];
     },
   });
 
@@ -130,7 +138,10 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
   };
 
   const getSelectedCategory = () => {
-    return categories.find((cat: any) => cat._id === formik.values.category) || null;
+    // Check if category is stored as name or ID
+    const byName = categories.find((cat: any) => cat.name === formik.values.category);
+    const byId = categories.find((cat: any) => cat._id === formik.values.category);
+    return byName || byId || null;
   };
 
   const getSkillName = (skillId: string) => {

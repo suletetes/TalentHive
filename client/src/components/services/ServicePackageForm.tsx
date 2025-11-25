@@ -149,13 +149,17 @@ const ServicePackageForm: React.FC = () => {
       navigate('/dashboard');
     } catch (error: any) {
       if (error.inner) {
-        // Yup validation errors
+        // Yup validation errors - show specific error messages
         const newErrors: Record<string, string> = {};
+        const errorMessages: string[] = [];
         error.inner.forEach((err: any) => {
           newErrors[err.path] = err.message;
+          errorMessages.push(err.message);
         });
         setErrors(newErrors);
-        toast.error('Please fix the validation errors');
+        // Show first 3 specific errors in toast
+        const displayErrors = errorMessages.slice(0, 3).join('. ');
+        toast.error(displayErrors || 'Please fix the validation errors');
       } else {
         const message = error.response?.data?.message || 'Failed to create service package';
         toast.error(message);
