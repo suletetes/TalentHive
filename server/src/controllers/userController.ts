@@ -88,7 +88,9 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
     minRating, 
     maxRate, 
     availability,
-    search 
+    search,
+    sortBy = 'rating.average',
+    sortOrder = 'desc'
   } = req.query;
 
   const query: any = { 
@@ -124,12 +126,16 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
     ];
   }
 
+  // Build sort object
+  const sort: any = {};
+  sort[sortBy as string] = sortOrder === 'desc' ? -1 : 1;
+
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
   
   const [freelancers, total] = await Promise.all([
     User.find(query)
       .select('-password -emailVerificationToken -passwordResetToken')
-      .sort({ 'rating.average': -1, createdAt: -1 })
+      .sort(sort)
       .skip(skip)
       .limit(parseInt(limit as string)),
     User.countDocuments(query),

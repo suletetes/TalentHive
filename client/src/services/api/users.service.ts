@@ -33,6 +33,8 @@ export interface FreelancerFilters {
   search?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: string;
 }
 
 export interface PaginatedResponse<T> {

@@ -77,6 +77,9 @@ export interface ProjectFilters {
   page?: number;
   limit?: number;
   sort?: string;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: string;
 }
 
 export interface PaginatedResponse<T> {
