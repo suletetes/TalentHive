@@ -2,6 +2,24 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import { store } from '@/store';
 import { logout, setTokens } from '@/store/slices/authSlice';
 
+// List of endpoints that don't require authentication
+const PUBLIC_ENDPOINTS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh-token',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/projects', // Public project listing
+  '/freelancers', // Public freelancer listing
+];
+
+// Endpoints that should silently fail on 401 (non-critical background requests)
+const SILENT_FAIL_ENDPOINTS = [
+  '/notifications',
+  '/conversations',
+  '/messages/unread',
+];
+
 export class ApiCore {
   private api: AxiosInstance;
   private refreshPromise: Promise<any> | null = null;
@@ -17,6 +35,14 @@ export class ApiCore {
 
     this.setupRequestInterceptor();
     this.setupResponseInterceptor();
+  }
+
+  private isPublicEndpoint(url: string): boolean {
+    return PUBLIC_ENDPOINTS.some(endpoint => url.startsWith(endpoint));
+  }
+
+  private isSilentFailEndpoint(url: string): boolean {
+    return SILENT_FAIL_ENDPOINTS.some(endpoint => url.includes(endpoint));
   }
 
   private setupRequestInterceptor() {
@@ -39,10 +65,22 @@ export class ApiCore {
     this.api.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
-        const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+        const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean; _silentFail?: boolean };
+        const requestUrl = originalRequest.url || '';
 
-        // Handle 401 errors with token refresh
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Handle 401 errors
+        if (error.response?.status === 401) {
+          // For silent fail endpoints, just reject without logout or refresh
+          if (this.isSilentFailEndpoint(requestUrl)) {
+            console.debug(`[API] Silent 401 for ${requestUrl}`);
+            return Promise.reject(error);
+          }
+
+          // Don't retry if already retried
+          if (originalRequest._retry) {
+            return Promise.reject(error);
+          }
+
           originalRequest._retry = true;
 
           try {
@@ -77,8 +115,16 @@ export class ApiCore {
             return this.api(originalRequest);
           } catch (refreshError) {
             this.refreshPromise = null;
-            store.dispatch(logout());
-            window.location.href = '/login';
+            
+            // Only logout and redirect if not on a public page
+            const currentPath = window.location.pathname;
+            const isPublicPage = currentPath === '/' || currentPath === '/login' || currentPath === '/register';
+            
+            if (!isPublicPage) {
+              store.dispatch(logout());
+              window.location.href = '/login';
+            }
+            
             return Promise.reject(refreshError);
           }
         }

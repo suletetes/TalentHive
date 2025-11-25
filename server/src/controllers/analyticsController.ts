@@ -210,26 +210,16 @@ export const analyticsController = {
         },
       ]);
 
-      // Projects by category
+      // Projects by category - category is stored as a String directly
       const categoryDistribution = await Project.aggregate([
-        { $match: matchStage },
-        { $unwind: { path: '$category', preserveNullAndEmptyArrays: false } },
-        {
-          $lookup: {
-            from: 'categories',
-            localField: 'category',
-            foreignField: '_id',
-            as: 'categoryInfo',
-          },
-        },
-        { $unwind: { path: '$categoryInfo', preserveNullAndEmptyArrays: false } },
+        { $match: { ...matchStage, category: { $exists: true, $ne: null, $ne: '' } } },
         {
           $group: {
-            _id: '$categoryInfo.name',
+            _id: '$category',
             count: { $sum: 1 },
           },
         },
-        { $match: { _id: { $ne: null } } },
+        { $match: { _id: { $ne: null, $ne: '' } } },
         { $sort: { count: -1 } },
         { $limit: 10 },
       ]);
