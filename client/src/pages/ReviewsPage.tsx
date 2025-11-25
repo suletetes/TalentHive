@@ -62,36 +62,21 @@ export const ReviewsPage: React.FC = () => {
     queryKey: ['reviews', user?._id],
     queryFn: async () => {
       if (!user?._id) return [];
-      console.log(`[REVIEWS PAGE] ========== START FETCH ==========`);
-      console.log(`[REVIEWS PAGE] Fetching reviews for user: ${user._id}, role: ${user.role}`);
+      console.log(`[REVIEWS PAGE] Fetching reviews for user: ${user._id}`);
       try {
         const response: any = await reviewsService.getReviews(user._id);
         console.log(`[REVIEWS PAGE] Raw response:`, response);
-        console.log(`[REVIEWS PAGE] Response type:`, typeof response);
         
-        // Handle various response structures
+        // API returns { status: 'success', data: [...reviews] }
+        // reviewsService wraps axios response, so we get response.data from axios
         let reviews = [];
-        if (response?.data?.reviews && Array.isArray(response.data.reviews)) {
-          reviews = response.data.reviews;
-          console.log(`[REVIEWS PAGE] Using response.data.reviews`);
-        } else if (response?.reviews && Array.isArray(response.reviews)) {
-          reviews = response.reviews;
-          console.log(`[REVIEWS PAGE] Using response.reviews`);
-        } else if (response?.data && Array.isArray(response.data)) {
+        if (response?.data && Array.isArray(response.data)) {
           reviews = response.data;
-          console.log(`[REVIEWS PAGE] Using response.data array`);
         } else if (Array.isArray(response)) {
           reviews = response;
-          console.log(`[REVIEWS PAGE] Using response directly as array`);
         }
         
         console.log(`[REVIEWS PAGE] Found ${reviews.length} reviews`);
-        if (reviews.length > 0) {
-          console.log(`[REVIEWS PAGE] First review:`, reviews[0]);
-          console.log(`[REVIEWS PAGE] First review reviewer:`, reviews[0].reviewer);
-          console.log(`[REVIEWS PAGE] First review reviewee:`, reviews[0].reviewee);
-        }
-        console.log(`[REVIEWS PAGE] ========== END FETCH ==========`);
         return reviews;
       } catch (err) {
         console.error(`[REVIEWS PAGE ERROR]`, err);

@@ -348,11 +348,16 @@ export const ProjectDetailPage = () => {
                   color="error"
                   size="large"
                   fullWidth
-                  onClick={() => {
+                  onClick={async () => {
                     if (window.confirm('Are you sure you want to withdraw your proposal?')) {
-                      console.log(`[PROJECT DETAIL] Withdrawing proposal: ${userProposal?._id}`);
-                      // TODO: Implement withdraw proposal functionality
-                      toast.success('Proposal withdrawn');
+                      try {
+                        await proposalsService.withdrawProposal(userProposal?._id);
+                        toast.success('Proposal withdrawn successfully');
+                        queryClient.invalidateQueries({ queryKey: ['project', id] });
+                        queryClient.invalidateQueries({ queryKey: ['my-proposals'] });
+                      } catch (error: any) {
+                        toast.error(error.response?.data?.message || 'Failed to withdraw proposal');
+                      }
                     }
                   }}
                 >
@@ -492,7 +497,7 @@ export const ProjectDetailPage = () => {
                 <Typography variant="body2" color="text.secondary">
                   Proposals
                 </Typography>
-                <Typography variant="h6">0</Typography>
+                <Typography variant="h6">{project.proposals?.length || 0}</Typography>
               </Box>
               <Divider />
               <Box>

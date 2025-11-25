@@ -43,15 +43,31 @@ export const ServicesPage: React.FC = () => {
   const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Fetch service packages
+  // Fetch service packages for current user
   const { data: packagesData, isLoading, error, refetch } = useQuery({
-    queryKey: ['service-packages'],
+    queryKey: ['service-packages', user?._id],
     queryFn: async () => {
-      const response = await apiCore.get('/services/packages');
-      const data = response.data?.data || response.data || [];
-      return Array.isArray(data) ? data : [];
+      console.log(`[SERVICES PAGE] Fetching service packages for user: ${user?._id}`);
+      // Filter by current user's freelancer ID
+      const response = await apiCore.get(`/services/packages?freelancerId=${user?._id}`);
+      console.log(`[SERVICES PAGE] Raw response:`, response);
+      
+      // API returns { status: 'success', data: { packages: [...] } }
+      let packages = [];
+      if (response.data?.data?.packages && Array.isArray(response.data.data.packages)) {
+        packages = response.data.data.packages;
+      } else if (response.data?.packages && Array.isArray(response.data.packages)) {
+        packages = response.data.packages;
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        packages = response.data.data;
+      } else if (Array.isArray(response.data)) {
+        packages = response.data;
+      }
+      
+      console.log(`[SERVICES PAGE] Found ${packages.length} packages for user`);
+      return packages;
     },
-    enabled: !!user,
+    enabled: !!user?._id,
   });
 
   // Create/Update mutation
