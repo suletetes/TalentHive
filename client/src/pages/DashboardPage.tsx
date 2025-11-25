@@ -26,45 +26,29 @@ export const DashboardPage: React.FC = () => {
   const { data: statsData, isLoading } = useQuery({
     queryKey: ['dashboard-stats', user?.role],
     queryFn: async () => {
-      console.log(`[DASHBOARD] ========== START FETCH STATS ==========`);
-      console.log(`[DASHBOARD] User ID: ${user?._id}`);
-      console.log(`[DASHBOARD] User role: ${user?.role}`);
+      console.log(`[DASHBOARD] Fetching stats for ${user?.role}, user: ${user?._id}`);
       try {
         if (user?.role === 'admin') {
-          console.log(`[DASHBOARD] Fetching admin stats...`);
           const response = await adminService.getDashboardStats();
-          console.log(`[DASHBOARD] Admin response:`, response.data);
-          const stats = response.data.stats;
-          console.log(`[DASHBOARD] ✅ Admin stats:`, stats);
+          console.log(`[DASHBOARD] Admin response:`, response);
+          // adminService returns response.data, so check for stats
+          const stats = response?.data?.stats || response?.stats || response || {};
+          console.log(`[DASHBOARD] Admin stats:`, stats);
           return stats;
         } else if (user?.role === 'client' || user?.role === 'freelancer') {
-          console.log(`[DASHBOARD] Fetching ${user.role} stats...`);
-          const response = await apiService.get<any>('/projects/my/stats');
-          console.log(`[DASHBOARD] Raw response:`, response.data);
-          console.log(`[DASHBOARD] response.data type:`, typeof response.data);
-          console.log(`[DASHBOARD] response.data.data:`, response.data?.data);
+          // apiService.get returns response.data directly
+          const response: any = await apiService.get('/projects/my/stats');
+          console.log(`[DASHBOARD] Stats response:`, response);
           
-          const stats = response.data?.data || response.data || {};
-          console.log(`[DASHBOARD] Parsed stats object:`, stats);
-          console.log(`[DASHBOARD] ✅ Stats values breakdown:`);
-          console.log(`  - totalProjects: ${stats.totalProjects} (type: ${typeof stats.totalProjects})`);
-          console.log(`  - activeProjects: ${stats.activeProjects} (type: ${typeof stats.activeProjects})`);
-          console.log(`  - totalProposals: ${stats.totalProposals} (type: ${typeof stats.totalProposals})`);
-          console.log(`  - totalContracts: ${stats.totalContracts} (type: ${typeof stats.totalContracts})`);
-          console.log(`  - totalEarnings: ${stats.totalEarnings} (type: ${typeof stats.totalEarnings})`);
-          console.log(`  - receivedProposals: ${stats.receivedProposals} (type: ${typeof stats.receivedProposals})`);
-          console.log(`  - ongoingContracts: ${stats.ongoingContracts} (type: ${typeof stats.ongoingContracts})`);
-          console.log(`  - totalSpent: ${stats.totalSpent} (type: ${typeof stats.totalSpent})`);
-          
+          // Handle response structure - apiService returns response.data
+          const stats = response?.data || response || {};
+          console.log(`[DASHBOARD] Parsed stats:`, stats);
           return stats;
         }
-        console.log(`[DASHBOARD] Unknown role, returning empty stats`);
         return {};
       } catch (error) {
-        console.error(`[DASHBOARD ERROR] ❌ Error fetching stats:`, error);
+        console.error(`[DASHBOARD ERROR]`, error);
         throw error;
-      } finally {
-        console.log(`[DASHBOARD] ========== END FETCH STATS ==========`);
       }
     },
     enabled: !!user,

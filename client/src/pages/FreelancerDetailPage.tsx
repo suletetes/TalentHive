@@ -344,9 +344,10 @@ export const FreelancerDetailPage = () => {
                     <ListItem key={index} sx={{ px: 0 }}>
                       <ListItemText
                         primary={cert.name}
+                        secondaryTypographyProps={{ component: 'div' }}
                         secondary={
                           <>
-                            <Typography variant="body2" color="text.secondary" component="div">
+                            <Typography variant="body2" color="text.secondary">
                               {cert.issuer} • {formatDate(cert.dateEarned)}
                             </Typography>
                             {cert.verificationUrl && (
