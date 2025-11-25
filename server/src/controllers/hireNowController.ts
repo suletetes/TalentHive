@@ -213,39 +213,66 @@ export const acceptHireNowRequest = async (
       selectedFreelancer: hireNowRequest.freelancer._id,
     });
 
-    // Create contract with all required fields
-    console.log(`[HIRE NOW ACCEPT] Creating contract for hire now request: ${id}`);
-    console.log(`[HIRE NOW ACCEPT] Contract data:`, {
+    // Create a dummy proposal for the contract (required field)
+    const Proposal = (await import('@/models/Proposal')).Proposal;
+    const dummyProposal = await Proposal.create({
       project: project._id,
-      client: hireNowRequest.client._id,
       freelancer: hireNowRequest.freelancer._id,
-      terms: hireNowRequest.projectDescription || 'To be discussed',
-      endDate: new Date(Date.now() + 30*24*60*60*1000),
-      totalAmount: hireNowRequest.budget,
-      proposal: null,
+      coverLetter: `Direct hire request accepted: ${hireNowRequest.projectDescription}`,
+      bidAmount: hireNowRequest.budget,
+      timeline: hireNowRequest.timeline,
+      milestones: hireNowRequest.milestones.length > 0 ? hireNowRequest.milestones : [{
+        title: 'Project Completion',
+        description: 'Complete the project as described',
+        amount: hireNowRequest.budget,
+        dueDate: new Date(Date.now() + (hireNowRequest.timeline.duration * (hireNowRequest.timeline.unit === 'days' ? 1 : hireNowRequest.timeline.unit === 'weeks' ? 7 : 30) * 24 * 60 * 60 * 1000)),
+      }],
+      status: 'accepted',
     });
+
+    // Calculate end date based on timeline
+    const timelineMultiplier = hireNowRequest.timeline.unit === 'days' ? 1 : hireNowRequest.timeline.unit === 'weeks' ? 7 : 30;
+    const endDate = new Date(Date.now() + (hireNowRequest.timeline.duration * timelineMultiplier * 24 * 60 * 60 * 1000));
+
+    // Create contract with proper terms object
+    console.log(`[HIRE NOW ACCEPT] Creating contract for hire now request: ${id}`);
+    
+    const contractMilestones = hireNowRequest.milestones.length > 0 
+      ? hireNowRequest.milestones.map((m: any) => ({
+          title: m.title,
+          description: m.description || 'Milestone delivery',
+          amount: m.amount,
+          dueDate: m.dueDate || endDate,
+          status: 'pending',
+        }))
+      : [{
+          title: 'Project Completion',
+          description: 'Complete the project as described',
+          amount: hireNowRequest.budget,
+          dueDate: endDate,
+          status: 'pending',
+        }];
 
     const contract = await Contract.create({
       project: project._id,
       client: hireNowRequest.client._id,
       freelancer: hireNowRequest.freelancer._id,
+      proposal: dummyProposal._id,
       title: hireNowRequest.projectTitle,
       description: hireNowRequest.projectDescription,
-      terms: hireNowRequest.projectDescription || 'To be discussed', // Required field
-      endDate: new Date(Date.now() + 30*24*60*60*1000), // Required field - 30 days from now
-      totalAmount: hireNowRequest.budget, // Required field
-      proposal: null, // Required field
-      budget: hireNowRequest.budget,
-      timeline: hireNowRequest.timeline,
-      milestones: hireNowRequest.milestones.map((m: any) => ({
-        title: m.title,
-        description: m.description,
-        amount: m.amount,
-        dueDate: m.dueDate,
-        status: 'pending',
-      })),
-      status: 'active',
+      totalAmount: hireNowRequest.budget,
+      currency: 'USD',
       startDate: new Date(),
+      endDate: endDate,
+      status: 'active',
+      milestones: contractMilestones,
+      terms: {
+        paymentTerms: 'Payment will be released upon milestone completion and client approval.',
+        cancellationPolicy: 'Either party may cancel this contract with 7 days written notice.',
+        intellectualProperty: 'All work product created under this contract will be owned by the client.',
+        confidentiality: 'Both parties agree to maintain confidentiality of all project information.',
+        disputeResolution: 'Disputes will be resolved through the platform\'s dispute resolution process.',
+      },
     });
 
     console.log(`[HIRE NOW ACCEPT] Contract created successfully: ${contract._id}`);

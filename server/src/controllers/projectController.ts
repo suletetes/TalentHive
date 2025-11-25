@@ -609,7 +609,7 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
     const projectIds = await Project.find({ client: userId }).distinct('_id');
     console.log(`[DASHBOARD STATS] Found ${projectIds.length} projects for client`);
     
-    const [totalProjects, activeProjects, completedProjects, pendingProposals, totalSpent, totalContracts] = await Promise.all([
+    const [totalProjects, activeProjects, completedProjects, receivedProposals, totalSpent, totalContracts, ongoingContracts] = await Promise.all([
       Project.countDocuments({ client: userId }),
       Project.countDocuments({ client: userId, status: 'open' }),
       Project.countDocuments({ client: userId, status: 'completed' }),
@@ -622,15 +622,17 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
         { $group: { _id: null, total: { $sum: '$totalAmount' } } }
       ]).then(result => result[0]?.total || 0),
       Contract.countDocuments({ client: userId }),
+      Contract.countDocuments({ client: userId, status: 'active' }),
     ]);
     
     console.log(`[DASHBOARD STATS] Client stats:`, {
       totalProjects,
       activeProjects,
       completedProjects,
-      pendingProposals,
+      receivedProposals,
       totalSpent,
       totalContracts,
+      ongoingContracts,
     });
     
     return res.json({
@@ -639,9 +641,10 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
         totalProjects,
         activeProjects,
         completedProjects,
-        pendingProposals,
+        receivedProposals,
         totalSpent,
         totalContracts,
+        ongoingContracts,
       },
     });
   }
