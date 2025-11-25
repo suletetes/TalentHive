@@ -54,11 +54,9 @@ export const HireNowRequestsPage: React.FC = () => {
     queryFn: async () => {
       console.log(`[HIRE NOW REQUESTS] Fetching for freelancer: ${user?._id}`);
       try {
-        // apiService.get returns response.data directly
         const response: any = await apiService.get('/hire-now/received');
         console.log(`[HIRE NOW REQUESTS] Response:`, response);
         
-        // Handle response - apiService returns response.data
         let requests = [];
         if (Array.isArray(response)) {
           requests = response;
@@ -81,7 +79,6 @@ export const HireNowRequestsPage: React.FC = () => {
   // Accept hire now request
   const acceptMutation = useMutation({
     mutationFn: async (id: string) => {
-      // apiService.put returns response.data directly
       const response = await apiService.put(`/hire-now/${id}/accept`, {
         responseMessage,
       });
@@ -101,7 +98,6 @@ export const HireNowRequestsPage: React.FC = () => {
   // Reject hire now request
   const rejectMutation = useMutation({
     mutationFn: async (id: string) => {
-      // apiService.put returns response.data directly
       const response = await apiService.put(`/hire-now/${id}/reject`, {
         responseMessage,
       });
@@ -117,6 +113,26 @@ export const HireNowRequestsPage: React.FC = () => {
       toast.error(error.response?.data?.message || error.message || 'Failed to decline request');
     },
   });
+
+  // ALL HOOKS MUST BE BEFORE ANY CONDITIONAL RETURNS
+  const requests = requestsData || [];
+  
+  // Filter requests by tab - useMemo MUST be called before conditional returns
+  const filteredRequests = useMemo(() => {
+    switch (tabValue) {
+      case 0: return requests.filter((r: any) => r.status === 'pending');
+      case 1: return requests.filter((r: any) => r.status === 'accepted');
+      case 2: return requests.filter((r: any) => r.status === 'rejected');
+      default: return requests;
+    }
+  }, [requests, tabValue]);
+
+  const pendingCount = requests.filter((r: any) => r.status === 'pending').length;
+  const acceptedCount = requests.filter((r: any) => r.status === 'accepted').length;
+  const rejectedCount = requests.filter((r: any) => r.status === 'rejected').length;
+
+  const totalPages = Math.ceil(filteredRequests.length / limit);
+  const paginatedRequests = filteredRequests.slice((page - 1) * limit, page * limit);
 
   const handleOpenDialog = (request: any, action: 'accept' | 'reject') => {
     setSelectedRequest(request);
@@ -140,6 +156,12 @@ export const HireNowRequestsPage: React.FC = () => {
     }
   };
 
+  const handleTabChange = (_: any, newValue: number) => {
+    setTabValue(newValue);
+    setPage(1);
+  };
+
+  // Conditional returns AFTER all hooks
   if (user?.role !== 'freelancer') {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -163,31 +185,6 @@ export const HireNowRequestsPage: React.FC = () => {
       </Container>
     );
   }
-
-  const requests = requestsData || [];
-  
-  // Filter requests by tab
-  const filteredRequests = useMemo(() => {
-    switch (tabValue) {
-      case 0: return requests.filter((r: any) => r.status === 'pending');
-      case 1: return requests.filter((r: any) => r.status === 'accepted');
-      case 2: return requests.filter((r: any) => r.status === 'rejected');
-      default: return requests;
-    }
-  }, [requests, tabValue]);
-
-  const pendingCount = requests.filter((r: any) => r.status === 'pending').length;
-  const acceptedCount = requests.filter((r: any) => r.status === 'accepted').length;
-  const rejectedCount = requests.filter((r: any) => r.status === 'rejected').length;
-
-  const totalPages = Math.ceil(filteredRequests.length / limit);
-  const paginatedRequests = filteredRequests.slice((page - 1) * limit, page * limit);
-
-  // Reset page when tab changes
-  const handleTabChange = (_: any, newValue: number) => {
-    setTabValue(newValue);
-    setPage(1);
-  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Container,
   Typography,
@@ -17,6 +17,7 @@ import {
   Alert,
   Avatar,
   Rating,
+  Pagination,
 } from '@mui/material';
 import { Message as MessageIcon } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -29,12 +30,15 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
+const ITEMS_PER_PAGE = 5;
+
 export const ContractsPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [signDialogOpen, setSignDialogOpen] = useState(false);
+  const [page, setPage] = useState(1);
 
   // Helper to get the other party in the contract
   const getOtherParty = (contract: Contract) => {
@@ -146,6 +150,13 @@ export const ContractsPage: React.FC = () => {
   }
 
   const contracts = data || [];
+  
+  // Pagination
+  const totalPages = Math.ceil(contracts.length / ITEMS_PER_PAGE);
+  const paginatedContracts = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return contracts.slice(start, start + ITEMS_PER_PAGE);
+  }, [contracts, page]);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -165,8 +176,9 @@ export const ContractsPage: React.FC = () => {
           </CardContent>
         </Card>
       ) : (
+        <>
         <Grid container spacing={3}>
-          {contracts.map((contract) => (
+          {paginatedContracts.map((contract) => (
             <Grid item xs={12} key={contract._id}>
               <Card>
                 <CardContent>
@@ -289,6 +301,19 @@ export const ContractsPage: React.FC = () => {
             </Grid>
           ))}
         </Grid>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(_, value) => setPage(value)}
+              color="primary"
+            />
+          </Box>
+        )}
+        </>
       )}
 
       {/* Contract Details Dialog */}
