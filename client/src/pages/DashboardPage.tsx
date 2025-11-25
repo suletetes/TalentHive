@@ -26,23 +26,28 @@ export const DashboardPage: React.FC = () => {
   const { data: statsData, isLoading } = useQuery({
     queryKey: ['dashboard-stats', user?.role],
     queryFn: async () => {
+      console.log(`[DASHBOARD] ========== START FETCH STATS ==========`);
       console.log(`[DASHBOARD] Fetching stats for ${user?.role}, user: ${user?._id}`);
       try {
         if (user?.role === 'admin') {
           const response = await adminService.getDashboardStats();
           console.log(`[DASHBOARD] Admin response:`, response);
-          // adminService returns response.data, so check for stats
           const stats = response?.data?.stats || response?.stats || response || {};
           console.log(`[DASHBOARD] Admin stats:`, stats);
           return stats;
         } else if (user?.role === 'client' || user?.role === 'freelancer') {
           // apiService.get returns response.data directly
           const response: any = await apiService.get('/projects/my/stats');
-          console.log(`[DASHBOARD] Stats response:`, response);
+          console.log(`[DASHBOARD] Stats raw response:`, response);
+          console.log(`[DASHBOARD] Response type:`, typeof response);
           
           // Handle response structure - apiService returns response.data
           const stats = response?.data || response || {};
           console.log(`[DASHBOARD] Parsed stats:`, stats);
+          console.log(`[DASHBOARD] totalEarnings:`, stats.totalEarnings);
+          console.log(`[DASHBOARD] totalProposals:`, stats.totalProposals);
+          console.log(`[DASHBOARD] activeProjects:`, stats.activeProjects);
+          console.log(`[DASHBOARD] ========== END FETCH STATS ==========`);
           return stats;
         }
         return {};

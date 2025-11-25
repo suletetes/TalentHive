@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Container,
   Typography,
@@ -22,6 +22,7 @@ import {
   TextField,
   Alert,
   Divider,
+  Pagination,
 } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
@@ -32,9 +33,12 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
+const ITEMS_PER_PAGE = 10;
+
 export const PaymentsPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
 
   // Fetch transaction history
   const { data: transactionsData, isLoading: transactionsLoading, error: transactionsError, refetch: refetchTransactions } = useQuery({
@@ -80,6 +84,13 @@ export const PaymentsPage: React.FC = () => {
   }
 
   const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+  
+  // Pagination
+  const totalPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
+  const paginatedTransactions = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return transactions.slice(start, start + ITEMS_PER_PAGE);
+  }, [transactions, page]);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -136,6 +147,7 @@ export const PaymentsPage: React.FC = () => {
                   No transactions yet
                 </Typography>
               ) : (
+                <>
                 <TableContainer>
                   <Table>
                     <TableHead>
@@ -149,7 +161,7 @@ export const PaymentsPage: React.FC = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {transactions.map((transaction: Transaction) => (
+                      {paginatedTransactions.map((transaction: Transaction) => (
                         <TableRow key={transaction._id}>
                           <TableCell>
                             {format(new Date(transaction.createdAt), 'MMM dd, yyyy HH:mm')}
@@ -190,6 +202,23 @@ export const PaymentsPage: React.FC = () => {
                     </TableBody>
                   </Table>
                 </TableContainer>
+                
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                    <Pagination
+                      count={totalPages}
+                      page={page}
+                      onChange={(_, value) => setPage(value)}
+                      color="primary"
+                    />
+                  </Box>
+                )}
+                
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: 'center' }}>
+                  Showing {paginatedTransactions.length} of {transactions.length} transactions
+                </Typography>
+                </>
               )}
             </CardContent>
           </Card>
