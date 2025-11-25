@@ -52,6 +52,16 @@ export const PaymentsPage: React.FC = () => {
     },
   });
 
+  // ALL HOOKS MUST BE BEFORE CONDITIONAL RETURNS
+  const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
+  
+  // Pagination - useMemo MUST be before conditional returns
+  const totalPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
+  const paginatedTransactions = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return transactions.slice(start, start + ITEMS_PER_PAGE);
+  }, [transactions, page]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'released':
@@ -71,6 +81,7 @@ export const PaymentsPage: React.FC = () => {
     }
   };
 
+  // Conditional returns AFTER all hooks
   if (transactionsLoading) {
     return <LoadingSpinner message="Loading payment information..." />;
   }
@@ -82,15 +93,6 @@ export const PaymentsPage: React.FC = () => {
       </Container>
     );
   }
-
-  const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.transactions || []);
-  
-  // Pagination
-  const totalPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
-  const paginatedTransactions = useMemo(() => {
-    const start = (page - 1) * ITEMS_PER_PAGE;
-    return transactions.slice(start, start + ITEMS_PER_PAGE);
-  }, [transactions, page]);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>

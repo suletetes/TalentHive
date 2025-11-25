@@ -89,18 +89,18 @@ export const TimeTrackingPage: React.FC = () => {
     queryFn: async () => {
       console.log(`[TIME TRACKING] Fetching projects for dropdown, user role: ${user?.role}`);
       try {
-        // Use different endpoint based on role
+        // Use my/projects for clients, /projects for freelancers
         const endpoint = user?.role === 'client' ? '/projects/my/projects' : '/projects';
         const response: any = await apiService.get(endpoint);
         console.log(`[TIME TRACKING] Projects response:`, response);
         
-        // apiService.get returns response.data directly
+        // API returns { status: 'success', data: { projects: [...] } }
         let projects = [];
         if (response?.data?.projects && Array.isArray(response.data.projects)) {
           projects = response.data.projects;
         } else if (response?.projects && Array.isArray(response.projects)) {
           projects = response.projects;
-        } else if (Array.isArray(response?.data)) {
+        } else if (response?.data && Array.isArray(response.data)) {
           projects = response.data;
         } else if (Array.isArray(response)) {
           projects = response;

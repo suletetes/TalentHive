@@ -52,9 +52,26 @@ export const ContractsPage: React.FC = () => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['my-contracts'],
     queryFn: async () => {
+      console.log(`[CONTRACTS PAGE] Fetching contracts...`);
       const response = await contractsService.getMyContracts();
-      // Handle both response structures
-      return response.data?.contracts || response.data || [];
+      console.log(`[CONTRACTS PAGE] Raw response:`, response);
+      
+      // API returns { status: 'success', data: { contracts: [...] } }
+      let contracts = [];
+      if (response?.data?.data?.contracts && Array.isArray(response.data.data.contracts)) {
+        contracts = response.data.data.contracts;
+      } else if (response?.data?.contracts && Array.isArray(response.data.contracts)) {
+        contracts = response.data.contracts;
+      } else if (response?.contracts && Array.isArray(response.contracts)) {
+        contracts = response.contracts;
+      } else if (Array.isArray(response?.data)) {
+        contracts = response.data;
+      } else if (Array.isArray(response)) {
+        contracts = response;
+      }
+      
+      console.log(`[CONTRACTS PAGE] Found ${contracts.length} contracts`);
+      return contracts;
     },
   });
 
@@ -137,6 +154,17 @@ export const ContractsPage: React.FC = () => {
     return false;
   };
 
+  // ALL HOOKS MUST BE BEFORE CONDITIONAL RETURNS
+  const contracts = data || [];
+  
+  // Pagination - useMemo MUST be before conditional returns
+  const totalPages = Math.ceil(contracts.length / ITEMS_PER_PAGE);
+  const paginatedContracts = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return contracts.slice(start, start + ITEMS_PER_PAGE);
+  }, [contracts, page]);
+
+  // Conditional returns AFTER all hooks
   if (isLoading) {
     return <LoadingSpinner message="Loading contracts..." />;
   }
@@ -148,15 +176,6 @@ export const ContractsPage: React.FC = () => {
       </Container>
     );
   }
-
-  const contracts = data || [];
-  
-  // Pagination
-  const totalPages = Math.ceil(contracts.length / ITEMS_PER_PAGE);
-  const paginatedContracts = useMemo(() => {
-    const start = (page - 1) * ITEMS_PER_PAGE;
-    return contracts.slice(start, start + ITEMS_PER_PAGE);
-  }, [contracts, page]);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
