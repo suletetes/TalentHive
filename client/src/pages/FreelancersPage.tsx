@@ -55,8 +55,10 @@ export const FreelancersPage = () => {
   const { data: skillsData } = useQuery({
     queryKey: ['skills'],
     queryFn: async () => {
-      const response = await apiService.get('/skills');
-      return response.data?.data || response.data || [];
+      // apiService.get returns response.data directly
+      const response: any = await apiService.get('/skills');
+      const skills = response?.data?.skills || response?.skills || response?.data || response || [];
+      return Array.isArray(skills) ? skills : [];
     },
   });
 
@@ -159,10 +161,7 @@ export const FreelancersPage = () => {
               fullWidth
               placeholder="Search freelancers by name or skills..."
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(1);
-              }}
+              onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -35,10 +35,26 @@ export const ProposalList: React.FC<ProposalListProps> = ({
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('submittedAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const toast = useToast();
   const socket = useSocket();
+  const debounceTimer = useRef<NodeJS.Timeout>();
+
+  // Debounce search term
+  useEffect(() => {
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPage(1);
+    }, 500);
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [searchTerm]);
 
   const limit = 10;
 
@@ -55,7 +71,7 @@ export const ProposalList: React.FC<ProposalListProps> = ({
     page,
     limit,
     status: statusFilter !== 'all' ? statusFilter : undefined,
-    search: searchTerm || undefined,
+    search: debouncedSearchTerm || undefined,
     sortBy,
     sortOrder,
   });

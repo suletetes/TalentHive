@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -45,13 +45,29 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ userRole }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const debounceTimer = useRef<NodeJS.Timeout>();
 
   const limit = 10;
 
+  // Debounce search term
+  useEffect(() => {
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPage(1);
+    }, 500);
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [searchTerm]);
+
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['payments', 'history', page, statusFilter, typeFilter, searchTerm],
+    queryKey: ['payments', 'history', page, statusFilter, typeFilter, debouncedSearchTerm],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -66,12 +82,12 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ userRole }) => {
         params.append('type', typeFilter);
       }
 
-      if (searchTerm) {
-        params.append('search', searchTerm);
+      if (debouncedSearchTerm) {
+        params.append('search', debouncedSearchTerm);
       }
 
-      const response = await apiService.get(`/payments/history?${params}`);
-      return response.data;
+      const response: any = await apiService.get(`/payments/history?${params}`);
+      return response?.data || response || {};
     },
   });
 
