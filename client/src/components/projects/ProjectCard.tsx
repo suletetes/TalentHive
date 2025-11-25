@@ -22,6 +22,51 @@ import {
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 
+// Helper function to get category display name
+const getCategoryDisplay = (category: any): string => {
+  if (!category) return 'General';
+  
+  // If category is an object with name property (populated)
+  if (typeof category === 'object' && category?.name) {
+    return category.name;
+  }
+  
+  // If category is a string
+  if (typeof category === 'string') {
+    // Check if it looks like a MongoDB ObjectId (24 hex characters)
+    const isObjectId = /^[a-f\d]{24}$/i.test(category);
+    if (isObjectId) {
+      return 'General'; // Return default instead of showing ID
+    }
+    // It's a regular string (category name)
+    return category;
+  }
+  
+  return 'General';
+};
+
+// Helper function to get skill display name
+const getSkillDisplay = (skill: any): string => {
+  if (!skill) return '';
+  
+  // If skill is an object with name property (populated)
+  if (typeof skill === 'object' && skill?.name) {
+    return skill.name;
+  }
+  
+  // If skill is a string
+  if (typeof skill === 'string') {
+    // Check if it looks like a MongoDB ObjectId (24 hex characters)
+    const isObjectId = /^[a-f\d]{24}$/i.test(skill);
+    if (isObjectId) {
+      return ''; // Return empty to filter out
+    }
+    return skill;
+  }
+  
+  return '';
+};
+
 interface ProjectCardProps {
   project: {
     _id: string;
@@ -191,7 +236,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               </Tooltip>
             )}
             <Typography variant="body2" color="text.secondary">
-              {typeof project.category === 'object' ? project.category?.name : project.category}
+              {getCategoryDisplay(project.category)}
             </Typography>
             {isDeadlineApproaching() && (
               <Chip
@@ -225,17 +270,21 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {/* Skills */}
         <Box sx={{ mb: 2 }}>
           <Box display="flex" flexWrap="wrap" gap={0.5}>
-            {project.skills.slice(0, 5).map((skill) => (
+            {project.skills
+              .map((skill) => getSkillDisplay(skill))
+              .filter((s) => s) // Filter out empty strings (ObjectIds)
+              .slice(0, 5)
+              .map((skillName) => (
+                <Chip
+                  key={skillName}
+                  label={skillName}
+                  size="small"
+                  variant="outlined"
+                />
+              ))}
+            {project.skills.filter((s) => getSkillDisplay(s)).length > 5 && (
               <Chip
-                key={skill}
-                label={skill}
-                size="small"
-                variant="outlined"
-              />
-            ))}
-            {project.skills.length > 5 && (
-              <Chip
-                label={`+${project.skills.length - 5} more`}
+                label={`+${project.skills.filter((s) => getSkillDisplay(s)).length - 5} more`}
                 size="small"
                 variant="outlined"
                 color="primary"

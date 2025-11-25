@@ -41,6 +41,51 @@ import { MessageButton } from '@/components/messaging/MessageButton';
 import { format, isValid, parseISO } from 'date-fns';
 import toast from 'react-hot-toast';
 
+// Helper function to get category display name
+const getCategoryDisplay = (category: any): string => {
+  if (!category) return 'General';
+  
+  // If category is an object with name property (populated)
+  if (typeof category === 'object' && category?.name) {
+    return category.name;
+  }
+  
+  // If category is a string
+  if (typeof category === 'string') {
+    // Check if it looks like a MongoDB ObjectId (24 hex characters)
+    const isObjectId = /^[a-f\d]{24}$/i.test(category);
+    if (isObjectId) {
+      return 'General'; // Return default instead of showing ID
+    }
+    // It's a regular string (category name)
+    return category;
+  }
+  
+  return 'General';
+};
+
+// Helper function to get skill display name
+const getSkillDisplay = (skill: any): string => {
+  if (!skill) return '';
+  
+  // If skill is an object with name property (populated)
+  if (typeof skill === 'object' && skill?.name) {
+    return skill.name;
+  }
+  
+  // If skill is a string
+  if (typeof skill === 'string') {
+    // Check if it looks like a MongoDB ObjectId (24 hex characters)
+    const isObjectId = /^[a-f\d]{24}$/i.test(skill);
+    if (isObjectId) {
+      return ''; // Return empty to filter out
+    }
+    return skill;
+  }
+  
+  return '';
+};
+
 interface Milestone {
   title: string;
   description: string;
@@ -194,7 +239,7 @@ export const ProjectDetailPage = () => {
               {project.title}
             </Typography>
             <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
-              <Chip label={typeof project.category === 'object' ? project.category?.name : project.category} color="primary" size="small" />
+              <Chip label={getCategoryDisplay(project.category)} color="primary" size="small" />
               <Chip
                 label={project.status?.replace('_', ' ').toUpperCase()}
                 color={project.status === 'open' ? 'success' : 'default'}
@@ -365,16 +410,16 @@ export const ProjectDetailPage = () => {
                 Required Skills
               </Typography>
               <Box display="flex" gap={1} flexWrap="wrap">
-                {project.skills.map((skill) => {
-                  console.log(`[PROJECT DETAIL SKILLS] Skill:`, skill, `Type:`, typeof skill);
-                  return (
+                {project.skills
+                  .map((skill) => getSkillDisplay(skill))
+                  .filter((s) => s) // Filter out empty strings (ObjectIds)
+                  .map((skillName) => (
                     <Chip 
-                      key={typeof skill === 'object' ? skill?._id : skill} 
-                      label={typeof skill === 'object' ? skill?.name : skill} 
+                      key={skillName} 
+                      label={skillName} 
                       variant="outlined" 
                     />
-                  );
-                })}
+                  ))}
               </Box>
             </Paper>
           )}

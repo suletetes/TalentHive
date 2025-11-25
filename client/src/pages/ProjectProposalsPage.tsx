@@ -34,7 +34,7 @@ export const ProjectProposalsPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ type: 'accept' | 'reject'; proposalId: string } | null>(null);
-  const limit = 10;
+  const limit = 5; // Show 5 proposals per page for better UX
 
   // Fetch project details
   const { data: projectData, isLoading: projectLoading } = useQuery({
