@@ -77,34 +77,18 @@ export const DashboardPage: React.FC = () => {
   });
 
   const profile = (profileData as any)?.data?.data?.user;
+  const stats = statsData || {};
+
+  // Log stats rendering - MUST be before any conditional returns to avoid hooks error
+  React.useEffect(() => {
+    if (Object.keys(stats).length > 0) {
+      console.log(`[DASHBOARD RENDER] Stats:`, stats);
+    }
+  }, [stats]);
 
   if (isLoading) {
     return <LoadingSpinner />;
   }
-
-  const stats = statsData || {};
-
-  // Log stats rendering - moved outside conditional renders to avoid hooks error
-  React.useEffect(() => {
-    if (Object.keys(stats).length > 0) {
-      console.log(`[DASHBOARD RENDER] ========== STATS RENDERING ==========`);
-      console.log(`[DASHBOARD RENDER] User role: ${user?.role}`);
-      console.log(`[DASHBOARD RENDER] Stats object:`, stats);
-      console.log(`[DASHBOARD RENDER] Stats keys:`, Object.keys(stats));
-      console.log(`[DASHBOARD RENDER] Stats values:`);
-      Object.entries(stats).forEach(([key, value]) => {
-        console.log(`  - ${key}: ${value} (type: ${typeof value})`);
-      });
-      
-      // Check which stats are zero or undefined
-      const zeroStats = Object.entries(stats).filter(([_, value]) => value === 0 || value === undefined || value === null);
-      if (zeroStats.length > 0) {
-        console.warn(`[DASHBOARD RENDER] ⚠️ Zero/undefined stats:`, zeroStats.map(([k]) => k).join(', '));
-      }
-      
-      console.log(`[DASHBOARD RENDER] ========== END STATS RENDERING ==========`);
-    }
-  }, [stats, user?.role]);
 
   // Admin Dashboard
   if (user?.role === 'admin') {

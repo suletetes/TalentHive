@@ -89,9 +89,10 @@ export const TimeTrackingPage: React.FC = () => {
     queryFn: async () => {
       console.log(`[TIME TRACKING] Fetching projects for dropdown...`);
       try {
-        const response = await apiService.get('/projects/my');
-        console.log(`[TIME TRACKING] Projects response:`, response.data);
-        const projects = response.data?.data?.projects || response.data?.data || [];
+        // apiService.get returns response.data directly, so we access .data.projects
+        const response: any = await apiService.get('/projects/my/projects');
+        console.log(`[TIME TRACKING] Projects response:`, response);
+        const projects = response?.data?.projects || response?.projects || response?.data || [];
         console.log(`[TIME TRACKING] ✅ Found ${projects.length} projects`);
         return projects;
       } catch (err: any) {
@@ -108,9 +109,10 @@ export const TimeTrackingPage: React.FC = () => {
     queryFn: async () => {
       console.log(`[TIME TRACKING] Fetching contracts for dropdown...`);
       try {
-        const response = await apiService.get('/contracts/my');
-        console.log(`[TIME TRACKING] Contracts response:`, response.data);
-        const contracts = response.data?.data?.contracts || response.data?.data || [];
+        // apiService.get returns response.data directly
+        const response: any = await apiService.get('/contracts/my');
+        console.log(`[TIME TRACKING] Contracts response:`, response);
+        const contracts = response?.data?.contracts || response?.contracts || response?.data || [];
         console.log(`[TIME TRACKING] ✅ Found ${contracts.length} contracts`);
         return contracts;
       } catch (err: any) {

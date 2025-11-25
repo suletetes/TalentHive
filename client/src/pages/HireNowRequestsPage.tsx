@@ -84,10 +84,11 @@ export const HireNowRequestsPage: React.FC = () => {
   // Accept hire now request
   const acceptMutation = useMutation({
     mutationFn: async (id: string) => {
+      // apiService.put returns response.data directly
       const response = await apiService.put(`/hire-now/${id}/accept`, {
         responseMessage,
       });
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       toast.success('Hire Now request accepted! Contract created.');
@@ -95,25 +96,28 @@ export const HireNowRequestsPage: React.FC = () => {
       handleCloseDialog();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to accept request');
+      console.error('[HIRE NOW ACCEPT ERROR]', error);
+      toast.error(error.response?.data?.message || error.message || 'Failed to accept request');
     },
   });
 
   // Reject hire now request
   const rejectMutation = useMutation({
     mutationFn: async (id: string) => {
+      // apiService.put returns response.data directly
       const response = await apiService.put(`/hire-now/${id}/reject`, {
         responseMessage,
       });
-      return response.data;
+      return response;
     },
     onSuccess: () => {
-      toast.success('Hire Now request rejected.');
+      toast.success('Hire Now request declined.');
       queryClient.invalidateQueries({ queryKey: ['hire-now-received'] });
       handleCloseDialog();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to reject request');
+      console.error('[HIRE NOW REJECT ERROR]', error);
+      toast.error(error.response?.data?.message || error.message || 'Failed to decline request');
     },
   });
 
