@@ -319,7 +319,7 @@ export const acceptProposal = catchAsync(async (req: AuthRequest, res: Response,
   const { id } = req.params;
   const { feedback } = req.body;
 
-  const proposal = await Proposal.findById(id).populate('project');
+  const proposal = await Proposal.findById(id).populate('project').populate('freelancer');
   if (!proposal) {
     return next(new AppError('Proposal not found', 404));
   }
@@ -359,9 +359,71 @@ export const acceptProposal = catchAsync(async (req: AuthRequest, res: Response,
     }
   );
 
+  // AUTO-CREATE CONTRACT when proposal is accepted
+  const { Contract } = await import('@/models/Contract');
+  
+  // Calculate end date based on proposal timeline
+  const startDate = new Date();
+  let endDate = new Date();
+  const duration = proposal.timeline?.duration || 30;
+  const unit = proposal.timeline?.unit || 'days';
+  
+  if (unit === 'days') {
+    endDate.setDate(endDate.getDate() + duration);
+  } else if (unit === 'weeks') {
+    endDate.setDate(endDate.getDate() + (duration * 7));
+  } else if (unit === 'months') {
+    endDate.setMonth(endDate.getMonth() + duration);
+  }
+
+  // Create milestones from proposal or default single milestone
+  const milestones = proposal.milestones && proposal.milestones.length > 0
+    ? proposal.milestones.map((m: any) => ({
+        title: m.title,
+        description: m.description || '',
+        amount: m.amount,
+        dueDate: m.dueDate || endDate,
+        status: 'pending',
+      }))
+    : [{
+        title: 'Project Completion',
+        description: 'Complete the project as described',
+        amount: proposal.bidAmount,
+        dueDate: endDate,
+        status: 'pending',
+      }];
+
+  const contract = new Contract({
+    project: project._id,
+    client: project.client,
+    freelancer: proposal.freelancer,
+    proposal: proposal._id,
+    title: project.title,
+    description: project.description,
+    totalAmount: proposal.bidAmount,
+    budget: {
+      amount: proposal.bidAmount,
+      type: project.budget?.type || 'fixed',
+    },
+    startDate,
+    endDate,
+    milestones,
+    terms: {
+      paymentTerms: 'Payment will be released upon milestone completion and client approval.',
+      cancellationPolicy: 'Either party may cancel this contract with 7 days written notice.',
+      intellectualProperty: 'All work product created under this contract will be owned by the client.',
+      confidentiality: 'Both parties agree to maintain confidentiality of all project information.',
+      disputeResolution: 'Disputes will be resolved through the platform\'s dispute resolution process.',
+    },
+    status: 'draft',
+  });
+
+  await contract.save();
+
   // Clear cache
   await deleteCache(`proposals:project:${project._id}`);
   await deleteCache('projects:*');
+  await deleteCache('contracts:*');
 
   // Send notification to freelancer
   try {
@@ -379,9 +441,10 @@ export const acceptProposal = catchAsync(async (req: AuthRequest, res: Response,
 
   res.json({
     status: 'success',
-    message: 'Proposal accepted successfully',
+    message: 'Proposal accepted and contract created successfully',
     data: {
       proposal: updatedProposal,
+      contract,
     },
   });
 });

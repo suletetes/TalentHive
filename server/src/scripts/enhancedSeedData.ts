@@ -197,7 +197,7 @@ export function generateAdditionalProjects(users: any[], categories: any[]) {
       title,
       description,
       client: client._id,
-      category: category.name,
+      category: category._id, // Use ObjectId instead of name for proper population
       skills: skillSets[i % skillSets.length],
       budget: {
         type: i % 2 === 0 ? 'fixed' : 'hourly',
