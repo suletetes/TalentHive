@@ -87,7 +87,9 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
 
   const categories = categoriesData || [];
   const skills = skillsData || [];
-  const organizations = organizationsData?.data || [];
+  // API returns { status: 'success', data: [...organizations] }
+  const organizations = Array.isArray(organizationsData?.data) ? organizationsData.data : 
+                        Array.isArray(organizationsData) ? organizationsData : [];
 
   const handleSkillAdd = (skillId: string) => {
     if (skillId && !formik.values.skills.includes(skillId)) {
