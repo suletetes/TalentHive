@@ -26,11 +26,24 @@ import { RootState } from '@/store';
 
 // Helper function to get category display name
 const getCategoryDisplay = (category: any): string => {
-  if (!category) return 'General';
+  console.log(`[CATEGORY DEBUG] Input:`, category, `Type:`, typeof category);
   
-  // If category is an object with name property (populated)
-  if (typeof category === 'object' && category?.name) {
-    return category.name;
+  if (!category) {
+    console.log(`[CATEGORY DEBUG] No category, returning General`);
+    return 'General';
+  }
+  
+  // If category is an object with name property (populated from DB)
+  if (typeof category === 'object' && category !== null) {
+    if (category.name) {
+      console.log(`[CATEGORY DEBUG] Found object with name:`, category.name);
+      return category.name;
+    }
+    // Check for _id only (not populated)
+    if (category._id && !category.name) {
+      console.log(`[CATEGORY DEBUG] Object has _id but no name, returning General`);
+      return 'General';
+    }
   }
   
   // If category is a string
@@ -38,12 +51,15 @@ const getCategoryDisplay = (category: any): string => {
     // Check if it looks like a MongoDB ObjectId (24 hex characters)
     const isObjectId = /^[a-f\d]{24}$/i.test(category);
     if (isObjectId) {
-      return 'General'; // Return default instead of showing ID
+      console.log(`[CATEGORY DEBUG] String is ObjectId, returning General`);
+      return 'General';
     }
     // It's a regular string (category name)
+    console.log(`[CATEGORY DEBUG] String category:`, category);
     return category;
   }
   
+  console.log(`[CATEGORY DEBUG] Fallback to General`);
   return 'General';
 };
 
@@ -377,8 +393,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             View Details
           </Button>
           
-          {/* View Proposals Button - Only for project owner */}
-          {project.proposalCount > 0 && isProjectOwner && (
+          {/* View Proposals Button - For project owner (client) */}
+          {project.proposalCount > 0 && (isProjectOwner || (isClient && project.client?._id === user?._id)) && (
             <Button
               variant="outlined"
               component={Link}

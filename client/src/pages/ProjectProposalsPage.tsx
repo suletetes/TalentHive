@@ -45,14 +45,16 @@ export const ProjectProposalsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('newest');
-  const limit = 5; // Show 5 proposals per page for better UX
+  const limit = 5;
 
   // Fetch project details
   const { data: projectData, isLoading: projectLoading } = useQuery({
     queryKey: ['project', projectId],
     queryFn: async () => {
-      const response = await apiService.get(`/projects/${projectId}`);
-      return response.data?.data || response.data || {};
+      console.log(`[PROJECT PROPOSALS] Fetching project: ${projectId}`);
+      const response: any = await apiService.get(`/projects/${projectId}`);
+      console.log(`[PROJECT PROPOSALS] Project response:`, response);
+      return response?.data || response || {};
     },
     enabled: !!projectId,
   });
@@ -63,11 +65,9 @@ export const ProjectProposalsPage: React.FC = () => {
     queryFn: async () => {
       console.log(`[PROJECT PROPOSALS] Fetching proposals for project: ${projectId}`);
       try {
-        // apiService.get returns response.data directly
         const response: any = await apiService.get(`/proposals/project/${projectId}`);
         console.log(`[PROJECT PROPOSALS] Response:`, response);
         
-        // Handle response - apiService returns response.data, so check for proposals directly
         let proposals = [];
         if (response?.proposals && Array.isArray(response.proposals)) {
           proposals = response.proposals;
@@ -87,7 +87,7 @@ export const ProjectProposalsPage: React.FC = () => {
     enabled: !!projectId,
   });
 
-  // Accept proposal mutation - uses POST not PUT
+  // Accept proposal mutation
   const acceptMutation = useMutation({
     mutationFn: async (proposalId: string) => {
       return apiService.post(`/proposals/${proposalId}/accept`, {});
@@ -103,7 +103,7 @@ export const ProjectProposalsPage: React.FC = () => {
     },
   });
 
-  // Reject proposal mutation - uses POST not PUT
+  // Reject proposal mutation
   const rejectMutation = useMutation({
     mutationFn: async (proposalId: string) => {
       return apiService.post(`/proposals/${proposalId}/reject`, {});
@@ -117,6 +117,52 @@ export const ProjectProposalsPage: React.FC = () => {
     },
   });
 
+  // ALL useMemo hooks MUST be before conditional returns
+  const project = projectData;
+  const allProposals = proposalsData || [];
+
+  // Filter and sort proposals
+  const filteredProposals = useMemo(() => {
+    let result = [...allProposals];
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter((p: any) => 
+        p.freelancer?.profile?.firstName?.toLowerCase().includes(term) ||
+        p.freelancer?.profile?.lastName?.toLowerCase().includes(term) ||
+        p.coverLetter?.toLowerCase().includes(term)
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      result = result.filter((p: any) => p.status === statusFilter);
+    }
+
+    switch (sortBy) {
+      case 'newest':
+        result.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+      case 'oldest':
+        result.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        break;
+      case 'lowest_bid':
+        result.sort((a: any, b: any) => (a.bidAmount || 0) - (b.bidAmount || 0));
+        break;
+      case 'highest_bid':
+        result.sort((a: any, b: any) => (b.bidAmount || 0) - (a.bidAmount || 0));
+        break;
+      case 'highest_rating':
+        result.sort((a: any, b: any) => (b.freelancer?.rating?.average || 0) - (a.freelancer?.rating?.average || 0));
+        break;
+    }
+
+    return result;
+  }, [allProposals, searchTerm, statusFilter, sortBy]);
+
+  const totalPages = Math.ceil(filteredProposals.length / limit);
+  const paginatedProposals = filteredProposals.slice((page - 1) * limit, page * limit);
+
+  // Event handlers
   const handleViewDetails = (proposal: any) => {
     setSelectedProposal(proposal);
     setDetailsOpen(true);
@@ -143,58 +189,6 @@ export const ProjectProposalsPage: React.FC = () => {
     setConfirmAction(null);
   };
 
-  if (projectLoading || proposalsLoading) {
-    return <LoadingSpinner />;
-  }
-
-  const project = projectData;
-  const allProposals = proposalsData || [];
-
-  // Filter and sort proposals
-  const filteredProposals = useMemo(() => {
-    let result = [...allProposals];
-
-    // Search filter
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter((p: any) => 
-        p.freelancer?.profile?.firstName?.toLowerCase().includes(term) ||
-        p.freelancer?.profile?.lastName?.toLowerCase().includes(term) ||
-        p.coverLetter?.toLowerCase().includes(term)
-      );
-    }
-
-    // Status filter
-    if (statusFilter !== 'all') {
-      result = result.filter((p: any) => p.status === statusFilter);
-    }
-
-    // Sort
-    switch (sortBy) {
-      case 'newest':
-        result.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        break;
-      case 'oldest':
-        result.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-        break;
-      case 'lowest_bid':
-        result.sort((a: any, b: any) => (a.bidAmount || 0) - (b.bidAmount || 0));
-        break;
-      case 'highest_bid':
-        result.sort((a: any, b: any) => (b.bidAmount || 0) - (a.bidAmount || 0));
-        break;
-      case 'highest_rating':
-        result.sort((a: any, b: any) => (b.freelancer?.rating?.average || 0) - (a.freelancer?.rating?.average || 0));
-        break;
-    }
-
-    return result;
-  }, [allProposals, searchTerm, statusFilter, sortBy]);
-
-  const totalPages = Math.ceil(filteredProposals.length / limit);
-  const paginatedProposals = filteredProposals.slice((page - 1) * limit, page * limit);
-
-  // Reset page when filters change
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     setPage(1);
@@ -210,6 +204,11 @@ export const ProjectProposalsPage: React.FC = () => {
     setPage(1);
   };
 
+  // Conditional returns AFTER all hooks
+  if (projectLoading || proposalsLoading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
@@ -220,7 +219,7 @@ export const ProjectProposalsPage: React.FC = () => {
           Proposals for: {project?.title}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {proposals.length} proposal{proposals.length !== 1 ? 's' : ''} received
+          {allProposals.length} proposal{allProposals.length !== 1 ? 's' : ''} received
         </Typography>
       </Box>
 
