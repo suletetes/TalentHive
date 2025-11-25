@@ -12,6 +12,7 @@ import {
   InputLabel,
   IconButton,
   Chip,
+  SelectChangeEvent,
 } from '@mui/material';
 import {
   PlayArrow,
@@ -191,34 +192,55 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({
           {!isTracking && (
             <>
               <FormControl fullWidth>
-                <InputLabel>Project</InputLabel>
+                <InputLabel id="project-select-label">Project</InputLabel>
                 <Select
+                  labelId="project-select-label"
                   value={selectedProject}
-                  onChange={(e) => setSelectedProject(e.target.value)}
+                  onChange={(e) => setSelectedProject(e.target.value as string)}
                   label="Project"
+                  displayEmpty
                 >
-                  {projects.map((project) => (
-                    <MenuItem key={project._id} value={project._id}>
-                      {project.title}
+                  {projects.length === 0 ? (
+                    <MenuItem disabled value="">
+                      <em>No projects available</em>
                     </MenuItem>
-                  ))}
+                  ) : (
+                    projects.map((project) => (
+                      <MenuItem key={project._id} value={project._id}>
+                        {project.title}
+                      </MenuItem>
+                    ))
+                  )}
                 </Select>
               </FormControl>
 
               <FormControl fullWidth>
-                <InputLabel>Contract</InputLabel>
+                <InputLabel id="contract-select-label">Contract</InputLabel>
                 <Select
+                  labelId="contract-select-label"
                   value={selectedContract}
-                  onChange={(e) => setSelectedContract(e.target.value)}
+                  onChange={(e) => setSelectedContract(e.target.value as string)}
                   label="Contract"
+                  displayEmpty
                 >
-                  {contracts.map((contract) => (
-                    <MenuItem key={contract._id} value={contract._id}>
-                      {contract.title}
+                  {contracts.length === 0 ? (
+                    <MenuItem disabled value="">
+                      <em>No contracts available</em>
                     </MenuItem>
-                  ))}
+                  ) : (
+                    contracts.map((contract) => (
+                      <MenuItem key={contract._id} value={contract._id}>
+                        {contract.title}
+                      </MenuItem>
+                    ))
+                  )}
                 </Select>
               </FormControl>
+
+              {/* Debug info */}
+              <Typography variant="caption" color="text.secondary">
+                Projects: {projects.length} | Contracts: {contracts.length}
+              </Typography>
             </>
           )}
 
