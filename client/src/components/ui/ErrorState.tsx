@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Button, Paper, Alert } from '@mui/material';
+import { Box, Typography, Button, Paper } from '@mui/material';
 import { Error, Refresh, WifiOff, BugReport } from '@mui/icons-material';
 
 interface ErrorStateProps {
@@ -86,11 +86,29 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         </Button>
       )}
       {showDetails && details && (
-        <Alert severity="error" sx={{ mt: 3, textAlign: 'left' }}>
-          <Typography variant="caption" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+        <Box
+          sx={{
+            mt: 3,
+            p: 2,
+            bgcolor: 'grey.900',
+            borderRadius: 1,
+            textAlign: 'left',
+            overflow: 'auto',
+          }}
+        >
+          <Typography 
+            variant="caption" 
+            component="pre" 
+            sx={{ 
+              whiteSpace: 'pre-wrap', 
+              wordBreak: 'break-word',
+              color: 'grey.100',
+              fontFamily: 'monospace',
+            }}
+          >
             {details}
           </Typography>
-        </Alert>
+        </Box>
       )}
     </Paper>
   );

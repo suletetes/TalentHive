@@ -88,13 +88,13 @@ export class ErrorBoundary extends Component<Props, State> {
                 sx={{
                   mt: 4,
                   p: 2,
-                  bgcolor: 'background.paper',
+                  bgcolor: 'grey.900',
                   borderRadius: 1,
                   textAlign: 'left',
                   overflow: 'auto',
                 }}
               >
-                <Typography variant="subtitle2" color="error" gutterBottom>
+                <Typography variant="subtitle2" color="error.light" gutterBottom>
                   Error Details (Development Only):
                 </Typography>
                 <Typography
@@ -104,6 +104,7 @@ export class ErrorBoundary extends Component<Props, State> {
                     whiteSpace: 'pre-wrap',
                     wordBreak: 'break-word',
                     fontFamily: 'monospace',
+                    color: 'grey.100',
                   }}
                 >
                   {this.state.error.toString()}
