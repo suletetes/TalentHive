@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -18,7 +18,15 @@ import {
   Rating,
   Alert,
   Pagination,
+  TextField,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Paper,
 } from '@mui/material';
+import { Search as SearchIcon, FilterList as FilterIcon } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -34,6 +42,9 @@ export const ProjectProposalsPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ type: 'accept' | 'reject'; proposalId: string } | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('newest');
   const limit = 5; // Show 5 proposals per page for better UX
 
   // Fetch project details
@@ -137,9 +148,67 @@ export const ProjectProposalsPage: React.FC = () => {
   }
 
   const project = projectData;
-  const proposals = proposalsData || [];
-  const totalPages = Math.ceil(proposals.length / limit);
-  const paginatedProposals = proposals.slice((page - 1) * limit, page * limit);
+  const allProposals = proposalsData || [];
+
+  // Filter and sort proposals
+  const filteredProposals = useMemo(() => {
+    let result = [...allProposals];
+
+    // Search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter((p: any) => 
+        p.freelancer?.profile?.firstName?.toLowerCase().includes(term) ||
+        p.freelancer?.profile?.lastName?.toLowerCase().includes(term) ||
+        p.coverLetter?.toLowerCase().includes(term)
+      );
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      result = result.filter((p: any) => p.status === statusFilter);
+    }
+
+    // Sort
+    switch (sortBy) {
+      case 'newest':
+        result.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+      case 'oldest':
+        result.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        break;
+      case 'lowest_bid':
+        result.sort((a: any, b: any) => (a.bidAmount || 0) - (b.bidAmount || 0));
+        break;
+      case 'highest_bid':
+        result.sort((a: any, b: any) => (b.bidAmount || 0) - (a.bidAmount || 0));
+        break;
+      case 'highest_rating':
+        result.sort((a: any, b: any) => (b.freelancer?.rating?.average || 0) - (a.freelancer?.rating?.average || 0));
+        break;
+    }
+
+    return result;
+  }, [allProposals, searchTerm, statusFilter, sortBy]);
+
+  const totalPages = Math.ceil(filteredProposals.length / limit);
+  const paginatedProposals = filteredProposals.slice((page - 1) * limit, page * limit);
+
+  // Reset page when filters change
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setPage(1);
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatusFilter(value);
+    setPage(1);
+  };
+
+  const handleSortChange = (value: string) => {
+    setSortBy(value);
+    setPage(1);
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -155,9 +224,74 @@ export const ProjectProposalsPage: React.FC = () => {
         </Typography>
       </Box>
 
-      {proposals.length === 0 ? (
+      {/* Search and Filter Bar */}
+      {allProposals.length > 0 && (
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Search by name or cover letter..."
+                value={searchTerm}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={statusFilter}
+                  label="Status"
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                >
+                  <MenuItem value="all">All Status</MenuItem>
+                  <MenuItem value="submitted">Submitted</MenuItem>
+                  <MenuItem value="accepted">Accepted</MenuItem>
+                  <MenuItem value="rejected">Rejected</MenuItem>
+                  <MenuItem value="withdrawn">Withdrawn</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Sort By</InputLabel>
+                <Select
+                  value={sortBy}
+                  label="Sort By"
+                  onChange={(e) => handleSortChange(e.target.value)}
+                >
+                  <MenuItem value="newest">Newest First</MenuItem>
+                  <MenuItem value="oldest">Oldest First</MenuItem>
+                  <MenuItem value="lowest_bid">Lowest Bid</MenuItem>
+                  <MenuItem value="highest_bid">Highest Bid</MenuItem>
+                  <MenuItem value="highest_rating">Highest Rating</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <Typography variant="body2" color="text.secondary" textAlign="right">
+                {filteredProposals.length} of {allProposals.length} proposals
+              </Typography>
+            </Grid>
+          </Grid>
+        </Paper>
+      )}
+
+      {allProposals.length === 0 ? (
         <Alert severity="info">
           No proposals have been submitted for this project yet.
+        </Alert>
+      ) : filteredProposals.length === 0 ? (
+        <Alert severity="info">
+          No proposals match your search criteria.
         </Alert>
       ) : (
         <>
