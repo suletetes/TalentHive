@@ -7,12 +7,23 @@ import { logger } from '@/utils/logger';
 // Start a new work session
 export const startWorkSession = async (req: Request, res: Response) => {
   try {
-    const { projectId, contractId } = req.body;
+    const { contractId } = req.body;
     const freelancerId = req.user?._id;
+    
+    console.log('[TIME TRACKING] Start session request:', { contractId, freelancerId });
+    
     if (!freelancerId) {
       return res.status(401).json({
         status: 'error',
         message: 'Unauthorized',
+      });
+    }
+
+    if (!contractId) {
+      console.log('[TIME TRACKING] No contractId provided');
+      return res.status(400).json({
+        status: 'error',
+        message: 'Contract ID is required',
       });
     }
 
@@ -23,11 +34,21 @@ export const startWorkSession = async (req: Request, res: Response) => {
     });
 
     if (activeSession) {
+      console.log('[TIME TRACKING] Already has active session:', activeSession._id);
       return res.status(400).json({
         status: 'error',
         message: 'You already have an active work session',
       });
     }
+
+    // First check if contract exists at all
+    const contractExists = await Contract.findById(contractId);
+    console.log('[TIME TRACKING] Contract lookup:', { 
+      exists: !!contractExists, 
+      status: contractExists?.status,
+      freelancer: contractExists?.freelancer?.toString(),
+      expectedFreelancer: freelancerId.toString()
+    });
 
     // Verify contract exists and belongs to freelancer
     const contract = await Contract.findOne({
@@ -37,11 +58,33 @@ export const startWorkSession = async (req: Request, res: Response) => {
     });
 
     if (!contract) {
+      // Provide more specific error message
+      if (!contractExists) {
+        return res.status(404).json({
+          status: 'error',
+          message: 'Contract not found',
+        });
+      }
+      if (contractExists.freelancer?.toString() !== freelancerId.toString()) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'This contract does not belong to you',
+        });
+      }
+      if (contractExists.status !== 'active') {
+        return res.status(400).json({
+          status: 'error',
+          message: `Contract is not active (current status: ${contractExists.status})`,
+        });
+      }
       return res.status(404).json({
         status: 'error',
         message: 'Contract not found or not active',
       });
     }
+
+    // Extract projectId from the contract
+    const projectId = contract.project;
 
     // Create new work session
     const session = await WorkSession.create({
@@ -110,7 +153,7 @@ export const stopWorkSession = async (req: Request, res: Response) => {
 // Create a time entry
 export const createTimeEntry = async (req: Request, res: Response) => {
   try {
-    const { projectId, contractId, milestoneId, description, duration, hourlyRate } = req.body;
+    const { contractId, milestoneId, description, duration, hourlyRate } = req.body;
     const freelancerId = req.user?._id;
     if (!freelancerId) {
       return res.status(401).json({
@@ -119,7 +162,14 @@ export const createTimeEntry = async (req: Request, res: Response) => {
       });
     }
 
-    // Verify contract
+    if (!contractId) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Contract ID is required',
+      });
+    }
+
+    // Verify contract and get project from it
     const contract = await Contract.findOne({
       _id: contractId,
       freelancer: freelancerId,
@@ -131,6 +181,9 @@ export const createTimeEntry = async (req: Request, res: Response) => {
         message: 'Contract not found',
       });
     }
+
+    // Extract projectId from contract
+    const projectId = contract.project;
 
     const timeEntry = await TimeEntry.create({
       freelancer: freelancerId,

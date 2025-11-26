@@ -650,29 +650,22 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
   }
   
   if (userRole === 'freelancer') {
-    console.log(`[DASHBOARD STATS] Freelancer stats requested`);
-    
+    const { Payment } = await import('@/models/Payment');
+
     const [totalProposals, acceptedProposals, activeContracts, totalEarnings, totalContracts, totalReviews] = await Promise.all([
       Proposal.countDocuments({ freelancer: userId }),
       Proposal.countDocuments({ freelancer: userId, status: 'accepted' }),
       Contract.countDocuments({ freelancer: userId, status: 'active' }),
-      Contract.aggregate([
+      // Get earnings from completed payments (freelancerAmount is after platform fee)
+      Payment.aggregate([
         { $match: { freelancer: userId, status: 'completed' } },
-        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+        { $group: { _id: null, total: { $sum: '$freelancerAmount' } } }
       ]).then(result => result[0]?.total || 0),
       Contract.countDocuments({ freelancer: userId }),
-      Review.countDocuments({ freelancer: userId }),
+      // Reviews where this user is the reviewee (received reviews)
+      Review.countDocuments({ reviewee: userId }),
     ]);
-    
-    console.log(`[DASHBOARD STATS] Freelancer stats:`, {
-      totalProposals,
-      acceptedProposals,
-      activeContracts,
-      totalEarnings,
-      totalContracts,
-      totalReviews,
-    });
-    
+
     return res.json({
       status: 'success',
       data: {
