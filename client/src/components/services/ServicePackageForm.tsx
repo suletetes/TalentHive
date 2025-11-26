@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -12,63 +12,36 @@ import {
   InputLabel,
   Select,
   IconButton,
-  CircularProgress,
+  InputAdornment,
 } from '@mui/material';
 import { Add, Delete } from '@mui/icons-material';
 import api from '@/services/api';
-import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import * as yup from 'yup';
 
+interface ServicePackageFormProps {
+  initialData?: any;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
 const validationSchema = yup.object({
-  title: yup.string()
-    .required('Title is required')
-    .min(5, 'Title must be at least 5 characters')
-    .max(100, 'Title must be at most 100 characters'),
-  description: yup.string()
-    .required('Description is required')
-    .min(20, 'Description must be at least 20 characters')
-    .max(1000, 'Description must be at most 1000 characters'),
-  category: yup.string()
-    .required('Category is required'),
-  amount: yup.number()
-    .when('pricingType', {
-      is: 'fixed',
-      then: (schema) => schema
-        .required('Fixed price is required')
-        .min(1, 'Price must be at least $1')
-        .max(100000, 'Price cannot exceed $100,000'),
-      otherwise: (schema) => schema.notRequired(),
-    }),
-  hourlyRate: yup.number()
-    .when('pricingType', {
-      is: 'hourly',
-      then: (schema) => schema
-        .required('Hourly rate is required')
-        .min(1, 'Rate must be at least $1')
-        .max(500, 'Rate cannot exceed $500/hr'),
-      otherwise: (schema) => schema.notRequired(),
-    }),
-  deliveryTime: yup.number()
-    .required('Delivery time is required')
-    .min(1, 'Delivery time must be at least 1 day')
-    .max(365, 'Delivery time cannot exceed 365 days'),
-  revisions: yup.number()
-    .required('Revisions is required')
-    .min(0, 'Revisions cannot be negative')
-    .max(20, 'Revisions cannot exceed 20'),
-  features: yup.array()
-    .of(yup.string().min(1, 'Feature cannot be empty'))
-    .min(1, 'At least one feature is required')
-    .max(10, 'Maximum 10 features allowed'),
-  skills: yup.array()
-    .of(yup.string().min(1, 'Skill cannot be empty'))
-    .min(1, 'At least one skill is required')
-    .max(10, 'Maximum 10 skills allowed'),
+  title: yup.string().required('Title is required').min(5).max(100),
+  description: yup.string().required('Description is required').min(20).max(1000),
+  category: yup.string().required('Category is required'),
+  deliveryTime: yup.number().required('Delivery time is required').min(1).max(365),
+  revisions: yup.number().required().min(0).max(20),
+  features: yup.array().of(yup.string()).min(1, 'At least one feature is required'),
+  skills: yup.array().of(yup.string()).min(1, 'At least one skill is required'),
 });
 
-const ServicePackageForm: React.FC = () => {
-  const navigate = useNavigate();
+const ServicePackageForm: React.FC<ServicePackageFormProps> = ({ 
+  initialData, 
+  onSuccess, 
+  onCancel 
+}) => {
+  const isEditing = !!initialData?._id;
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -85,8 +58,30 @@ const ServicePackageForm: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Populate form with initial data when editing
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        category: initialData.category || '',
+        pricingType: initialData.pricing?.type || 'fixed',
+        amount: initialData.pricing?.amount?.toString() || '',
+        hourlyRate: initialData.pricing?.hourlyRate?.toString() || '',
+        deliveryTime: initialData.deliveryTime?.toString() || '',
+        revisions: initialData.revisions?.toString() || '2',
+        features: initialData.features?.length > 0 ? initialData.features : [''],
+        requirements: initialData.requirements?.length > 0 ? initialData.requirements : [''],
+        skills: initialData.skills?.length > 0 ? initialData.skills : [''],
+      });
+    }
+  }, [initialData]);
+
   const handleChange = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: '' });
+    }
   };
 
   const handleArrayChange = (field: string, index: number, value: string) => {
@@ -101,8 +96,10 @@ const ServicePackageForm: React.FC = () => {
 
   const removeArrayItem = (field: string, index: number) => {
     const array = [...(formData as any)[field]];
-    array.splice(index, 1);
-    setFormData({ ...formData, [field]: array });
+    if (array.length > 1) {
+      array.splice(index, 1);
+      setFormData({ ...formData, [field]: array });
+    }
   };
 
   const handleSubmit = async () => {
@@ -110,9 +107,6 @@ const ServicePackageForm: React.FC = () => {
       setIsSubmitting(true);
       setErrors({});
 
-      console.log('[SERVICE PACKAGE] Submitting form data:', formData);
-
-      // Validate form data - handle empty strings properly
       const validationData = {
         ...formData,
         amount: formData.amount ? parseFloat(formData.amount) : undefined,
@@ -123,10 +117,7 @@ const ServicePackageForm: React.FC = () => {
         skills: formData.skills.filter(s => s.trim()),
       };
 
-      console.log('[SERVICE PACKAGE] Validation data:', validationData);
-
       await validationSchema.validate(validationData, { abortEarly: false });
-      console.log('[SERVICE PACKAGE] Validation passed');
 
       const packageData = {
         title: formData.title,
@@ -144,25 +135,25 @@ const ServicePackageForm: React.FC = () => {
         skills: formData.skills.filter(s => s.trim()),
       };
 
-      await api.post('/services/packages', packageData);
-      toast.success('Service package created successfully!');
-      navigate('/dashboard');
+      if (isEditing) {
+        await api.patch(`/services/packages/${initialData._id}`, packageData);
+        toast.success('Service package updated!');
+      } else {
+        await api.post('/services/packages', packageData);
+        toast.success('Service package created!');
+      }
+      
+      onSuccess?.();
     } catch (error: any) {
       if (error.inner) {
-        // Yup validation errors - show specific error messages
         const newErrors: Record<string, string> = {};
-        const errorMessages: string[] = [];
         error.inner.forEach((err: any) => {
           newErrors[err.path] = err.message;
-          errorMessages.push(err.message);
         });
         setErrors(newErrors);
-        // Show first 3 specific errors in toast
-        const displayErrors = errorMessages.slice(0, 3).join('. ');
-        toast.error(displayErrors || 'Please fix the validation errors');
+        toast.error('Please fix the validation errors');
       } else {
-        const message = error.response?.data?.message || 'Failed to create service package';
-        toast.error(message);
+        toast.error(error.response?.data?.message || 'Failed to save service package');
       }
     } finally {
       setIsSubmitting(false);
@@ -170,53 +161,53 @@ const ServicePackageForm: React.FC = () => {
   };
 
   return (
-    <Card>
+    <Card elevation={0}>
       <CardContent>
-        <Typography variant="h5" gutterBottom>
-          Create Service Package
+        <Typography variant="h6" gutterBottom>
+          {isEditing ? 'Edit Service Package' : 'Create Service Package'}
         </Typography>
 
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
           <Grid item xs={12}>
             <TextField
               fullWidth
+              size="small"
               label="Package Title"
               value={formData.title}
               onChange={(e) => handleChange('title', e.target.value)}
               error={!!errors.title}
               helperText={errors.title}
-              required
             />
           </Grid>
 
           <Grid item xs={12}>
             <TextField
               fullWidth
+              size="small"
               label="Description"
               value={formData.description}
               onChange={(e) => handleChange('description', e.target.value)}
               multiline
-              rows={4}
+              rows={3}
               error={!!errors.description}
               helperText={errors.description}
-              required
             />
           </Grid>
 
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
+              size="small"
               label="Category"
               value={formData.category}
               onChange={(e) => handleChange('category', e.target.value)}
               error={!!errors.category}
               helperText={errors.category}
-              required
             />
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
+            <FormControl fullWidth size="small">
               <InputLabel>Pricing Type</InputLabel>
               <Select
                 value={formData.pricingType}
@@ -233,12 +224,12 @@ const ServicePackageForm: React.FC = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                size="small"
                 type="number"
                 label="Fixed Price"
                 value={formData.amount}
                 onChange={(e) => handleChange('amount', e.target.value)}
-                InputProps={{ startAdornment: '$' }}
-                required
+                InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
               />
             </Grid>
           )}
@@ -247,42 +238,40 @@ const ServicePackageForm: React.FC = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                size="small"
                 type="number"
                 label="Hourly Rate"
                 value={formData.hourlyRate}
                 onChange={(e) => handleChange('hourlyRate', e.target.value)}
-                InputProps={{ startAdornment: '$' }}
-                required
+                InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
               />
             </Grid>
           )}
 
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={6} sm={3}>
             <TextField
               fullWidth
+              size="small"
               type="number"
-              label="Delivery Time (days)"
+              label="Delivery (days)"
               value={formData.deliveryTime}
               onChange={(e) => handleChange('deliveryTime', e.target.value)}
-              required
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={6} sm={3}>
             <TextField
               fullWidth
+              size="small"
               type="number"
-              label="Number of Revisions"
+              label="Revisions"
               value={formData.revisions}
               onChange={(e) => handleChange('revisions', e.target.value)}
-              required
             />
           </Grid>
 
           <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Features
-            </Typography>
+            <Typography variant="subtitle2" gutterBottom>Features</Typography>
             {formData.features.map((feature, index) => (
               <Box key={index} display="flex" gap={1} mb={1}>
                 <TextField
@@ -292,43 +281,18 @@ const ServicePackageForm: React.FC = () => {
                   onChange={(e) => handleArrayChange('features', index, e.target.value)}
                   placeholder="Enter feature"
                 />
-                <IconButton onClick={() => removeArrayItem('features', index)}>
-                  <Delete />
+                <IconButton size="small" onClick={() => removeArrayItem('features', index)}>
+                  <Delete fontSize="small" />
                 </IconButton>
               </Box>
             ))}
-            <Button startIcon={<Add />} onClick={() => addArrayItem('features')}>
+            <Button size="small" startIcon={<Add />} onClick={() => addArrayItem('features')}>
               Add Feature
             </Button>
           </Grid>
 
           <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Requirements
-            </Typography>
-            {formData.requirements.map((req, index) => (
-              <Box key={index} display="flex" gap={1} mb={1}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  value={req}
-                  onChange={(e) => handleArrayChange('requirements', index, e.target.value)}
-                  placeholder="Enter requirement"
-                />
-                <IconButton onClick={() => removeArrayItem('requirements', index)}>
-                  <Delete />
-                </IconButton>
-              </Box>
-            ))}
-            <Button startIcon={<Add />} onClick={() => addArrayItem('requirements')}>
-              Add Requirement
-            </Button>
-          </Grid>
-
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Skills
-            </Typography>
+            <Typography variant="subtitle2" gutterBottom>Skills</Typography>
             {formData.skills.map((skill, index) => (
               <Box key={index} display="flex" gap={1} mb={1}>
                 <TextField
@@ -338,21 +302,21 @@ const ServicePackageForm: React.FC = () => {
                   onChange={(e) => handleArrayChange('skills', index, e.target.value)}
                   placeholder="Enter skill"
                 />
-                <IconButton onClick={() => removeArrayItem('skills', index)}>
-                  <Delete />
+                <IconButton size="small" onClick={() => removeArrayItem('skills', index)}>
+                  <Delete fontSize="small" />
                 </IconButton>
               </Box>
             ))}
-            <Button startIcon={<Add />} onClick={() => addArrayItem('skills')}>
+            <Button size="small" startIcon={<Add />} onClick={() => addArrayItem('skills')}>
               Add Skill
             </Button>
           </Grid>
 
           <Grid item xs={12}>
-            <Box display="flex" gap={2} justifyContent="flex-end">
-              <Button onClick={() => navigate('/dashboard')}>Cancel</Button>
-              <Button variant="contained" onClick={handleSubmit}>
-                Create Package
+            <Box display="flex" gap={2} justifyContent="flex-end" mt={2}>
+              {onCancel && <Button onClick={onCancel}>Cancel</Button>}
+              <Button variant="contained" onClick={handleSubmit} disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : isEditing ? 'Update' : 'Create'}
               </Button>
             </Box>
           </Grid>

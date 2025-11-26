@@ -136,13 +136,13 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Box display="flex" alignItems="center" gap={1}>
             <Rating
-              value={freelancer.rating.average}
+              value={freelancer.rating?.average || 0}
               readOnly
               size="small"
               precision={0.1}
             />
             <Typography variant="body2" color="text.secondary">
-              {freelancer.rating.average.toFixed(1)} ({freelancer.rating.count})
+              {(freelancer.rating?.average || 0).toFixed(1)} ({freelancer.rating?.count || 0})
             </Typography>
           </Box>
 
