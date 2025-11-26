@@ -212,14 +212,14 @@ export const analyticsController = {
 
       // Projects by category - category is stored as a String directly
       const categoryDistribution = await Project.aggregate([
-        { $match: { ...matchStage, category: { $exists: true, $ne: null, $ne: '' } } },
+        { $match: { ...matchStage, category: { $exists: true, $nin: [null, ''] } } },
         {
           $group: {
             _id: '$category',
             count: { $sum: 1 },
           },
         },
-        { $match: { _id: { $ne: null, $ne: '' } } },
+        { $match: { _id: { $nin: [null, ''] } } },
         { $sort: { count: -1 } },
         { $limit: 10 },
       ]);

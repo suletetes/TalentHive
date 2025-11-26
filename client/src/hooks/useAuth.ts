@@ -24,6 +24,7 @@ export const useAuth = () => {
         loginSuccess({
           user: {
             ...user,
+            _id: user.id, // Add _id alias for components that use it
             role: user.role as 'admin' | 'freelancer' | 'client',
           },
           token: tokens.accessToken,
