@@ -15,6 +15,7 @@ import transactionRoutes from './transactions';
 import verificationRoutes from './verification';
 import uploadRoutes from './upload';
 import timeTrackingRoutes from './timeTracking';
+import workLogRoutes from './workLog';
 import organizationRoutes from './organizations';
 import servicePackageRoutes from './servicePackages';
 
@@ -49,6 +50,7 @@ router.use('/verification', verificationRoutes);
 router.use('/upload', uploadRoutes);
 router.use('/admin', adminRoutes);
 router.use('/time-tracking', timeTrackingRoutes);
+router.use('/work-logs', workLogRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/services', servicePackageRoutes);
 
