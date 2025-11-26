@@ -45,11 +45,7 @@ export class ReviewsService {
   }
 
   async getReviews(userId: string): Promise<{ data: Review[] }> {
-    console.log(`[REVIEWS SERVICE] Fetching reviews for userId: ${userId}`);
-    console.log(`[REVIEWS SERVICE] Endpoint: ${this.basePath}/user/${userId}`);
-    const result = await apiCore.get<{ data: Review[] }>(`${this.basePath}/user/${userId}`);
-    console.log(`[REVIEWS SERVICE] Result:`, result);
-    return result;
+    return apiCore.get<{ data: Review[] }>(`${this.basePath}/user/${userId}`);
   }
 
   async respondToReview(reviewId: string, content: string): Promise<{ data: Review }> {

@@ -5,7 +5,6 @@ import {
   Box,
   Card,
   CardContent,
-  Grid,
   Avatar,
   Rating,
   Button,
@@ -17,7 +16,6 @@ import {
   DialogActions,
   TextField,
   Divider,
-  Alert,
 } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
@@ -57,33 +55,28 @@ export const ReviewsPage: React.FC = () => {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [responseContent, setResponseContent] = useState('');
 
+  // Get user ID (support both _id and id)
+  const userId = user?._id || user?.id;
+
   // Fetch reviews
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['reviews', user?._id],
+    queryKey: ['reviews', userId],
     queryFn: async () => {
-      if (!user?._id) return [];
-      console.log(`[REVIEWS PAGE] Fetching reviews for user: ${user._id}`);
-      try {
-        const response: any = await reviewsService.getReviews(user._id);
-        console.log(`[REVIEWS PAGE] Raw response:`, response);
-        
-        // API returns { status: 'success', data: [...reviews] }
-        // reviewsService wraps axios response, so we get response.data from axios
-        let reviews = [];
-        if (response?.data && Array.isArray(response.data)) {
-          reviews = response.data;
-        } else if (Array.isArray(response)) {
-          reviews = response;
-        }
-        
-        console.log(`[REVIEWS PAGE] Found ${reviews.length} reviews`);
-        return reviews;
-      } catch (err) {
-        console.error(`[REVIEWS PAGE ERROR]`, err);
-        throw err;
+      if (!userId) return [];
+      const response: any = await reviewsService.getReviews(userId);
+
+      let reviews: Review[] = [];
+      if (response?.data && Array.isArray(response.data)) {
+        reviews = response.data;
+      } else if (Array.isArray(response)) {
+        reviews = response;
+      } else if (response?.data?.reviews && Array.isArray(response.data.reviews)) {
+        reviews = response.data.reviews;
       }
+
+      return reviews;
     },
-    enabled: !!user?._id,
+    enabled: !!userId,
   });
 
   // Respond to review mutation
@@ -91,7 +84,7 @@ export const ReviewsPage: React.FC = () => {
     mutationFn: ({ reviewId, content }: { reviewId: string; content: string }) =>
       reviewsService.respondToReview(reviewId, content),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reviews', user?._id] });
+      queryClient.invalidateQueries({ queryKey: ['reviews', userId] });
       toast.success('Response submitted successfully');
       setRespondDialogOpen(false);
       setSelectedReview(null);
@@ -102,12 +95,21 @@ export const ReviewsPage: React.FC = () => {
     },
   });
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
   const handleRespondClick = (review: Review) => {
     setSelectedReview(review);
+    setResponseContent('');
+    setRespondDialogOpen(true);
+  };
+
+  const handleEditResponse = (review: Review) => {
+    setSelectedReview(review);
+    const existingContent =
+      typeof review.response === 'string' ? review.response : review.response?.content || '';
+    setResponseContent(existingContent);
     setRespondDialogOpen(true);
   };
 
@@ -135,79 +137,138 @@ export const ReviewsPage: React.FC = () => {
   }
 
   const reviews = data || [];
-  
+
   // Separate reviews into received and given
-  const reviewsReceived = reviews.filter(
-    (review) => review.reviewee === user?._id || (typeof review.reviewee === 'object' && (review.reviewee as any)._id === user?._id)
-  );
-  const reviewsGiven = reviews.filter(
-    (review) => review.reviewer._id === user?._id
-  );
+  const reviewsReceived = reviews.filter((review) => {
+    const revieweeId =
+      typeof review.reviewee === 'object' ? (review.reviewee as any)?._id : review.reviewee;
+    return revieweeId === userId;
+  });
 
-  const renderReviewCard = (review: Review, isReceived: boolean) => (
-    <Card key={review._id} sx={{ mb: 2 }}>
-      <CardContent>
-        <Box display="flex" alignItems="flex-start" gap={2}>
-          <Avatar
-            src={review.reviewer.profile?.avatar}
-            alt={`${review.reviewer.profile?.firstName} ${review.reviewer.profile?.lastName}`}
-            sx={{ width: 56, height: 56 }}
-          />
-          <Box flex={1}>
-            <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-              <Box>
-                <Typography variant="h6">
-                  {review.reviewer.profile?.firstName} {review.reviewer.profile?.lastName}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {format(new Date(review.createdAt), 'MMMM dd, yyyy')}
-                </Typography>
+  const reviewsGiven = reviews.filter((review) => {
+    const reviewerId =
+      typeof review.reviewer === 'object' ? review.reviewer?._id : review.reviewer;
+    return reviewerId === userId;
+  });
+
+  const renderReviewCard = (review: Review, isReceived: boolean) => {
+    // For "Reviews Received": show who reviewed you (reviewer)
+    // For "Reviews Given": show who you reviewed (reviewee)
+    const displayPerson = isReceived ? review.reviewer : (review as any).reviewee;
+    const displayName = displayPerson?.profile
+      ? `${displayPerson.profile.firstName} ${displayPerson.profile.lastName}`
+      : 'Unknown User';
+    const displayAvatar = displayPerson?.profile?.avatar;
+
+    // Response label
+    const responseLabel = isReceived ? 'Your Response' : 'Their Response';
+
+    // Check if response exists - handle both object and string formats
+    const reviewResponse = review.response;
+
+    let hasResponse = false;
+    let responseText = '';
+
+    if (reviewResponse) {
+      if (typeof reviewResponse === 'string' && reviewResponse.trim()) {
+        hasResponse = true;
+        responseText = reviewResponse;
+      } else if (typeof reviewResponse === 'object' && reviewResponse.content && reviewResponse.content.trim()) {
+        hasResponse = true;
+        responseText = reviewResponse.content;
+      }
+    }
+
+    return (
+      <Card key={review._id} sx={{ mb: 2 }}>
+        <CardContent>
+          <Box display="flex" alignItems="flex-start" gap={2}>
+            <Avatar src={displayAvatar} alt={displayName} sx={{ width: 56, height: 56 }}>
+              {displayName.charAt(0)}
+            </Avatar>
+            <Box flex={1}>
+              <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                <Box>
+                  <Typography variant="h6">{displayName}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {isReceived ? 'Reviewed you on ' : 'You reviewed on '}
+                    {format(new Date(review.createdAt), 'MMMM dd, yyyy')}
+                  </Typography>
+                </Box>
+                <Rating value={review.rating} readOnly precision={0.5} />
               </Box>
-              <Rating value={review.rating} readOnly precision={0.5} />
+
+              <Typography variant="body1" paragraph sx={{ whiteSpace: 'pre-wrap' }}>
+                {review.feedback || review.comment || 'No feedback provided'}
+              </Typography>
+
+              {/* Show response if exists */}
+              {hasResponse && responseText && (
+                <Box
+                  sx={{
+                    mt: 2,
+                    p: 2,
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100',
+                    borderRadius: 1,
+                    borderLeft: 3,
+                    borderColor: 'primary.main',
+                  }}
+                >
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="subtitle2" color="primary" gutterBottom>
+                      {responseLabel}
+                      {(reviewResponse as any)?.isEdited && (
+                        <Typography
+                          component="span"
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ ml: 1 }}
+                        >
+                          (edited)
+                        </Typography>
+                      )}
+                    </Typography>
+                    {isReceived && (
+                      <Button size="small" onClick={() => handleEditResponse(review)}>
+                        Edit
+                      </Button>
+                    )}
+                  </Box>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                    {responseText}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: 1, display: 'block' }}
+                  >
+                    {(reviewResponse as any)?.createdAt
+                      ? format(new Date((reviewResponse as any).createdAt), 'MMMM dd, yyyy')
+                      : review.respondedAt
+                        ? format(new Date(review.respondedAt), 'MMMM dd, yyyy')
+                        : ''}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Show Respond button for reviews received without response */}
+              {isReceived && !hasResponse && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => handleRespondClick(review)}
+                  sx={{ mt: 1 }}
+                >
+                  Respond
+                </Button>
+              )}
             </Box>
-
-            <Typography variant="body1" paragraph sx={{ whiteSpace: 'pre-wrap' }}>
-              {review.feedback || review.comment || 'No feedback provided'}
-            </Typography>
-
-            {review.response && (
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 2,
-                  bgcolor: 'grey.50',
-                  borderRadius: 1,
-                  borderLeft: 3,
-                  borderColor: 'primary.main',
-                }}
-              >
-                <Typography variant="subtitle2" color="primary" gutterBottom>
-                  Your Response
-                </Typography>
-                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                  {review.response.content}
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                  {format(new Date(review.response.createdAt), 'MMMM dd, yyyy')}
-                </Typography>
-              </Box>
-            )}
-
-            {isReceived && !review.response && (
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => handleRespondClick(review)}
-                sx={{ mt: 1 }}
-              >
-                Respond
-              </Button>
-            )}
           </Box>
-        </Box>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -230,14 +291,12 @@ export const ReviewsPage: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="body1" color="text.secondary" align="center">
-                You haven't received any reviews yet. Complete projects to receive reviews from clients.
+                You haven't received any reviews yet. Complete projects to receive reviews.
               </Typography>
             </CardContent>
           </Card>
         ) : (
-          <Box>
-            {reviewsReceived.map((review) => renderReviewCard(review, true))}
-          </Box>
+          <Box>{reviewsReceived.map((review) => renderReviewCard(review, true))}</Box>
         )}
       </TabPanel>
 
@@ -246,25 +305,22 @@ export const ReviewsPage: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="body1" color="text.secondary" align="center">
-                You haven't given any reviews yet. Complete projects and leave reviews for your experience.
+                You haven't given any reviews yet. Complete projects and leave reviews.
               </Typography>
             </CardContent>
           </Card>
         ) : (
-          <Box>
-            {reviewsGiven.map((review) => renderReviewCard(review, false))}
-          </Box>
+          <Box>{reviewsGiven.map((review) => renderReviewCard(review, false))}</Box>
         )}
       </TabPanel>
 
       {/* Respond to Review Dialog */}
-      <Dialog
-        open={respondDialogOpen}
-        onClose={() => setRespondDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Respond to Review</DialogTitle>
+      <Dialog open={respondDialogOpen} onClose={() => setRespondDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {selectedReview?.response?.content || typeof selectedReview?.response === 'string'
+            ? 'Edit Response'
+            : 'Respond to Review'}
+        </DialogTitle>
         <DialogContent>
           {selectedReview && (
             <>
@@ -276,7 +332,8 @@ export const ReviewsPage: React.FC = () => {
                   />
                   <Box>
                     <Typography variant="subtitle1">
-                      {selectedReview.reviewer.profile?.firstName} {selectedReview.reviewer.profile?.lastName}
+                      {selectedReview.reviewer.profile?.firstName}{' '}
+                      {selectedReview.reviewer.profile?.lastName}
                     </Typography>
                     <Rating value={selectedReview.rating} readOnly size="small" />
                   </Box>

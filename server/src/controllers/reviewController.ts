@@ -75,57 +75,41 @@ export const createReview = catchAsync(async (req: AuthRequest, res: Response, n
 
 export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => {
   const { userId } = req.params;
-  const { page = 1, limit = 50 } = req.query;
 
-  console.log('[GET_REVIEWS] Fetching reviews for user:', userId);
-  console.log('[GET_REVIEWS] Page:', page, 'Limit:', limit);
+  // Fetch BOTH reviews received (as reviewee) AND reviews given (as reviewer)
+  const [reviewsReceived, reviewsGiven] = await Promise.all([
+    Review.find({ reviewee: userId })
+      .lean()
+      .populate('reviewer', 'profile email')
+      .populate('reviewee', 'profile email')
+      .populate('project', 'title')
+      .sort({ createdAt: -1 }),
+    Review.find({ reviewer: userId })
+      .lean()
+      .populate('reviewer', 'profile email')
+      .populate('reviewee', 'profile email')
+      .populate('project', 'title')
+      .sort({ createdAt: -1 }),
+  ]);
 
-  try {
-    // Fetch BOTH reviews received (as reviewee) AND reviews given (as reviewer)
-    const [reviewsReceived, reviewsGiven] = await Promise.all([
-      Review.find({ reviewee: userId })
-        .populate('reviewer', 'profile email')
-        .populate('reviewee', 'profile email')
-        .populate('project', 'title')
-        .sort({ createdAt: -1 }),
-      Review.find({ reviewer: userId })
-        .populate('reviewer', 'profile email')
-        .populate('reviewee', 'profile email')
-        .populate('project', 'title')
-        .sort({ createdAt: -1 }),
-    ]);
+  // Combine all reviews (frontend will filter by received/given)
+  const allReviews = [...reviewsReceived, ...reviewsGiven];
 
-    console.log('[GET_REVIEWS] Reviews received:', reviewsReceived.length);
-    console.log('[GET_REVIEWS] Reviews given:', reviewsGiven.length);
+  // Remove duplicates (in case a user reviewed themselves somehow)
+  const uniqueReviews = allReviews.filter((review, index, self) =>
+    index === self.findIndex((r) => r._id.toString() === review._id.toString())
+  );
 
-    // Combine all reviews (frontend will filter by received/given)
-    const allReviews = [...reviewsReceived, ...reviewsGiven];
-    
-    // Remove duplicates (in case a user reviewed themselves somehow)
-    const uniqueReviews = allReviews.filter((review, index, self) =>
-      index === self.findIndex((r) => r._id.toString() === review._id.toString())
-    );
+  // Map reviews to include 'client' field for frontend compatibility
+  const reviewsWithClient = uniqueReviews.map((review) => ({
+    ...review,
+    client: review.reviewer,
+  }));
 
-    // Map reviews to include 'client' field for frontend compatibility
-    const reviewsWithClient = uniqueReviews.map(review => {
-      const reviewObj = review.toObject();
-      return {
-        ...reviewObj,
-        client: reviewObj.reviewer, // Add client alias for reviewer
-      };
-    });
-
-    console.log('[GET_REVIEWS] Returning', reviewsWithClient.length, 'total reviews');
-
-    res.json({
-      status: 'success',
-      data: reviewsWithClient,
-    });
-  } catch (error: any) {
-    console.error('[GET_REVIEWS ERROR] Error fetching reviews:', error.message);
-    console.error('[GET_REVIEWS ERROR] Stack:', error.stack);
-    throw error;
-  }
+  res.json({
+    status: 'success',
+    data: reviewsWithClient,
+  });
 });
 
 export const respondToReview = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -147,21 +131,27 @@ export const respondToReview = catchAsync(async (req: AuthRequest, res: Response
   }
 
   const now = new Date();
-  const isEditing = !!review.response?.content;
+  const existingResponse = review.response as { content?: string; createdAt?: Date } | undefined;
+  const isEditing = !!(existingResponse && existingResponse.content);
 
+  // Set the response object directly on the document and save
   review.response = {
-    content,
-    createdAt: review.response?.createdAt || now,
+    content: content,
+    createdAt: existingResponse?.createdAt || now,
     updatedAt: now,
     isEdited: isEditing,
   };
   review.respondedAt = now;
+
   await review.save();
 
-  await review.populate('reviewer', 'profile email');
+  // Re-fetch with population
+  const updatedReview = await Review.findById(reviewId)
+    .populate('reviewer', 'profile email')
+    .lean();
 
   res.json({
     status: 'success',
-    data: { review },
+    data: { review: updatedReview },
   });
 });
