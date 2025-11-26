@@ -26,12 +26,19 @@ import { apiCore } from '@/services/api/core';
 
 interface ServicePackage {
   _id: string;
-  name: string;
+  title: string;
   description: string;
-  price: number;
+  category: string;
+  pricing: {
+    type: 'fixed' | 'hourly' | 'custom';
+    amount?: number;
+    hourlyRate?: number;
+  };
   deliveryTime: number;
   revisions: number;
   features: string[];
+  requirements?: string[];
+  skills?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -43,70 +50,37 @@ export const ServicesPage: React.FC = () => {
   const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
+  // Get user ID (support both _id and id)
+  const userId = user?._id || user?.id;
+
   // Fetch service packages for current user
   const { data: packagesData, isLoading, error, refetch } = useQuery({
-    queryKey: ['service-packages', user?._id],
+    queryKey: ['service-packages', userId],
     queryFn: async () => {
-      console.log(`[SERVICES PAGE] Fetching service packages for user: ${user?._id}`);
+      if (!userId) return [];
       // Filter by current user's freelancer ID
-      const response = await apiCore.get(`/services/packages?freelancerId=${user?._id}`);
-      console.log(`[SERVICES PAGE] Raw response:`, response);
+      // apiCore.get returns response.data directly
+      const response: any = await apiCore.get(`/services/packages?freelancerId=${userId}`);
       
       // API returns { status: 'success', data: { packages: [...] } }
+      // After apiCore.get, we get { status: 'success', data: { packages: [...] } }
       let packages = [];
-      if (response.data?.data?.packages && Array.isArray(response.data.data.packages)) {
-        packages = response.data.data.packages;
-      } else if (response.data?.packages && Array.isArray(response.data.packages)) {
+      if (response?.data?.packages && Array.isArray(response.data.packages)) {
         packages = response.data.packages;
-      } else if (response.data?.data && Array.isArray(response.data.data)) {
-        packages = response.data.data;
-      } else if (Array.isArray(response.data)) {
+      } else if (response?.packages && Array.isArray(response.packages)) {
+        packages = response.packages;
+      } else if (Array.isArray(response?.data)) {
         packages = response.data;
+      } else if (Array.isArray(response)) {
+        packages = response;
       }
       
-      console.log(`[SERVICES PAGE] Found ${packages.length} packages for user`);
       return packages;
     },
-    enabled: !!user?._id,
+    enabled: !!userId,
   });
 
-  // Create/Update mutation
-  const saveMutation = useMutation({
-    mutationFn: async (data: any) => {
-      console.log(`[SERVICE PACKAGE] Form data:`, data);
-      console.log(`[SERVICE PACKAGE] Submitting to API...`);
-      
-      if (isEditing && selectedPackage) {
-        const response = await apiCore.patch(`/services/packages/${selectedPackage._id}`, data);
-        return response.data.data;
-      } else {
-        const response = await apiCore.post('/services/packages', data);
-        return response.data.data;
-      }
-    },
-    onSuccess: () => {
-      console.log(`[SERVICE PACKAGE] ✅ Success`);
-      queryClient.invalidateQueries({ queryKey: ['service-packages'] });
-      toast.success(isEditing ? 'Service package updated' : 'Service package created');
-      handleCloseDialog();
-    },
-    onError: (error: any) => {
-      console.error(`[SERVICE PACKAGE] ❌ Error:`, error.response?.data);
-      
-      // Show specific error messages
-      const errorData = error.response?.data;
-      if (errorData?.errors && typeof errorData.errors === 'object') {
-        Object.entries(errorData.errors).forEach(([field, message]) => {
-          console.error(`  - ${field}: ${message}`);
-          toast.error(`${field}: ${message}`);
-        });
-      } else if (errorData?.message) {
-        toast.error(errorData.message);
-      } else {
-        toast.error('Failed to save service package');
-      }
-    },
-  });
+
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -139,8 +113,9 @@ export const ServicesPage: React.FC = () => {
     setIsEditing(false);
   };
 
-  const handleSave = (data: any) => {
-    saveMutation.mutate(data);
+  const handleFormSuccess = () => {
+    handleCloseDialog();
+    queryClient.invalidateQueries({ queryKey: ['service-packages'] });
   };
 
   const handleDelete = (id: string) => {
@@ -216,15 +191,17 @@ export const ServicesPage: React.FC = () => {
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography variant="h6" gutterBottom>
-                    {pkg.name}
+                    {pkg.title}
                   </Typography>
-                  <Typography color="text.secondary" sx={{ mb: 2 }}>
+                  <Typography color="text.secondary" sx={{ mb: 2 }} noWrap>
                     {pkg.description}
                   </Typography>
                   <Typography variant="h5" color="primary" gutterBottom>
-                    ${pkg.price}
+                    {pkg.pricing?.type === 'hourly' 
+                      ? `$${pkg.pricing?.hourlyRate || 0}/hr`
+                      : `$${pkg.pricing?.amount || 0}`}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
                     Delivery: {pkg.deliveryTime} days
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -236,11 +213,18 @@ export const ServicesPage: React.FC = () => {
                         Features:
                       </Typography>
                       <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
-                        {pkg.features.map((feature, idx) => (
+                        {pkg.features.slice(0, 3).map((feature, idx) => (
                           <li key={idx}>
                             <Typography variant="caption">{feature}</Typography>
                           </li>
                         ))}
+                        {pkg.features.length > 3 && (
+                          <li>
+                            <Typography variant="caption" color="text.secondary">
+                              +{pkg.features.length - 3} more
+                            </Typography>
+                          </li>
+                        )}
                       </ul>
                     </Box>
                   )}
@@ -277,19 +261,13 @@ export const ServicesPage: React.FC = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>
-          {isEditing ? 'Edit Service Package' : 'Create Service Package'}
-        </DialogTitle>
-        <DialogContent sx={{ pt: 2 }}>
+        <DialogContent>
           <ServicePackageForm
-            initialData={selectedPackage || undefined}
-            onSubmit={handleSave}
-            isLoading={saveMutation.isPending}
+            initialData={selectedPackage}
+            onSuccess={handleFormSuccess}
+            onCancel={handleCloseDialog}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-        </DialogActions>
       </Dialog>
     </Container>
   );

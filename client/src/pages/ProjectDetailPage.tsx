@@ -101,6 +101,8 @@ export const ProjectDetailPage = () => {
   const { data: projectResponse, isLoading, error } = useProject(id || '');
 
   const [proposalDialogOpen, setProposalDialogOpen] = useState(false);
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
   const [bidAmount, setBidAmount] = useState('');
   const [duration, setDuration] = useState('');
@@ -108,16 +110,37 @@ export const ProjectDetailPage = () => {
 
   // Submit proposal mutation
   const submitProposalMutation = useMutation({
-    mutationFn: (data: any) => proposalsService.createProposal(id || '', data),
+    mutationFn: (data: any) => {
+      if (isEditMode && userProposal?._id) {
+        return proposalsService.updateProposal(userProposal._id, data);
+      }
+      return proposalsService.createProposal(id || '', data);
+    },
     onSuccess: () => {
+      // Invalidate project detail cache (matches useProject hook key)
+      queryClient.invalidateQueries({ queryKey: ['projects', 'detail', id] });
       queryClient.invalidateQueries({ queryKey: ['my-proposals'] });
-      toast.success('Proposal submitted successfully!');
+      toast.success(isEditMode ? 'Proposal updated successfully!' : 'Proposal submitted successfully!');
       setProposalDialogOpen(false);
       resetForm();
-      navigate('/dashboard/proposals');
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to submit proposal');
+    },
+  });
+
+  // Withdraw proposal mutation
+  const withdrawProposalMutation = useMutation({
+    mutationFn: () => proposalsService.withdrawProposal(userProposal?._id),
+    onSuccess: () => {
+      // Invalidate project detail cache (matches useProject hook key)
+      queryClient.invalidateQueries({ queryKey: ['projects', 'detail', id] });
+      queryClient.invalidateQueries({ queryKey: ['my-proposals'] });
+      toast.success('Proposal withdrawn successfully');
+      setWithdrawDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to withdraw proposal');
     },
   });
 
@@ -126,6 +149,23 @@ export const ProjectDetailPage = () => {
     setBidAmount('');
     setDuration('');
     setMilestones([]);
+    setIsEditMode(false);
+  };
+
+  const openEditDialog = () => {
+    if (userProposal) {
+      setCoverLetter(userProposal.coverLetter || '');
+      setBidAmount(userProposal.proposedBudget?.amount?.toString() || '');
+      setDuration(userProposal.timeline?.duration?.toString() || '');
+      setMilestones(userProposal.milestones || []);
+      setIsEditMode(true);
+      setProposalDialogOpen(true);
+    }
+  };
+
+  const openNewProposalDialog = () => {
+    resetForm();
+    setProposalDialogOpen(true);
   };
 
   const handleAddMilestone = () => {
@@ -142,17 +182,78 @@ export const ProjectDetailPage = () => {
     setMilestones(updated);
   };
 
-  const handleSubmitProposal = () => {
+  const validateProposal = (): boolean => {
+    const project = projectResponse?.data;
+    const bid = parseFloat(bidAmount);
+    const dur = parseInt(duration);
+
     if (!coverLetter.trim()) {
       toast.error('Please write a cover letter');
-      return;
+      return false;
     }
-    if (!bidAmount || parseFloat(bidAmount) <= 0) {
+
+    if (coverLetter.trim().length < 50) {
+      toast.error('Cover letter must be at least 50 characters');
+      return false;
+    }
+
+    if (!bidAmount || isNaN(bid) || bid <= 0) {
       toast.error('Please enter a valid bid amount');
-      return;
+      return false;
     }
-    if (!duration || parseInt(duration) <= 0) {
+
+    // Validate bid is within project budget range
+    if (project?.budget?.min && bid < project.budget.min) {
+      toast.error(`Bid amount must be at least $${project.budget.min} (project minimum)`);
+      return false;
+    }
+
+    if (project?.budget?.max && bid > project.budget.max) {
+      toast.error(`Bid amount cannot exceed $${project.budget.max} (project maximum)`);
+      return false;
+    }
+
+    if (!duration || isNaN(dur) || dur <= 0) {
       toast.error('Please enter a valid duration');
+      return false;
+    }
+
+    if (dur > 365) {
+      toast.error('Duration cannot exceed 365 days');
+      return false;
+    }
+
+    // Validate milestones if provided
+    if (milestones.length > 0) {
+      const totalMilestoneAmount = milestones.reduce((sum, m) => sum + (m.amount || 0), 0);
+      
+      for (let i = 0; i < milestones.length; i++) {
+        const m = milestones[i];
+        if (!m.title.trim()) {
+          toast.error(`Milestone ${i + 1}: Title is required`);
+          return false;
+        }
+        if (!m.amount || m.amount <= 0) {
+          toast.error(`Milestone ${i + 1}: Amount must be greater than 0`);
+          return false;
+        }
+        if (!m.duration || m.duration <= 0) {
+          toast.error(`Milestone ${i + 1}: Duration must be greater than 0`);
+          return false;
+        }
+      }
+
+      if (Math.abs(totalMilestoneAmount - bid) > 0.01) {
+        toast.error(`Milestone amounts ($${totalMilestoneAmount}) must equal your bid amount ($${bid})`);
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleSubmitProposal = () => {
+    if (!validateProposal()) {
       return;
     }
 
@@ -193,30 +294,7 @@ export const ProjectDetailPage = () => {
   });
   const hasApplied = !!userProposal;
 
-  console.log(`[PROJECT DETAIL] ========== START PROJECT DEBUG ==========`);
-  console.log(`[PROJECT DETAIL] User ID: ${user?._id}`);
-  console.log(`[PROJECT DETAIL] User role: ${user?.role}`);
-  console.log(`[PROJECT DETAIL] Is freelancer: ${isFreelancer}`);
-  console.log(`[PROJECT DETAIL] Is client: ${isClient}`);
-  console.log(`[PROJECT DETAIL] Project ID: ${project._id}`);
-  console.log(`[PROJECT DETAIL] Project status: ${project.status}`);
-  console.log(`[PROJECT DETAIL] Project category:`, project.category);
-  console.log(`[PROJECT DETAIL] Category type:`, typeof project.category);
-  if (typeof project.category === 'object') {
-    console.log(`[PROJECT DETAIL] Category name:`, project.category?.name);
-    console.log(`[PROJECT DETAIL] Category ID:`, project.category?._id);
-  }
-  console.log(`[PROJECT DETAIL] Project skills:`, project.skills);
-  console.log(`[PROJECT DETAIL] Skills type:`, typeof project.skills);
-  console.log(`[PROJECT DETAIL] Project proposals count: ${project.proposals?.length || 0}`);
-  if (project.proposals && project.proposals.length > 0) {
-    console.log(`[PROJECT DETAIL] First proposal:`, project.proposals[0]);
-    console.log(`[PROJECT DETAIL] First proposal freelancer:`, project.proposals[0].freelancer);
-    console.log(`[PROJECT DETAIL] First proposal freelancer type:`, typeof project.proposals[0].freelancer);
-  }
-  console.log(`[PROJECT DETAIL] User proposal found:`, userProposal);
-  console.log(`[PROJECT DETAIL] User has applied: ${hasApplied}`);
-  console.log(`[PROJECT DETAIL] ========== END PROJECT DEBUG ==========`);
+
 
   // Helper function to safely format dates
   const formatDate = (dateString: string | Date | undefined, formatStr: string) => {
@@ -319,7 +397,7 @@ export const ProjectDetailPage = () => {
                 variant="contained"
                 size="large"
                 fullWidth
-                onClick={() => setProposalDialogOpen(true)}
+                onClick={openNewProposalDialog}
               >
                 Submit Proposal
               </Button>
@@ -338,7 +416,7 @@ export const ProjectDetailPage = () => {
                     variant="outlined"
                     size="large"
                     fullWidth
-                    onClick={() => setProposalDialogOpen(true)}
+                    onClick={openEditDialog}
                   >
                     Edit
                   </Button>
@@ -348,18 +426,7 @@ export const ProjectDetailPage = () => {
                   color="error"
                   size="large"
                   fullWidth
-                  onClick={async () => {
-                    if (window.confirm('Are you sure you want to withdraw your proposal?')) {
-                      try {
-                        await proposalsService.withdrawProposal(userProposal?._id);
-                        toast.success('Proposal withdrawn successfully');
-                        queryClient.invalidateQueries({ queryKey: ['project', id] });
-                        queryClient.invalidateQueries({ queryKey: ['my-proposals'] });
-                      } catch (error: any) {
-                        toast.error(error.response?.data?.message || 'Failed to withdraw proposal');
-                      }
-                    }
-                  }}
+                  onClick={() => setWithdrawDialogOpen(true)}
                 >
                   Withdraw Proposal
                 </Button>
@@ -513,7 +580,33 @@ export const ProjectDetailPage = () => {
         </Grid>
       </Grid>
 
-      {/* Submit Proposal Dialog */}
+      {/* Withdraw Confirmation Dialog */}
+      <Dialog
+        open={withdrawDialogOpen}
+        onClose={() => setWithdrawDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Withdraw Proposal</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to withdraw your proposal? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setWithdrawDialogOpen(false)}>Cancel</Button>
+          <Button
+            onClick={() => withdrawProposalMutation.mutate()}
+            color="error"
+            variant="contained"
+            disabled={withdrawProposalMutation.isPending}
+          >
+            {withdrawProposalMutation.isPending ? 'Withdrawing...' : 'Withdraw'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Submit/Edit Proposal Dialog */}
       <Dialog
         open={proposalDialogOpen}
         onClose={() => setProposalDialogOpen(false)}
@@ -522,7 +615,7 @@ export const ProjectDetailPage = () => {
       >
         <DialogTitle>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h6">Submit Proposal</Typography>
+            <Typography variant="h6">{isEditMode ? 'Edit Proposal' : 'Submit Proposal'}</Typography>
             <IconButton onClick={() => setProposalDialogOpen(false)}>
               <CloseIcon />
             </IconButton>
@@ -552,7 +645,13 @@ export const ProjectDetailPage = () => {
                 fullWidth
                 value={bidAmount}
                 onChange={(e) => setBidAmount(e.target.value)}
-                placeholder="5000"
+                placeholder={project?.budget?.min?.toString() || '5000'}
+                helperText={
+                  project?.budget?.min && project?.budget?.max
+                    ? `Project budget: $${project.budget.min} - $${project.budget.max}`
+                    : 'Enter your proposed amount'
+                }
+                inputProps={{ min: project?.budget?.min || 0, max: project?.budget?.max }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -562,7 +661,13 @@ export const ProjectDetailPage = () => {
                 fullWidth
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
-                placeholder="30"
+                placeholder={project?.timeline?.duration?.toString() || '30'}
+                helperText={
+                  project?.timeline?.duration
+                    ? `Project timeline: ${project.timeline.duration} ${project.timeline.unit}`
+                    : 'Enter estimated completion time'
+                }
+                inputProps={{ min: 1, max: 365 }}
               />
             </Grid>
           </Grid>
@@ -647,7 +752,13 @@ export const ProjectDetailPage = () => {
             variant="contained"
             disabled={submitProposalMutation.isPending}
           >
-            {submitProposalMutation.isPending ? 'Submitting...' : 'Submit Proposal'}
+            {submitProposalMutation.isPending
+              ? isEditMode
+                ? 'Updating...'
+                : 'Submitting...'
+              : isEditMode
+                ? 'Update Proposal'
+                : 'Submit Proposal'}
           </Button>
         </DialogActions>
       </Dialog>
