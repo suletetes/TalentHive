@@ -10,14 +10,17 @@ export interface AuthRequest extends Request {
 
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    console.log('[AUTH] authenticate called for:', req.method, req.originalUrl);
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
     if (!token) {
+      console.log('[AUTH] No token provided');
       return next(new AppError('Access token is required', 401));
     }
 
     // Verify token
     const decoded = verifyToken(token);
+    console.log('[AUTH] Token decoded, userId:', decoded.userId);
     
     // Check if user exists in cache first
     let user = await getCache(`user:${decoded.userId}`);
@@ -26,27 +29,36 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       // If not in cache, fetch from database
       user = await User.findById(decoded.userId).select('-password');
       if (!user) {
+        console.log('[AUTH] User not found in DB');
         return next(new AppError('User not found', 401));
       }
       
       // Cache user for 15 minutes
       await setCache(`user:${decoded.userId}`, user, 900);
     }
+    
+    console.log('[AUTH] User found:', { id: user._id, role: user.role, isActive: user.isActive });
 
     if (!user.isActive) {
+      console.log('[AUTH] User account is deactivated');
       return next(new AppError('Account is deactivated', 401));
     }
 
     req.user = user;
     next();
   } catch (error) {
+    console.log('[AUTH] Token verification error:', error);
     next(new AppError('Invalid token', 401));
   }
 };
 
 export const authorize = (...roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
+    console.log('[AUTH] authorize called for roles:', roles);
+    console.log('[AUTH] req.user:', req.user ? { id: req.user._id, role: req.user.role, roles: req.user.roles } : 'NO USER');
+    
     if (!req.user) {
+      console.log('[AUTH] REJECTED: No user on request');
       return next(new AppError('Authentication required', 401));
     }
 
@@ -55,9 +67,13 @@ export const authorize = (...roles: string[]) => {
       ? req.user.roles 
       : [req.user.role];
     
+    console.log('[AUTH] userRoles:', userRoles);
+    
     const hasPermission = userRoles.some((userRole: string) => roles.includes(userRole));
+    console.log('[AUTH] hasPermission:', hasPermission);
 
     if (!hasPermission) {
+      console.log('[AUTH] REJECTED: Insufficient permissions');
       return next(new AppError('Insufficient permissions', 403));
     }
 
