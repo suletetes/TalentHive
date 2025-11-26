@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Card,
@@ -23,11 +23,16 @@ import {
   DialogActions,
   Button,
   Grid,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  TablePagination,
 } from '@mui/material';
-import { Delete, Edit } from '@mui/icons-material';
+import { Delete, Edit, ExpandMore, AccessTime } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import api from '@/services/api';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface WorkLogListProps {
   refreshTrigger?: number;
@@ -35,11 +40,21 @@ interface WorkLogListProps {
 
 const WorkLogList: React.FC<WorkLogListProps> = ({ refreshTrigger }) => {
   const { user } = useSelector((state: RootState) => state.auth);
+  const toast = useToast();
   const [workLogs, setWorkLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
   const [editDialog, setEditDialog] = useState<any>(null);
-  const [editData, setEditData] = useState({ date: '', startTime: '', endTime: '', description: '' });
+  const [editData, setEditData] = useState({
+    date: '',
+    startTime: '',
+    endTime: '',
+    description: '',
+  });
+
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     fetchWorkLogs();
@@ -52,33 +67,53 @@ const WorkLogList: React.FC<WorkLogListProps> = ({ refreshTrigger }) => {
       if (filterStatus !== 'all') {
         params.status = filterStatus;
       }
-      console.log('[WORK LOG LIST] Fetching work logs with params:', params);
-      
-      // api.get returns response.data directly
-      const response: any = await api.get('/work-logs', { params });
-      console.log('[WORK LOG LIST] Response:', response);
 
-      // Response structure is: { status, results, data: { workLogs } }
+      const response: any = await api.get('/work-logs', { params });
       const logs = response?.data?.workLogs || [];
-      console.log('[WORK LOG LIST] Extracted logs:', logs);
-      
       setWorkLogs(Array.isArray(logs) ? logs : []);
+      setPage(0); // Reset to first page on filter change
     } catch (error: any) {
       console.error('[WORK LOG LIST] Error fetching work logs:', error);
+      toast.error('Failed to fetch work logs');
       setWorkLogs([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // Group work logs by contract for clients
+  const groupedByContract = useMemo(() => {
+    if (user?.role !== 'client') return null;
+
+    const groups: Record<string, { contract: any; logs: any[]; totalMinutes: number }> = {};
+
+    workLogs.forEach((log) => {
+      const contractId = log.contract?._id || 'unknown';
+      if (!groups[contractId]) {
+        groups[contractId] = {
+          contract: log.contract,
+          logs: [],
+          totalMinutes: 0,
+        };
+      }
+      groups[contractId].logs.push(log);
+      if (log.status === 'completed') {
+        groups[contractId].totalMinutes += log.duration || 0;
+      }
+    });
+
+    return Object.values(groups);
+  }, [workLogs, user?.role]);
+
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this work log?')) return;
 
     try {
       await api.delete(`/work-logs/${id}`);
+      toast.success('Work log deleted successfully');
       fetchWorkLogs();
     } catch (error: any) {
-      alert(error.message || 'Failed to delete work log');
+      toast.error(error.response?.data?.message || 'Failed to delete work log');
     }
   };
 
@@ -95,12 +130,23 @@ const WorkLogList: React.FC<WorkLogListProps> = ({ refreshTrigger }) => {
   const handleSaveEdit = async () => {
     if (!editDialog) return;
 
+    // Validate end time is after start time
+    if (editData.startTime && editData.endTime) {
+      const [startH, startM] = editData.startTime.split(':').map(Number);
+      const [endH, endM] = editData.endTime.split(':').map(Number);
+      if (endH * 60 + endM <= startH * 60 + startM) {
+        toast.error('End time must be after start time');
+        return;
+      }
+    }
+
     try {
       await api.patch(`/work-logs/${editDialog._id}`, editData);
+      toast.success('Work log updated successfully');
       setEditDialog(null);
       fetchWorkLogs();
     } catch (error: any) {
-      alert(error.message || 'Failed to update work log');
+      toast.error(error.response?.data?.message || 'Failed to update work log');
     }
   };
 
@@ -121,6 +167,158 @@ const WorkLogList: React.FC<WorkLogListProps> = ({ refreshTrigger }) => {
     }
     return 'Unknown';
   };
+
+  const handleChangePage = (_: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Paginated logs for freelancer view
+  const paginatedLogs = useMemo(() => {
+    const start = page * rowsPerPage;
+    return workLogs.slice(start, start + rowsPerPage);
+  }, [workLogs, page, rowsPerPage]);
+
+  const renderFreelancerView = () => (
+    <>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>Contract</TableCell>
+              <TableCell>Time</TableCell>
+              <TableCell>Duration</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {paginatedLogs.map((log) => (
+              <TableRow key={log._id}>
+                <TableCell>{new Date(log.date).toLocaleDateString()}</TableCell>
+                <TableCell>{log.contract?.title || 'N/A'}</TableCell>
+                <TableCell>
+                  {log.startTime}
+                  {log.endTime && ` - ${log.endTime}`}
+                </TableCell>
+                <TableCell>
+                  {log.status === 'completed' ? formatDuration(log.duration) : '-'}
+                </TableCell>
+                <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {log.description || '-'}
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={log.status === 'completed' ? 'Completed' : 'In Progress'}
+                    color={getStatusColor(log.status)}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell>
+                  <IconButton size="small" onClick={() => handleEdit(log)}>
+                    <Edit fontSize="small" />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => handleDelete(log._id)} color="error">
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <TablePagination
+        component="div"
+        count={workLogs.length}
+        page={page}
+        onPageChange={handleChangePage}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+      />
+    </>
+  );
+
+  const renderClientView = () => (
+    <Box>
+      {groupedByContract?.map((group, index) => (
+        <Accordion key={group.contract?._id || index} defaultExpanded={index === 0}>
+          <AccordionSummary expandIcon={<ExpandMore />}>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              width="100%"
+              pr={2}
+            >
+              <Typography variant="subtitle1" fontWeight="medium">
+                {group.contract?.title || 'Unknown Contract'}
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Chip
+                  icon={<AccessTime />}
+                  label={`${formatDuration(group.totalMinutes)} total`}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                />
+                <Chip label={`${group.logs.length} entries`} size="small" variant="outlined" />
+              </Box>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Freelancer</TableCell>
+                    <TableCell>Time</TableCell>
+                    <TableCell>Duration</TableCell>
+                    <TableCell>Description</TableCell>
+                    <TableCell>Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {group.logs.map((log) => (
+                    <TableRow key={log._id}>
+                      <TableCell>{new Date(log.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{getFreelancerName(log)}</TableCell>
+                      <TableCell>
+                        {log.startTime}
+                        {log.endTime && ` - ${log.endTime}`}
+                      </TableCell>
+                      <TableCell>
+                        {log.status === 'completed' ? formatDuration(log.duration) : '-'}
+                      </TableCell>
+                      <TableCell
+                        sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                      >
+                        {log.description || '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={log.status === 'completed' ? 'Completed' : 'In Progress'}
+                          color={getStatusColor(log.status)}
+                          size="small"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </AccordionDetails>
+        </Accordion>
+      ))}
+    </Box>
+  );
 
   return (
     <Card>
@@ -145,57 +343,10 @@ const WorkLogList: React.FC<WorkLogListProps> = ({ refreshTrigger }) => {
           <Typography>Loading...</Typography>
         ) : workLogs.length === 0 ? (
           <Typography color="text.secondary">No work logs found.</Typography>
+        ) : user?.role === 'client' ? (
+          renderClientView()
         ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Date</TableCell>
-                  {user?.role === 'client' && <TableCell>Freelancer</TableCell>}
-                  <TableCell>Contract</TableCell>
-                  <TableCell>Time</TableCell>
-                  <TableCell>Duration</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Status</TableCell>
-                  {user?.role === 'freelancer' && <TableCell>Actions</TableCell>}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {workLogs.map((log) => (
-                  <TableRow key={log._id}>
-                    <TableCell>{new Date(log.date).toLocaleDateString()}</TableCell>
-                    {user?.role === 'client' && <TableCell>{getFreelancerName(log)}</TableCell>}
-                    <TableCell>{log.contract?.title || 'N/A'}</TableCell>
-                    <TableCell>
-                      {log.startTime}
-                      {log.endTime && ` - ${log.endTime}`}
-                    </TableCell>
-                    <TableCell>
-                      {log.status === 'completed' ? formatDuration(log.duration) : '-'}
-                    </TableCell>
-                    <TableCell>{log.description || '-'}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={log.status === 'completed' ? 'Completed' : 'In Progress'}
-                        color={getStatusColor(log.status)}
-                        size="small"
-                      />
-                    </TableCell>
-                    {user?.role === 'freelancer' && (
-                      <TableCell>
-                        <IconButton size="small" onClick={() => handleEdit(log)}>
-                          <Edit fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" onClick={() => handleDelete(log._id)} color="error">
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          renderFreelancerView()
         )}
 
         {/* Edit Dialog */}

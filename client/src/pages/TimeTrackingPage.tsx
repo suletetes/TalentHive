@@ -4,21 +4,17 @@ import {
   Typography,
   Box,
   Card,
-  CardContent,
   Tabs,
   Tab,
-  Grid,
   Alert,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import TimeTracker from '@/components/timeTracking/TimeTracker';
-import TimeEntryList from '@/components/timeTracking/TimeEntryList';
-import TimeReport from '@/components/timeTracking/TimeReport';
+import WorkLogForm from '@/components/workLog/WorkLogForm';
+import WorkLogList from '@/components/workLog/WorkLogList';
+import WorkLogReport from '@/components/workLog/WorkLogReport';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { ErrorState } from '@/components/ui/ErrorState';
-import { apiCore } from '@/services/api/core';
 import { apiService } from '@/services/api';
 
 interface TabPanelProps {
@@ -34,8 +30,8 @@ function TabPanel(props: TabPanelProps) {
     <div
       role="tabpanel"
       hidden={value !== index}
-      id={`time-tracking-tabpanel-${index}`}
-      aria-labelledby={`time-tracking-tab-${index}`}
+      id={`work-log-tabpanel-${index}`}
+      aria-labelledby={`work-log-tab-${index}`}
       {...other}
     >
       {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
@@ -46,53 +42,14 @@ function TabPanel(props: TabPanelProps) {
 export const TimeTrackingPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const [tabValue, setTabValue] = useState(0);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Fetch time entries
-  const { data: entriesData, isLoading, error, refetch } = useQuery({
-    queryKey: ['time-entries'],
+  // Fetch contracts for dropdown
+  const { data: contractsData, isLoading } = useQuery({
+    queryKey: ['work-log-contracts'],
     queryFn: async () => {
-      console.log(`[TIME TRACKING] ========== START FETCH ENTRIES ==========`);
-      console.log(`[TIME TRACKING] User ID: ${user?._id}`);
-      console.log(`[TIME TRACKING] User role: ${user?.role}`);
-      try {
-        const response = await apiCore.get('/time-tracking/entries');
-        console.log(`[TIME TRACKING] Raw response:`, response.data);
-        console.log(`[TIME TRACKING] response.data type:`, typeof response.data);
-        console.log(`[TIME TRACKING] response.data.data:`, response.data?.data);
-        
-        let entries = [];
-        if (response.data?.data?.timeEntries && Array.isArray(response.data.data.timeEntries)) {
-          entries = response.data.data.timeEntries;
-          console.log(`[TIME TRACKING] ✅ Using response.data.data.timeEntries (${entries.length} items)`);
-        } else if (response.data?.data && Array.isArray(response.data.data)) {
-          entries = response.data.data;
-          console.log(`[TIME TRACKING] ✅ Using response.data.data (${entries.length} items)`);
-        } else if (Array.isArray(response.data)) {
-          entries = response.data;
-          console.log(`[TIME TRACKING] ✅ Using response.data directly (${entries.length} items)`);
-        }
-        
-        console.log(`[TIME TRACKING] Final result: Found ${entries.length} time entries`);
-        console.log(`[TIME TRACKING] ========== END FETCH ENTRIES ==========`);
-        return entries;
-      } catch (err: any) {
-        console.error(`[TIME TRACKING ERROR] ❌ Error fetching time entries:`, err.response?.status, err.response?.data);
-        throw err;
-      }
-    },
-    enabled: !!user,
-  });
-
-  // Fetch contracts for dropdown (contracts contain project info)
-  const { data: contractsData } = useQuery({
-    queryKey: ['time-tracking-contracts'],
-    queryFn: async () => {
-      console.log(`[TIME TRACKING] Fetching contracts for dropdown...`);
       try {
         const response: any = await apiService.get('/contracts/my');
-        console.log(`[TIME TRACKING] Contracts response:`, response);
-        
-        // apiService.get returns response.data directly
         let contracts = [];
         if (response?.data?.contracts && Array.isArray(response.data.contracts)) {
           contracts = response.data.contracts;
@@ -103,41 +60,10 @@ export const TimeTrackingPage: React.FC = () => {
         } else if (Array.isArray(response)) {
           contracts = response;
         }
-        
-        console.log(`[TIME TRACKING] Found ${contracts.length} contracts`);
         return contracts;
       } catch (err: any) {
-        console.error(`[TIME TRACKING] Error fetching contracts:`, err);
+        console.error('Error fetching contracts:', err);
         return [];
-      }
-    },
-    enabled: !!user,
-  });
-
-  // Fetch time reports
-  const { data: reportsData } = useQuery({
-    queryKey: ['time-reports'],
-    queryFn: async () => {
-      console.log(`[TIME TRACKING] ========== START FETCH REPORTS ==========`);
-      try {
-        const response = await apiCore.get('/time-tracking/reports');
-        console.log(`[TIME TRACKING] Reports response:`, response.data);
-        
-        let reports = [];
-        if (response.data?.data && Array.isArray(response.data.data)) {
-          reports = response.data.data;
-          console.log(`[TIME TRACKING] ✅ Using response.data.data (${reports.length} items)`);
-        } else if (Array.isArray(response.data)) {
-          reports = response.data;
-          console.log(`[TIME TRACKING] ✅ Using response.data directly (${reports.length} items)`);
-        }
-        
-        console.log(`[TIME TRACKING] Final result: Found ${reports.length} reports`);
-        console.log(`[TIME TRACKING] ========== END FETCH REPORTS ==========`);
-        return reports;
-      } catch (err: any) {
-        console.error(`[TIME TRACKING ERROR] ❌ Error fetching time reports:`, err.response?.status, err.response?.data);
-        throw err;
       }
     },
     enabled: !!user,
@@ -147,61 +73,74 @@ export const TimeTrackingPage: React.FC = () => {
     setTabValue(newValue);
   };
 
+  const handleLogCreated = () => {
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
   if (!user) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error">
-          You must be logged in to access time tracking.
-        </Alert>
+        <Alert severity="error">You must be logged in to access work logs.</Alert>
       </Container>
     );
   }
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading time tracking..." />;
-  }
-
-  if (error) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <ErrorState error={error} onRetry={() => refetch()} />
-      </Container>
-    );
+    return <LoadingSpinner message="Loading..." />;
   }
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        Time Tracking
+        Work Log
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Track your work hours and productivity
+        {user.role === 'freelancer'
+          ? 'Log your work hours for your contracts'
+          : 'View work hours logged by your freelancers'}
       </Typography>
 
       <Card>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs
-            value={tabValue}
-            onChange={handleTabChange}
-            aria-label="time tracking tabs"
-          >
-            <Tab label="Time Tracker" id="time-tracking-tab-0" aria-controls="time-tracking-tabpanel-0" />
-            <Tab label="Time Entries" id="time-tracking-tab-1" aria-controls="time-tracking-tabpanel-1" />
-            <Tab label="Reports" id="time-tracking-tab-2" aria-controls="time-tracking-tabpanel-2" />
+          <Tabs value={tabValue} onChange={handleTabChange} aria-label="work log tabs">
+            {user.role === 'freelancer' && (
+              <Tab label="Log Hours" id="work-log-tab-0" aria-controls="work-log-tabpanel-0" />
+            )}
+            <Tab
+              label="Work Logs"
+              id={`work-log-tab-${user.role === 'freelancer' ? 1 : 0}`}
+              aria-controls={`work-log-tabpanel-${user.role === 'freelancer' ? 1 : 0}`}
+            />
+            <Tab
+              label="Reports"
+              id={`work-log-tab-${user.role === 'freelancer' ? 2 : 1}`}
+              aria-controls={`work-log-tabpanel-${user.role === 'freelancer' ? 2 : 1}`}
+            />
           </Tabs>
         </Box>
 
-        <TabPanel value={tabValue} index={0}>
-          <TimeTracker contracts={contractsData || []} />
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={1}>
-          <TimeEntryList entries={entriesData || []} />
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={2}>
-          <TimeReport data={reportsData || []} />
-        </TabPanel>
+        {user.role === 'freelancer' ? (
+          <>
+            <TabPanel value={tabValue} index={0}>
+              <WorkLogForm contracts={contractsData || []} onLogCreated={handleLogCreated} />
+            </TabPanel>
+            <TabPanel value={tabValue} index={1}>
+              <WorkLogList refreshTrigger={refreshTrigger} />
+            </TabPanel>
+            <TabPanel value={tabValue} index={2}>
+              <WorkLogReport />
+            </TabPanel>
+          </>
+        ) : (
+          <>
+            <TabPanel value={tabValue} index={0}>
+              <WorkLogList refreshTrigger={refreshTrigger} />
+            </TabPanel>
+            <TabPanel value={tabValue} index={1}>
+              <WorkLogReport />
+            </TabPanel>
+          </>
+        )}
       </Card>
     </Container>
   );

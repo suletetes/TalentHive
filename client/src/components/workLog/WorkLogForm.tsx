@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Card,
@@ -12,102 +12,86 @@ import {
   InputLabel,
   Alert,
   Grid,
+  FormHelperText,
 } from '@mui/material';
 import { Check } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import api from '@/services/api';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface WorkLogFormProps {
   contracts?: any[];
   onLogCreated?: () => void;
 }
 
+const validationSchema = Yup.object({
+  contractId: Yup.string().required('Please select a contract'),
+  date: Yup.string().required('Please select a date'),
+  startTime: Yup.string()
+    .required('Please enter start time')
+    .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
+  endTime: Yup.string()
+    .required('Please enter end time')
+    .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format')
+    .test('is-after-start', 'End time must be after start time', function (value) {
+      const { startTime } = this.parent;
+      if (!startTime || !value) return true;
+      const [startH, startM] = startTime.split(':').map(Number);
+      const [endH, endM] = value.split(':').map(Number);
+      return endH * 60 + endM > startH * 60 + startM;
+    }),
+  description: Yup.string().max(500, 'Description must be 500 characters or less'),
+});
+
 const WorkLogForm: React.FC<WorkLogFormProps> = ({ contracts = [], onLogCreated }) => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const [selectedContract, setSelectedContract] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
+  const toast = useToast();
   const activeContracts = contracts.filter((c) => c.status === 'active');
 
-  const handleSubmit = async () => {
-    setError('');
-    setSuccess('');
+  const formik = useFormik({
+    initialValues: {
+      contractId: '',
+      date: new Date().toISOString().split('T')[0],
+      startTime: '',
+      endTime: '',
+      description: '',
+    },
+    validationSchema,
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
+      try {
+        const createRes: any = await api.post('/work-logs', {
+          contractId: values.contractId,
+          date: values.date,
+          startTime: values.startTime,
+          description: values.description,
+        });
 
-    if (!selectedContract) {
-      setError('Please select a contract');
-      return;
-    }
-    if (!date) {
-      setError('Please select a date');
-      return;
-    }
-    if (!startTime) {
-      setError('Please enter start time');
-      return;
-    }
-    if (!endTime) {
-      setError('Please enter end time');
-      return;
-    }
+        const workLogId = createRes?.data?.workLog?._id;
 
-    // Validate end time is after start time
-    const [startH, startM] = startTime.split(':').map(Number);
-    const [endH, endM] = endTime.split(':').map(Number);
-    const startMinutes = startH * 60 + startM;
-    const endMinutes = endH * 60 + endM;
+        if (!workLogId) {
+          throw new Error('Failed to get work log ID from response');
+        }
 
-    if (endMinutes <= startMinutes) {
-      setError('End time must be after start time');
-      return;
-    }
+        await api.patch(`/work-logs/${workLogId}/complete`, {
+          endTime: values.endTime,
+          description: values.description,
+        });
 
-    try {
-      setLoading(true);
-
-      // api methods return response.data directly
-      const createRes: any = await api.post('/work-logs', {
-        contractId: selectedContract,
-        date,
-        startTime,
-        description,
-      });
-
-      console.log('[WORK LOG] Create response:', createRes);
-
-      // Response is already response.data, so structure is: { status, data: { workLog } }
-      const workLogId = createRes?.data?.workLog?._id;
-
-      console.log('[WORK LOG] WorkLog ID:', workLogId);
-
-      if (!workLogId) {
-        throw new Error('Failed to get work log ID from response');
+        toast.success('Work log created successfully!');
+        resetForm();
+        formik.setFieldValue('date', new Date().toISOString().split('T')[0]);
+        onLogCreated?.();
+      } catch (err: any) {
+        const message = err.response?.data?.message || err.message || 'Failed to create work log';
+        toast.error(message);
+      } finally {
+        setSubmitting(false);
       }
-
-      // Complete it with end time
-      await api.patch(`/work-logs/${workLogId}/complete`, {
-        endTime,
-        description,
-      });
-
-      setSuccess('Work log created successfully!');
-      setStartTime('');
-      setEndTime('');
-      setDescription('');
-      onLogCreated?.();
-    } catch (err: any) {
-      console.error('[WORK LOG] Error:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to create work log');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
   if (user?.role !== 'freelancer') {
     return (
@@ -131,91 +115,106 @@ const WorkLogForm: React.FC<WorkLogFormProps> = ({ contracts = [], onLogCreated 
           Record your work hours by selecting the date and time range
         </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {success}
-          </Alert>
-        )}
-
         {activeContracts.length === 0 ? (
           <Alert severity="warning">
             No active contracts found. You need an active contract to log work hours.
           </Alert>
         ) : (
-          <Box display="flex" flexDirection="column" gap={2}>
-            <FormControl fullWidth>
-              <InputLabel>Select Contract</InputLabel>
-              <Select
-                value={selectedContract}
-                onChange={(e) => setSelectedContract(e.target.value)}
-                label="Select Contract"
+          <form onSubmit={formik.handleSubmit}>
+            <Box display="flex" flexDirection="column" gap={2}>
+              <FormControl
+                fullWidth
+                error={formik.touched.contractId && Boolean(formik.errors.contractId)}
               >
-                {activeContracts.map((contract) => (
-                  <MenuItem key={contract._id} value={contract._id}>
-                    {contract.title} - {contract.project?.title || 'Project'}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                <InputLabel>Select Contract</InputLabel>
+                <Select
+                  name="contractId"
+                  value={formik.values.contractId}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  label="Select Contract"
+                >
+                  {activeContracts.map((contract) => (
+                    <MenuItem key={contract._id} value={contract._id}>
+                      {contract.title} - {contract.project?.title || 'Project'}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {formik.touched.contractId && formik.errors.contractId && (
+                  <FormHelperText>{formik.errors.contractId}</FormHelperText>
+                )}
+              </FormControl>
 
-            <TextField
-              fullWidth
-              type="date"
-              label="Date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
+              <TextField
+                fullWidth
+                type="date"
+                name="date"
+                label="Date"
+                value={formik.values.date}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.date && Boolean(formik.errors.date)}
+                helperText={formik.touched.date && formik.errors.date}
+                InputLabelProps={{ shrink: true }}
+              />
 
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  type="time"
-                  label="Start Time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <TextField
+                    fullWidth
+                    type="time"
+                    name="startTime"
+                    label="Start Time"
+                    value={formik.values.startTime}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.startTime && Boolean(formik.errors.startTime)}
+                    helperText={formik.touched.startTime && formik.errors.startTime}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    fullWidth
+                    type="time"
+                    name="endTime"
+                    label="End Time"
+                    value={formik.values.endTime}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.endTime && Boolean(formik.errors.endTime)}
+                    helperText={formik.touched.endTime && formik.errors.endTime}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
               </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  type="time"
-                  label="End Time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-            </Grid>
 
-            <TextField
-              fullWidth
-              label="Description (optional)"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              multiline
-              rows={2}
-              placeholder="What did you work on?"
-            />
+              <TextField
+                fullWidth
+                name="description"
+                label="Description (optional)"
+                value={formik.values.description}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.description && Boolean(formik.errors.description)}
+                helperText={formik.touched.description && formik.errors.description}
+                multiline
+                rows={2}
+                placeholder="What did you work on?"
+              />
 
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<Check />}
-              onClick={handleSubmit}
-              disabled={loading || !selectedContract || !date || !startTime || !endTime}
-              size="large"
-            >
-              {loading ? 'Saving...' : 'Save Work Log'}
-            </Button>
-          </Box>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                startIcon={<Check />}
+                disabled={formik.isSubmitting || !formik.isValid}
+                size="large"
+              >
+                {formik.isSubmitting ? 'Saving...' : 'Save Work Log'}
+              </Button>
+            </Box>
+          </form>
         )}
       </CardContent>
     </Card>
