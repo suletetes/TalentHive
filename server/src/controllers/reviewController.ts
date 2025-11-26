@@ -75,34 +75,39 @@ export const createReview = catchAsync(async (req: AuthRequest, res: Response, n
 
 export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => {
   const { userId } = req.params;
-  const { page = 1, limit = 10 } = req.query;
+  const { page = 1, limit = 50 } = req.query;
 
   console.log('[GET_REVIEWS] Fetching reviews for user:', userId);
   console.log('[GET_REVIEWS] Page:', page, 'Limit:', limit);
 
-  const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
-
   try {
-    // Query for reviews - include both public and private (isPublic can be undefined or true)
-    const query = { reviewee: userId };
-    
-    console.log('[GET_REVIEWS] Query:', query);
-
-    const [reviews, total] = await Promise.all([
-      Review.find(query)
+    // Fetch BOTH reviews received (as reviewee) AND reviews given (as reviewer)
+    const [reviewsReceived, reviewsGiven] = await Promise.all([
+      Review.find({ reviewee: userId })
         .populate('reviewer', 'profile email')
+        .populate('reviewee', 'profile email')
         .populate('project', 'title')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(parseInt(limit as string)),
-      Review.countDocuments(query),
+        .sort({ createdAt: -1 }),
+      Review.find({ reviewer: userId })
+        .populate('reviewer', 'profile email')
+        .populate('reviewee', 'profile email')
+        .populate('project', 'title')
+        .sort({ createdAt: -1 }),
     ]);
 
-    console.log('[GET_REVIEWS] Found', reviews.length, 'reviews, total:', total);
-    console.log('[GET_REVIEWS] Reviews data:', JSON.stringify(reviews, null, 2));
+    console.log('[GET_REVIEWS] Reviews received:', reviewsReceived.length);
+    console.log('[GET_REVIEWS] Reviews given:', reviewsGiven.length);
+
+    // Combine all reviews (frontend will filter by received/given)
+    const allReviews = [...reviewsReceived, ...reviewsGiven];
+    
+    // Remove duplicates (in case a user reviewed themselves somehow)
+    const uniqueReviews = allReviews.filter((review, index, self) =>
+      index === self.findIndex((r) => r._id.toString() === review._id.toString())
+    );
 
     // Map reviews to include 'client' field for frontend compatibility
-    const reviewsWithClient = reviews.map(review => {
+    const reviewsWithClient = uniqueReviews.map(review => {
       const reviewObj = review.toObject();
       return {
         ...reviewObj,
@@ -110,7 +115,7 @@ export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => 
       };
     });
 
-    console.log('[GET_REVIEWS] Returning', reviewsWithClient.length, 'reviews');
+    console.log('[GET_REVIEWS] Returning', reviewsWithClient.length, 'total reviews');
 
     res.json({
       status: 'success',
@@ -125,7 +130,7 @@ export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => 
 
 export const respondToReview = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { reviewId } = req.params;
-  const { response } = req.body;
+  const { content } = req.body;
 
   const review = await Review.findById(reviewId);
   if (!review) {
@@ -141,9 +146,19 @@ export const respondToReview = catchAsync(async (req: AuthRequest, res: Response
     return next(new AppError('Not authorized', 403));
   }
 
-  review.response = response;
-  review.respondedAt = new Date();
+  const now = new Date();
+  const isEditing = !!review.response?.content;
+
+  review.response = {
+    content,
+    createdAt: review.response?.createdAt || now,
+    updatedAt: now,
+    isEdited: isEditing,
+  };
+  review.respondedAt = now;
   await review.save();
+
+  await review.populate('reviewer', 'profile email');
 
   res.json({
     status: 'success',

@@ -1942,6 +1942,118 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
       isPublic: true,
     });
   }
+
+  // ========== REVIEWS GIVEN BY FREELANCERS TO CLIENTS ==========
+  // These are reviews that freelancers give to clients after completing projects
+  const freelancerFeedbackTemplates = [
+    'Great client to work with! Clear requirements and prompt communication.',
+    'Professional and respectful throughout the project. Would work with again.',
+    'Excellent collaboration. The client provided detailed feedback and was very supportive.',
+    'Smooth project from start to finish. Client was responsive and understanding.',
+    'Highly recommend this client. Fair expectations and timely payments.',
+  ];
+
+  // Alice reviews clients
+  reviews.push(
+    {
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: alice._id,
+      reviewee: client1._id,
+      rating: 5,
+      feedback: 'John was an excellent client to work with. He provided clear requirements from the start and was always available for questions. The project scope was well-defined and he gave constructive feedback throughout.',
+      categories: {
+        communication: 5,
+        quality: 5,
+        professionalism: 5,
+        deadlines: 5,
+      },
+      isPublic: true,
+    },
+    {
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: alice._id,
+      reviewee: client2._id,
+      rating: 4,
+      feedback: 'Sarah was professional and organized. The project requirements were clear and she provided timely feedback. Would definitely work with her again on future projects.',
+      categories: {
+        communication: 4,
+        quality: 5,
+        professionalism: 5,
+        deadlines: 4,
+      },
+      isPublic: true,
+    }
+  );
+
+  // Bob reviews clients
+  reviews.push(
+    {
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: bob._id,
+      reviewee: client1._id,
+      rating: 5,
+      feedback: 'Working with John was a pleasure. He had a clear vision for the design and gave helpful feedback. Communication was excellent throughout the project.',
+      categories: {
+        communication: 5,
+        quality: 5,
+        professionalism: 5,
+        deadlines: 5,
+      },
+      isPublic: true,
+    },
+    {
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: bob._id,
+      reviewee: client2._id,
+      rating: 4,
+      feedback: 'Sarah provided detailed design briefs and was open to creative suggestions. Great collaboration experience.',
+      categories: {
+        communication: 4,
+        quality: 4,
+        professionalism: 5,
+        deadlines: 4,
+      },
+      isPublic: true,
+    }
+  );
+
+  // Carol reviews clients
+  reviews.push(
+    {
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: carol._id,
+      reviewee: client1._id,
+      rating: 5,
+      feedback: 'John is a fantastic client! He provided all the necessary information upfront and was very responsive to drafts. The content direction was clear and feedback was constructive.',
+      categories: {
+        communication: 5,
+        quality: 5,
+        professionalism: 5,
+        deadlines: 5,
+      },
+      isPublic: true,
+    },
+    {
+      contract: new mongoose.Types.ObjectId(),
+      project: mockProject._id,
+      reviewer: carol._id,
+      reviewee: client2._id,
+      rating: 5,
+      feedback: 'Sarah was wonderful to work with. She had a clear content strategy and provided excellent feedback. Highly recommend working with her.',
+      categories: {
+        communication: 5,
+        quality: 5,
+        professionalism: 5,
+        deadlines: 5,
+      },
+      isPublic: true,
+    }
+  );
   
   const createdReviews = await Review.insertMany(reviews);
   logger.info(`✅ Created ${createdReviews.length} reviews`);

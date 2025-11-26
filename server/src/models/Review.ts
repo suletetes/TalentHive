@@ -45,7 +45,12 @@ const reviewSchema = new Schema<IReview>({
     type: Boolean,
     default: true,
   },
-  response: String,
+  response: {
+    content: String,
+    createdAt: Date,
+    updatedAt: Date,
+    isEdited: { type: Boolean, default: false },
+  },
   respondedAt: Date,
   status: {
     type: String,

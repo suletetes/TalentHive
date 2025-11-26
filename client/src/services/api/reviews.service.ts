@@ -19,7 +19,10 @@ export interface Review {
   response?: {
     content: string;
     createdAt: Date;
-  };
+    updatedAt?: Date;
+    isEdited?: boolean;
+  } | string; // Can be string for legacy data
+  respondedAt?: Date;
   categories?: {
     communication?: number;
     quality?: number;
@@ -42,7 +45,11 @@ export class ReviewsService {
   }
 
   async getReviews(userId: string): Promise<{ data: Review[] }> {
-    return apiCore.get<{ data: Review[] }>(`${this.basePath}/user/${userId}`);
+    console.log(`[REVIEWS SERVICE] Fetching reviews for userId: ${userId}`);
+    console.log(`[REVIEWS SERVICE] Endpoint: ${this.basePath}/user/${userId}`);
+    const result = await apiCore.get<{ data: Review[] }>(`${this.basePath}/user/${userId}`);
+    console.log(`[REVIEWS SERVICE] Result:`, result);
+    return result;
   }
 
   async respondToReview(reviewId: string, content: string): Promise<{ data: Review }> {
