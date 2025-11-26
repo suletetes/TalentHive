@@ -83,40 +83,7 @@ export const TimeTrackingPage: React.FC = () => {
     enabled: !!user,
   });
 
-  // Fetch projects for dropdown
-  const { data: projectsData } = useQuery({
-    queryKey: ['time-tracking-projects'],
-    queryFn: async () => {
-      console.log(`[TIME TRACKING] Fetching projects for dropdown, user role: ${user?.role}`);
-      try {
-        // Use my/projects for clients, /projects for freelancers
-        const endpoint = user?.role === 'client' ? '/projects/my/projects' : '/projects';
-        const response: any = await apiService.get(endpoint);
-        console.log(`[TIME TRACKING] Projects response:`, response);
-        
-        // API returns { status: 'success', data: { projects: [...] } }
-        let projects = [];
-        if (response?.data?.projects && Array.isArray(response.data.projects)) {
-          projects = response.data.projects;
-        } else if (response?.projects && Array.isArray(response.projects)) {
-          projects = response.projects;
-        } else if (response?.data && Array.isArray(response.data)) {
-          projects = response.data;
-        } else if (Array.isArray(response)) {
-          projects = response;
-        }
-        
-        console.log(`[TIME TRACKING] Found ${projects.length} projects`);
-        return projects;
-      } catch (err: any) {
-        console.error(`[TIME TRACKING] Error fetching projects:`, err);
-        return [];
-      }
-    },
-    enabled: !!user,
-  });
-
-  // Fetch contracts for dropdown
+  // Fetch contracts for dropdown (contracts contain project info)
   const { data: contractsData } = useQuery({
     queryKey: ['time-tracking-contracts'],
     queryFn: async () => {
@@ -225,7 +192,7 @@ export const TimeTrackingPage: React.FC = () => {
         </Box>
 
         <TabPanel value={tabValue} index={0}>
-          <TimeTracker projects={projectsData || []} contracts={contractsData || []} />
+          <TimeTracker contracts={contractsData || []} />
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>

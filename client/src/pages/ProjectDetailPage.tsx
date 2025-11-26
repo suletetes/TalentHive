@@ -155,7 +155,9 @@ export const ProjectDetailPage = () => {
   const openEditDialog = () => {
     if (userProposal) {
       setCoverLetter(userProposal.coverLetter || '');
-      setBidAmount(userProposal.proposedBudget?.amount?.toString() || '');
+      // Support both bidAmount (backend) and proposedBudget.amount (frontend interface)
+      const amount = userProposal.bidAmount || userProposal.proposedBudget?.amount;
+      setBidAmount(amount?.toString() || '');
       setDuration(userProposal.timeline?.duration?.toString() || '');
       setMilestones(userProposal.milestones || []);
       setIsEditMode(true);

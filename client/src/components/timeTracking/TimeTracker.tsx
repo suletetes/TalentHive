@@ -12,7 +12,7 @@ import {
   InputLabel,
   IconButton,
   Chip,
-  SelectChangeEvent,
+  Alert,
 } from '@mui/material';
 import {
   PlayArrow,
@@ -25,16 +25,12 @@ import { RootState } from '@/store';
 import api from '@/services/api';
 
 interface TimeTrackerProps {
-  projectId?: string;
   contractId?: string;
-  projects?: any[];
   contracts?: any[];
 }
 
 const TimeTracker: React.FC<TimeTrackerProps> = ({ 
-  projectId, 
   contractId,
-  projects: propProjects = [],
   contracts: propContracts = [],
 }) => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -42,32 +38,47 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({
   const [isPaused, setIsPaused] = useState(false);
   const [duration, setDuration] = useState(0);
   const [description, setDescription] = useState('');
-  const [selectedProject, setSelectedProject] = useState(projectId || '');
   const [selectedContract, setSelectedContract] = useState(contractId || '');
-  const [projects, setProjects] = useState<any[]>(propProjects);
   const [contracts, setContracts] = useState<any[]>(propContracts);
   const [currentSession, setCurrentSession] = useState<any>(null);
 
   // Update local state when props change
-  useEffect(() => {
-    if (propProjects.length > 0) {
-      setProjects(propProjects);
-    }
-  }, [propProjects]);
-
   useEffect(() => {
     if (propContracts.length > 0) {
       setContracts(propContracts);
     }
   }, [propContracts]);
 
-  // Fetch data only if not provided via props
+  // Fetch contracts only if not provided via props
   useEffect(() => {
-    if (propProjects.length === 0 && propContracts.length === 0) {
-      fetchProjects();
+    if (propContracts.length === 0) {
       fetchContracts();
     }
-  }, [user, propProjects.length, propContracts.length]);
+  }, [user, propContracts.length]);
+
+  // Check for active session on mount
+  useEffect(() => {
+    checkActiveSession();
+  }, []);
+
+  const checkActiveSession = async () => {
+    try {
+      const response = await api.get('/time-tracking/sessions/active');
+      if (response?.data?.data?.session) {
+        const session = response.data.data.session;
+        setCurrentSession(session);
+        setSelectedContract(session.contract?._id || session.contract);
+        setIsTracking(true);
+        // Calculate elapsed time
+        const startTime = new Date(session.startTime).getTime();
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        setDuration(elapsed);
+      }
+    } catch (error) {
+      // No active session, that's fine
+      console.log('[TIME TRACKER] No active session found');
+    }
+  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -78,18 +89,6 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({
     }
     return () => clearInterval(interval);
   }, [isTracking, isPaused]);
-
-  const fetchProjects = async () => {
-    try {
-      const response = await api.get('/projects/my/projects');
-      const projectsList = response?.data?.data?.projects || response?.data?.projects || response?.data?.data || [];
-      console.log('[TIME TRACKER] Fetched projects:', projectsList);
-      setProjects(Array.isArray(projectsList) ? projectsList : []);
-    } catch (error) {
-      console.error('Error fetching projects:', error);
-      setProjects([]);
-    }
-  };
 
   const fetchContracts = async () => {
     try {
@@ -103,15 +102,20 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({
     }
   };
 
+  // Filter to only show active contracts for the freelancer
+  const activeContracts = contracts.filter(c => c.status === 'active');
+
+  // Get selected contract details
+  const selectedContractData = contracts.find(c => c._id === selectedContract);
+
   const handleStart = async () => {
-    if (!selectedProject || !selectedContract) {
-      alert('Please select a project and contract');
+    if (!selectedContract) {
+      alert('Please select a contract');
       return;
     }
 
     try {
       const response = await api.post('/time-tracking/sessions/start', {
-        projectId: selectedProject,
         contractId: selectedContract,
       });
       setCurrentSession(response.data.data.session);
@@ -133,9 +137,8 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({
     try {
       await api.patch(`/time-tracking/sessions/${currentSession._id}/stop`);
       
-      // Create time entry
+      // Create time entry - projectId is extracted from contract on backend
       await api.post('/time-tracking/entries', {
-        projectId: selectedProject,
         contractId: selectedContract,
         description,
         duration,
@@ -188,59 +191,52 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({
             </Typography>
           </Box>
 
-          {/* Project and Contract Selection */}
+          {/* Contract Selection - Only for freelancers */}
           {!isTracking && (
             <>
-              <FormControl fullWidth>
-                <InputLabel id="project-select-label">Project</InputLabel>
-                <Select
-                  labelId="project-select-label"
-                  value={selectedProject}
-                  onChange={(e) => setSelectedProject(e.target.value as string)}
-                  label="Project"
-                  displayEmpty
-                >
-                  {projects.length === 0 ? (
-                    <MenuItem disabled value="">
-                      <em>No projects available</em>
-                    </MenuItem>
-                  ) : (
-                    projects.map((project) => (
-                      <MenuItem key={project._id} value={project._id}>
-                        {project.title}
-                      </MenuItem>
-                    ))
-                  )}
-                </Select>
-              </FormControl>
+              {user?.role !== 'freelancer' ? (
+                <Alert severity="info">
+                  Only freelancers can track time. Clients can view time entries in the Time Entries tab.
+                </Alert>
+              ) : contracts.length === 0 ? (
+                <Alert severity="warning">
+                  No contracts found. You need a contract to track time.
+                </Alert>
+              ) : activeContracts.length === 0 ? (
+                <Alert severity="warning">
+                  No active contracts found. You have {contracts.length} contract(s) but none are active.
+                  Contract statuses: {contracts.map(c => c.status).join(', ')}
+                </Alert>
+              ) : (
+                <>
+                  <FormControl fullWidth>
+                    <InputLabel id="contract-select-label">Select Contract</InputLabel>
+                    <Select
+                      labelId="contract-select-label"
+                      value={selectedContract}
+                      onChange={(e) => setSelectedContract(e.target.value as string)}
+                      label="Select Contract"
+                    >
+                      {activeContracts.map((contract) => (
+                        <MenuItem key={contract._id} value={contract._id}>
+                          {contract.title} - {contract.project?.title || 'Project'}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
 
-              <FormControl fullWidth>
-                <InputLabel id="contract-select-label">Contract</InputLabel>
-                <Select
-                  labelId="contract-select-label"
-                  value={selectedContract}
-                  onChange={(e) => setSelectedContract(e.target.value as string)}
-                  label="Contract"
-                  displayEmpty
-                >
-                  {contracts.length === 0 ? (
-                    <MenuItem disabled value="">
-                      <em>No contracts available</em>
-                    </MenuItem>
-                  ) : (
-                    contracts.map((contract) => (
-                      <MenuItem key={contract._id} value={contract._id}>
-                        {contract.title}
-                      </MenuItem>
-                    ))
+                  {selectedContractData && (
+                    <Box sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Project: {selectedContractData.project?.title || 'N/A'}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Client: {selectedContractData.client?.firstName} {selectedContractData.client?.lastName}
+                      </Typography>
+                    </Box>
                   )}
-                </Select>
-              </FormControl>
-
-              {/* Debug info */}
-              <Typography variant="caption" color="text.secondary">
-                Projects: {projects.length} | Contracts: {contracts.length}
-              </Typography>
+                </>
+              )}
             </>
           )}
 
@@ -264,6 +260,7 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({
                 startIcon={<PlayArrow />}
                 onClick={handleStart}
                 size="large"
+                disabled={user?.role !== 'freelancer' || !selectedContract}
               >
                 Start Tracking
               </Button>
