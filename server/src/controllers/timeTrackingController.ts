@@ -4,15 +4,77 @@ import WorkSession from '@/models/WorkSession';
 import { Contract } from '@/models/Contract';
 import { logger } from '@/utils/logger';
 
+// Get active work session
+export const getActiveSession = async (req: Request, res: Response) => {
+  try {
+    const freelancerId = req.user?._id;
+    const userRole = req.user?.role;
+    
+    console.log('[TIME TRACKING] getActiveSession called:', {
+      freelancerId: freelancerId?.toString(),
+      userRole,
+      hasUser: !!req.user,
+    });
+    
+    if (!freelancerId) {
+      console.log('[TIME TRACKING] getActiveSession: No freelancerId - unauthorized');
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
+
+    const session = await WorkSession.findOne({
+      freelancer: freelancerId,
+      status: 'active',
+    })
+      .populate('project', 'title')
+      .populate('contract', 'title');
+
+    console.log('[TIME TRACKING] getActiveSession result:', {
+      found: !!session,
+      sessionId: session?._id?.toString(),
+    });
+
+    if (!session) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'No active session found',
+      });
+    }
+
+    res.json({
+      status: 'success',
+      data: { session },
+    });
+  } catch (error) {
+    console.error('[TIME TRACKING] getActiveSession error:', error);
+    logger.error('Error getting active session:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to get active session',
+    });
+  }
+};
+
 // Start a new work session
 export const startWorkSession = async (req: Request, res: Response) => {
   try {
     const { contractId } = req.body;
     const freelancerId = req.user?._id;
+    const userRole = req.user?.role;
     
-    console.log('[TIME TRACKING] Start session request:', { contractId, freelancerId });
+    console.log('[TIME TRACKING] ========== START SESSION REQUEST ==========');
+    console.log('[TIME TRACKING] Request body:', JSON.stringify(req.body));
+    console.log('[TIME TRACKING] User info:', { 
+      freelancerId: freelancerId?.toString(), 
+      userRole,
+      hasUser: !!req.user,
+      userName: req.user?.profile?.firstName + ' ' + req.user?.profile?.lastName,
+    });
     
     if (!freelancerId) {
+      console.log('[TIME TRACKING] REJECTED: No freelancerId - unauthorized');
       return res.status(401).json({
         status: 'error',
         message: 'Unauthorized',
@@ -20,7 +82,7 @@ export const startWorkSession = async (req: Request, res: Response) => {
     }
 
     if (!contractId) {
-      console.log('[TIME TRACKING] No contractId provided');
+      console.log('[TIME TRACKING] REJECTED: No contractId provided in request body');
       return res.status(400).json({
         status: 'error',
         message: 'Contract ID is required',

@@ -13,7 +13,8 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "seed": "ts-node -r tsconfig-paths/register src/scripts/seed.ts",
-    "seed:complete-profiles": "ts-node -r tsconfig-paths/register src/scripts/seedWithCompleteProfiles.ts"
+    "seed:complete-profiles": "ts-node -r tsconfig-paths/register src/scripts/seedWithCompleteProfiles.ts",
+    "seed:work-logs": "ts-node -r tsconfig-paths/register src/scripts/seedWorkLogs.ts"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.0",
