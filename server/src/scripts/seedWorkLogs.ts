@@ -111,8 +111,9 @@ async function seedWorkLogs() {
         workLogs.push({
           freelancer: contract.freelancer,
           contract: contract._id,
-          date: logDate,
+          startDate: logDate,
           startTime,
+          endDate: logDate,
           endTime,
           duration: workHours * 60, // in minutes
           description,
@@ -126,7 +127,7 @@ async function seedWorkLogs() {
         workLogs.push({
           freelancer: contract.freelancer,
           contract: contract._id,
-          date: today,
+          startDate: today,
           startTime,
           description: 'Currently working on assigned tasks',
           status: 'in_progress',
