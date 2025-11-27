@@ -40,8 +40,8 @@ export const FreelancerReviewsPage: React.FC = () => {
       // apiService.get returns response.data directly
       const response: any = await apiService.get(`/users/freelancer/${id}`);
       console.log(`[FREELANCER REVIEWS] Freelancer response:`, response);
-      // Handle response structure
-      const freelancer = response?.data?.user || response?.data || response?.user || response;
+      // Handle response structure - API returns { data: { freelancer: {...} } }
+      const freelancer = response?.data?.freelancer || response?.freelancer || response?.data?.user || response?.data || response;
       console.log(`[FREELANCER REVIEWS] Freelancer name:`, freelancer?.profile?.firstName, freelancer?.profile?.lastName);
       return freelancer;
     },

@@ -17,6 +17,11 @@ import {
   ListItem,
   ListItemText,
   Link as MuiLink,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material';
 import {
   LocationOn,
@@ -26,7 +31,13 @@ import {
   Language,
   CardMembership,
   OpenInNew,
+  Storefront,
+  AccessTime,
+  Refresh,
+  CheckCircle,
 } from '@mui/icons-material';
+import { useMutation } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useFreelancer } from '@/hooks/api/useUsers';
 import { useQuery } from '@tanstack/react-query';
@@ -41,8 +52,53 @@ export const FreelancerDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { data: freelancerResponse, isLoading, error } = useFreelancer(id || '');
   const [hireNowModalOpen, setHireNowModalOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<any>(null);
+  const [serviceDetailOpen, setServiceDetailOpen] = useState(false);
+  const [requestServiceOpen, setRequestServiceOpen] = useState(false);
+  const [requestMessage, setRequestMessage] = useState('');
   const { user } = useSelector((state: RootState) => state.auth);
   const isClient = user?.role === 'client';
+
+  // Request service mutation
+  const requestServiceMutation = useMutation({
+    mutationFn: async (data: { freelancerId: string; servicePackageId: string; message: string }) => {
+      const response = await apiService.post('/hire-now', {
+        freelancerId: data.freelancerId,
+        title: `Service Request: ${selectedService?.title}`,
+        description: data.message || `I would like to request your "${selectedService?.title}" service.`,
+        budget: {
+          amount: selectedService?.pricing?.amount || selectedService?.pricing?.hourlyRate || 0,
+          type: selectedService?.pricing?.type || 'fixed',
+        },
+        timeline: {
+          duration: selectedService?.deliveryTime || 7,
+          unit: 'days',
+        },
+        servicePackageId: data.servicePackageId,
+      });
+      return response;
+    },
+    onSuccess: () => {
+      toast.success('Service request sent successfully!');
+      setRequestServiceOpen(false);
+      setRequestMessage('');
+      setSelectedService(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to send request');
+    },
+  });
+
+  // Fetch service packages for this freelancer
+  const { data: servicesData } = useQuery({
+    queryKey: ['freelancer-services', id],
+    queryFn: async () => {
+      const response = await apiService.get(`/services/packages?freelancerId=${id}`);
+      const data = response.data?.data?.packages || response.data?.packages || response.data || [];
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!id,
+  });
 
   // Fetch reviews for this freelancer
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
@@ -82,6 +138,7 @@ export const FreelancerDetailPage = () => {
 
   const freelancer = freelancerResponse.data;
   const reviews = reviewsData || [];
+  const services = servicesData || [];
 
   const formatDate = (date: string | Date) => {
     try {
@@ -229,6 +286,87 @@ export const FreelancerDetailPage = () => {
             </CardContent>
           </Card>
         </Grid>
+
+        {/* Service Packages Section */}
+        {services.length > 0 && (
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Storefront color="primary" />
+                  <Typography variant="h6">Service Packages</Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  {services.map((pkg: any) => (
+                    <Grid item xs={12} sm={6} md={4} key={pkg._id}>
+                      <Card variant="outlined" sx={{ height: '100%' }}>
+                        <CardContent>
+                          <Typography variant="h6" gutterBottom>
+                            {pkg.title}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 40 }}>
+                            {pkg.description?.slice(0, 100)}{pkg.description?.length > 100 ? '...' : ''}
+                          </Typography>
+                          <Typography variant="h5" color="primary" gutterBottom>
+                            {pkg.pricing?.type === 'hourly'
+                              ? `$${pkg.pricing?.hourlyRate || 0}/hr`
+                              : `$${pkg.pricing?.amount || 0}`}
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <AccessTime fontSize="small" color="action" />
+                              <Typography variant="body2" color="text.secondary">
+                                {pkg.deliveryTime} days
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <Refresh fontSize="small" color="action" />
+                              <Typography variant="body2" color="text.secondary">
+                                {pkg.revisions} revisions
+                              </Typography>
+                            </Box>
+                          </Box>
+                          {pkg.features?.length > 0 && (
+                            <Box sx={{ mb: 2 }}>
+                              {pkg.features.slice(0, 3).map((feature: string, idx: number) => (
+                                <Typography key={idx} variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <CheckCircle fontSize="small" color="success" /> {feature}
+                                </Typography>
+                              ))}
+                              {pkg.features.length > 3 && (
+                                <Typography variant="body2" color="text.secondary">
+                                  +{pkg.features.length - 3} more features
+                                </Typography>
+                              )}
+                            </Box>
+                          )}
+                          <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => { setSelectedService(pkg); setServiceDetailOpen(true); }}
+                            >
+                              View Details
+                            </Button>
+                            {isClient && (
+                              <Button
+                                size="small"
+                                variant="contained"
+                                onClick={() => { setSelectedService(pkg); setRequestServiceOpen(true); }}
+                              >
+                                Request
+                              </Button>
+                            )}
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
 
         {/* Work Experience Section */}
         {freelancer.freelancerProfile?.workExperience && freelancer.freelancerProfile.workExperience.length > 0 && (
@@ -517,6 +655,119 @@ export const FreelancerDetailPage = () => {
           freelancer={freelancer}
         />
       )}
+
+      {/* Service Detail Dialog */}
+      <Dialog
+        open={serviceDetailOpen}
+        onClose={() => setServiceDetailOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>{selectedService?.title}</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body1" paragraph>
+            {selectedService?.description}
+          </Typography>
+          
+          <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
+            <Box>
+              <Typography variant="caption" color="text.secondary">Price</Typography>
+              <Typography variant="h5" color="primary">
+                ${selectedService?.pricing?.type === 'hourly'
+                  ? `${selectedService?.pricing?.hourlyRate}/hr`
+                  : selectedService?.pricing?.amount}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">Delivery</Typography>
+              <Typography variant="h6">{selectedService?.deliveryTime} days</Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">Revisions</Typography>
+              <Typography variant="h6">{selectedService?.revisions}</Typography>
+            </Box>
+          </Box>
+
+          {selectedService?.features?.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>What's Included:</Typography>
+              {selectedService.features.map((feature: string, idx: number) => (
+                <Typography key={idx} variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                  <CheckCircle fontSize="small" color="success" /> {feature}
+                </Typography>
+              ))}
+            </Box>
+          )}
+
+          {selectedService?.requirements?.length > 0 && (
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>Requirements:</Typography>
+              {selectedService.requirements.map((req: string, idx: number) => (
+                <Typography key={idx} variant="body2" sx={{ mb: 0.5 }}>• {req}</Typography>
+              ))}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setServiceDetailOpen(false)}>Close</Button>
+          {isClient && (
+            <Button
+              variant="contained"
+              onClick={() => {
+                setServiceDetailOpen(false);
+                setRequestServiceOpen(true);
+              }}
+            >
+              Request This Service
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Request Service Dialog */}
+      <Dialog
+        open={requestServiceOpen}
+        onClose={() => setRequestServiceOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Request Service: {selectedService?.title}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mb: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
+            <Typography variant="body2">
+              <strong>Price:</strong> ${selectedService?.pricing?.amount || selectedService?.pricing?.hourlyRate}
+              {selectedService?.pricing?.type === 'hourly' ? '/hr' : ''}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Delivery:</strong> {selectedService?.deliveryTime} days
+            </Typography>
+          </Box>
+          <TextField
+            fullWidth
+            label="Message to Freelancer"
+            multiline
+            rows={4}
+            value={requestMessage}
+            onChange={(e) => setRequestMessage(e.target.value)}
+            placeholder="Describe your project requirements or any specific details..."
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRequestServiceOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={() => requestServiceMutation.mutate({
+              freelancerId: id!,
+              servicePackageId: selectedService?._id,
+              message: requestMessage,
+            })}
+            disabled={requestServiceMutation.isPending}
+          >
+            {requestServiceMutation.isPending ? 'Sending...' : 'Send Request'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
