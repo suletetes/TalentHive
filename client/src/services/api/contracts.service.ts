@@ -1,5 +1,13 @@
 import { apiCore } from './core';
 
+export interface ContractSignature {
+  signedBy: string;
+  signedAt: string;
+  ipAddress?: string;
+  userAgent?: string;
+  signatureHash?: string;
+}
+
 export interface Contract {
   _id: string;
   project: any;
@@ -9,15 +17,16 @@ export interface Contract {
   title: string;
   description: string;
   totalAmount: number;
+  budget?: { amount: number; type: string };
   currency: string;
   startDate: string;
   endDate: string;
-  status: 'draft' | 'active' | 'completed' | 'cancelled' | 'disputed';
+  status: 'draft' | 'pending' | 'active' | 'completed' | 'cancelled' | 'disputed';
   milestones: Milestone[];
   terms: any;
   deliverables: any[];
   amendments: any[];
-  signatures: any[];
+  signatures: ContractSignature[];
   progress: number;
   totalPaid: number;
   remainingAmount: number;

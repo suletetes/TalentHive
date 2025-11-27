@@ -58,6 +58,11 @@ const workDescriptions = [
   'Backend service development',
   'Data migration scripts',
   'Unit test coverage improvement',
+  'Client meeting and requirements gathering',
+  'Sprint planning and task breakdown',
+  'Bug fixes and hotfixes',
+  'Code deployment and monitoring',
+  'Database schema updates',
 ];
 
 async function seedWorkLogs() {
@@ -70,10 +75,11 @@ async function seedWorkLogs() {
     await WorkLog.deleteMany({});
     logger.info('✅ Cleared existing work logs');
 
-    // Get active contracts
+    // Get active contracts with populated data
     const activeContracts = await Contract.find({ status: 'active' })
-      .populate('freelancer', '_id')
-      .limit(10);
+      .populate('freelancer', '_id profile.firstName profile.lastName')
+      .populate('client', '_id')
+      .limit(15);
 
     if (activeContracts.length === 0) {
       logger.warn('⚠️ No active contracts found. Please seed contracts first.');
@@ -87,17 +93,17 @@ async function seedWorkLogs() {
     const today = new Date();
 
     for (const contract of activeContracts) {
-      // Create 5-10 work logs per contract over the last 30 days
-      const numLogs = Math.floor(Math.random() * 6) + 5;
+      // Create 8-15 work logs per contract over the last 60 days for better reports
+      const numLogs = Math.floor(Math.random() * 8) + 8;
 
       for (let i = 0; i < numLogs; i++) {
-        const daysAgo = Math.floor(Math.random() * 30);
+        const daysAgo = Math.floor(Math.random() * 60);
         const logDate = new Date(today);
         logDate.setDate(logDate.getDate() - daysAgo);
         logDate.setHours(0, 0, 0, 0);
 
-        const startTime = getRandomTime(8, 14); // Start between 8am and 2pm
-        const workHours = Math.floor(Math.random() * 4) + 2; // 2-5 hours
+        const startTime = getRandomTime(8, 16); // Start between 8am and 4pm
+        const workHours = Math.floor(Math.random() * 5) + 1; // 1-5 hours
         const endTime = addHours(startTime, workHours);
 
         const description = workDescriptions[Math.floor(Math.random() * workDescriptions.length)];
@@ -114,8 +120,8 @@ async function seedWorkLogs() {
         });
       }
 
-      // Add one in-progress log for some contracts (50% chance)
-      if (Math.random() > 0.5) {
+      // Add one in-progress log for some contracts (30% chance)
+      if (Math.random() > 0.7) {
         const startTime = getRandomTime(9, 11);
         workLogs.push({
           freelancer: contract.freelancer,
@@ -132,10 +138,17 @@ async function seedWorkLogs() {
     await WorkLog.insertMany(workLogs);
     logger.info(`✅ Created ${workLogs.length} work logs`);
 
-    // Summary
+    // Calculate totals for summary
     const completedCount = workLogs.filter((l) => l.status === 'completed').length;
     const inProgressCount = workLogs.filter((l) => l.status === 'in_progress').length;
-    logger.info(`📊 Summary: ${completedCount} completed, ${inProgressCount} in progress`);
+    const totalMinutes = workLogs.reduce((sum, l) => sum + (l.duration || 0), 0);
+    const totalHours = Math.round((totalMinutes / 60) * 100) / 100;
+
+    logger.info(`📊 Summary:`);
+    logger.info(`   - ${completedCount} completed logs`);
+    logger.info(`   - ${inProgressCount} in-progress logs`);
+    logger.info(`   - ${totalHours} total hours logged`);
+    logger.info(`   - ${activeContracts.length} contracts with work logs`);
 
     logger.info('🎉 Work log seeding finished successfully!');
     await disconnectDB();
