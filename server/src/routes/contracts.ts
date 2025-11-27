@@ -8,6 +8,7 @@ import {
   submitMilestone,
   approveMilestone,
   rejectMilestone,
+  releasePayment,
   proposeAmendment,
   respondToAmendment,
   cancelContract,
@@ -44,6 +45,7 @@ router.post('/:id/dispute', createDispute);
 router.post('/:id/milestones/:milestoneId/submit', submitMilestone);
 router.post('/:id/milestones/:milestoneId/approve', approveMilestone);
 router.post('/:id/milestones/:milestoneId/reject', rejectMilestone);
+router.post('/:id/milestones/:milestoneId/release-payment', releasePayment);
 
 // Amendment management
 router.post('/:id/amendments', proposeAmendment);

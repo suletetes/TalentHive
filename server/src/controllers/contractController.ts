@@ -790,3 +790,79 @@ export const resumeContract = catchAsync(async (req: AuthRequest, res: Response,
     },
   });
 });
+
+
+export const releasePayment = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const { id, milestoneId } = req.params;
+
+  const contract = await Contract.findById(id);
+  if (!contract) {
+    return next(new AppError('Contract not found', 404));
+  }
+
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  // Only client can release payment
+  if (contract.client.toString() !== userId.toString()) {
+    return next(new AppError('Only the client can release payment', 403));
+  }
+
+  const milestone = contract.milestones.find((m: any) => m._id.toString() === milestoneId);
+  if (!milestone) {
+    return next(new AppError('Milestone not found', 404));
+  }
+
+  // Can only release payment for approved milestones
+  if (milestone.status !== 'approved') {
+    return next(new AppError('Payment can only be released for approved milestones', 400));
+  }
+
+  // Update milestone status to paid
+  milestone.status = 'paid';
+  milestone.paidAt = new Date();
+
+  // Check if all milestones are paid - if so, complete the contract
+  const allMilestonesPaid = contract.milestones.every((m: any) => m.status === 'paid');
+  if (allMilestonesPaid) {
+    contract.status = 'completed';
+  }
+
+  await contract.save();
+
+  // Repopulate contract
+  await contract.populate([
+    { path: 'client', select: 'profile' },
+    { path: 'freelancer', select: 'profile freelancerProfile' },
+    { path: 'project', select: 'title' },
+  ]);
+
+  // Send notification to freelancer
+  try {
+    const client = await User.findById(userId);
+    const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
+    await notificationService.notifyPaymentReleased(
+      contract.freelancer.toString(),
+      clientName,
+      contract._id.toString(),
+      milestone.title,
+      milestone.amount
+    );
+  } catch (error) {
+    console.error('Failed to send payment notification:', error);
+  }
+
+  res.json({
+    status: 'success',
+    message: allMilestonesPaid 
+      ? 'Payment released! All milestones complete - contract is now finished.' 
+      : 'Payment released successfully',
+    data: {
+      contract,
+      milestone,
+      contractCompleted: allMilestonesPaid,
+    },
+  });
+});

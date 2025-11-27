@@ -14,6 +14,7 @@ export interface Contract {
   client: any;
   freelancer: any;
   proposal: string;
+  sourceType?: 'proposal' | 'hire_now' | 'service';
   title: string;
   description: string;
   totalAmount: number;
@@ -100,6 +101,10 @@ export class ContractsService {
     data: { clientFeedback: string }
   ) {
     return apiCore.post(`${this.basePath}/${contractId}/milestones/${milestoneId}/reject`, data);
+  }
+
+  async releasePayment(contractId: string, milestoneId: string) {
+    return apiCore.post(`${this.basePath}/${contractId}/milestones/${milestoneId}/release-payment`, {});
   }
 
   async proposeAmendment(

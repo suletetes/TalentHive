@@ -209,6 +209,19 @@ const contractSchema = new Schema<IContract>({
     ref: 'Proposal',
     required: true,
   },
+  sourceType: {
+    type: String,
+    enum: ['proposal', 'hire_now', 'service'],
+    default: 'proposal',
+  },
+  hireNowRequest: {
+    type: Schema.Types.ObjectId,
+    ref: 'HireNowRequest',
+  },
+  servicePackage: {
+    type: Schema.Types.ObjectId,
+    ref: 'ServicePackage',
+  },
   title: {
     type: String,
     required: true,
