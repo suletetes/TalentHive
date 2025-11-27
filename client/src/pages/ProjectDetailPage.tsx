@@ -289,10 +289,10 @@ export const ProjectDetailPage = () => {
   const isFreelancer = user?.role === 'freelancer';
   const isClient = user?.role === 'client';
   
-  // Check if user already applied
+  // Check if user already applied (exclude withdrawn proposals)
   const userProposal = project.proposals?.find((p: any) => {
     const proposalFreelancerId = typeof p.freelancer === 'object' ? p.freelancer?._id : p.freelancer;
-    return proposalFreelancerId === user?._id;
+    return proposalFreelancerId === user?._id && p.status !== 'withdrawn';
   });
   const hasApplied = !!userProposal;
 
