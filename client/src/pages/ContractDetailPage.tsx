@@ -33,6 +33,7 @@ import { contractsService } from '@/services/api/contracts.service';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { useToast } from '@/components/ui/ToastProvider';
+import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { format } from 'date-fns';
 
 interface TabPanelProps {
@@ -126,6 +127,20 @@ export const ContractDetailPage: React.FC = () => {
     },
   });
 
+  // Release payment mutation
+  const releasePaymentMutation = useMutation({
+    mutationFn: async (milestoneId: string) => {
+      return contractsService.releasePayment(id!, milestoneId);
+    },
+    onSuccess: () => {
+      toast.success('Payment released successfully!');
+      queryClient.invalidateQueries({ queryKey: ['contract', id] });
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'Failed to release payment');
+    },
+  });
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, any> = {
       active: 'success', completed: 'info', cancelled: 'error',
@@ -138,6 +153,10 @@ export const ContractDetailPage: React.FC = () => {
 
   const canSubmitMilestone = (milestone: any) => {
     return isFreelancer && ['pending', 'in_progress', 'rejected'].includes(milestone.status) && isFullySigned();
+  };
+
+  const canReleasePayment = (milestone: any) => {
+    return isClient && milestone.status === 'approved';
   };
 
   const canReviewMilestone = (milestone: any) => {
@@ -212,6 +231,7 @@ export const ContractDetailPage: React.FC = () => {
             <Tab label="Milestones" />
             <Tab label="Details" />
             <Tab label="Terms" />
+            {contract.status === 'completed' && <Tab label="Review" />}
           </Tabs>
         </Box>
 
@@ -278,6 +298,23 @@ export const ContractDetailPage: React.FC = () => {
                         Review Submission
                       </Button>
                     )}
+                    
+                    {/* Client: Release Payment button for approved milestones */}
+                    {canReleasePayment(milestone) && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        color="primary"
+                        onClick={() => {
+                          if (confirm(`Release payment of $${milestone.amount} for "${milestone.title}"?`)) {
+                            releasePaymentMutation.mutate(milestone._id);
+                          }
+                        }}
+                        disabled={releasePaymentMutation.isPending}
+                      >
+                        {releasePaymentMutation.isPending ? 'Processing...' : `Release $${milestone.amount}`}
+                      </Button>
+                    )}
                   </Box>
                 </Box>
               </CardContent>
@@ -317,6 +354,13 @@ export const ContractDetailPage: React.FC = () => {
             </Box>
           ))}
         </TabPanel>
+
+        {/* Review Tab - Only shown when contract is completed */}
+        {contract.status === 'completed' && (
+          <TabPanel value={tabValue} index={3}>
+            <ReviewForm contractId={id!} onSuccess={() => toast.success('Review submitted!')} />
+          </TabPanel>
+        )}
       </Card>
 
       {/* Submit Milestone Dialog */}

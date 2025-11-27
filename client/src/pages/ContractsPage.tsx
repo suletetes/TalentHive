@@ -18,8 +18,17 @@ import {
   Avatar,
   Rating,
   Pagination,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
-import { Message as MessageIcon } from '@mui/icons-material';
+import {
+  Message as MessageIcon,
+  Description as ProposalIcon,
+  FlashOn as HireNowIcon,
+  Storefront as ServiceIcon,
+} from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -39,6 +48,8 @@ export const ContractsPage: React.FC = () => {
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [signDialogOpen, setSignDialogOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sourceFilter, setSourceFilter] = useState<string>('all');
 
   // Helper to get the other party in the contract
   const getOtherParty = (contract: Contract) => {
@@ -205,12 +216,34 @@ export const ContractsPage: React.FC = () => {
   // ALL HOOKS MUST BE BEFORE CONDITIONAL RETURNS
   const contracts = data || [];
   
+  // Filter contracts
+  const filteredContracts = useMemo(() => {
+    return contracts.filter((c: Contract) => {
+      const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
+      const matchesSource = sourceFilter === 'all' || (c as any).sourceType === sourceFilter;
+      return matchesStatus && matchesSource;
+    });
+  }, [contracts, statusFilter, sourceFilter]);
+  
   // Pagination - useMemo MUST be before conditional returns
-  const totalPages = Math.ceil(contracts.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredContracts.length / ITEMS_PER_PAGE);
   const paginatedContracts = useMemo(() => {
     const start = (page - 1) * ITEMS_PER_PAGE;
-    return contracts.slice(start, start + ITEMS_PER_PAGE);
-  }, [contracts, page]);
+    return filteredContracts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredContracts, page]);
+
+  // Helper to get source type display
+  const getSourceInfo = (contract: Contract) => {
+    const sourceType = (contract as any).sourceType || 'proposal';
+    switch (sourceType) {
+      case 'hire_now':
+        return { label: 'Hire Now', color: 'secondary' as const, icon: <HireNowIcon fontSize="small" /> };
+      case 'service':
+        return { label: 'Service', color: 'info' as const, icon: <ServiceIcon fontSize="small" /> };
+      default:
+        return { label: 'Proposal', color: 'default' as const, icon: <ProposalIcon fontSize="small" /> };
+    }
+  };
 
   // Conditional returns AFTER all hooks
   if (isLoading) {
@@ -230,11 +263,45 @@ export const ContractsPage: React.FC = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         My Contracts
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
         View and manage all your contracts
       </Typography>
 
-      {contracts.length === 0 ? (
+      {/* Filters */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={statusFilter}
+            label="Status"
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          >
+            <MenuItem value="all">All Statuses</MenuItem>
+            <MenuItem value="draft">Draft</MenuItem>
+            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="completed">Completed</MenuItem>
+            <MenuItem value="cancelled">Cancelled</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Source</InputLabel>
+          <Select
+            value={sourceFilter}
+            label="Source"
+            onChange={(e) => { setSourceFilter(e.target.value); setPage(1); }}
+          >
+            <MenuItem value="all">All Sources</MenuItem>
+            <MenuItem value="proposal">Proposal</MenuItem>
+            <MenuItem value="hire_now">Hire Now</MenuItem>
+            <MenuItem value="service">Service</MenuItem>
+          </Select>
+        </FormControl>
+        <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center', ml: 'auto' }}>
+          {filteredContracts.length} contract{filteredContracts.length !== 1 ? 's' : ''}
+        </Typography>
+      </Box>
+
+      {filteredContracts.length === 0 ? (
         <Card>
           <CardContent>
             <Typography variant="body1" color="text.secondary" align="center">
@@ -254,12 +321,24 @@ export const ContractsPage: React.FC = () => {
                       <Typography variant="h6" gutterBottom>
                         {contract.title}
                       </Typography>
-                      <Box display="flex" gap={2} alignItems="center" mb={1}>
+                      <Box display="flex" gap={1} alignItems="center" mb={1} flexWrap="wrap">
                         <Chip
                           label={contract.status.toUpperCase()}
                           color={getStatusColor(contract.status)}
                           size="small"
                         />
+                        {(() => {
+                          const source = getSourceInfo(contract);
+                          return (
+                            <Chip
+                              icon={source.icon}
+                              label={source.label}
+                              color={source.color}
+                              size="small"
+                              variant="outlined"
+                            />
+                          );
+                        })()}
                         {needsSignature(contract) && (
                           <Chip
                             label="NEEDS YOUR SIGNATURE"
