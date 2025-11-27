@@ -171,6 +171,24 @@ export class NotificationService {
   }
 
   /**
+   * Create notification for payment released by client
+   */
+  async notifyPaymentReleased(freelancerId: string, clientName: string, contractId: string, milestoneTitle: string, amount: number) {
+    return this.createNotification({
+      userId: freelancerId,
+      type: 'payment',
+      title: 'Payment Released 💰',
+      message: `${clientName} released $${amount} for "${milestoneTitle}"`,
+      link: `/dashboard/contracts/${contractId}`,
+      priority: 'high',
+      metadata: {
+        contractId,
+        amount,
+      },
+    });
+  }
+
+  /**
    * Create notification for payment received
    */
   async notifyPaymentReceived(freelancerId: string, amount: number, contractId: string) {

@@ -5,6 +5,9 @@ export interface IContract extends Document {
   client: ObjectId;
   freelancer: ObjectId;
   proposal: ObjectId;
+  sourceType?: 'proposal' | 'hire_now' | 'service';
+  hireNowRequest?: ObjectId;
+  servicePackage?: ObjectId;
   title: string;
   description: string;
   totalAmount: number;

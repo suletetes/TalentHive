@@ -1675,11 +1675,31 @@ async function seedContracts(users: any[], projects: any[], proposals: any[]) {
     const milestoneTotal = milestones.reduce((sum, m) => sum + m.amount, 0);
     logger.info(`Creating contract for proposal: ${proposal._id}, totalAmount: ${totalAmount}, milestoneTotal: ${milestoneTotal}`);
     
+    // Generate signatures for both parties (required for active status)
+    const signedAt = new Date(startDate.getTime() - 24 * 60 * 60 * 1000); // Signed 1 day before start
+    const signatures = [
+      {
+        signedBy: project.client,
+        signedAt: signedAt,
+        ipAddress: '192.168.1.1',
+        userAgent: 'Mozilla/5.0 (Seed Script)',
+        signatureHash: `client-sig-${proposal._id}`,
+      },
+      {
+        signedBy: proposal.freelancer,
+        signedAt: new Date(signedAt.getTime() + 60 * 60 * 1000), // Freelancer signed 1 hour later
+        ipAddress: '192.168.1.2',
+        userAgent: 'Mozilla/5.0 (Seed Script)',
+        signatureHash: `freelancer-sig-${proposal._id}`,
+      },
+    ];
+
     const contractData = {
       project: proposal.project,
       client: project.client,
       freelancer: proposal.freelancer,
       proposal: proposal._id,
+      sourceType: 'proposal',
       title: `Contract for ${project.title}`,
       description: project.description,
       totalAmount: totalAmount,
@@ -1688,6 +1708,7 @@ async function seedContracts(users: any[], projects: any[], proposals: any[]) {
       endDate: endDate,
       status: 'active',
       milestones: milestones,
+      signatures: signatures,
       terms: {
         paymentTerms: 'Payment will be released upon milestone completion and client approval.',
         cancellationPolicy: 'Either party may cancel this contract with 7 days written notice.',
