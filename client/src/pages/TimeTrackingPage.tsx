@@ -21,10 +21,16 @@ interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
   value: number;
+  keepMounted?: boolean;
 }
 
+// Keep tabs mounted to prevent reloading
 function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+  const { children, value, index, keepMounted = true, ...other } = props;
+
+  if (!keepMounted && value !== index) {
+    return null;
+  }
 
   return (
     <div
@@ -32,9 +38,10 @@ function TabPanel(props: TabPanelProps) {
       hidden={value !== index}
       id={`work-log-tabpanel-${index}`}
       aria-labelledby={`work-log-tab-${index}`}
+      style={{ display: value === index ? 'block' : 'none' }}
       {...other}
     >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+      <Box sx={{ py: 3 }}>{children}</Box>
     </div>
   );
 }
@@ -44,7 +51,7 @@ export const TimeTrackingPage: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Fetch contracts for dropdown
+  // Fetch contracts for dropdown with caching
   const { data: contractsData, isLoading } = useQuery({
     queryKey: ['work-log-contracts'],
     queryFn: async () => {
@@ -67,6 +74,7 @@ export const TimeTrackingPage: React.FC = () => {
       }
     },
     enabled: !!user,
+    staleTime: 60000, // Cache for 1 minute
   });
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -89,13 +97,15 @@ export const TimeTrackingPage: React.FC = () => {
     return <LoadingSpinner message="Loading..." />;
   }
 
+  const isFreelancer = user.role === 'freelancer';
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         Work Log
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        {user.role === 'freelancer'
+        {isFreelancer
           ? 'Log your work hours for your contracts'
           : 'View work hours logged by your freelancers'}
       </Typography>
@@ -103,23 +113,13 @@ export const TimeTrackingPage: React.FC = () => {
       <Card>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={tabValue} onChange={handleTabChange} aria-label="work log tabs">
-            {user.role === 'freelancer' && (
-              <Tab label="Log Hours" id="work-log-tab-0" aria-controls="work-log-tabpanel-0" />
-            )}
-            <Tab
-              label="Work Logs"
-              id={`work-log-tab-${user.role === 'freelancer' ? 1 : 0}`}
-              aria-controls={`work-log-tabpanel-${user.role === 'freelancer' ? 1 : 0}`}
-            />
-            <Tab
-              label="Reports"
-              id={`work-log-tab-${user.role === 'freelancer' ? 2 : 1}`}
-              aria-controls={`work-log-tabpanel-${user.role === 'freelancer' ? 2 : 1}`}
-            />
+            {isFreelancer && <Tab label="Log Hours" />}
+            <Tab label="Work Logs" />
+            <Tab label="Reports" />
           </Tabs>
         </Box>
 
-        {user.role === 'freelancer' ? (
+        {isFreelancer ? (
           <>
             <TabPanel value={tabValue} index={0}>
               <WorkLogForm contracts={contractsData || []} onLogCreated={handleLogCreated} />

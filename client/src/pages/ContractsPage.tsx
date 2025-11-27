@@ -77,18 +77,33 @@ export const ContractsPage: React.FC = () => {
 
   // Sign contract mutation
   const signMutation = useMutation({
-    mutationFn: (contractId: string) => contractsService.signContract(contractId, {
-      ipAddress: 'client-side',
-      userAgent: navigator.userAgent,
-    }),
-    onSuccess: () => {
+    mutationFn: async (contractId: string) => {
+      console.log('[CONTRACT SIGN] Starting sign request for contract:', contractId);
+      const response = await contractsService.signContract(contractId, {
+        ipAddress: 'client-side',
+        userAgent: navigator.userAgent,
+      });
+      console.log('[CONTRACT SIGN] Sign response:', response);
+      return response;
+    },
+    onSuccess: (response: any) => {
+      console.log('[CONTRACT SIGN] Success:', response);
       queryClient.invalidateQueries({ queryKey: ['my-contracts'] });
-      toast.success('Contract signed successfully');
+      
+      const isFullySigned = response?.data?.isFullySigned;
+      if (isFullySigned) {
+        toast.success('Contract signed and activated! Both parties have signed.');
+      } else {
+        toast.success('Contract signed successfully. Waiting for other party to sign.');
+      }
+      
       setSignDialogOpen(false);
       setSelectedContract(null);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to sign contract');
+      console.error('[CONTRACT SIGN] Error:', error);
+      const message = error?.response?.data?.message || error?.message || 'Failed to sign contract';
+      toast.error(message);
     },
   });
 
@@ -146,12 +161,45 @@ export const ContractsPage: React.FC = () => {
   };
 
   const needsSignature = (contract: Contract) => {
-    if (user?.role === 'client') {
-      return !contract.signatures?.client?.signed;
-    } else if (user?.role === 'freelancer') {
-      return !contract.signatures?.freelancer?.signed;
-    }
-    return false;
+    // Signatures is an array of { signedBy, signedAt, ... }
+    const signatures = contract.signatures || [];
+    const userId = user?._id;
+    
+    // Check if current user has already signed
+    const userHasSigned = signatures.some(
+      (sig: any) => sig.signedBy === userId || sig.signedBy?._id === userId
+    );
+    
+    // Check if both parties have signed
+    const clientId = typeof contract.client === 'string' ? contract.client : contract.client?._id;
+    const freelancerId = typeof contract.freelancer === 'string' ? contract.freelancer : contract.freelancer?._id;
+    
+    const clientSigned = signatures.some(
+      (sig: any) => sig.signedBy === clientId || sig.signedBy?._id === clientId
+    );
+    const freelancerSigned = signatures.some(
+      (sig: any) => sig.signedBy === freelancerId || sig.signedBy?._id === freelancerId
+    );
+    const isFullySigned = clientSigned && freelancerSigned;
+    
+    console.log('[CONTRACT] needsSignature check:', {
+      contractId: contract._id,
+      userId,
+      clientId,
+      freelancerId,
+      signatures: signatures.length,
+      userHasSigned,
+      clientSigned,
+      freelancerSigned,
+      isFullySigned,
+      contractStatus: contract.status,
+    });
+    
+    // User needs to sign if:
+    // 1. They haven't signed yet
+    // 2. Contract is not completed or cancelled
+    // 3. Contract is not fully signed by both parties
+    return !userHasSigned && !['completed', 'cancelled'].includes(contract.status) && !isFullySigned;
   };
 
   // ALL HOOKS MUST BE BEFORE CONDITIONAL RETURNS
@@ -214,11 +262,28 @@ export const ContractsPage: React.FC = () => {
                         />
                         {needsSignature(contract) && (
                           <Chip
-                            label="NEEDS SIGNATURE"
+                            label="NEEDS YOUR SIGNATURE"
                             color="warning"
                             size="small"
                           />
                         )}
+                        {(() => {
+                          // Show "Waiting for other party" if user signed but other hasn't
+                          const signatures = contract.signatures || [];
+                          const userId = user?._id;
+                          const userHasSigned = signatures.some(
+                            (sig: any) => sig.signedBy === userId || sig.signedBy?._id === userId
+                          );
+                          const clientId = typeof contract.client === 'string' ? contract.client : contract.client?._id;
+                          const freelancerId = typeof contract.freelancer === 'string' ? contract.freelancer : contract.freelancer?._id;
+                          const clientSigned = signatures.some((sig: any) => sig.signedBy === clientId || sig.signedBy?._id === clientId);
+                          const freelancerSigned = signatures.some((sig: any) => sig.signedBy === freelancerId || sig.signedBy?._id === freelancerId);
+                          
+                          if (userHasSigned && !(clientSigned && freelancerSigned)) {
+                            return <Chip label="WAITING FOR OTHER PARTY" color="info" size="small" />;
+                          }
+                          return null;
+                        })()}
                       </Box>
                       
                       {/* Other Party Info */}
@@ -252,7 +317,7 @@ export const ContractsPage: React.FC = () => {
                     </Box>
                     <Box textAlign="right">
                       <Typography variant="h6" color="primary">
-                        ${contract.budget?.amount || 0}
+                        ${contract.totalAmount || contract.budget?.amount || 0}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {contract.budget?.type === 'hourly' ? '/hour' : 'total'}
@@ -382,7 +447,7 @@ export const ContractsPage: React.FC = () => {
                   Budget
                 </Typography>
                 <Typography variant="h6" color="primary">
-                  ${selectedContract.budget?.amount || 0}
+                  ${selectedContract.totalAmount || selectedContract.budget?.amount || 0}
                   {selectedContract.budget?.type === 'hourly' ? '/hour' : ' (total)'}
                 </Typography>
               </Box>
@@ -407,18 +472,37 @@ export const ContractsPage: React.FC = () => {
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Signatures
                 </Typography>
-                <Box display="flex" gap={2}>
-                  <Chip
-                    label={`Client: ${selectedContract.signatures?.client?.signed ? 'Signed' : 'Pending'}`}
-                    color={selectedContract.signatures?.client?.signed ? 'success' : 'default'}
-                    size="small"
-                  />
-                  <Chip
-                    label={`Freelancer: ${selectedContract.signatures?.freelancer?.signed ? 'Signed' : 'Pending'}`}
-                    color={selectedContract.signatures?.freelancer?.signed ? 'success' : 'default'}
-                    size="small"
-                  />
-                </Box>
+                {(() => {
+                  const signatures = selectedContract.signatures || [];
+                  const clientId = typeof selectedContract.client === 'string' 
+                    ? selectedContract.client 
+                    : selectedContract.client?._id;
+                  const freelancerId = typeof selectedContract.freelancer === 'string'
+                    ? selectedContract.freelancer
+                    : selectedContract.freelancer?._id;
+                  
+                  const clientSigned = signatures.some(
+                    (sig: any) => (sig.signedBy === clientId || sig.signedBy?._id === clientId)
+                  );
+                  const freelancerSigned = signatures.some(
+                    (sig: any) => (sig.signedBy === freelancerId || sig.signedBy?._id === freelancerId)
+                  );
+                  
+                  return (
+                    <Box display="flex" gap={2}>
+                      <Chip
+                        label={`Client: ${clientSigned ? 'Signed' : 'Pending'}`}
+                        color={clientSigned ? 'success' : 'default'}
+                        size="small"
+                      />
+                      <Chip
+                        label={`Freelancer: ${freelancerSigned ? 'Signed' : 'Pending'}`}
+                        color={freelancerSigned ? 'success' : 'default'}
+                        size="small"
+                      />
+                    </Box>
+                  );
+                })()}
               </Box>
 
               {selectedContract.milestones && selectedContract.milestones.length > 0 && (
