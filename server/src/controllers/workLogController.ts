@@ -6,7 +6,7 @@ import { logger } from '@/utils/logger';
 // Create a new work log entry
 export const createWorkLog = async (req: Request, res: Response) => {
   try {
-    const { contractId, date, startTime, description } = req.body;
+    const { contractId, milestoneId, date, startTime, description } = req.body;
     const freelancerId = req.user?._id;
 
     if (!freelancerId) {
@@ -34,9 +34,32 @@ export const createWorkLog = async (req: Request, res: Response) => {
       });
     }
 
+    // Check if contract is fully signed (both parties)
+    const isFullySigned = contract.isFullySigned();
+    if (!isFullySigned) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Contract must be signed by both parties before logging work',
+      });
+    }
+
+    // Validate milestone if provided
+    if (milestoneId) {
+      const milestoneExists = contract.milestones?.some(
+        (m: any) => m._id.toString() === milestoneId
+      );
+      if (!milestoneExists) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Invalid milestone ID',
+        });
+      }
+    }
+
     const workLog = await WorkLog.create({
       freelancer: freelancerId,
       contract: contractId,
+      milestone: milestoneId || undefined,
       date: new Date(date),
       startTime,
       description: description || '',
@@ -44,7 +67,7 @@ export const createWorkLog = async (req: Request, res: Response) => {
     });
 
     const populated = await WorkLog.findById(workLog._id)
-      .populate('contract', 'title')
+      .populate('contract', 'title milestones')
       .populate('freelancer', 'profile.firstName profile.lastName');
 
     res.status(201).json({

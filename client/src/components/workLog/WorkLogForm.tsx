@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Card,
@@ -32,10 +32,25 @@ interface FormErrors {
   endTime?: string;
 }
 
+// Check if contract is fully signed by both parties
+const isContractFullySigned = (contract: any): boolean => {
+  const signatures = contract.signatures || [];
+  if (signatures.length < 2) return false;
+  
+  const clientId = typeof contract.client === 'string' ? contract.client : contract.client?._id;
+  const freelancerId = typeof contract.freelancer === 'string' ? contract.freelancer : contract.freelancer?._id;
+  
+  const clientSigned = signatures.some((s: any) => s.signedBy === clientId || s.signedBy?._id === clientId);
+  const freelancerSigned = signatures.some((s: any) => s.signedBy === freelancerId || s.signedBy?._id === freelancerId);
+  
+  return clientSigned && freelancerSigned;
+};
+
 const WorkLogForm: React.FC<WorkLogFormProps> = ({ contracts = [], onLogCreated }) => {
   const { user } = useSelector((state: RootState) => state.auth);
   const toast = useToast();
   const [selectedContract, setSelectedContract] = useState('');
+  const [selectedMilestone, setSelectedMilestone] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -43,7 +58,17 @@ const WorkLogForm: React.FC<WorkLogFormProps> = ({ contracts = [], onLogCreated 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
-  const activeContracts = contracts.filter((c) => c.status === 'active');
+  // Only show active contracts that are fully signed
+  const eligibleContracts = useMemo(() => {
+    return contracts.filter((c) => c.status === 'active' && isContractFullySigned(c));
+  }, [contracts]);
+
+  // Get milestones for selected contract
+  const selectedContractData = contracts.find((c) => c._id === selectedContract);
+  const milestones = selectedContractData?.milestones || [];
+  const activeMilestones = milestones.filter((m: any) => 
+    ['pending', 'in_progress', 'submitted'].includes(m.status)
+  );
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -84,6 +109,12 @@ const WorkLogForm: React.FC<WorkLogFormProps> = ({ contracts = [], onLogCreated 
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleContractChange = (contractId: string) => {
+    setSelectedContract(contractId);
+    setSelectedMilestone(''); // Reset milestone when contract changes
+    setErrors({ ...errors, contract: undefined });
+  };
+
   const handleSubmit = async () => {
     if (!validateForm()) {
       toast.error('Please fix the form errors');
@@ -93,6 +124,7 @@ const WorkLogForm: React.FC<WorkLogFormProps> = ({ contracts = [], onLogCreated 
       setLoading(true);
       const createRes: any = await api.post('/work-logs', {
         contractId: selectedContract,
+        milestoneId: selectedMilestone || undefined,
         date,
         startTime,
         description,
@@ -105,6 +137,7 @@ const WorkLogForm: React.FC<WorkLogFormProps> = ({ contracts = [], onLogCreated 
       setStartTime('');
       setEndTime('');
       setDescription('');
+      setSelectedMilestone('');
       setErrors({});
       onLogCreated?.();
     } catch (err: any) {
@@ -126,6 +159,9 @@ const WorkLogForm: React.FC<WorkLogFormProps> = ({ contracts = [], onLogCreated 
     );
   }
 
+  // Check if there are active but unsigned contracts
+  const unsignedContracts = contracts.filter((c) => c.status === 'active' && !isContractFullySigned(c));
+
   return (
     <Card>
       <CardContent>
@@ -134,20 +170,28 @@ const WorkLogForm: React.FC<WorkLogFormProps> = ({ contracts = [], onLogCreated 
           Record your work hours by selecting the date and time range
         </Typography>
 
-        {activeContracts.length === 0 ? (
-          <Alert severity="warning">
-            No active contracts found. You need an active contract to log work hours.
-          </Alert>
+        {eligibleContracts.length === 0 ? (
+          <Box>
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              No eligible contracts found. Contracts must be active and signed by both parties.
+            </Alert>
+            {unsignedContracts.length > 0 && (
+              <Alert severity="info">
+                You have {unsignedContracts.length} active contract(s) awaiting signatures. 
+                Please ensure both parties sign before logging work.
+              </Alert>
+            )}
+          </Box>
         ) : (
           <Box display="flex" flexDirection="column" gap={2}>
             <FormControl fullWidth error={!!errors.contract}>
               <InputLabel>Select Contract</InputLabel>
               <Select
                 value={selectedContract}
-                onChange={(e) => { setSelectedContract(e.target.value); setErrors({ ...errors, contract: undefined }); }}
+                onChange={(e) => handleContractChange(e.target.value)}
                 label="Select Contract"
               >
-                {activeContracts.map((contract) => (
+                {eligibleContracts.map((contract) => (
                   <MenuItem key={contract._id} value={contract._id}>
                     {contract.title} - {contract.project?.title || 'Project'}
                   </MenuItem>
@@ -155,6 +199,26 @@ const WorkLogForm: React.FC<WorkLogFormProps> = ({ contracts = [], onLogCreated 
               </Select>
               {errors.contract && <FormHelperText>{errors.contract}</FormHelperText>}
             </FormControl>
+
+            {/* Optional Milestone Selection */}
+            {selectedContract && activeMilestones.length > 0 && (
+              <FormControl fullWidth>
+                <InputLabel>Milestone (optional)</InputLabel>
+                <Select
+                  value={selectedMilestone}
+                  onChange={(e) => setSelectedMilestone(e.target.value)}
+                  label="Milestone (optional)"
+                >
+                  <MenuItem value="">No specific milestone</MenuItem>
+                  {activeMilestones.map((milestone: any) => (
+                    <MenuItem key={milestone._id} value={milestone._id}>
+                      {milestone.title} - ${milestone.amount}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>Link this work to a specific milestone</FormHelperText>
+              </FormControl>
+            )}
 
             <TextField
               fullWidth

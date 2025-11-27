@@ -4,6 +4,7 @@ export interface IWorkLog {
   _id: mongoose.Types.ObjectId;
   freelancer: mongoose.Types.ObjectId;
   contract: mongoose.Types.ObjectId;
+  milestone?: mongoose.Types.ObjectId; // Optional milestone reference
   date: Date;
   startTime: string; // HH:mm format
   endTime?: string; // HH:mm format
@@ -26,6 +27,11 @@ const workLogSchema = new Schema<IWorkLog>(
       type: Schema.Types.ObjectId,
       ref: 'Contract',
       required: true,
+      index: true,
+    },
+    milestone: {
+      type: Schema.Types.ObjectId,
+      ref: 'Contract.milestones',
       index: true,
     },
     date: {
