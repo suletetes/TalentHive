@@ -4,11 +4,12 @@ export interface IWorkLog {
   _id: mongoose.Types.ObjectId;
   freelancer: mongoose.Types.ObjectId;
   contract: mongoose.Types.ObjectId;
-  milestone?: mongoose.Types.ObjectId; // Optional milestone reference
-  date: Date;
+  milestone?: mongoose.Types.ObjectId;
+  startDate: Date;
   startTime: string; // HH:mm format
+  endDate?: Date;
   endTime?: string; // HH:mm format
-  duration: number; // in minutes
+  duration: number; // in minutes (calculated from start to end)
   description: string;
   status: 'in_progress' | 'completed';
   createdAt: Date;
@@ -31,10 +32,9 @@ const workLogSchema = new Schema<IWorkLog>(
     },
     milestone: {
       type: Schema.Types.ObjectId,
-      ref: 'Contract.milestones',
       index: true,
     },
-    date: {
+    startDate: {
       type: Date,
       required: true,
       index: true,
@@ -42,6 +42,9 @@ const workLogSchema = new Schema<IWorkLog>(
     startTime: {
       type: String,
       required: true,
+    },
+    endDate: {
+      type: Date,
     },
     endTime: {
       type: String,
@@ -54,7 +57,7 @@ const workLogSchema = new Schema<IWorkLog>(
     description: {
       type: String,
       trim: true,
-      maxlength: 500,
+      maxlength: 1000,
       default: '',
     },
     status: {
@@ -70,20 +73,23 @@ const workLogSchema = new Schema<IWorkLog>(
 );
 
 // Indexes
-workLogSchema.index({ freelancer: 1, date: -1 });
-workLogSchema.index({ contract: 1, date: -1 });
+workLogSchema.index({ freelancer: 1, startDate: -1 });
+workLogSchema.index({ contract: 1, startDate: -1 });
 
-// Calculate duration before saving when endTime is set
+// Calculate duration before saving when completed
 workLogSchema.pre('save', function (next) {
-  if (this.startTime && this.endTime) {
-    const [startHour, startMin] = this.startTime.split(':').map(Number);
-    const [endHour, endMin] = this.endTime.split(':').map(Number);
-    const startMinutes = startHour * 60 + startMin;
-    const endMinutes = endHour * 60 + endMin;
-    this.duration = endMinutes - startMinutes;
-    if (this.duration < 0) {
-      this.duration += 24 * 60; // Handle overnight work
-    }
+  if (this.status === 'completed' && this.startDate && this.endDate && this.startTime && this.endTime) {
+    const [startH, startM] = this.startTime.split(':').map(Number);
+    const [endH, endM] = this.endTime.split(':').map(Number);
+    
+    const startDateTime = new Date(this.startDate);
+    startDateTime.setHours(startH, startM, 0, 0);
+    
+    const endDateTime = new Date(this.endDate);
+    endDateTime.setHours(endH, endM, 0, 0);
+    
+    // Duration in minutes
+    this.duration = Math.max(0, Math.round((endDateTime.getTime() - startDateTime.getTime()) / 60000));
   }
   next();
 });

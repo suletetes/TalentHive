@@ -70,10 +70,10 @@ const WorkLogReport: React.FC = () => {
       const freelancerName = log.freelancer?.profile
         ? `${log.freelancer.profile.firstName || ''} ${log.freelancer.profile.lastName || ''}`.trim()
         : 'Unknown';
-      const baseRow = [
-        new Date(log.date).toLocaleDateString(),
-        log.contract?.title || '',
-      ];
+      const startDateStr = log.startDate ? new Date(log.startDate).toLocaleDateString() : '';
+      const endDateStr = log.endDate ? new Date(log.endDate).toLocaleDateString() : '';
+      const dateRange = startDateStr === endDateStr ? startDateStr : `${startDateStr} - ${endDateStr}`;
+      const baseRow = [dateRange, log.contract?.title || ''];
       if (isClient) baseRow.push(freelancerName);
       baseRow.push(log.startTime, log.endTime || '', (log.duration / 60).toFixed(2), log.description || '');
       return baseRow;
@@ -231,16 +231,21 @@ const WorkLogReport: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {report.workLogs.map((log: any) => (
-                    <TableRow key={log._id}>
-                      <TableCell>{new Date(log.date).toLocaleDateString()}</TableCell>
-                      <TableCell>{log.contract?.title || 'N/A'}</TableCell>
-                      {isClient && <TableCell>{getFreelancerName(log)}</TableCell>}
-                      <TableCell>{log.startTime} - {log.endTime}</TableCell>
-                      <TableCell align="right">{formatDuration(log.duration)}</TableCell>
-                      <TableCell>{log.description || '-'}</TableCell>
-                    </TableRow>
-                  ))}
+                  {report.workLogs.map((log: any) => {
+                    const startDateStr = log.startDate ? new Date(log.startDate).toLocaleDateString() : '';
+                    const endDateStr = log.endDate ? new Date(log.endDate).toLocaleDateString() : '';
+                    const dateRange = startDateStr === endDateStr ? startDateStr : `${startDateStr} → ${endDateStr}`;
+                    return (
+                      <TableRow key={log._id}>
+                        <TableCell>{dateRange}</TableCell>
+                        <TableCell>{log.contract?.title || 'N/A'}</TableCell>
+                        {isClient && <TableCell>{getFreelancerName(log)}</TableCell>}
+                        <TableCell>{log.startTime} - {log.endTime}</TableCell>
+                        <TableCell align="right">{formatDuration(log.duration)}</TableCell>
+                        <TableCell>{log.description || '-'}</TableCell>
+                      </TableRow>
+                    );
+                  })}
                   <TableRow>
                     <TableCell colSpan={isClient ? 4 : 3} align="right"><strong>Total</strong></TableCell>
                     <TableCell align="right"><strong>{report.totalHours.toFixed(2)}h</strong></TableCell>
