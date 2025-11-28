@@ -99,13 +99,15 @@ proposalSchema.index({ project: 1, freelancer: 1 }, { unique: true }); // Preven
 
 // Virtual for timeline display
 proposalSchema.virtual('timelineDisplay').get(function() {
+  if (!this.timeline) return '';
   const { duration, unit } = this.timeline;
   return `${duration} ${unit}`;
 });
 
 // Virtual for total milestone amount
 proposalSchema.virtual('totalMilestoneAmount').get(function() {
-  return this.milestones.reduce((total, milestone) => total + milestone.amount, 0);
+  if (!this.milestones || !Array.isArray(this.milestones)) return 0;
+  return this.milestones.reduce((total, milestone) => total + (milestone.amount || 0), 0);
 });
 
 // Method to check if proposal is expired

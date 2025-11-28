@@ -26,10 +26,12 @@ export const useMyContracts = (params?: {
 
 export const useContract = (id: string) => {
   return useQuery({
-    queryKey: ['contracts', id],
+    queryKey: ['contract', id],
     queryFn: async () => {
       const response = await contractsService.getContractById(id);
-      return response.data;
+      // API returns { status, data: { contract } }, apiCore.get returns response.data
+      // So response = { status, data: { contract } }
+      return response?.data?.contract || response?.contract || response?.data || response;
     },
     enabled: !!id,
   });

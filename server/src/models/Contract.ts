@@ -344,9 +344,9 @@ contractSchema.methods.canBeModified = function(userId: string) {
 contractSchema.methods.canSubmitMilestone = function (milestoneId: string, userId: string) {
   if (this.freelancer.toString() !== userId) return false;
   if (this.status !== 'active') return false;
-  if (!this.milestones || !this.milestones.id) return false;
+  if (!this.milestones || !Array.isArray(this.milestones)) return false;
 
-  const milestone = this.milestones.id(milestoneId);
+  const milestone = this.milestones.find((m: any) => m._id.toString() === milestoneId);
   return milestone && ['pending', 'in_progress', 'rejected'].includes(milestone.status);
 };
 
@@ -354,9 +354,9 @@ contractSchema.methods.canSubmitMilestone = function (milestoneId: string, userI
 contractSchema.methods.canApproveMilestone = function (milestoneId: string, userId: string) {
   if (this.client.toString() !== userId) return false;
   if (this.status !== 'active') return false;
-  if (!this.milestones || !this.milestones.id) return false;
+  if (!this.milestones || !Array.isArray(this.milestones)) return false;
 
-  const milestone = this.milestones.id(milestoneId);
+  const milestone = this.milestones.find((m: any) => m._id.toString() === milestoneId);
   return milestone && milestone.status === 'submitted';
 };
 
