@@ -332,7 +332,7 @@ async function seedUsers() {
       isEmailVerified: true,
       isVerified: true,
       profile: {
-        firstName: 'Bob',
+        firstName: 'Bob', 
         lastName: 'Designer',
         bio: 'Award-winning UI/UX Designer with 7+ years of experience creating beautiful, user-centered digital experiences. I specialize in mobile app design, web applications, and design systems. My work has been featured in Awwwards and CSS Design Awards.',
         location: 'Los Angeles, CA',
