@@ -275,17 +275,37 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
   const { id, milestoneId } = req.params;
   const { deliverables, freelancerNotes } = req.body;
 
+  console.log('[SUBMIT MILESTONE] Starting...', { contractId: id, milestoneId });
+
   const contract = await Contract.findById(id);
   if (!contract) {
+    console.log('[SUBMIT MILESTONE] Contract not found');
     return next(new AppError('Contract not found', 404));
   }
+
+  console.log('[SUBMIT MILESTONE] Contract found:', { 
+    status: contract.status, 
+    freelancer: contract.freelancer.toString(),
+    milestonesCount: contract.milestones?.length 
+  });
 
   const userId = req.user?._id;
   if (!userId) {
     return next(new AppError('Unauthorized', 401));
   }
 
-  if (!contract.canSubmitMilestone(milestoneId, userId.toString())) {
+  console.log('[SUBMIT MILESTONE] User:', userId.toString());
+
+  const canSubmit = contract.canSubmitMilestone(milestoneId, userId.toString());
+  console.log('[SUBMIT MILESTONE] canSubmitMilestone:', canSubmit);
+
+  if (!canSubmit) {
+    console.log('[SUBMIT MILESTONE] Cannot submit - checking why...');
+    console.log('  - Is freelancer:', contract.freelancer.toString() === userId.toString());
+    console.log('  - Contract status:', contract.status);
+    const ms = contract.milestones.find((m: any) => m._id.toString() === milestoneId);
+    console.log('  - Milestone found:', !!ms);
+    console.log('  - Milestone status:', ms?.status);
     return next(new AppError('You cannot submit this milestone', 403));
   }
 
@@ -294,10 +314,14 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
     return next(new AppError('Milestone not found', 404));
   }
 
+  console.log('[SUBMIT MILESTONE] Before update - milestone status:', milestone.status);
+
   // Update milestone
   milestone.status = 'submitted';
   milestone.submittedAt = new Date();
   milestone.freelancerNotes = freelancerNotes;
+
+  console.log('[SUBMIT MILESTONE] After update - milestone status:', milestone.status);
 
   // Add deliverables
   if (deliverables && deliverables.length > 0) {
@@ -312,6 +336,7 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
   }
 
   await contract.save();
+  console.log('[SUBMIT MILESTONE] Contract saved');
 
   // Repopulate contract to get updated data
   await contract.populate([

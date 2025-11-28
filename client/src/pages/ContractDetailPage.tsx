@@ -57,10 +57,16 @@ export const ContractDetailPage: React.FC = () => {
   // Dialog states
   const [submitDialog, setSubmitDialog] = useState<any>(null);
   const [reviewDialog, setReviewDialog] = useState<any>(null);
+  const [releaseDialog, setReleaseDialog] = useState<any>(null);
   const [submitNotes, setSubmitNotes] = useState('');
   const [reviewFeedback, setReviewFeedback] = useState('');
 
   const { data: contract, isLoading, error, refetch } = useContract(id || '');
+
+  // Debug logging
+  console.log('[CONTRACT PAGE] Contract data:', contract);
+  console.log('[CONTRACT PAGE] Milestones:', contract?.milestones?.map((m: any) => ({ title: m.title, status: m.status })));
+  console.log('[CONTRACT PAGE] User role:', user?.role);
 
   const isClient = user?.role === 'client';
   const isFreelancer = user?.role === 'freelancer';
@@ -79,18 +85,26 @@ export const ContractDetailPage: React.FC = () => {
   // Submit milestone mutation
   const submitMutation = useMutation({
     mutationFn: async ({ milestoneId, notes }: { milestoneId: string; notes: string }) => {
-      return contractsService.submitMilestone(id!, milestoneId, {
+      console.log('[SUBMIT] Calling API...', { contractId: id, milestoneId });
+      const result = await contractsService.submitMilestone(id!, milestoneId, {
         deliverables: [],
         freelancerNotes: notes,
       });
+      console.log('[SUBMIT] API Response:', result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      console.log('[SUBMIT] Success, invalidating cache...', data);
       toast.success('Milestone submitted for review');
-      queryClient.invalidateQueries({ queryKey: ['contract', id] });
+      // Clear cache and force refetch
+      await queryClient.invalidateQueries({ queryKey: ['contract', id] });
+      await refetch();
+      console.log('[SUBMIT] Refetch complete');
       setSubmitDialog(null);
       setSubmitNotes('');
     },
     onError: (err: any) => {
+      console.log('[SUBMIT] Error:', err);
       toast.error(err.message || 'Failed to submit milestone');
     },
   });
@@ -305,11 +319,7 @@ export const ContractDetailPage: React.FC = () => {
                         variant="contained"
                         size="small"
                         color="primary"
-                        onClick={() => {
-                          if (confirm(`Release payment of $${milestone.amount} for "${milestone.title}"?`)) {
-                            releasePaymentMutation.mutate(milestone._id);
-                          }
-                        }}
+                        onClick={() => setReleaseDialog(milestone)}
                         disabled={releasePaymentMutation.isPending}
                       >
                         {releasePaymentMutation.isPending ? 'Processing...' : `Release $${milestone.amount}`}
@@ -433,6 +443,38 @@ export const ContractDetailPage: React.FC = () => {
             disabled={approveMutation.isPending}
           >
             Approve
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Release Payment Dialog */}
+      <Dialog open={!!releaseDialog} onClose={() => setReleaseDialog(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Release Payment</DialogTitle>
+        <DialogContent>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            You are about to release payment for this milestone. This action cannot be undone.
+          </Alert>
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="h4" color="primary" gutterBottom>
+              ${releaseDialog?.amount}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              {releaseDialog?.title}
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReleaseDialog(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              releasePaymentMutation.mutate(releaseDialog._id);
+              setReleaseDialog(null);
+            }}
+            disabled={releasePaymentMutation.isPending}
+          >
+            {releasePaymentMutation.isPending ? 'Processing...' : 'Confirm Release'}
           </Button>
         </DialogActions>
       </Dialog>

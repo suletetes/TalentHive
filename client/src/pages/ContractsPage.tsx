@@ -425,13 +425,20 @@ export const ContractsPage: React.FC = () => {
                     {contract.endDate && ` • Ends: ${format(new Date(contract.endDate), 'MMM dd, yyyy')}`}
                   </Typography>
 
-                  <Box display="flex" gap={2}>
+                  <Box display="flex" gap={2} flexWrap="wrap">
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => navigate(`/dashboard/contracts/${contract._id}`)}
+                    >
+                      Manage Contract
+                    </Button>
                     <Button
                       variant="outlined"
                       size="small"
                       onClick={() => handleViewDetails(contract)}
                     >
-                      View Details
+                      Quick View
                     </Button>
                     {needsSignature(contract) && (
                       <Button
