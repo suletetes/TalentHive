@@ -54,9 +54,9 @@ const projectSchema = new Schema<IProject>({
     ref: 'Organization',
   },
   category: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: 'Category',
     required: true,
-    trim: true,
   },
   skills: [{
     type: String,

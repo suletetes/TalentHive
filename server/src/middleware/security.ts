@@ -90,11 +90,14 @@ export const corsOptions = {
  * Request validation middleware
  */
 export const validateRequest = (req: Request, res: Response, next: NextFunction) => {
-  // Check for required headers
-  if (!req.headers['content-type'] && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
+  // Check for required headers only if there's actual body content
+  const hasBody = req.body && Object.keys(req.body).length > 0;
+  
+  if (!req.headers['content-type'] && ['POST', 'PUT', 'PATCH'].includes(req.method) && hasBody) {
+    console.warn(`[SECURITY] Missing Content-Type header for ${req.method} ${req.path} with body`);
     return res.status(400).json({
       status: 'error',
-      message: 'Content-Type header is required',
+      message: 'Content-Type header is required for requests with body',
     });
   }
 

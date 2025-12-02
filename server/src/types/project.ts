@@ -16,7 +16,7 @@ export interface IProject extends Document {
   description: string;
   client: ObjectId;
   organization?: ObjectId;
-  category: string;
+  category: ObjectId;
   skills: string[];
   budget: IBudget;
   timeline: ITimeline;
