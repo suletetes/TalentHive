@@ -23,6 +23,7 @@ import {
   CheckCircle,
   Cancel,
   Send,
+  Payment as PaymentIcon,
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -34,7 +35,18 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { useToast } from '@/components/ui/ToastProvider';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
-import { format } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
+
+// Safe date formatter
+const formatDate = (dateStr: string | Date | undefined, formatStr: string = 'MMM dd, yyyy'): string => {
+  if (!dateStr) return 'N/A';
+  try {
+    const date = typeof dateStr === 'string' ? parseISO(dateStr) : dateStr;
+    return isValid(date) ? format(date, formatStr) : 'Invalid date';
+  } catch {
+    return 'Invalid date';
+  }
+};
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -57,16 +69,10 @@ export const ContractDetailPage: React.FC = () => {
   // Dialog states
   const [submitDialog, setSubmitDialog] = useState<any>(null);
   const [reviewDialog, setReviewDialog] = useState<any>(null);
-  const [releaseDialog, setReleaseDialog] = useState<any>(null);
   const [submitNotes, setSubmitNotes] = useState('');
   const [reviewFeedback, setReviewFeedback] = useState('');
 
   const { data: contract, isLoading, error, refetch } = useContract(id || '');
-
-  // Debug logging
-  console.log('[CONTRACT PAGE] Contract data:', contract);
-  console.log('[CONTRACT PAGE] Milestones:', contract?.milestones?.map((m: any) => ({ title: m.title, status: m.status })));
-  console.log('[CONTRACT PAGE] User role:', user?.role);
 
   const isClient = user?.role === 'client';
   const isFreelancer = user?.role === 'freelancer';
@@ -85,26 +91,20 @@ export const ContractDetailPage: React.FC = () => {
   // Submit milestone mutation
   const submitMutation = useMutation({
     mutationFn: async ({ milestoneId, notes }: { milestoneId: string; notes: string }) => {
-      console.log('[SUBMIT] Calling API...', { contractId: id, milestoneId });
       const result = await contractsService.submitMilestone(id!, milestoneId, {
         deliverables: [],
         freelancerNotes: notes,
       });
-      console.log('[SUBMIT] API Response:', result);
       return result;
     },
-    onSuccess: async (data) => {
-      console.log('[SUBMIT] Success, invalidating cache...', data);
+    onSuccess: async () => {
       toast.success('Milestone submitted for review');
-      // Clear cache and force refetch
       await queryClient.invalidateQueries({ queryKey: ['contract', id] });
       await refetch();
-      console.log('[SUBMIT] Refetch complete');
       setSubmitDialog(null);
       setSubmitNotes('');
     },
     onError: (err: any) => {
-      console.log('[SUBMIT] Error:', err);
       toast.error(err.message || 'Failed to submit milestone');
     },
   });
@@ -141,20 +141,6 @@ export const ContractDetailPage: React.FC = () => {
     },
   });
 
-  // Release payment mutation
-  const releasePaymentMutation = useMutation({
-    mutationFn: async (milestoneId: string) => {
-      return contractsService.releasePayment(id!, milestoneId);
-    },
-    onSuccess: () => {
-      toast.success('Payment released successfully!');
-      queryClient.invalidateQueries({ queryKey: ['contract', id] });
-    },
-    onError: (err: any) => {
-      toast.error(err.message || 'Failed to release payment');
-    },
-  });
-
   const getStatusColor = (status: string) => {
     const colors: Record<string, any> = {
       active: 'success', completed: 'info', cancelled: 'error',
@@ -179,7 +165,7 @@ export const ContractDetailPage: React.FC = () => {
 
   if (isLoading) return <LoadingSpinner message="Loading contract..." />;
   if (error || !contract) {
-    return <Container maxWidth="lg" sx={{ py: 4 }}><ErrorState error={error} onRetry={refetch} /></Container>;
+    return <Container maxWidth="lg" sx={{ py: 4 }}><ErrorState onRetry={refetch} /></Container>;
   }
 
   const completedMilestones = contract.milestones?.filter((m: any) => ['approved', 'paid'].includes(m.status)).length || 0;
@@ -272,16 +258,16 @@ export const ContractDetailPage: React.FC = () => {
                         <strong>Amount:</strong> ${milestone.amount?.toLocaleString()}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Due:</strong> {format(new Date(milestone.dueDate), 'MMM dd, yyyy')}
+                        <strong>Due:</strong> {formatDate(milestone.dueDate)}
                       </Typography>
                       {milestone.submittedAt && (
                         <Typography variant="body2" color="info.main">
-                          Submitted: {format(new Date(milestone.submittedAt), 'MMM dd, yyyy')}
+                          Submitted: {formatDate(milestone.submittedAt)}
                         </Typography>
                       )}
                       {milestone.approvedAt && (
                         <Typography variant="body2" color="success.main">
-                          Approved: {format(new Date(milestone.approvedAt), 'MMM dd, yyyy')}
+                          Approved: {formatDate(milestone.approvedAt)}
                         </Typography>
                       )}
                     </Box>
@@ -313,16 +299,16 @@ export const ContractDetailPage: React.FC = () => {
                       </Button>
                     )}
                     
-                    {/* Client: Release Payment button for approved milestones */}
+                    {/* Client: Release Payment - Navigate to dedicated page */}
                     {canReleasePayment(milestone) && (
                       <Button
                         variant="contained"
                         size="small"
                         color="primary"
-                        onClick={() => setReleaseDialog(milestone)}
-                        disabled={releasePaymentMutation.isPending}
+                        startIcon={<PaymentIcon />}
+                        onClick={() => navigate(`/dashboard/contracts/${id}/release/${milestone._id}`)}
                       >
-                        {releasePaymentMutation.isPending ? 'Processing...' : `Release $${milestone.amount}`}
+                        Release ${milestone.amount?.toLocaleString()}
                       </Button>
                     )}
                   </Box>
@@ -343,12 +329,12 @@ export const ContractDetailPage: React.FC = () => {
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Typography variant="subtitle2" color="text.secondary">Description</Typography>
-              <Typography paragraph>{contract.description}</Typography>
+              <Typography sx={{ mb: 2 }}>{contract.description}</Typography>
             </Grid>
             <Grid item xs={12} md={6}>
               <Typography variant="subtitle2" color="text.secondary">Timeline</Typography>
-              <Typography>Start: {format(new Date(contract.startDate), 'MMMM dd, yyyy')}</Typography>
-              {contract.endDate && <Typography>End: {format(new Date(contract.endDate), 'MMMM dd, yyyy')}</Typography>}
+              <Typography>Start: {formatDate(contract.startDate, 'MMMM dd, yyyy')}</Typography>
+              {contract.endDate && <Typography>End: {formatDate(contract.endDate, 'MMMM dd, yyyy')}</Typography>}
             </Grid>
           </Grid>
         </TabPanel>
@@ -443,38 +429,6 @@ export const ContractDetailPage: React.FC = () => {
             disabled={approveMutation.isPending}
           >
             Approve
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Release Payment Dialog */}
-      <Dialog open={!!releaseDialog} onClose={() => setReleaseDialog(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>Release Payment</DialogTitle>
-        <DialogContent>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            You are about to release payment for this milestone. This action cannot be undone.
-          </Alert>
-          <Box sx={{ textAlign: 'center', py: 2 }}>
-            <Typography variant="h4" color="primary" gutterBottom>
-              ${releaseDialog?.amount}
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              {releaseDialog?.title}
-            </Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setReleaseDialog(null)}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              releasePaymentMutation.mutate(releaseDialog._id);
-              setReleaseDialog(null);
-            }}
-            disabled={releasePaymentMutation.isPending}
-          >
-            {releasePaymentMutation.isPending ? 'Processing...' : 'Confirm Release'}
           </Button>
         </DialogActions>
       </Dialog>

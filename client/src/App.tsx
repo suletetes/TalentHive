@@ -50,6 +50,9 @@ import { ServicesPage } from '@/pages/ServicesPage';
 import { CreateProfilePage } from '@/pages/CreateProfilePage';
 import { HireNowRequestsPage } from '@/pages/HireNowRequestsPage';
 import { HireNowSentPage } from '@/pages/HireNowSentPage';
+import { EarningsPage } from '@/pages/EarningsPage';
+import { ReleasePaymentPage } from '@/pages/ReleasePaymentPage';
+import { AdminTransactionsPage } from '@/pages/admin/AdminTransactionsPage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { ToastProvider } from '@/components/ui/ToastProvider';
@@ -118,10 +121,12 @@ function App() {
           <Route path="organizations" element={<OrganizationListPage />} />
           <Route path="organizations/:id" element={<OrganizationDashboardPage />} />
           <Route path="contracts/:id" element={<ContractDetailPage />} />
+          <Route path="contracts/:contractId/release/:milestoneId" element={<ReleasePaymentPage />} />
           <Route path="time-tracking" element={<TimeTrackingPage />} />
           <Route path="services" element={<ServicesPage />} />
           <Route path="hire-now-requests" element={<HireNowRequestsPage />} />
           <Route path="hire-now-sent" element={<HireNowSentPage />} />
+          <Route path="earnings" element={<EarningsPage />} />
         </Route>
 
         {/* Admin routes */}
@@ -138,6 +143,7 @@ function App() {
           <Route path="projects" element={<AdminProjectsPage />} />
           <Route path="analytics" element={<AnalyticsDashboardPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
+          <Route path="transactions" element={<AdminTransactionsPage />} />
         </Route>
 
         {/* 404 route */}

@@ -175,6 +175,9 @@ export const DashboardPage: React.FC = () => {
                   <Button variant="outlined" component={Link} to="/admin/projects">
                     Manage Projects
                   </Button>
+                  <Button variant="outlined" component={Link} to="/admin/transactions">
+                    Manage Transactions
+                  </Button>
                 </Box>
               </CardContent>
             </Card>
@@ -231,7 +234,7 @@ export const DashboardPage: React.FC = () => {
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ cursor: 'pointer' }} onClick={() => navigate('/dashboard/payments')}>
+            <Card sx={{ cursor: 'pointer' }} onClick={() => navigate('/dashboard/earnings')}>
               <CardContent>
                 <Box display="flex" alignItems="center" mb={2}>
                   <Payment color="success" sx={{ mr: 1 }} />
@@ -241,7 +244,7 @@ export const DashboardPage: React.FC = () => {
                   ${(stats.totalEarnings ?? 0).toFixed(2)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  All time
+                  View earnings dashboard
                 </Typography>
               </CardContent>
             </Card>
