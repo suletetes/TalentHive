@@ -13,6 +13,11 @@ import {
   reorderFeaturedFreelancers,
   getAnalytics,
 } from '@/controllers/adminController';
+import {
+  getAllTransactions,
+  getTransactionStats,
+  triggerAutoRelease,
+} from '@/controllers/adminTransactionController';
 import { authenticate, authorize } from '@/middleware/auth';
 
 const router = Router();
@@ -40,5 +45,10 @@ router.put('/featured-freelancers/reorder', reorderFeaturedFreelancers);
 
 // Analytics
 router.get('/analytics', getAnalytics);
+
+// Transaction management
+router.get('/transactions', getAllTransactions);
+router.get('/transactions/stats', getTransactionStats);
+router.post('/transactions/auto-release', triggerAutoRelease);
 
 export default router;
