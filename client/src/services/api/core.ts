@@ -141,7 +141,9 @@ export class ApiCore {
   }
 
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    console.log('[API] POST request:', url, 'Data:', data);
     const response = await this.api.post<T>(url, data, config);
+    console.log('[API] POST response:', response.status, response.data);
     return response.data;
   }
 

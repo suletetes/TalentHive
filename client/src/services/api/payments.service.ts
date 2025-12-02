@@ -41,7 +41,7 @@ export interface RefundPaymentDto {
 }
 
 export class PaymentsService {
-  private basePath = '/transactions';
+  private basePath = '/payments';
 
   /**
    * Create a payment intent for a milestone
@@ -54,7 +54,7 @@ export class PaymentsService {
       clientSecret: string;
     };
   }> {
-    return apiCore.post(`${this.basePath}/payment-intent`, data);
+    return apiCore.post(`${this.basePath}/create-intent`, data);
   }
 
   /**
@@ -115,34 +115,21 @@ export class PaymentsService {
         }
       });
     }
-    return apiCore.get(`${this.basePath}/history?${queryParams.toString()}`);
+    return apiCore.get(`${this.basePath}/transactions?${queryParams.toString()}`);
   }
 
   /**
-   * Get a specific transaction by ID
+   * Get user balance
    */
-  async getTransaction(transactionId: string): Promise<{
-    status: string;
-    data: Transaction;
-  }> {
-    return apiCore.get(`${this.basePath}/${transactionId}`);
-  }
-
-  /**
-   * Calculate fees for a given amount
-   */
-  async calculateFees(amount: number): Promise<{
+  async getBalance(): Promise<{
     status: string;
     data: {
-      amount: number;
-      commission: number;
-      processingFee: number;
-      tax: number;
-      freelancerAmount: number;
-      currency: string;
+      available: number;
+      pending: number;
+      total: number;
     };
   }> {
-    return apiCore.post(`${this.basePath}/calculate-fees`, { amount });
+    return apiCore.get(`${this.basePath}/balance`);
   }
 }
 
