@@ -20,7 +20,7 @@ export const transactionController = {
       }
 
       // Verify contract exists and user is the client
-      const contract = await Contract.findById(contractId);
+      const contract = await Contract.findById(contractId).populate('client', 'email');
 
       if (!contract) {
         return res.status(404).json({
@@ -29,18 +29,29 @@ export const transactionController = {
         });
       }
 
-      if (contract.client.toString() !== userId) {
+      const contractClientId = (contract.client as any)._id?.toString() || contract.client.toString();
+      const currentUserId = userId?.toString();
+      console.log('[PAYMENT] Contract client ID:', contractClientId);
+      console.log('[PAYMENT] Current user ID:', currentUserId);
+      console.log('[PAYMENT] Contract client email:', (contract.client as any).email);
+      console.log('[PAYMENT] Match:', contractClientId === currentUserId);
+
+      if (contractClientId !== currentUserId) {
         return res.status(403).json({
           status: 'error',
-          message: 'Only the client can make payments',
+          message: `Only the client can make payments. Contract client: ${(contract.client as any).email || contractClientId}`,
         });
       }
 
+      // Extract IDs properly whether populated or not
+      const clientId = (contract.client as any)._id?.toString() || contract.client.toString();
+      const freelancerId = (contract.freelancer as any)._id?.toString() || contract.freelancer.toString();
+      
       const result = await paymentService.createPaymentIntent(
         contractId,
         amount,
-        contract.client.toString(),
-        contract.freelancer.toString(),
+        clientId,
+        freelancerId,
         milestoneId
       );
 
