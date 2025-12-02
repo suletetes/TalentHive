@@ -19,25 +19,46 @@ export class PaymentService {
       throw new Error('Platform settings not found');
     }
 
-    // Calculate commission
-    let commission = Math.round((amount * settings.commissionRate) / 100);
+    // Calculate commission as percentage
+    let commission = Math.round((amount * (settings.commissionRate || 10)) / 100);
     
-    // Apply min/max limits
-    if (commission < settings.minCommission) {
-      commission = settings.minCommission;
+    // Apply min/max limits, but cap at 50% of amount to ensure freelancer gets something
+    const maxAllowedCommission = Math.floor(amount * 0.5);
+    if (settings.minCommission && commission < settings.minCommission) {
+      commission = Math.min(settings.minCommission, maxAllowedCommission);
     }
-    if (commission > settings.maxCommission) {
+    if (settings.maxCommission && commission > settings.maxCommission) {
       commission = settings.maxCommission;
     }
+    // Ensure commission doesn't exceed 50% of amount
+    commission = Math.min(commission, maxAllowedCommission);
 
-    // Calculate processing fee
-    const processingFee = Math.round((amount * settings.paymentProcessingFee) / 100);
+    // Calculate processing fee (cap at reasonable percentage)
+    const processingFeeRate = settings.paymentProcessingFee || 2.9;
+    let processingFee = Math.round((amount * processingFeeRate) / 100);
+    processingFee = Math.min(processingFee, Math.floor(amount * 0.1)); // Cap at 10%
 
     // Calculate tax
-    const tax = Math.round((amount * settings.taxRate) / 100);
+    const taxRate = settings.taxRate || 0;
+    let tax = Math.round((amount * taxRate) / 100);
+    tax = Math.min(tax, Math.floor(amount * 0.2)); // Cap at 20%
 
-    // Calculate freelancer amount
-    const freelancerAmount = amount - commission - processingFee - tax;
+    // Calculate freelancer amount - ensure it's at least 20% of original amount
+    let freelancerAmount = amount - commission - processingFee - tax;
+    const minFreelancerAmount = Math.floor(amount * 0.2);
+    
+    if (freelancerAmount < minFreelancerAmount) {
+      // Reduce fees proportionally to ensure minimum freelancer amount
+      const totalFees = commission + processingFee + tax;
+      const maxFees = amount - minFreelancerAmount;
+      const ratio = maxFees / totalFees;
+      commission = Math.floor(commission * ratio);
+      processingFee = Math.floor(processingFee * ratio);
+      tax = Math.floor(tax * ratio);
+      freelancerAmount = amount - commission - processingFee - tax;
+    }
+
+    console.log('[FEES] Amount:', amount, 'Commission:', commission, 'Processing:', processingFee, 'Tax:', tax, 'Freelancer:', freelancerAmount);
 
     return {
       amount,
@@ -45,7 +66,7 @@ export class PaymentService {
       processingFee,
       tax,
       freelancerAmount,
-      currency: settings.currency,
+      currency: settings.currency || 'USD',
     };
   }
 
@@ -63,9 +84,17 @@ export class PaymentService {
       // Calculate fees
       const fees = await this.calculateFees(amount);
 
+      // Stripe expects amount in cents (smallest currency unit)
+      const amountInCents = Math.round(fees.amount * 100);
+      
+      // Validate minimum amount ($0.50 = 50 cents)
+      if (amountInCents < 50) {
+        throw new Error('Amount must be at least $0.50');
+      }
+
       // Create payment intent
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: fees.amount,
+        amount: amountInCents,
         currency: fees.currency.toLowerCase(),
         metadata: {
           contractId,

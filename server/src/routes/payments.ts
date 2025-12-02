@@ -7,12 +7,26 @@ import {
   getBalance,
   refundPayment,
 } from '@/controllers/paymentController';
+import {
+  createConnectAccount,
+  getConnectStatus,
+  getEarnings,
+  requestPayout,
+} from '@/controllers/stripeConnectController';
 import { authenticate, authorize } from '@/middleware/auth';
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(authenticate);
+
+// Stripe Connect (Freelancer onboarding)
+router.post('/stripe-connect/onboard', createConnectAccount);
+router.get('/stripe-connect/status', getConnectStatus);
+
+// Freelancer earnings
+router.get('/earnings', getEarnings);
+router.post('/payout/request', requestPayout);
 
 // Payment operations
 router.post('/create-intent', createPaymentIntent);
