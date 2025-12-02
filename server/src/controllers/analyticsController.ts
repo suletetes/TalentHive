@@ -210,18 +210,38 @@ export const analyticsController = {
         },
       ]);
 
-      // Projects by category - category is stored as a String directly
+      // Projects by category - lookup category names
       const categoryDistribution = await Project.aggregate([
-        { $match: { ...matchStage, category: { $exists: true, $nin: [null, ''] } } },
+        { $match: { ...matchStage, category: { $exists: true, $ne: null } } },
         {
           $group: {
             _id: '$category',
             count: { $sum: 1 },
           },
         },
-        { $match: { _id: { $nin: [null, ''] } } },
+        { $match: { _id: { $ne: null } } },
         { $sort: { count: -1 } },
         { $limit: 10 },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'categoryInfo',
+          },
+        },
+        {
+          $unwind: {
+            path: '$categoryInfo',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: { $ifNull: ['$categoryInfo.name', 'Uncategorized'] },
+            count: 1,
+          },
+        },
       ]);
 
       // Budget range distribution

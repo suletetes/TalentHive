@@ -521,6 +521,27 @@ export const getAnalytics = catchAsync(async (req: Request, res: Response, next:
         },
         { $sort: { count: -1 } },
         { $limit: 10 },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'categoryInfo',
+          },
+        },
+        {
+          $unwind: {
+            path: '$categoryInfo',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            count: 1,
+            name: { $ifNull: ['$categoryInfo.name', 'Uncategorized'] },
+          },
+        },
       ]);
 
   // Top freelancers by rating

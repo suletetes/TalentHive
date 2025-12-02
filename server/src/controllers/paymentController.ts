@@ -260,42 +260,80 @@ export const confirmPayment = async (req: Request, res: Response) => {
 export const releasePayment = async (req: Request, res: Response) => {
   try {
     const { transactionId } = req.params;
+    console.log('🔓 [RELEASE_PAYMENT] Starting payment release for transaction:', transactionId);
+    console.log('🔓 [RELEASE_PAYMENT] Request user:', req.user?.email, 'Role:', req.user?.role);
+    console.log('🔓 [RELEASE_PAYMENT] Request body:', req.body);
 
     const transaction = await Transaction.findById(transactionId)
       .populate('contract')
       .populate('freelancer', 'email profile stripeConnectedAccountId');
 
     if (!transaction) {
+      console.log('❌ [RELEASE_PAYMENT] Transaction not found:', transactionId);
       return res.status(404).json({
         status: 'error',
         message: 'Transaction not found',
       });
     }
 
+    console.log('✅ [RELEASE_PAYMENT] Transaction found:', {
+      id: transaction._id,
+      status: transaction.status,
+      amount: transaction.amount,
+      freelancerAmount: transaction.freelancerAmount,
+      currency: transaction.currency,
+    });
+
     if (transaction.status !== 'held_in_escrow') {
+      console.log('❌ [RELEASE_PAYMENT] Invalid status:', transaction.status, '(expected: held_in_escrow)');
       return res.status(400).json({
         status: 'error',
         message: 'Transaction is not in escrow status',
       });
     }
 
+    console.log('✅ [RELEASE_PAYMENT] Transaction status valid, proceeding with release');
+
     // Transfer to freelancer's Stripe account
     const freelancerObj = transaction.freelancer as any;
+    console.log('💳 [RELEASE_PAYMENT] Freelancer info:', {
+      id: freelancerObj._id,
+      email: freelancerObj.email,
+      hasStripeAccount: !!freelancerObj.stripeConnectedAccountId,
+      stripeAccountId: freelancerObj.stripeConnectedAccountId,
+    });
+
     if (freelancerObj.stripeConnectedAccountId) {
-      await stripe.transfers.create({
+      console.log('💸 [RELEASE_PAYMENT] Creating Stripe transfer:', {
         amount: Math.round(transaction.freelancerAmount * 100),
         currency: (transaction.currency || 'USD').toLowerCase(),
         destination: freelancerObj.stripeConnectedAccountId,
-        metadata: {
-          transactionId: transaction._id.toString(),
-          contractId: transaction.contract.toString(),
-        },
       });
+
+      try {
+        const transfer = await stripe.transfers.create({
+          amount: Math.round(transaction.freelancerAmount * 100),
+          currency: (transaction.currency || 'USD').toLowerCase(),
+          destination: freelancerObj.stripeConnectedAccountId,
+          metadata: {
+            transactionId: transaction._id.toString(),
+            contractId: transaction.contract.toString(),
+          },
+        });
+        console.log('✅ [RELEASE_PAYMENT] Stripe transfer successful:', transfer.id);
+      } catch (stripeError: any) {
+        console.error('❌ [RELEASE_PAYMENT] Stripe transfer failed:', stripeError.message);
+        throw stripeError;
+      }
+    } else {
+      console.log('⚠️ [RELEASE_PAYMENT] No Stripe account connected, skipping transfer');
     }
 
+    console.log('💾 [RELEASE_PAYMENT] Updating transaction status to released');
     transaction.status = 'released';
     transaction.releasedAt = new Date();
     await transaction.save();
+    console.log('✅ [RELEASE_PAYMENT] Transaction updated successfully');
 
     // Create notification
     try {
