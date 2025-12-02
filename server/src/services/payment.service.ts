@@ -171,6 +171,20 @@ export class PaymentService {
       transaction.escrowReleaseDate = escrowReleaseDate;
       await transaction.save();
 
+      // Update milestone status to 'paid'
+      if (transaction.milestone) {
+        const contract = await Contract.findById(transaction.contract);
+        if (contract) {
+          const milestone = (contract.milestones as any).id(transaction.milestone);
+          if (milestone) {
+            milestone.status = 'paid';
+            milestone.paidAt = new Date();
+            await contract.save();
+            console.log('[PAYMENT] Milestone updated to paid:', milestone._id);
+          }
+        }
+      }
+
       return transaction;
     } catch (error: any) {
       console.error('Confirm payment error:', error);

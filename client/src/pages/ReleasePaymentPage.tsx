@@ -99,15 +99,27 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
       });
 
       if (error) {
+        console.error('[PAYMENT] Stripe error:', error);
         setErrorMessage(error.message || 'Payment failed');
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        console.log('[PAYMENT] Payment succeeded, confirming with backend...');
+        console.log('[PAYMENT] Payment Intent ID:', paymentIntent.id);
+        console.log('[PAYMENT] Contract ID for navigation:', contractId);
+        
         // Confirm payment on backend to update milestone status
-        await paymentsService.confirmPayment({ paymentIntentId: paymentIntent.id });
+        const confirmResult = await paymentsService.confirmPayment({ paymentIntentId: paymentIntent.id });
+        console.log('[PAYMENT] Backend confirm result:', confirmResult);
+        
         toast.success('Payment successful! Funds are now in escrow.');
+        
         // Invalidate cache and navigate to contract page
+        console.log('[PAYMENT] Invalidating cache for contract:', contractId);
         await queryClient.invalidateQueries({ queryKey: ['contract', contractId] });
         await queryClient.invalidateQueries({ queryKey: ['contracts'] });
-        navigate(`/dashboard/contracts/${contractId}`, { replace: true });
+        
+        const targetUrl = `/dashboard/contracts/${contractId}`;
+        console.log('[PAYMENT] Navigating to:', targetUrl);
+        navigate(targetUrl, { replace: true });
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to process payment');
@@ -181,8 +193,11 @@ export const ReleasePaymentPage: React.FC = () => {
   const isClient = user?.role === 'client';
 
   // Debug logging
+  console.log('[RELEASE PAGE] ===== PAGE LOAD =====');
   console.log('[RELEASE PAGE] User:', user?.email, 'Role:', user?.role, 'isClient:', isClient);
-  console.log('[RELEASE PAGE] ContractId:', contractId, 'MilestoneId:', milestoneId);
+  console.log('[RELEASE PAGE] URL Params - ContractId:', contractId, 'MilestoneId:', milestoneId);
+  console.log('[RELEASE PAGE] ContractId type:', typeof contractId);
+  console.log('[RELEASE PAGE] Is valid ObjectId:', contractId && /^[a-f\d]{24}$/i.test(contractId));
 
   // Check Stripe availability
   useEffect(() => {

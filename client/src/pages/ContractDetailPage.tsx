@@ -66,13 +66,31 @@ export const ContractDetailPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const [tabValue, setTabValue] = useState(0);
   
+  // Debug logging
+  console.log('[CONTRACT DETAIL] URL param id:', id);
+  console.log('[CONTRACT DETAIL] Is valid ObjectId:', id && /^[a-f\d]{24}$/i.test(id));
+  
   // Dialog states
   const [submitDialog, setSubmitDialog] = useState<any>(null);
   const [reviewDialog, setReviewDialog] = useState<any>(null);
   const [submitNotes, setSubmitNotes] = useState('');
   const [reviewFeedback, setReviewFeedback] = useState('');
 
-  const { data: contract, isLoading, error, refetch } = useContract(id || '');
+  const { data: contractData, isLoading, error, refetch } = useContract(id || '');
+  
+  // Extract contract from various response structures
+  const contract = (contractData as any)?.data?.contract 
+    || (contractData as any)?.contract 
+    || (contractData as any)?.data 
+    || contractData;
+  
+  // Debug contract data
+  console.log('[CONTRACT DETAIL] Raw contractData:', contractData);
+  console.log('[CONTRACT DETAIL] Extracted contract:', contract);
+  console.log('[CONTRACT DETAIL] Contract title:', contract?.title);
+  console.log('[CONTRACT DETAIL] Milestones count:', contract?.milestones?.length);
+  console.log('[CONTRACT DETAIL] isLoading:', isLoading);
+  console.log('[CONTRACT DETAIL] error:', error);
 
   const isClient = user?.role === 'client';
   const isFreelancer = user?.role === 'freelancer';
