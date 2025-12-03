@@ -10,9 +10,9 @@ import {
   searchProjects,
   getProjectCategories,
   getProjectStats,
-  getMyProjectStats,
   toggleProjectStatus,
 } from '@/controllers/projectController';
+import { getMyProjectStats } from '@/controllers/dashboardController';
 import { authenticate, authorize } from '@/middleware/auth';
 
 const router = Router();

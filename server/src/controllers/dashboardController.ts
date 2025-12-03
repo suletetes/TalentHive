@@ -20,6 +20,10 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
   if (userRole === 'freelancer') {
     // Freelancer stats
     const userObjectId = new mongoose.Types.ObjectId(userId);
+    
+    // Get user for rating
+    const { User } = await import('@/models/User');
+    const user = await User.findById(userId).select('rating');
 
     const [totalProposals, activeContracts, earnings] = await Promise.all([
       Proposal.countDocuments({ freelancer: userId }),
@@ -31,11 +35,13 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
     ]);
 
     const totalEarnings = earnings[0]?.total || 0;
+    const rating = user?.rating || { average: 0, count: 0 };
     
     console.log('📊 [MY_STATS] Freelancer stats:', {
       totalProposals,
       activeProjects: activeContracts,
       totalEarnings,
+      rating,
     });
 
     return res.json({
@@ -44,6 +50,7 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
         totalProposals,
         activeProjects: activeContracts,
         totalEarnings,
+        rating,
       },
     });
   }

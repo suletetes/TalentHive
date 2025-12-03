@@ -258,11 +258,11 @@ export const DashboardPage: React.FC = () => {
                   <Typography variant="h6">Rating</Typography>
                 </Box>
                 <Typography variant="h4" color="warning.main">
-                  {profile?.rating?.average?.toFixed(1) || 'N/A'}
+                  {stats.rating?.average > 0 ? stats.rating.average.toFixed(1) : 'N/A'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {profile?.rating?.count > 0 
-                    ? `${profile.rating.count} reviews`
+                  {stats.rating?.count > 0 
+                    ? `${stats.rating.count} reviews`
                     : 'No reviews yet'
                   }
                 </Typography>
