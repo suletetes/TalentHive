@@ -110,36 +110,86 @@ export const getConnectStatus = async (req: Request, res: Response) => {
 export const getEarnings = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id;
+    console.log('💰 [EARNINGS] Getting earnings for user:', userId);
+    console.log('💰 [EARNINGS] User email:', req.user?.email);
+    console.log('💰 [EARNINGS] User role:', req.user?.role);
+
+    // First, check all transactions for this user
+    const allTransactions = await Transaction.find({ freelancer: userId });
+    console.log('📊 [EARNINGS] Total transactions for user:', allTransactions.length);
+    
+    if (allTransactions.length > 0) {
+      console.log('📊 [EARNINGS] Transaction breakdown:');
+      allTransactions.forEach((t, i) => {
+        console.log(`  ${i + 1}. Status: ${t.status}, Amount: ${t.freelancerAmount}, ID: ${t._id}`);
+      });
+    } else {
+      console.log('⚠️ [EARNINGS] No transactions found for this user');
+      
+      // Check if there are ANY transactions in the system
+      const anyTransactions = await Transaction.countDocuments();
+      console.log('📊 [EARNINGS] Total transactions in system:', anyTransactions);
+      
+      if (anyTransactions > 0) {
+        // Show a sample transaction to compare
+        const sampleTransaction = await Transaction.findOne();
+        console.log('📊 [EARNINGS] Sample transaction freelancer ID:', sampleTransaction?.freelancer);
+        console.log('📊 [EARNINGS] Current user ID:', userId);
+        console.log('📊 [EARNINGS] IDs match:', sampleTransaction?.freelancer?.toString() === userId?.toString());
+      }
+    }
 
     // Calculate earnings from transactions
-    const [inEscrow, pending, released] = await Promise.all([
+    console.log('🔍 [EARNINGS] Running aggregation queries...');
+    
+    // Import mongoose to convert userId to ObjectId
+    const mongoose = require('mongoose');
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    console.log('🔍 [EARNINGS] Converted userId to ObjectId:', userObjectId);
+    
+    const [inEscrow, pending, released, paidOut] = await Promise.all([
       Transaction.aggregate([
-        { $match: { freelancer: userId, status: 'held_in_escrow' } },
+        { $match: { freelancer: userObjectId, status: 'held_in_escrow' } },
         { $group: { _id: null, total: { $sum: '$freelancerAmount' } } },
       ]),
       Transaction.aggregate([
-        { $match: { freelancer: userId, status: { $in: ['pending', 'processing'] } } },
+        { $match: { freelancer: userObjectId, status: { $in: ['pending', 'processing'] } } },
         { $group: { _id: null, total: { $sum: '$freelancerAmount' } } },
       ]),
       Transaction.aggregate([
-        { $match: { freelancer: userId, status: 'released' } },
+        { $match: { freelancer: userObjectId, status: 'released' } },
+        { $group: { _id: null, total: { $sum: '$freelancerAmount' } } },
+      ]),
+      Transaction.aggregate([
+        { $match: { freelancer: userObjectId, status: 'paid_out' } },
         { $group: { _id: null, total: { $sum: '$freelancerAmount' } } },
       ]),
     ]);
 
-    const totalEarned = (inEscrow[0]?.total || 0) + (released[0]?.total || 0);
+    console.log('💵 [EARNINGS] In Escrow:', inEscrow[0]?.total || 0);
+    console.log('💵 [EARNINGS] Pending:', pending[0]?.total || 0);
+    console.log('💵 [EARNINGS] Released (Available):', released[0]?.total || 0);
+    console.log('💵 [EARNINGS] Paid Out:', paidOut[0]?.total || 0);
+
+    const totalEarned = (inEscrow[0]?.total || 0) + (released[0]?.total || 0) + (paidOut[0]?.total || 0);
+    console.log('💵 [EARNINGS] Total Earned:', totalEarned);
+
+    const responseData = {
+      inEscrow: inEscrow[0]?.total || 0,
+      pending: pending[0]?.total || 0,
+      available: released[0]?.total || 0,
+      totalEarned,
+    };
+
+    console.log('✅ [EARNINGS] Sending response:', responseData);
 
     res.status(200).json({
       status: 'success',
-      data: {
-        inEscrow: inEscrow[0]?.total || 0,
-        pending: pending[0]?.total || 0,
-        available: released[0]?.total || 0,
-        totalEarned,
-      },
+      data: responseData,
     });
   } catch (error: any) {
-    console.error('Get earnings error:', error);
+    console.error('❌ [EARNINGS] Get earnings error:', error);
+    console.error('❌ [EARNINGS] Error stack:', error.stack);
     res.status(500).json({
       status: 'error',
       message: 'Failed to get earnings',
@@ -152,37 +202,132 @@ export const getEarnings = async (req: Request, res: Response) => {
 export const requestPayout = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id;
+    console.log('💰 [PAYOUT] Payout request from user:', userId);
+
     const user = await User.findById(userId);
 
     if (!user || !user.stripeConnectedAccountId) {
+      console.log('❌ [PAYOUT] User has no Stripe account connected');
       return res.status(400).json({
         status: 'error',
         message: 'Payment account not set up',
       });
     }
 
-    // Get available balance
-    const balance = await stripe.balance.retrieve({
-      stripeAccount: user.stripeConnectedAccountId,
-    });
+    console.log('✅ [PAYOUT] User Stripe account:', user.stripeConnectedAccountId);
 
-    const availableAmount = balance.available.reduce((sum, b) => sum + b.amount, 0);
+    // Check if using mock mode for development
+    const useMockPayout = process.env.MOCK_STRIPE_CONNECT === 'true' || process.env.NODE_ENV === 'development';
 
-    if (availableAmount <= 0) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'No available balance to withdraw',
-      });
-    }
+    let availableAmount = 0;
+    let payout: any;
 
-    // Create payout
-    const payout = await stripe.payouts.create(
-      {
+    if (useMockPayout) {
+      console.log('⚠️ [PAYOUT] Using mock payout (development mode)');
+      console.log('🔍 [PAYOUT] MOCK_STRIPE_CONNECT:', process.env.MOCK_STRIPE_CONNECT);
+      console.log('🔍 [PAYOUT] NODE_ENV:', process.env.NODE_ENV);
+      
+      // Calculate available balance from released transactions
+      const mongoose = require('mongoose');
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+      console.log('🔍 [PAYOUT] User ObjectId for query:', userObjectId);
+      
+      // First check how many released transactions exist
+      const allReleased = await Transaction.find({ status: 'released' });
+      console.log('📊 [PAYOUT] Total released transactions in system:', allReleased.length);
+      if (allReleased.length > 0) {
+        console.log('📊 [PAYOUT] First released transaction freelancer:', allReleased[0].freelancer);
+        console.log('📊 [PAYOUT] Current user ObjectId:', userObjectId);
+        console.log('📊 [PAYOUT] Match:', allReleased[0].freelancer.toString() === userObjectId.toString());
+      }
+      
+      const releasedTransactions = await Transaction.aggregate([
+        { $match: { freelancer: userObjectId, status: 'released' } },
+        { $group: { _id: null, total: { $sum: '$freelancerAmount' } } },
+      ]);
+
+      console.log('📊 [PAYOUT] Aggregation result:', JSON.stringify(releasedTransactions, null, 2));
+      console.log('💵 [PAYOUT] Available from transactions (dollars):', releasedTransactions[0]?.total || 0);
+      
+      availableAmount = (releasedTransactions[0]?.total || 0) * 100; // Convert to cents
+      console.log('💵 [PAYOUT] Available from transactions (cents):', availableAmount);
+
+      if (availableAmount <= 0) {
+        console.log('⚠️ [PAYOUT] No released transactions to withdraw');
+        console.log('⚠️ [PAYOUT] availableAmount value:', availableAmount);
+        console.log('⚠️ [PAYOUT] Check failed: availableAmount <= 0 is', availableAmount <= 0);
+        return res.status(400).json({
+          status: 'error',
+          message: 'No available balance to withdraw',
+        });
+      }
+      
+      console.log('✅ [PAYOUT] Proceeding with payout, amount:', availableAmount);
+
+      // Mock payout
+      payout = {
+        id: `po_mock_${Date.now()}`,
         amount: availableAmount,
         currency: 'usd',
-      },
-      { stripeAccount: user.stripeConnectedAccountId }
-    );
+        status: 'paid',
+        arrival_date: Math.floor(Date.now() / 1000),
+      };
+
+      console.log('✅ [PAYOUT] Mock payout created:', payout.id);
+      
+      // Update transaction statuses to 'paid_out' so they don't show as available anymore
+      const updateResult = await Transaction.updateMany(
+        { freelancer: userObjectId, status: 'released' },
+        { $set: { status: 'paid_out', paidOutAt: new Date() } }
+      );
+      
+      console.log('✅ [PAYOUT] Updated transactions to paid_out:', updateResult.modifiedCount);
+    } else {
+      // Real Stripe payout
+      console.log('🔍 [PAYOUT] Checking Stripe balance...');
+      const balance = await stripe.balance.retrieve({
+        stripeAccount: user.stripeConnectedAccountId,
+      });
+
+      console.log('💵 [PAYOUT] Stripe balance:', JSON.stringify(balance, null, 2));
+
+      availableAmount = balance.available.reduce((sum, b) => sum + b.amount, 0);
+      console.log('💵 [PAYOUT] Available amount (cents):', availableAmount);
+      console.log('💵 [PAYOUT] Available amount (dollars):', availableAmount / 100);
+
+      if (availableAmount <= 0) {
+        console.log('⚠️ [PAYOUT] No available balance');
+        
+        // Check if there are released transactions
+        const releasedTransactions = await Transaction.find({
+          freelancer: userId,
+          status: 'released',
+        });
+        
+        console.log('📊 [PAYOUT] Released transactions count:', releasedTransactions.length);
+        if (releasedTransactions.length > 0) {
+          console.log('⚠️ [PAYOUT] Transactions are released but not yet in Stripe balance');
+          console.log('⚠️ [PAYOUT] This may take a few minutes to reflect in Stripe');
+        }
+
+        return res.status(400).json({
+          status: 'error',
+          message: 'No available balance to withdraw',
+        });
+      }
+
+      // Create real payout
+      console.log('💸 [PAYOUT] Creating Stripe payout for amount:', availableAmount);
+      payout = await stripe.payouts.create(
+        {
+          amount: availableAmount,
+          currency: 'usd',
+        },
+        { stripeAccount: user.stripeConnectedAccountId }
+      );
+
+      console.log('✅ [PAYOUT] Payout created successfully:', payout.id);
+    }
 
     res.status(200).json({
       status: 'success',
@@ -190,7 +335,8 @@ export const requestPayout = async (req: Request, res: Response) => {
       data: { payout },
     });
   } catch (error: any) {
-    console.error('Request payout error:', error);
+    console.error('❌ [PAYOUT] Request payout error:', error);
+    console.error('❌ [PAYOUT] Error details:', error.message);
     res.status(500).json({
       status: 'error',
       message: 'Failed to request payout',

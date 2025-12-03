@@ -684,3 +684,60 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
     data: {},
   });
 });
+
+// Get user's project stats for dashboard
+export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?._id;
+  const userRole = req.user?.role;
+  
+  console.log('📊 [MY_STATS] Getting stats for user:', userId, 'Role:', userRole);
+
+  if (userRole === 'freelancer') {
+    // Freelancer stats
+    const { Proposal } = await import('@/models/Proposal');
+    const { Contract } = await import('@/models/Contract');
+    const { Transaction } = await import('@/models/Transaction');
+    const mongoose = await import('mongoose');
+    
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
+    const [totalProposals, activeContracts, earnings] = await Promise.all([
+      Proposal.countDocuments({ freelancer: userId }),
+      Contract.countDocuments({ freelancer: userId, status: 'active' }),
+      Transaction.aggregate([
+        { $match: { freelancer: userObjectId, status: { $in: ['released', 'paid_out', 'held_in_escrow'] } } },
+        { $group: { _id: null, total: { $sum: '$freelancerAmount' } } },
+      ]),
+    ]);
+
+    const totalEarnings = earnings[0]?.total || 0;
+    
+    console.log('📊 [MY_STATS] Freelancer stats:', {
+      totalProposals,
+      activeProjects: activeContracts,
+      totalEarnings,
+    });
+
+    return res.json({
+      status: 'success',
+      data: {
+        totalProposals,
+        activeProjects: activeContracts,
+        totalEarnings,
+      },
+    });
+  }
+
+  if (userRole === 'client') {
+    // Client stats
+    const { Proposal } = await import('@/models/Proposal');
+    const { Contract } = await import('@/models/Contract');
+    const { Transaction } = await import('@/models/Transaction');
+    const mongoose = await import('mongoose');
+    
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
+    const [totalProjects, activeProjects, receivedProposals, ongoingContracts, spent] = await Promise.all([
+      Project.countDocuments({ client: userId }),
+      Project.countDocuments({ client: userId, status: 'in_progress' }),
+      Proposal.countDocuments({ project: { $in: await Project
