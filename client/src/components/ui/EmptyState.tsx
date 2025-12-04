@@ -44,7 +44,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       sx={{
         p: 6,
         textAlign: 'center',
-        bgcolor: 'grey.50',
+        bgcolor: 'background.default',
         border: 1,
         borderColor: 'divider',
         borderRadius: 2,

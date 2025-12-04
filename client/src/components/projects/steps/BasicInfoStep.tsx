@@ -60,8 +60,8 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
     },
     onSuccess: (newCategory) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      // Store the category name, not the ID
-      formik.setFieldValue('category', newCategory.name);
+      // Store the category ID
+      formik.setFieldValue('category', newCategory._id);
       toast.success('Category created successfully!');
     },
     onError: (error: any) => {
@@ -115,8 +115,8 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
       // User selected "Add new category"
       createCategoryMutation.mutate(newValue.inputValue);
     } else if (newValue) {
-      // User selected an existing category - store the name, not the ID
-      formik.setFieldValue('category', newValue.name);
+      // User selected an existing category - store the ID
+      formik.setFieldValue('category', newValue._id);
     } else {
       // User cleared the selection
       formik.setFieldValue('category', '');
@@ -272,7 +272,12 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
           }}
           onChange={handleSkillChange}
           filterOptions={(options, params) => {
-            const filtered = options.filter((option: any) =>
+            // Filter out already selected skills
+            const availableOptions = options.filter((option: any) => 
+              !formik.values.skills.includes(option._id)
+            );
+            
+            const filtered = availableOptions.filter((option: any) =>
               option.name.toLowerCase().includes(params.inputValue.toLowerCase())
             );
 
