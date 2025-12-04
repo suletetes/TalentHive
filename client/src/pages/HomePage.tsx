@@ -298,7 +298,7 @@ export const HomePage: React.FC = () => {
       </Container>
 
       {/* Features Section */}
-      <Box sx={{ bgcolor: 'grey.50', py: 8 }}>
+      <Box sx={{ bgcolor: 'background.default', py: 8 }}>
         <Container maxWidth="lg">
           <Typography variant="h3" textAlign="center" gutterBottom>
             Why Choose TalentHive?
@@ -526,7 +526,7 @@ export const HomePage: React.FC = () => {
       </Box>
 
       {/* Testimonials Section */}
-      <Box sx={{ bgcolor: 'grey.50', py: 8 }}>
+      <Box sx={{ bgcolor: 'background.default', py: 8 }}>
         <Container maxWidth="lg">
           <Typography variant="h3" textAlign="center" gutterBottom>
             What Our Users Say

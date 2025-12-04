@@ -315,7 +315,7 @@ export const EarningsPage: React.FC = () => {
                         {format(new Date(tx.createdAt), 'MMM dd, yyyy')}
                       </TableCell>
                       <TableCell>
-                        {tx.description || `Payment for contract`}
+                        {tx.contract?.title || tx.description || `Payment for contract ${tx.contract?._id || tx.contract || ''}`}
                       </TableCell>
                       <TableCell>${tx.amount?.toLocaleString()}</TableCell>
                       <TableCell color="success">

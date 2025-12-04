@@ -36,8 +36,9 @@ import { PrivacyPolicyPage } from '@/pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from '@/pages/TermsOfServicePage';
 import { SuccessStoriesPage } from '@/pages/SuccessStoriesPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
-import { OrganizationListPage } from '@/pages/OrganizationListPage';
-import { OrganizationDashboardPage } from '@/pages/OrganizationDashboardPage';
+// Organization feature - Coming soon
+// import { OrganizationListPage } from '@/pages/OrganizationListPage';
+// import { OrganizationDashboardPage } from '@/pages/OrganizationDashboardPage';
 import { VerificationPage } from '@/pages/VerificationPage';
 import { VerificationSuccessPage } from '@/pages/VerificationSuccessPage';
 import { EmailVerificationPage } from '@/pages/EmailVerificationPage';
@@ -48,6 +49,8 @@ import { ContractDetailPage } from '@/pages/ContractDetailPage';
 import { TimeTrackingPage } from '@/pages/TimeTrackingPage';
 import { ServicesPage } from '@/pages/ServicesPage';
 import { CreateProfilePage } from '@/pages/CreateProfilePage';
+import { HowItWorksPage } from '@/pages/HowItWorksPage';
+import { FindFreelancersPage } from '@/pages/FindFreelancersPage';
 import { HireNowRequestsPage } from '@/pages/HireNowRequestsPage';
 import { HireNowSentPage } from '@/pages/HireNowSentPage';
 import { EarningsPage } from '@/pages/EarningsPage';
@@ -78,6 +81,8 @@ function App() {
           <Route path="privacy" element={<PrivacyPolicyPage />} />
           <Route path="terms" element={<TermsOfServicePage />} />
           <Route path="success-stories" element={<SuccessStoriesPage />} />
+          <Route path="how-it-works" element={<HowItWorksPage />} />
+          <Route path="find-freelancers" element={<FindFreelancersPage />} />
           
           {/* Browse pages (public) */}
           <Route path="projects" element={<BrowseProjectsPage />} />
@@ -118,8 +123,9 @@ function App() {
           <Route path="reviews" element={<ReviewsPage />} />
           <Route path="messages" element={<MessagesPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
-          <Route path="organizations" element={<OrganizationListPage />} />
-          <Route path="organizations/:id" element={<OrganizationDashboardPage />} />
+          {/* Organization feature - Coming soon */}
+          {/* <Route path="organizations" element={<OrganizationListPage />} /> */}
+          {/* <Route path="organizations/:id" element={<OrganizationDashboardPage />} /> */}
           <Route path="contracts/:id" element={<ContractDetailPage />} />
           <Route path="contracts/:contractId/release/:milestoneId" element={<ReleasePaymentPage />} />
           <Route path="time-tracking" element={<TimeTrackingPage />} />
