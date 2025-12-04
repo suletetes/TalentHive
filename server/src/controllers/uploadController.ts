@@ -119,10 +119,25 @@ export const uploadAvatar = async (
       return next(new AppError('No file uploaded', 400));
     }
 
+    const userId = (req as any).user?._id;
+    if (!userId) {
+      return next(new AppError('User not authenticated', 401));
+    }
+
     const folder = 'talenthive/avatars';
 
     // Upload to Cloudinary
     const result = await uploadToCloudinary(req.file, folder);
+
+    // Update user profile with new avatar URL
+    const { User } = await import('@/models/User');
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { 'profile.avatar': result.url },
+      { new: true }
+    ).select('profile.avatar');
+
+    console.log('✅ [UPLOAD] Avatar updated in database for user:', userId);
 
     res.status(200).json({
       success: true,
@@ -130,6 +145,7 @@ export const uploadAvatar = async (
       data: {
         url: result.url,
         publicId: result.publicId,
+        avatar: result.url, // Add this for backward compatibility
       },
     });
   } catch (error: any) {

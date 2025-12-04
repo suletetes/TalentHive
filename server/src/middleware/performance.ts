@@ -10,6 +10,16 @@ export const requestTimer = (req: Request, res: Response, next: NextFunction) =>
   // Log when response finishes
   res.on('finish', () => {
     const duration = Date.now() - startTime;
+    
+    // Skip logging for polling endpoints with 401 errors (expired tokens are normal)
+    const isPollingEndpoint = req.originalUrl.includes('/unread-count') || 
+                              req.originalUrl.includes('/conversations');
+    const is401 = res.statusCode === 401;
+    
+    if (isPollingEndpoint && is401) {
+      return; // Skip logging
+    }
+    
     const logData = {
       method: req.method,
       url: req.originalUrl,

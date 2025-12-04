@@ -49,10 +49,17 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     req.user = user;
     next();
   } catch (error: any) {
-    console.log('🔐 [AUTH] Token verification failed');
-    console.log('🔐 [AUTH] Token preview:', token?.substring(0, 20) + '...');
-    console.log('🔐 [AUTH] Error:', error.message);
-    console.log('🔐 [AUTH] URL:', req.originalUrl);
+    // Skip logging for polling endpoints to reduce noise
+    const isPollingEndpoint = req.originalUrl.includes('/unread-count') || 
+                              req.originalUrl.includes('/conversations');
+    
+    if (!isPollingEndpoint) {
+      console.log('🔐 [AUTH] Token verification failed');
+      console.log('🔐 [AUTH] Token preview:', token?.substring(0, 20) + '...');
+      console.log('🔐 [AUTH] Error:', error.message);
+      console.log('🔐 [AUTH] URL:', req.originalUrl);
+    }
+    
     next(new AppError('Invalid token', 401));
   }
 };
