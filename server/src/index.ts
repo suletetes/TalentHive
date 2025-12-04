@@ -61,11 +61,16 @@ app.use(requestTimer);
 app.use(compression());
 app.use(compressionCheck);
 
-// Logging middleware
+// Logging middleware - skip frequent polling endpoints
+const skipPolling = (req: any) => {
+  return req.url.includes('/unread-count') || 
+         req.url.includes('/conversations') && req.method === 'GET';
+};
+
 if (NODE_ENV === 'development') {
-  app.use(morgan('dev'));
+  app.use(morgan('dev', { skip: skipPolling }));
 } else {
-  app.use(morgan('combined'));
+  app.use(morgan('combined', { skip: skipPolling }));
 }
 
 // Body parsing middleware

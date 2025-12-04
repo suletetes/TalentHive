@@ -46,8 +46,11 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
     req.user = user;
     next();
-  } catch (error) {
-    // console.log('[AUTH] Token verification error:', error);
+  } catch (error: any) {
+    console.log('🔐 [AUTH] Token verification failed');
+    console.log('🔐 [AUTH] Token preview:', token?.substring(0, 20) + '...');
+    console.log('🔐 [AUTH] Error:', error.message);
+    console.log('🔐 [AUTH] URL:', req.originalUrl);
     next(new AppError('Invalid token', 401));
   }
 };

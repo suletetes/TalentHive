@@ -16,7 +16,8 @@ import verificationRoutes from './verification';
 import uploadRoutes from './upload';
 import timeTrackingRoutes from './timeTracking';
 import workLogRoutes from './workLog';
-import organizationRoutes from './organizations';
+// Organization feature - Coming soon
+// import organizationRoutes from './organizations';
 import servicePackageRoutes from './servicePackages';
 
 const router = Router();
@@ -51,7 +52,8 @@ router.use('/upload', uploadRoutes);
 router.use('/admin', adminRoutes);
 router.use('/time-tracking', timeTrackingRoutes);
 router.use('/work-logs', workLogRoutes);
-router.use('/organizations', organizationRoutes);
+// Organization feature - Coming soon
+// router.use('/organizations', organizationRoutes);
 router.use('/services', servicePackageRoutes);
 
 // Import and use search routes
