@@ -36,9 +36,8 @@ import { PrivacyPolicyPage } from '@/pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from '@/pages/TermsOfServicePage';
 import { SuccessStoriesPage } from '@/pages/SuccessStoriesPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
-// Organization feature - Coming soon
-// import { OrganizationListPage } from '@/pages/OrganizationListPage';
-// import { OrganizationDashboardPage } from '@/pages/OrganizationDashboardPage';
+import { OrganizationListPage } from '@/pages/OrganizationListPage';
+import { OrganizationDashboardPage } from '@/pages/OrganizationDashboardPage';
 import { VerificationPage } from '@/pages/VerificationPage';
 import { VerificationSuccessPage } from '@/pages/VerificationSuccessPage';
 import { EmailVerificationPage } from '@/pages/EmailVerificationPage';
@@ -123,9 +122,8 @@ function App() {
           <Route path="reviews" element={<ReviewsPage />} />
           <Route path="messages" element={<MessagesPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
-          {/* Organization feature - Coming soon */}
-          {/* <Route path="organizations" element={<OrganizationListPage />} /> */}
-          {/* <Route path="organizations/:id" element={<OrganizationDashboardPage />} /> */}
+          <Route path="organizations" element={<OrganizationListPage />} />
+          <Route path="organizations/:id" element={<OrganizationDashboardPage />} />
           <Route path="contracts/:id" element={<ContractDetailPage />} />
           <Route path="contracts/:contractId/release/:milestoneId" element={<ReleasePaymentPage />} />
           <Route path="time-tracking" element={<TimeTrackingPage />} />

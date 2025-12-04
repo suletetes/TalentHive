@@ -166,7 +166,7 @@ export const HomePage: React.FC = () => {
               <Paper
                 elevation={8}
                 sx={{
-                  bgcolor: 'rgba(255,255,255,0.95)',
+                  bgcolor: 'background.paper',
                   borderRadius: 3,
                   p: 4,
                   textAlign: 'center',

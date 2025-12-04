@@ -359,7 +359,7 @@ export const DashboardPage: React.FC = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
+          <Card sx={{ cursor: 'pointer' }} onClick={() => navigate('/dashboard/projects')}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <Person color="secondary" sx={{ mr: 1 }} />
@@ -369,7 +369,7 @@ export const DashboardPage: React.FC = () => {
                 {stats.receivedProposals || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Received
+                Received - View in projects
               </Typography>
             </CardContent>
           </Card>
