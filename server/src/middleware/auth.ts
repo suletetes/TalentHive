@@ -9,9 +9,11 @@ export interface AuthRequest extends Request {
 }
 
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  let token: string | undefined;
+  
   try {
     // console.log('[AUTH] authenticate called for:', req.method, req.originalUrl);
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    token = req.header('Authorization')?.replace('Bearer ', '');
     
     if (!token) {
       // console.log('[AUTH] No token provided');
