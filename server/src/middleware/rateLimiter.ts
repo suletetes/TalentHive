@@ -1,8 +1,17 @@
 import rateLimit from 'express-rate-limit';
 import { logger } from '@/utils/logger';
 
+// Check if rate limiting should be disabled for testing
+const shouldBypassRateLimit = process.env.DISABLE_RATE_LIMIT_FOR_TESTING === 'true';
+
+if (shouldBypassRateLimit) {
+  console.log('⚠️  Rate limiting is DISABLED for testing');
+}
+
 // General rate limiter
-export const rateLimiter = rateLimit({
+export const rateLimiter = shouldBypassRateLimit
+  ? (req: any, res: any, next: any) => next()
+  : rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // limit each IP to 100 requests per windowMs
   message: {

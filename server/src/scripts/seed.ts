@@ -19,6 +19,7 @@ import { Category } from '@/models/Category';
 import { Skill } from '@/models/Skill';
 import { HireNowRequest } from '@/models/HireNowRequest';
 import { PlatformSettings } from '@/models/PlatformSettings';
+import { Settings } from '@/models/Settings';
 import { generateEnhancedUsers, generateAdditionalProjects, generateAdditionalProposals } from './enhancedSeedData';
 
 // Load environment variables
@@ -70,7 +71,11 @@ async function clearDatabase() {
   await Skill.deleteMany({});
   await HireNowRequest.deleteMany({});
   await PlatformSettings.deleteMany({});
+  await Settings.deleteMany({});
   await Transaction.deleteMany({});
+  
+  const { Dispute } = await import('@/models/Dispute');
+  await Dispute.deleteMany({});
   
   logger.info('✅ Database cleared');
 }
@@ -2321,6 +2326,42 @@ async function seedPlatformSettings(adminId: any) {
   return settings;
 }
 
+async function seedSettings() {
+  logger.info('⚙️ Seeding new settings model...');
+  
+  const settings = await Settings.create({
+    platformFee: 5, // 5%
+    escrowPeriodDays: 7,
+    minWithdrawalAmount: 10,
+    maintenanceMode: false,
+    commissionSettings: [
+      {
+        name: 'Standard Commission',
+        commissionPercentage: 5,
+        description: 'Default platform commission for all transactions',
+        isActive: true,
+      },
+      {
+        name: 'Premium Projects',
+        commissionPercentage: 3,
+        minAmount: 5000,
+        description: 'Reduced commission for high-value projects',
+        isActive: true,
+      },
+      {
+        name: 'Enterprise Clients',
+        commissionPercentage: 2,
+        minAmount: 10000,
+        description: 'Special rate for enterprise-level projects',
+        isActive: true,
+      },
+    ],
+  });
+  
+  logger.info(`✅ Created settings with ${settings.commissionSettings.length} commission tiers`);
+  return settings;
+}
+
 async function seedPayments(users: any[], contracts: any[]) {
   logger.info('💰 Seeding payments...');
   
@@ -2426,6 +2467,7 @@ async function seedDatabase() {
     const users = await seedUsers();
     const admin = users.find(u => u.role === 'admin');
     const platformSettings = await seedPlatformSettings(admin._id);
+    const newSettings = await seedSettings();
     const categories = await seedCategories(admin._id);
     const skills = await seedSkills(categories, admin._id);
     const organizations = await seedOrganizations(users);
@@ -2446,6 +2488,7 @@ async function seedDatabase() {
     logger.info('✅ Database seeding completed successfully');
     logger.info(`📊 Summary:
     - Platform Settings: Created
+    - New Settings Model: Created with ${newSettings.commissionSettings.length} commission tiers
     - Categories: ${categories.length}
     - Skills: ${skills.length}
     - Users: ${users.length}
