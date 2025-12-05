@@ -37,6 +37,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { useProject } from '@/hooks/api/useProjects';
 import { proposalsService } from '@/services/api/proposals.service';
+import { projectsService } from '@/services/api/projects.service';
 import { MessageButton } from '@/components/messaging/MessageButton';
 import { format, isValid, parseISO } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -141,6 +142,18 @@ export const ProjectDetailPage = () => {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to withdraw proposal');
+    },
+  });
+
+  // Toggle proposal acceptance mutation
+  const toggleProposalsMutation = useMutation({
+    mutationFn: (projectId: string) => projectsService.toggleProposalAcceptance(projectId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects', 'detail', id] });
+      toast.success('Proposal acceptance updated');
+    },
+    onError: () => {
+      toast.error('Failed to update proposal acceptance');
     },
   });
 
@@ -448,15 +461,27 @@ export const ProjectDetailPage = () => {
           </>
         )}
         
-        {isClient && (
-          <Button
-            variant="contained"
-            size="large"
-            fullWidth
-            onClick={() => navigate(`/dashboard/projects/${id}/proposals`)}
-          >
-            View Proposals ({project.proposals?.length || 0})
-          </Button>
+        {isClient && user?._id === project.client?._id && (
+          <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+            <Button
+              variant="contained"
+              size="large"
+              fullWidth
+              onClick={() => navigate(`/dashboard/projects/${id}/proposals`)}
+            >
+              View Proposals ({project.proposals?.length || 0})
+            </Button>
+            <Button
+              variant={project.acceptingProposals ? 'outlined' : 'contained'}
+              color={project.acceptingProposals ? 'error' : 'success'}
+              size="large"
+              fullWidth
+              onClick={() => toggleProposalsMutation.mutate(project._id)}
+              disabled={toggleProposalsMutation.isPending}
+            >
+              {project.acceptingProposals ? 'Close Proposals' : 'Open Proposals'}
+            </Button>
+          </Box>
         )}
       </Paper>
 

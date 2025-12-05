@@ -35,6 +35,9 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { useToast } from '@/components/ui/ToastProvider';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
+import { ReviewModal } from '@/components/reviews/ReviewModal';
+import { useReviewPrompt } from '@/hooks/useReviewPrompt';
+import { CreateDisputeDialog } from '@/components/disputes/CreateDisputeDialog';
 import { format, isValid, parseISO } from 'date-fns';
 
 // Safe date formatter
@@ -75,6 +78,7 @@ export const ContractDetailPage: React.FC = () => {
   const [reviewDialog, setReviewDialog] = useState<any>(null);
   const [submitNotes, setSubmitNotes] = useState('');
   const [reviewFeedback, setReviewFeedback] = useState('');
+  const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
 
   const { data: contractData, isLoading, error, refetch } = useContract(id || '');
   
@@ -94,6 +98,9 @@ export const ContractDetailPage: React.FC = () => {
 
   const isClient = user?.role === 'client';
   const isFreelancer = user?.role === 'freelancer';
+
+  // Review prompt hook (after contract is defined)
+  const { showReviewModal, reviewData, promptReview, closeReviewModal } = useReviewPrompt();
 
   // Check if contract is fully signed
   const isFullySigned = () => {
@@ -244,13 +251,14 @@ export const ContractDetailPage: React.FC = () => {
 
       {/* Tabs */}
       <Card>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2 }}>
           <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
             <Tab label="Milestones" />
             <Tab label="Details" />
             <Tab label="Terms" />
             {contract.status === 'completed' && <Tab label="Review" />}
           </Tabs>
+          {/* Report Issue button - can be implemented later with dispute system */}
         </Box>
 
         {/* Milestones Tab */}
@@ -450,6 +458,26 @@ export const ContractDetailPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Review Modal */}
+      {reviewData && (
+        <ReviewModal
+          open={showReviewModal}
+          onClose={closeReviewModal}
+          contractId={reviewData.contractId}
+          revieweeId={reviewData.revieweeId}
+          revieweeName={reviewData.revieweeName}
+          revieweeRole={reviewData.revieweeRole}
+        />
+      )}
+
+      {/* Dispute Dialog */}
+      <CreateDisputeDialog
+        open={disputeDialogOpen}
+        onClose={() => setDisputeDialogOpen(false)}
+        contractId={contract?._id || ''}
+        projectId={contract?.project?._id || (typeof contract?.project === 'object' ? contract?.project?._id : contract?.project) || ''}
+      />
     </Container>
   );
 };

@@ -56,6 +56,19 @@ export const ProposalsPage: React.FC = () => {
     },
   });
 
+  // Delete proposal mutation
+  const deleteMutation = useMutation({
+    mutationFn: (proposalId: string) => proposalsService.deleteProposal(proposalId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-proposals'] });
+      toast.success('Proposal deleted successfully');
+      setSelectedProposal(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete proposal');
+    },
+  });
+
   const handleViewDetails = (proposal: Proposal) => {
     setSelectedProposal(proposal);
   };
@@ -191,6 +204,19 @@ export const ProposalsPage: React.FC = () => {
                           onClick={() => handleWithdrawClick(proposal)}
                         >
                           Withdraw
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          size="small"
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this proposal? This action cannot be undone.')) {
+                              deleteMutation.mutate(proposal._id);
+                            }
+                          }}
+                          disabled={deleteMutation.isPending}
+                        >
+                          Delete
                         </Button>
                       </>
                     )}
