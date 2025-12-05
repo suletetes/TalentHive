@@ -5,13 +5,13 @@ export interface ITransaction extends Document {
   milestone?: mongoose.Types.ObjectId;
   client: mongoose.Types.ObjectId;
   freelancer: mongoose.Types.ObjectId;
-  amount: number; // Total amount in cents
-  platformCommission: number; // Commission in cents
-  processingFee: number; // Processing fee in cents
-  tax: number; // Tax in cents
-  freelancerAmount: number; // Amount freelancer receives in cents
+  amount: number; // Total amount in CENTS (smallest currency unit)
+  platformCommission: number; // Commission in CENTS
+  processingFee: number; // Processing fee in CENTS
+  tax: number; // Tax in CENTS
+  freelancerAmount: number; // Amount freelancer receives in CENTS
   currency: string;
-  status: 'pending' | 'processing' | 'held_in_escrow' | 'released' | 'refunded' | 'failed' | 'cancelled';
+  status: 'pending' | 'processing' | 'held_in_escrow' | 'released' | 'refunded' | 'failed' | 'cancelled' | 'paid_out';
   paymentMethod: 'stripe' | 'paypal' | 'bank_transfer' | 'other';
   stripePaymentIntentId?: string;
   stripeChargeId?: string;
@@ -19,6 +19,7 @@ export interface ITransaction extends Document {
   escrowReleaseDate?: Date;
   releasedAt?: Date;
   refundedAt?: Date;
+  paidOutAt?: Date;
   failureReason?: string;
   metadata?: Record<string, any>;
   description?: string;
@@ -86,7 +87,7 @@ const transactionSchema = new Schema<ITransaction>(
     },
     status: {
       type: String,
-      enum: ['pending', 'processing', 'held_in_escrow', 'released', 'refunded', 'failed', 'cancelled'],
+      enum: ['pending', 'processing', 'held_in_escrow', 'released', 'refunded', 'failed', 'cancelled', 'paid_out'],
       default: 'pending',
       index: true,
     },
@@ -114,6 +115,9 @@ const transactionSchema = new Schema<ITransaction>(
       type: Date,
     },
     refundedAt: {
+      type: Date,
+    },
+    paidOutAt: {
       type: Date,
     },
     failureReason: {
