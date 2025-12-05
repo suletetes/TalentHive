@@ -1,4 +1,4 @@
-import api from './core';
+import { apiCore } from './core';
 
 export interface CommissionSetting {
   name: string;
@@ -20,17 +20,17 @@ export interface PlatformSettings {
 export const settingsService = {
   // Get all settings
   getSettings: () =>
-    api.get<{ data: PlatformSettings }>('/admin/settings'),
+    apiCore.get<{ data: PlatformSettings }>('/admin/settings'),
 
   // Update settings
   updateSettings: (data: Partial<PlatformSettings>) =>
-    api.put('/admin/settings', data),
+    apiCore.put('/admin/settings', data),
 
   // Get commission settings
   getCommissionSettings: () =>
-    api.get<{ data: CommissionSetting[] }>('/admin/settings/commission'),
+    apiCore.get<{ data: CommissionSetting[] }>('/admin/settings/commission'),
 
   // Update commission settings
   updateCommissionSettings: (commissionSettings: CommissionSetting[]) =>
-    api.put('/admin/settings/commission', { commissionSettings }),
+    apiCore.put('/admin/settings/commission', { commissionSettings }),
 };

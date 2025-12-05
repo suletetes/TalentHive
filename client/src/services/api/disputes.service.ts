@@ -1,4 +1,4 @@
-import api from './core';
+import { apiCore } from './core';
 
 export interface CreateDisputeData {
   title: string;
@@ -19,33 +19,33 @@ export interface AddMessageData {
 export const disputesService = {
   // Create a new dispute
   createDispute: (data: CreateDisputeData) =>
-    api.post('/disputes', data),
+    apiCore.post('/disputes', data),
 
   // Get all disputes (admin)
   getAllDisputes: (params?: { page?: number; limit?: number; status?: string; priority?: string; type?: string }) =>
-    api.get('/disputes', { params }),
+    apiCore.get('/disputes', { params }),
 
   // Get user's disputes
   getMyDisputes: (params?: { page?: number; limit?: number; status?: string }) =>
-    api.get('/disputes/my', { params }),
+    apiCore.get('/disputes/my', { params }),
 
   // Get dispute by ID
   getDisputeById: (id: string) =>
-    api.get(`/disputes/${id}`),
+    apiCore.get(`/disputes/${id}`),
 
   // Add message to dispute
   addMessage: (id: string, data: AddMessageData) =>
-    api.post(`/disputes/${id}/messages`, data),
+    apiCore.post(`/disputes/${id}/messages`, data),
 
   // Update dispute status (admin)
   updateStatus: (id: string, data: { status: string; resolution?: string }) =>
-    api.patch(`/disputes/${id}/status`, data),
+    apiCore.patch(`/disputes/${id}/status`, data),
 
   // Assign dispute to admin
   assignDispute: (id: string, adminId?: string) =>
-    api.patch(`/disputes/${id}/assign`, { adminId }),
+    apiCore.patch(`/disputes/${id}/assign`, { adminId }),
 
   // Get dispute statistics (admin)
   getStats: () =>
-    api.get('/disputes/stats/overview'),
+    apiCore.get('/disputes/stats/overview'),
 };
