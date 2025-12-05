@@ -114,6 +114,13 @@ const projectSchema = new Schema<IProject>({
   },
   draftSavedAt: Date,
   publishedAt: Date,
+  // Proposal acceptance control
+  acceptingProposals: {
+    type: Boolean,
+    default: true,
+  },
+  proposalsClosed: Boolean,
+  proposalsClosedAt: Date,
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
