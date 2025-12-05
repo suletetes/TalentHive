@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+  createCheckoutSession,
   createPaymentIntent,
   confirmPayment,
   releasePayment,
@@ -28,9 +29,14 @@ router.get('/stripe-connect/status', getConnectStatus);
 router.get('/earnings', getEarnings);
 router.post('/payout/request', requestPayout);
 
-// Payment operations
+// Payment operations (NEW: Checkout Sessions - RECOMMENDED)
+router.post('/checkout-session', createCheckoutSession);
+
+// Payment operations (LEGACY: Payment Intents - still supported)
 router.post('/create-intent', createPaymentIntent);
 router.post('/confirm', confirmPayment);
+
+// Admin operations
 router.post('/:transactionId/release', authorize('admin'), releasePayment);
 router.post('/:transactionId/refund', authorize('admin'), refundPayment);
 

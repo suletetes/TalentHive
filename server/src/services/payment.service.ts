@@ -5,63 +5,65 @@ import { Contract } from '../models/Contract';
 import mongoose from 'mongoose';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
+  apiVersion: '2023-10-16', // Latest supported by stripe@14.25.0 - upgrade to stripe@17+ for newer versions
 });
 
 export class PaymentService {
   /**
    * Calculate commission and fees for a payment
+   * @param amountInCents - Amount in cents (smallest currency unit)
+   * @returns Fee breakdown in cents
    */
-  async calculateFees(amount: number) {
+  async calculateFees(amountInCents: number) {
     const settings = await PlatformSettings.findOne({ isActive: true });
     
     if (!settings) {
       throw new Error('Platform settings not found');
     }
 
-    // Calculate commission as percentage
-    let commission = Math.round((amount * (settings.commissionRate || 10)) / 100);
+    // Calculate commission as percentage (all in cents)
+    let commission = Math.round((amountInCents * (settings.commissionRate || 10)) / 100);
     
-    // Apply min/max limits, but cap at 50% of amount to ensure freelancer gets something
-    const maxAllowedCommission = Math.floor(amount * 0.5);
-    if (settings.minCommission && commission < settings.minCommission) {
-      commission = Math.min(settings.minCommission, maxAllowedCommission);
+    // Apply min/max limits (convert from dollars to cents), but cap at 50% of amount
+    const maxAllowedCommission = Math.floor(amountInCents * 0.5);
+    if (settings.minCommission && commission < settings.minCommission * 100) {
+      commission = Math.min(settings.minCommission * 100, maxAllowedCommission);
     }
-    if (settings.maxCommission && commission > settings.maxCommission) {
-      commission = settings.maxCommission;
+    if (settings.maxCommission && commission > settings.maxCommission * 100) {
+      commission = settings.maxCommission * 100;
     }
     // Ensure commission doesn't exceed 50% of amount
     commission = Math.min(commission, maxAllowedCommission);
 
     // Calculate processing fee (cap at reasonable percentage)
     const processingFeeRate = settings.paymentProcessingFee || 2.9;
-    let processingFee = Math.round((amount * processingFeeRate) / 100);
-    processingFee = Math.min(processingFee, Math.floor(amount * 0.1)); // Cap at 10%
+    let processingFee = Math.round((amountInCents * processingFeeRate) / 100);
+    processingFee = Math.min(processingFee, Math.floor(amountInCents * 0.1)); // Cap at 10%
 
     // Calculate tax
     const taxRate = settings.taxRate || 0;
-    let tax = Math.round((amount * taxRate) / 100);
-    tax = Math.min(tax, Math.floor(amount * 0.2)); // Cap at 20%
+    let tax = Math.round((amountInCents * taxRate) / 100);
+    tax = Math.min(tax, Math.floor(amountInCents * 0.2)); // Cap at 20%
 
     // Calculate freelancer amount - ensure it's at least 20% of original amount
-    let freelancerAmount = amount - commission - processingFee - tax;
-    const minFreelancerAmount = Math.floor(amount * 0.2);
+    let freelancerAmount = amountInCents - commission - processingFee - tax;
+    const minFreelancerAmount = Math.floor(amountInCents * 0.2);
     
     if (freelancerAmount < minFreelancerAmount) {
       // Reduce fees proportionally to ensure minimum freelancer amount
       const totalFees = commission + processingFee + tax;
-      const maxFees = amount - minFreelancerAmount;
+      const maxFees = amountInCents - minFreelancerAmount;
       const ratio = maxFees / totalFees;
       commission = Math.floor(commission * ratio);
       processingFee = Math.floor(processingFee * ratio);
       tax = Math.floor(tax * ratio);
-      freelancerAmount = amount - commission - processingFee - tax;
+      freelancerAmount = amountInCents - commission - processingFee - tax;
     }
 
-    console.log('[FEES] Amount:', amount, 'Commission:', commission, 'Processing:', processingFee, 'Tax:', tax, 'Freelancer:', freelancerAmount);
+    console.log('[FEES] Amount (cents):', amountInCents, 'Commission:', commission, 'Processing:', processingFee, 'Tax:', tax, 'Freelancer:', freelancerAmount);
 
     return {
-      amount,
+      amount: amountInCents,
       commission,
       processingFee,
       tax,
@@ -71,30 +73,121 @@ export class PaymentService {
   }
 
   /**
-   * Create a Stripe payment intent
+   * Create a Stripe Checkout Session (RECOMMENDED METHOD)
+   * @param amountInCents - Amount in cents (smallest currency unit)
    */
-  async createPaymentIntent(
+  async createCheckoutSession(
     contractId: string,
-    amount: number,
+    amountInCents: number,
     clientId: string,
     freelancerId: string,
-    milestoneId?: string
+    milestoneId?: string,
+    successUrl?: string,
+    cancelUrl?: string
   ) {
     try {
-      // Calculate fees
-      const fees = await this.calculateFees(amount);
-
-      // Stripe expects amount in cents (smallest currency unit)
-      const amountInCents = Math.round(fees.amount * 100);
-      
       // Validate minimum amount ($0.50 = 50 cents)
       if (amountInCents < 50) {
         throw new Error('Amount must be at least $0.50');
       }
 
-      // Create payment intent
+      // Calculate fees (already in cents)
+      const fees = await this.calculateFees(amountInCents);
+
+      // Get contract details for description
+      const contract = await Contract.findById(contractId);
+      const milestoneName = milestoneId && contract 
+        ? (contract.milestones as any).id(milestoneId)?.title 
+        : 'Contract Payment';
+
+      // Create Checkout Session
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: fees.currency.toLowerCase(),
+              product_data: {
+                name: milestoneName || 'Milestone Payment',
+                description: `Payment for contract ${contractId}`,
+              },
+              unit_amount: fees.amount,
+            },
+            quantity: 1,
+          },
+        ],
+        metadata: {
+          contractId,
+          clientId,
+          freelancerId,
+          milestoneId: milestoneId || '',
+          platformCommission: fees.commission.toString(),
+          processingFee: fees.processingFee.toString(),
+          tax: fees.tax.toString(),
+          freelancerAmount: fees.freelancerAmount.toString(),
+        },
+        success_url: successUrl || `${process.env.CLIENT_URL}/dashboard/contracts/${contractId}?payment=success`,
+        cancel_url: cancelUrl || `${process.env.CLIENT_URL}/dashboard/contracts/${contractId}?payment=cancelled`,
+        client_reference_id: clientId,
+      });
+
+      // Create transaction record (all amounts in cents)
+      const transaction = await Transaction.create({
+        contract: contractId,
+        milestone: milestoneId,
+        client: clientId,
+        freelancer: freelancerId,
+        amount: fees.amount,
+        platformCommission: fees.commission,
+        processingFee: fees.processingFee,
+        tax: fees.tax,
+        freelancerAmount: fees.freelancerAmount,
+        currency: fees.currency,
+        status: 'pending',
+        paymentMethod: 'stripe',
+        stripePaymentIntentId: session.payment_intent as string,
+        description: `Payment for contract ${contractId}`,
+        metadata: {
+          checkoutSessionId: session.id,
+        },
+      });
+
+      return {
+        transaction,
+        session,
+        checkoutUrl: session.url,
+      };
+    } catch (error: any) {
+      console.error('Create checkout session error:', error);
+      throw new Error(`Failed to create checkout session: ${error.message}`);
+    }
+  }
+
+  /**
+   * Create a Stripe payment intent (LEGACY - Use createCheckoutSession instead)
+   * @param amountInCents - Amount in cents (smallest currency unit)
+   */
+  async createPaymentIntent(
+    contractId: string,
+    amountInCents: number,
+    clientId: string,
+    freelancerId: string,
+    milestoneId?: string,
+    idempotencyKey?: string
+  ) {
+    try {
+      // Validate minimum amount ($0.50 = 50 cents)
+      if (amountInCents < 50) {
+        throw new Error('Amount must be at least $0.50');
+      }
+
+      // Calculate fees (already in cents)
+      const fees = await this.calculateFees(amountInCents);
+
+      // Create payment intent with idempotency key
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: amountInCents,
+        amount: fees.amount,
         currency: fees.currency.toLowerCase(),
         metadata: {
           contractId,
@@ -107,9 +200,12 @@ export class PaymentService {
           freelancerAmount: fees.freelancerAmount.toString(),
         },
         description: `Payment for contract ${contractId}`,
-      });
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      }, idempotencyKey ? { idempotencyKey } : undefined);
 
-      // Create transaction record
+      // Create transaction record (all amounts in cents)
       const transaction = await Transaction.create({
         contract: contractId,
         milestone: milestoneId,
@@ -383,6 +479,14 @@ export class PaymentService {
   async handleWebhook(event: any) {
     try {
       switch (event.type) {
+        case 'checkout.session.completed':
+          // Handle successful checkout session
+          const session = event.data.object;
+          if (session.payment_intent) {
+            await this.confirmPayment(session.payment_intent);
+          }
+          break;
+
         case 'payment_intent.succeeded':
           await this.confirmPayment(event.data.object.id);
           break;
@@ -396,6 +500,14 @@ export class PaymentService {
 
         case 'payment_intent.canceled':
           await this.handlePaymentFailure(event.data.object.id, 'Payment canceled');
+          break;
+
+        case 'checkout.session.expired':
+          // Handle expired checkout session
+          const expiredSession = event.data.object;
+          if (expiredSession.payment_intent) {
+            await this.handlePaymentFailure(expiredSession.payment_intent, 'Checkout session expired');
+          }
           break;
 
         default:
