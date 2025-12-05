@@ -23,6 +23,7 @@ import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
 import { AdminProjectsPage } from '@/pages/admin/AdminProjectsPage';
 import { AnalyticsDashboardPage } from '@/pages/admin/AnalyticsDashboardPage';
 import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
+import { CommissionSettingsPage } from '@/pages/admin/CommissionSettingsPage';
 import { BrowseProjectsPage } from '@/pages/BrowseProjectsPage';
 import { FreelancersPage } from '@/pages/FreelancersPage';
 import { FreelancerDetailPage } from '@/pages/FreelancerDetailPage';
@@ -147,6 +148,7 @@ function App() {
           <Route path="projects" element={<AdminProjectsPage />} />
           <Route path="analytics" element={<AnalyticsDashboardPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
+          <Route path="commission-settings" element={<CommissionSettingsPage />} />
           <Route path="transactions" element={<AdminTransactionsPage />} />
         </Route>
 
