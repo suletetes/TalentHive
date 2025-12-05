@@ -60,6 +60,8 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       queryClient.invalidateQueries({ queryKey: ['reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] }); // ISSUE #15 FIX: Invalidate user data to update rating
+      queryClient.invalidateQueries({ queryKey: ['freelancers'] }); // Update freelancer listings
       toast.success('Review submitted successfully!');
       handleClose();
     },

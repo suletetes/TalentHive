@@ -265,8 +265,8 @@ export const FreelancersPage = () => {
 
       {/* Freelancers Grid */}
       {freelancers.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 8, bgcolor: 'grey.50', borderRadius: 2 }}>
-          <Typography variant="h6" gutterBottom>
+        <Box sx={{ textAlign: 'center', py: 8, bgcolor: 'background.paper', borderRadius: 2 }}>
+          <Typography variant="h6" gutterBottom color="text.primary">
             No freelancers found
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>

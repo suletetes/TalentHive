@@ -368,9 +368,9 @@ export const FreelancerDetailPage = () => {
           </Grid>
         )}
 
-        {/* Work Experience Section */}
+        {/* Work Experience Section - ISSUE #5 FIX: Changed to full width */}
         {freelancer.freelancerProfile?.workExperience && freelancer.freelancerProfile.workExperience.length > 0 && (
-          <Grid item xs={12} md={8}>
+          <Grid item xs={12}>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>

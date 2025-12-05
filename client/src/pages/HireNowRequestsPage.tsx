@@ -86,7 +86,10 @@ export const HireNowRequestsPage: React.FC = () => {
     },
     onSuccess: () => {
       toast.success('Hire Now request accepted! Contract created.');
+      // ISSUE #9 FIX: Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ['hire-now-received'] });
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       handleCloseDialog();
     },
     onError: (error: any) => {
@@ -105,6 +108,7 @@ export const HireNowRequestsPage: React.FC = () => {
     },
     onSuccess: () => {
       toast.success('Hire Now request declined.');
+      // ISSUE #9 FIX: Invalidate queries for proper state update
       queryClient.invalidateQueries({ queryKey: ['hire-now-received'] });
       handleCloseDialog();
     },
@@ -226,8 +230,8 @@ export const HireNowRequestsPage: React.FC = () => {
       </Paper>
 
       {requests.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 8, bgcolor: 'grey.50', borderRadius: 2 }}>
-          <Typography variant="h6" gutterBottom>
+        <Box sx={{ textAlign: 'center', py: 8, bgcolor: 'background.paper', borderRadius: 2 }}>
+          <Typography variant="h6" gutterBottom color="text.primary">
             No hire now requests yet
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -235,8 +239,8 @@ export const HireNowRequestsPage: React.FC = () => {
           </Typography>
         </Box>
       ) : filteredRequests.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 6, bgcolor: 'grey.50', borderRadius: 2 }}>
-          <Typography variant="h6" gutterBottom>
+        <Box sx={{ textAlign: 'center', py: 6, bgcolor: 'background.paper', borderRadius: 2 }}>
+          <Typography variant="h6" gutterBottom color="text.primary">
             No {tabValue === 0 ? 'pending' : tabValue === 1 ? 'accepted' : 'declined'} requests
           </Typography>
           <Typography variant="body2" color="text.secondary">
