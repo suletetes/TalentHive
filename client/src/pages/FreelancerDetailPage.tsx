@@ -62,19 +62,16 @@ export const FreelancerDetailPage = () => {
   // Request service mutation
   const requestServiceMutation = useMutation({
     mutationFn: async (data: { freelancerId: string; servicePackageId: string; message: string }) => {
-      const response = await apiService.post('/hire-now', {
-        freelancerId: data.freelancerId,
-        title: `Service Request: ${selectedService?.title}`,
-        description: data.message || `I would like to request your "${selectedService?.title}" service.`,
-        budget: {
-          amount: selectedService?.pricing?.amount || selectedService?.pricing?.hourlyRate || 0,
-          type: selectedService?.pricing?.type || 'fixed',
-        },
+      const response = await apiService.post(`/hire-now/${data.freelancerId}`, {
+        projectTitle: `Service Request: ${selectedService?.title}`,
+        projectDescription: data.message || `I would like to request your "${selectedService?.title}" service.`,
+        budget: selectedService?.pricing?.amount || selectedService?.pricing?.hourlyRate || 0,
         timeline: {
           duration: selectedService?.deliveryTime || 7,
           unit: 'days',
         },
-        servicePackageId: data.servicePackageId,
+        milestones: [],
+        message: data.message || '',
       });
       return response;
     },
@@ -238,8 +235,8 @@ export const FreelancerDetailPage = () => {
       </Paper>
 
       <Grid container spacing={3}>
-        {/* Statistics Section */}
-        <Grid item xs={12} md={4}>
+        {/* Statistics Section - ISSUE #5 FIX: Full width */}
+        <Grid item xs={12}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>

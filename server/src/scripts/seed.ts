@@ -2096,6 +2096,26 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
   logger.info(`✅ Created ${createdReviews.length} reviews`);
   console.log(`[SEED REVIEWS] Total reviews created: ${createdReviews.length}`);
   
+  // ROOT CAUSE FIX: Update user ratings based on created reviews
+  logger.info('📊 Updating user ratings from reviews...');
+  const revieweeIds = [...new Set(reviews.map(r => r.reviewee.toString()))];
+  
+  for (const revieweeId of revieweeIds) {
+    const userReviews = createdReviews.filter(r => r.reviewee.toString() === revieweeId);
+    if (userReviews.length > 0) {
+      const totalRating = userReviews.reduce((sum, review) => sum + review.rating, 0);
+      const averageRating = totalRating / userReviews.length;
+      
+      await User.findByIdAndUpdate(revieweeId, {
+        'rating.average': averageRating,
+        'rating.count': userReviews.length,
+      });
+      
+      const user = await User.findById(revieweeId);
+      logger.info(`✅ Updated ${user?.profile.firstName} ${user?.profile.lastName}: ${averageRating.toFixed(2)} (${userReviews.length} reviews)`);
+    }
+  }
+  
   return createdReviews;
 }
 
