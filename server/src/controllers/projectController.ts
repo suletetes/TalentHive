@@ -694,3 +694,44 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
     data: {},
   });
 });
+
+// Close/Open proposal acceptance for a project
+export const toggleProposalAcceptance = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const userId = req.user?._id;
+
+  const project = await Project.findById(id);
+  if (!project) {
+    return next(new AppError('Project not found', 404));
+  }
+
+  // Check if user owns the project
+  if (project.client.toString() !== userId?.toString()) {
+    return next(new AppError('You can only modify your own projects', 403));
+  }
+
+  // Toggle proposal acceptance
+  project.acceptingProposals = !project.acceptingProposals;
+  
+  if (!project.acceptingProposals) {
+    project.proposalsClosed = true;
+    project.proposalsClosedAt = new Date();
+  } else {
+    project.proposalsClosed = false;
+    project.proposalsClosedAt = undefined;
+  }
+
+  await project.save();
+
+  // Clear cache
+  await deleteCache(`project:${id}`);
+  await deleteCache('projects:*');
+
+  res.json({
+    status: 'success',
+    message: `Proposal acceptance ${project.acceptingProposals ? 'opened' : 'closed'}`,
+    data: {
+      project,
+    },
+  });
+});

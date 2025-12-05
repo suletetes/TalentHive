@@ -580,3 +580,41 @@ export const getProposalStats = catchAsync(async (req: AuthRequest, res: Respons
     },
   });
 });
+
+export const deleteProposal = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const userId = req.user?._id;
+
+  const proposal = await Proposal.findById(id);
+  if (!proposal) {
+    return next(new AppError('Proposal not found', 404));
+  }
+
+  // Check if user owns the proposal
+  if (proposal.freelancer.toString() !== userId?.toString()) {
+    return next(new AppError('You can only delete your own proposals', 403));
+  }
+
+  // Can only delete submitted or withdrawn proposals
+  if (!['submitted', 'withdrawn'].includes(proposal.status)) {
+    return next(new AppError('Cannot delete accepted or rejected proposals', 400));
+  }
+
+  const projectId = proposal.project;
+
+  // Remove proposal from project
+  await Project.findByIdAndUpdate(projectId, {
+    $pull: { proposals: proposal._id },
+  });
+
+  // Delete the proposal
+  await Proposal.findByIdAndDelete(id);
+
+  // Clear cache
+  await deleteCache(`proposals:project:${projectId}`);
+
+  res.json({
+    status: 'success',
+    message: 'Proposal deleted successfully',
+  });
+});

@@ -39,20 +39,23 @@ export const getDashboardStats = catchAsync(async (req: AuthRequest, res: Respon
     totalUsers,
     totalProjects,
     totalContracts,
-    totalRevenue,
+    revenueData,
     activeProjects,
     completedProjects,
   ] = await Promise.all([
     User.countDocuments(),
     Project.countDocuments(),
     Contract.countDocuments(),
-    Payment.aggregate([
-      { $match: { status: 'completed' } },
-      { $group: { _id: null, total: { $sum: '$platformFee' } } },
+    Transaction.aggregate([
+      { $match: { status: { $in: ['completed', 'released', 'paid_out', 'held_in_escrow'] } } },
+      { $group: { _id: null, total: { $sum: '$platformCommission' } } },
     ]),
     Project.countDocuments({ status: 'in_progress' }),
     Project.countDocuments({ status: 'completed' }),
   ]);
+
+  // Calculate total revenue from platform commission
+  const totalRevenue = revenueData[0]?.total || 0;
 
   res.json({
     status: 'success',
@@ -61,7 +64,7 @@ export const getDashboardStats = catchAsync(async (req: AuthRequest, res: Respon
         totalUsers,
         totalProjects,
         totalContracts,
-        totalRevenue: totalRevenue[0]?.total || 0,
+        totalRevenue, // Now shows actual platform commission from transactions
         activeProjects,
         completedProjects,
       },
@@ -750,5 +753,110 @@ export const getTopUsersAnalytics = catchAsync(async (req: Request, res: Respons
       topFreelancers,
       topClients,
     },
+  });
+});
+
+// Get platform settings
+export const getSettings = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { Settings } = await import('@/models/Settings');
+  
+  let settings = await Settings.findOne();
+  
+  // Create default settings if none exist
+  if (!settings) {
+    settings = new Settings({
+      platformFee: 5,
+      escrowPeriodDays: 7,
+      minWithdrawalAmount: 10,
+      commissionSettings: [
+        {
+          name: 'Standard Commission',
+          commissionPercentage: 5,
+          description: 'Default platform commission for all transactions',
+          isActive: true,
+        },
+      ],
+    });
+    await settings.save();
+  }
+
+  res.json({
+    status: 'success',
+    data: settings,
+  });
+});
+
+// Update platform settings
+export const updateSettings = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { Settings } = await import('@/models/Settings');
+  const { platformFee, escrowPeriodDays, minWithdrawalAmount, commissionSettings, maintenanceMode } = req.body;
+
+  let settings = await Settings.findOne();
+  
+  if (!settings) {
+    settings = new Settings();
+  }
+
+  if (platformFee !== undefined) settings.platformFee = platformFee;
+  if (escrowPeriodDays !== undefined) settings.escrowPeriodDays = escrowPeriodDays;
+  if (minWithdrawalAmount !== undefined) settings.minWithdrawalAmount = minWithdrawalAmount;
+  if (commissionSettings !== undefined) settings.commissionSettings = commissionSettings;
+  if (maintenanceMode !== undefined) settings.maintenanceMode = maintenanceMode;
+
+  await settings.save();
+
+  res.json({
+    status: 'success',
+    message: 'Settings updated successfully',
+    data: settings,
+  });
+});
+
+// Get commission settings
+export const getCommissionSettings = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { Settings } = await import('@/models/Settings');
+  
+  let settings = await Settings.findOne();
+  
+  if (!settings) {
+    // Create default settings
+    settings = new Settings({
+      platformFee: 5,
+      commissionSettings: [
+        {
+          name: 'Standard Commission',
+          commissionPercentage: 5,
+          description: 'Default platform commission for all transactions',
+          isActive: true,
+        },
+      ],
+    });
+    await settings.save();
+  }
+
+  res.json({
+    status: 'success',
+    data: settings.commissionSettings || [],
+  });
+});
+
+// Update commission settings
+export const updateCommissionSettings = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { Settings } = await import('@/models/Settings');
+  const { commissionSettings } = req.body;
+
+  let settings = await Settings.findOne();
+  
+  if (!settings) {
+    settings = new Settings();
+  }
+
+  settings.commissionSettings = commissionSettings;
+  await settings.save();
+
+  res.json({
+    status: 'success',
+    message: 'Commission settings updated successfully',
+    data: settings.commissionSettings,
   });
 });
