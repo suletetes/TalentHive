@@ -23,6 +23,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { paymentsService } from '@/services/api/payments.service';
+import { formatDollars } from '@/utils/currency';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY!);
 
@@ -123,7 +124,7 @@ const PaymentFormContent: React.FC<PaymentFormProps> = ({
     });
   };
 
-  const platformFee = Math.round(milestone.amount * 0.1); // 10% platform fee (default)
+  const platformFee = milestone.amount * 0.05; // 5% platform fee (default)
   const totalAmount = milestone.amount;
 
   return (
@@ -170,7 +171,7 @@ const PaymentFormContent: React.FC<PaymentFormProps> = ({
             </Grid>
             <Grid item xs={4}>
               <Typography variant="body2" align="right">
-                ${milestone.amount.toFixed(2)}
+                {formatDollars(milestone.amount)}
               </Typography>
             </Grid>
             
@@ -179,7 +180,7 @@ const PaymentFormContent: React.FC<PaymentFormProps> = ({
             </Grid>
             <Grid item xs={4}>
               <Typography variant="body2" align="right">
-                ${platformFee.toFixed(2)}
+                {formatDollars(platformFee)}
               </Typography>
             </Grid>
             
@@ -192,7 +193,7 @@ const PaymentFormContent: React.FC<PaymentFormProps> = ({
             </Grid>
             <Grid item xs={4}>
               <Typography variant="h6" align="right">
-                ${totalAmount.toFixed(2)}
+                {formatDollars(totalAmount)}
               </Typography>
             </Grid>
           </Grid>
