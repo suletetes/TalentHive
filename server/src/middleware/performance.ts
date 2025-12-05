@@ -11,13 +11,12 @@ export const requestTimer = (req: Request, res: Response, next: NextFunction) =>
   res.on('finish', () => {
     const duration = Date.now() - startTime;
     
-    // Skip logging for polling endpoints with 401 errors (expired tokens are normal)
+    // Skip logging for polling endpoints entirely (they're too frequent and noisy)
     const isPollingEndpoint = req.originalUrl.includes('/unread-count') || 
                               req.originalUrl.includes('/conversations');
-    const is401 = res.statusCode === 401;
     
-    if (isPollingEndpoint && is401) {
-      return; // Skip logging
+    if (isPollingEndpoint) {
+      return; // Skip logging for all polling endpoints
     }
     
     const logData = {

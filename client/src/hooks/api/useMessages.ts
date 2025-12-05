@@ -28,7 +28,9 @@ export const useUnreadCount = (enabled = true) => {
       return totalUnread;
     },
     enabled,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 60000, // Refetch every 60 seconds (reduced frequency)
+    retry: 1, // Only retry once on failure
+    retryOnMount: false, // Don't retry when component mounts
   });
 };
 
