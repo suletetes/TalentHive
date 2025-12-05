@@ -38,6 +38,10 @@ export interface IProject extends Document {
   isDraft?: boolean;
   draftSavedAt?: Date;
   publishedAt?: Date;
+  // Proposal acceptance control
+  acceptingProposals?: boolean;
+  proposalsClosed?: boolean;
+  proposalsClosedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   

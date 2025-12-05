@@ -4,6 +4,7 @@ import { User } from '@/models/User';
 import { Project } from '@/models/Project';
 import { Contract } from '@/models/Contract';
 import { Payment } from '@/models/Payment';
+import { Transaction } from '@/models/Transaction';
 import { Review } from '@/models/Review';
 import { AppError, catchAsync } from '@/middleware/errorHandler';
 
