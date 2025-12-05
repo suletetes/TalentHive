@@ -60,7 +60,14 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       console.log('🔐 [AUTH] URL:', req.originalUrl);
     }
     
-    next(new AppError('Invalid token', 401));
+    // Provide more specific error messages
+    if (error.name === 'TokenExpiredError') {
+      return next(new AppError('Token expired', 401));
+    } else if (error.name === 'JsonWebTokenError') {
+      return next(new AppError('Invalid token', 401));
+    }
+    
+    next(new AppError('Authentication failed', 401));
   }
 };
 
