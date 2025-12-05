@@ -12,6 +12,10 @@ import {
   getFeaturedFreelancers,
   reorderFeaturedFreelancers,
   getAnalytics,
+  getSettings,
+  updateSettings,
+  getCommissionSettings,
+  updateCommissionSettings,
 } from '@/controllers/adminController';
 import {
   getAllTransactions,
@@ -50,5 +54,11 @@ router.get('/analytics', getAnalytics);
 router.get('/transactions', getAllTransactions);
 router.get('/transactions/stats', getTransactionStats);
 router.post('/transactions/auto-release', triggerAutoRelease);
+
+// Settings management
+router.get('/settings', getSettings);
+router.put('/settings', updateSettings);
+router.get('/settings/commission', getCommissionSettings);
+router.put('/settings/commission', updateCommissionSettings);
 
 export default router;

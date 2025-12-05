@@ -11,6 +11,7 @@ import {
   getProjectCategories,
   getProjectStats,
   toggleProjectStatus,
+  toggleProposalAcceptance,
 } from '@/controllers/projectController';
 import { getMyProjectStats } from '@/controllers/dashboardController';
 import { authenticate, authorize } from '@/middleware/auth';
@@ -32,6 +33,7 @@ router.get('/my/stats', getMyProjectStats);
 router.put('/:id', authorize('client'), updateProject);
 router.delete('/:id', authorize('client'), deleteProject);
 router.patch('/:id/status', authorize('client'), toggleProjectStatus);
+router.patch('/:id/toggle-proposals', authorize('client'), toggleProposalAcceptance);
 
 // Get project by ID - MUST come last
 router.get('/:id', getProjectById);

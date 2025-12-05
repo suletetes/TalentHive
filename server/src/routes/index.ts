@@ -18,6 +18,7 @@ import timeTrackingRoutes from './timeTracking';
 import workLogRoutes from './workLog';
 import organizationRoutes from './organizations';
 import servicePackageRoutes from './servicePackages';
+import disputeRoutes from './disputes';
 
 const router = Router();
 
@@ -53,6 +54,7 @@ router.use('/time-tracking', timeTrackingRoutes);
 router.use('/work-logs', workLogRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/services', servicePackageRoutes);
+router.use('/disputes', disputeRoutes);
 
 // Import and use search routes
 import searchRoutes from './search';

@@ -11,6 +11,7 @@ import {
   rejectProposal,
   highlightProposal,
   getProposalStats,
+  deleteProposal,
 } from '@/controllers/proposalController';
 import { authenticate, authorize } from '@/middleware/auth';
 
@@ -28,7 +29,8 @@ router.post('/project/:projectId', authorize('freelancer'), createProposalValida
 // Freelancer routes with :id parameter
 router.get('/:id', getProposalById);
 router.put('/:id', authorize('freelancer'), updateProposal);
-router.delete('/:id', authorize('freelancer'), withdrawProposal);
+router.patch('/:id/withdraw', authorize('freelancer'), withdrawProposal);
+router.delete('/:id/delete', authorize('freelancer'), deleteProposal);
 router.patch('/:id/highlight', authorize('freelancer'), highlightProposal);
 
 // Client routes
