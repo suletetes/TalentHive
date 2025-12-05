@@ -134,9 +134,16 @@ export async function generateEnhancedUsers() {
 /**
  * Generate additional projects for comprehensive seed data
  */
-export function generateAdditionalProjects(users: any[], categories: any[]) {
+export function generateAdditionalProjects(users: any[], categories: any[], skillNameToId: Map<string, any>) {
   const projects = [];
   const clients = users.filter(u => u.role === 'client');
+  
+  // Helper function to convert skill names to ObjectIds
+  const getSkillIds = (skillNames: string[]): any[] => {
+    return skillNames
+      .map(name => skillNameToId.get(name))
+      .filter(id => id !== undefined);
+  };
   
   const projectTitles = [
     'Build a Modern E-commerce Website',
@@ -170,14 +177,14 @@ export function generateAdditionalProjects(users: any[], categories: any[]) {
   ];
 
   const skillSets = [
-    ['React', 'Node.js', 'MongoDB', 'TypeScript'],
-    ['React Native', 'Firebase', 'Redux'],
-    ['Figma', 'UI Design', 'Prototyping'],
-    ['Content Writing', 'SEO', 'Research'],
-    ['Python', 'Data Analysis', 'Machine Learning'],
-    ['Docker', 'Kubernetes', 'AWS'],
-    ['Video Editing', 'Adobe Premiere', 'After Effects'],
-    ['Solidity', 'Smart Contracts', 'Web3'],
+    getSkillIds(['React', 'Node.js', 'MongoDB', 'TypeScript']),
+    getSkillIds(['React Native', 'Firebase']),
+    getSkillIds(['Figma', 'Prototyping']),
+    getSkillIds(['Technical Writing', 'SEO']),
+    getSkillIds(['Python', 'Data Analysis', 'Machine Learning']),
+    getSkillIds(['Docker', 'Kubernetes', 'AWS']),
+    getSkillIds(['Video Editing', 'Adobe Premiere', 'After Effects']),
+    getSkillIds(['Solidity', 'Smart Contracts', 'Web3']),
   ];
 
   // Generate 80 additional projects

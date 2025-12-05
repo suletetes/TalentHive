@@ -259,6 +259,7 @@ export const getProjectById = catchAsync(async (req: Request, res: Response, nex
     .populate('client', 'profile rating clientProfile')
     .populate('organization', 'name logo budget members')
     .populate('category', '_id name')
+    .populate('skills', '_id name')
     .populate('selectedFreelancer', 'profile rating freelancerProfile')
     .populate({
       path: 'proposals',
@@ -270,6 +271,15 @@ export const getProjectById = catchAsync(async (req: Request, res: Response, nex
 
   if (!project) {
     return next(new AppError('Project not found', 404));
+  }
+
+  console.log('🔍 [PROJECT] Project ID:', id);
+  console.log('🔍 [PROJECT] Skills raw:', project.skills);
+  console.log('🔍 [PROJECT] Skills type:', typeof project.skills);
+  console.log('🔍 [PROJECT] Skills length:', project.skills?.length);
+  if (project.skills && project.skills.length > 0) {
+    console.log('🔍 [PROJECT] First skill:', project.skills[0]);
+    console.log('🔍 [PROJECT] First skill type:', typeof project.skills[0]);
   }
 
   // Increment view count (don't await to avoid blocking)

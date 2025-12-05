@@ -790,6 +790,17 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
   const videoCat = categories.find(c => c.slug === 'video-animation')?._id;
   const blockchainCat = categories.find(c => c.slug === 'blockchain')?._id;
   
+  // Get all skills for mapping names to IDs
+  const allSkills = await Skill.find();
+  const skillNameToId = new Map(allSkills.map(s => [s.name, s._id]));
+  
+  // Helper function to convert skill names to ObjectIds
+  const getSkillIds = (skillNames: string[]): any[] => {
+    return skillNames
+      .map(name => skillNameToId.get(name))
+      .filter(id => id !== undefined);
+  };
+  
   const projects = [
     // Open projects
     {
@@ -805,7 +816,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 60,
         unit: 'days',
       },
-      skills: ['React', 'Node.js', 'MongoDB', 'Stripe'],
+      skills: getSkillIds(['React', 'Node.js', 'MongoDB']),
       requirements: [
         'Responsive design',
         'Payment integration',
@@ -828,7 +839,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 30,
         unit: 'days',
       },
-      skills: ['Figma', 'Mobile Design', 'Prototyping'],
+      skills: getSkillIds(['Figma', 'Prototyping']),
       requirements: [
         'iOS and Android designs',
         'Interactive prototypes',
@@ -850,7 +861,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 45,
         unit: 'days',
       },
-      skills: ['React', 'Design', 'SEO'],
+      skills: getSkillIds(['React', 'SEO']),
       requirements: [
         'Modern design',
         'SEO optimization',
@@ -873,7 +884,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 21,
         unit: 'days',
       },
-      skills: ['Technical Writing', 'API Documentation'],
+      skills: getSkillIds(['Technical Writing']),
       requirements: [
         'API reference documentation',
         'User guides',
@@ -895,7 +906,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 30,
         unit: 'days',
       },
-      skills: ['Node.js', 'Express', 'MongoDB', 'REST API'],
+      skills: getSkillIds(['Node.js', 'Express.js', 'MongoDB', 'REST API']),
       requirements: [
         'RESTful architecture',
         'Authentication',
@@ -918,7 +929,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 7,
         unit: 'days',
       },
-      skills: ['Graphic Design', 'Branding'],
+      skills: getSkillIds(['Logo Design', 'Branding']),
       requirements: [
         'Multiple concepts',
         'Vector files',
@@ -940,7 +951,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 20,
         unit: 'days',
       },
-      skills: ['WordPress', 'PHP', 'JavaScript'],
+      skills: getSkillIds(['JavaScript']),
       requirements: [
         'Custom functionality',
         'Admin interface',
@@ -963,7 +974,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 90,
         unit: 'days',
       },
-      skills: ['Social Media', 'Content Creation'],
+      skills: getSkillIds(['Social Media Marketing']),
       requirements: [
         'Daily posts',
         'Engagement tracking',
@@ -986,7 +997,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 15,
         unit: 'days',
       },
-      skills: ['Python', 'Pandas', 'Data Visualization', 'Excel'],
+      skills: getSkillIds(['Python', 'Pandas', 'Data Analysis']),
       requirements: [
         'Data cleaning',
         'Statistical analysis',
@@ -1009,7 +1020,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 90,
         unit: 'days',
       },
-      skills: ['React Native', 'Firebase', 'Redux', 'REST API'],
+      skills: getSkillIds(['React Native', 'Firebase', 'REST API']),
       requirements: [
         'User authentication',
         'Activity tracking',
@@ -1032,7 +1043,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 45,
         unit: 'days',
       },
-      skills: ['SEO', 'Google Analytics', 'Content Marketing', 'Link Building'],
+      skills: getSkillIds(['SEO', 'Google Analytics']),
       requirements: [
         'Keyword research',
         'On-page optimization',
@@ -1055,7 +1066,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 30,
         unit: 'days',
       },
-      skills: ['Docker', 'Kubernetes', 'Jenkins', 'AWS', 'Terraform'],
+      skills: getSkillIds(['Docker', 'Kubernetes', 'Jenkins', 'AWS', 'Terraform']),
       requirements: [
         'Automated testing',
         'Deployment automation',
@@ -1078,7 +1089,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 20,
         unit: 'days',
       },
-      skills: ['Video Editing', 'Adobe Premiere', 'After Effects', 'Color Grading'],
+      skills: getSkillIds(['Video Editing', 'Adobe Premiere', 'After Effects']),
       requirements: [
         'Professional editing',
         'Intro/outro animations',
@@ -1102,7 +1113,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 45,
         unit: 'days',
       },
-      skills: ['Python', 'Machine Learning', 'TensorFlow', 'Data Analysis'],
+      skills: getSkillIds(['Python', 'Machine Learning', 'TensorFlow', 'Data Analysis']),
       requirements: [
         'Data preprocessing',
         'Model training',
@@ -1127,7 +1138,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 60,
         unit: 'days',
       },
-      skills: ['Solidity', 'Smart Contracts', 'Web3', 'Ethereum'],
+      skills: getSkillIds(['Solidity', 'Smart Contracts', 'Web3', 'Ethereum']),
       requirements: [
         'NFT minting contract',
         'Marketplace contract',
@@ -1152,7 +1163,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         duration: 60,
         unit: 'days',
       },
-      skills: ['React', 'Design', 'TypeScript', 'Tailwind CSS'],
+      skills: getSkillIds(['React', 'TypeScript', 'Tailwind CSS']),
       requirements: [
         'Responsive design',
         'CMS integration',
@@ -1167,7 +1178,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
   ];
   
   // Add enhanced projects (100+ total)
-  const additionalProjects = generateAdditionalProjects(users, categories);
+  const additionalProjects = generateAdditionalProjects(users, categories, skillNameToId);
   projects.push(...additionalProjects);
   
   const createdProjects = await Project.insertMany(projects);

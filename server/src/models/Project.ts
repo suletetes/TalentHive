@@ -59,8 +59,8 @@ const projectSchema = new Schema<IProject>({
     required: true,
   },
   skills: [{
-    type: String,
-    trim: true,
+    type: Schema.Types.ObjectId,
+    ref: 'Skill',
   }],
   budget: {
     type: budgetSchema,
