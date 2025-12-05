@@ -98,7 +98,6 @@ const transactionSchema = new Schema<ITransaction>(
     },
     stripePaymentIntentId: {
       type: String,
-      sparse: true,
     },
     stripeChargeId: {
       type: String,
