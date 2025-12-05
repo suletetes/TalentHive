@@ -108,9 +108,13 @@ export const createContract = catchAsync(async (req: Request, res: Response, nex
     const client = await User.findById(userId);
     if (client?.profile) {
       const clientName = `${client.profile.firstName} ${client.profile.lastName}`;
-      const freelancerId = proposal.freelancer.toString();
+      // ISSUE #14 FIX: Extract ID from freelancer (might be populated object)
+      const freelancerObj = proposal.freelancer as any;
+      const freelancerId = typeof freelancerObj === 'object' && freelancerObj._id
+        ? freelancerObj._id.toString()
+        : freelancerObj.toString();
       await notificationService.notifyNewContract(
-        freelancerId.toString(),
+        freelancerId,
         clientName,
         contract._id.toString(),
         project._id.toString()

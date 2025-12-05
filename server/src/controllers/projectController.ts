@@ -311,6 +311,18 @@ export const updateProject = catchAsync(async (req: AuthRequest, res: Response, 
     return next(new AppError('Cannot update project in current status', 400));
   }
 
+  // ISSUE #8 FIX: Warn if changing budget when proposals exist
+  if (req.body.budget && project.proposals && project.proposals.length > 0) {
+    const hasSubmittedProposals = await import('@/models/Proposal').then(({ Proposal }) => 
+      Proposal.countDocuments({ project: id, status: 'submitted' })
+    );
+    
+    if (hasSubmittedProposals > 0) {
+      console.log(`[PROJECT UPDATE] Warning: Updating budget for project with ${hasSubmittedProposals} submitted proposals`);
+      // Allow the update but log it - proposals are based on original budget
+    }
+  }
+
   // Handle organization change
   if (req.body.organization && req.body.organization !== project.organization?.toString()) {
     const { Organization } = await import('@/models/Organization');

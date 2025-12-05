@@ -70,10 +70,12 @@ export const createProposal = catchAsync(async (req: AuthRequest, res: Response,
     return next(new AppError('You have already submitted a proposal for this project', 400));
   }
 
-  // Check application deadline
-  if (project.applicationDeadline && new Date() > project.applicationDeadline) {
-    return next(new AppError('Application deadline has passed', 400));
+  // ISSUE #4 FIX: Allow applications until project is manually closed
+  // Only check deadline if project is not explicitly open
+  if (project.status !== 'open') {
+    return next(new AppError('Project is not accepting proposals', 400));
   }
+  // Removed strict deadline check - allow proposals as long as project is open
 
   const proposal = new Proposal({
     project: projectId,
@@ -336,6 +338,13 @@ export const acceptProposal = catchAsync(async (req: AuthRequest, res: Response,
     return next(new AppError('Project is no longer accepting proposals', 400));
   }
 
+  // ISSUE #7 FIX: Check if contract already exists for this project
+  const { Contract } = await import('@/models/Contract');
+  const existingContract = await Contract.findOne({ project: project._id });
+  if (existingContract) {
+    return next(new AppError('A contract has already been created for this project. Cannot accept another proposal.', 400));
+  }
+
   const updatedProposal = await proposal.accept(feedback);
 
   // Update project status and selected freelancer
@@ -360,7 +369,7 @@ export const acceptProposal = catchAsync(async (req: AuthRequest, res: Response,
   );
 
   // AUTO-CREATE CONTRACT when proposal is accepted
-  const { Contract } = await import('@/models/Contract');
+  // (Contract already imported above for existence check)
   
   // Calculate end date based on proposal timeline
   const startDate = new Date();
@@ -429,8 +438,12 @@ export const acceptProposal = catchAsync(async (req: AuthRequest, res: Response,
   try {
     const client = await User.findById(req.user._id);
     const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
+    // ISSUE #14 FIX: Extract ID from freelancer (might be populated object)
+    const freelancerId = typeof proposal.freelancer === 'object' && (proposal.freelancer as any)._id
+      ? (proposal.freelancer as any)._id.toString()
+      : proposal.freelancer.toString();
     await notificationService.notifyProposalAccepted(
-      proposal.freelancer.toString(),
+      freelancerId,
       clientName,
       project._id.toString(),
       proposal._id.toString()
@@ -474,8 +487,12 @@ export const rejectProposal = catchAsync(async (req: AuthRequest, res: Response,
   try {
     const client = await User.findById(req.user._id);
     const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
+    // ISSUE #14 FIX: Extract ID from freelancer (might be populated object)
+    const freelancerId = typeof proposal.freelancer === 'object' && (proposal.freelancer as any)._id
+      ? (proposal.freelancer as any)._id.toString()
+      : proposal.freelancer.toString();
     await notificationService.notifyProposalRejected(
-      proposal.freelancer.toString(),
+      freelancerId,
       clientName,
       project._id.toString(),
       proposal._id.toString()

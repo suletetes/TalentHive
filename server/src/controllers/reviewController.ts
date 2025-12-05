@@ -51,6 +51,18 @@ export const createReview = catchAsync(async (req: AuthRequest, res: Response, n
 
   await review.populate('reviewer', 'profile');
 
+  // ISSUE #16 FIX: Update reviewee's rating
+  try {
+    const revieweeUser = await User.findById(reviewee);
+    if (revieweeUser) {
+      revieweeUser.updateRating(rating);
+      await revieweeUser.save();
+      console.log(`[REVIEW] Updated rating for user ${reviewee}: ${revieweeUser.rating.average} (${revieweeUser.rating.count} reviews)`);
+    }
+  } catch (error) {
+    console.error('Failed to update user rating:', error);
+  }
+
   // Send notification to reviewee (only if reviewing a freelancer)
   if (isClient) {
     try {
