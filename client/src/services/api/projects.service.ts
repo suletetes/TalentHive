@@ -178,6 +178,11 @@ export class ProjectsService {
   async getProjectCategories(): Promise<{ data: string[] }> {
     return apiCore.get<{ data: string[] }>(`${this.basePath}/categories`);
   }
+
+  async toggleProposalAcceptance(id: string): Promise<{ data: Project }> {
+    const response = await apiCore.post<{ status: string; data: { project: Project } }>(`${this.basePath}/${id}/toggle-proposals`);
+    return { data: response.data.project };
+  }
 }
 
 export const projectsService = new ProjectsService();

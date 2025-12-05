@@ -98,6 +98,10 @@ export class ProposalsService {
   async getProposalStats(): Promise<{ data: any }> {
     return apiCore.get<{ data: any }>(`${this.basePath}/stats`);
   }
+
+  async deleteProposal(id: string): Promise<{ message: string }> {
+    return apiCore.delete<{ message: string }>(`${this.basePath}/${id}`);
+  }
 }
 
 export const proposalsService = new ProposalsService();
