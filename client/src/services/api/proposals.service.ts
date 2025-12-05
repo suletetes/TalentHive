@@ -80,7 +80,7 @@ export class ProposalsService {
   }
 
   async withdrawProposal(id: string): Promise<{ message: string }> {
-    return apiCore.delete<{ message: string }>(`${this.basePath}/${id}`);
+    return apiCore.patch<{ message: string }>(`${this.basePath}/${id}/withdraw`);
   }
 
   async acceptProposal(id: string): Promise<{ data: Proposal }> {
@@ -100,7 +100,7 @@ export class ProposalsService {
   }
 
   async deleteProposal(id: string): Promise<{ message: string }> {
-    return apiCore.delete<{ message: string }>(`${this.basePath}/${id}`);
+    return apiCore.delete<{ message: string }>(`${this.basePath}/${id}/delete`);
   }
 }
 

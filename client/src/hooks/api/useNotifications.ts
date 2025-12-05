@@ -22,14 +22,15 @@ export const useNotifications = (params?: {
   });
 };
 
-export const useUnreadCount = () => {
+export const useUnreadCount = (enabled: boolean = true) => {
   return useQuery({
     queryKey: ['notifications-unread-count'],
     queryFn: async () => {
       const response = await notificationsService.getUnreadCount();
       return response.data.count;
     },
-    refetchInterval: 60000, // Refetch every 60 seconds (reduced frequency)
+    enabled, // ISSUE #3 FIX: Only fetch when authenticated
+    refetchInterval: enabled ? 60000 : false, // Only refetch if enabled
     retry: 1, // Only retry once on failure
     retryOnMount: false, // Don't retry when component mounts
   });
