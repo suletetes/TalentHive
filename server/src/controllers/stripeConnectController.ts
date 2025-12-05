@@ -4,7 +4,7 @@ import { User } from '@/models/User';
 import { Transaction } from '@/models/Transaction';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
+  apiVersion: '2023-10-16', // Latest supported by stripe@14.25.0 - upgrade to stripe@17+ for newer versions
 });
 
 // Create Stripe Connect account and return onboarding URL
@@ -166,22 +166,29 @@ export const getEarnings = async (req: Request, res: Response) => {
       ]),
     ]);
 
-    console.log('💵 [EARNINGS] In Escrow:', inEscrow[0]?.total || 0);
-    console.log('💵 [EARNINGS] Pending:', pending[0]?.total || 0);
-    console.log('💵 [EARNINGS] Released (Available):', released[0]?.total || 0);
-    console.log('💵 [EARNINGS] Paid Out:', paidOut[0]?.total || 0);
+    // Amounts are stored in cents, convert to dollars for display
+    const inEscrowCents = inEscrow[0]?.total || 0;
+    const pendingCents = pending[0]?.total || 0;
+    const releasedCents = released[0]?.total || 0;
+    const paidOutCents = paidOut[0]?.total || 0;
 
-    const totalEarned = (inEscrow[0]?.total || 0) + (released[0]?.total || 0) + (paidOut[0]?.total || 0);
-    console.log('💵 [EARNINGS] Total Earned:', totalEarned);
+    console.log('💵 [EARNINGS] In Escrow (cents):', inEscrowCents);
+    console.log('💵 [EARNINGS] Pending (cents):', pendingCents);
+    console.log('💵 [EARNINGS] Released (cents):', releasedCents);
+    console.log('💵 [EARNINGS] Paid Out (cents):', paidOutCents);
 
+    const totalEarnedCents = inEscrowCents + releasedCents + paidOutCents;
+    console.log('💵 [EARNINGS] Total Earned (cents):', totalEarnedCents);
+
+    // Convert to dollars for response
     const responseData = {
-      inEscrow: inEscrow[0]?.total || 0,
-      pending: pending[0]?.total || 0,
-      available: released[0]?.total || 0,
-      totalEarned,
+      inEscrow: inEscrowCents / 100,
+      pending: pendingCents / 100,
+      available: releasedCents / 100,
+      totalEarned: totalEarnedCents / 100,
     };
 
-    console.log('✅ [EARNINGS] Sending response:', responseData);
+    console.log('✅ [EARNINGS] Sending response (dollars):', responseData);
 
     res.status(200).json({
       status: 'success',
@@ -247,10 +254,11 @@ export const requestPayout = async (req: Request, res: Response) => {
       ]);
 
       console.log('📊 [PAYOUT] Aggregation result:', JSON.stringify(releasedTransactions, null, 2));
-      console.log('💵 [PAYOUT] Available from transactions (dollars):', releasedTransactions[0]?.total || 0);
       
-      availableAmount = (releasedTransactions[0]?.total || 0) * 100; // Convert to cents
+      // Amounts are already in cents in the database
+      availableAmount = releasedTransactions[0]?.total || 0;
       console.log('💵 [PAYOUT] Available from transactions (cents):', availableAmount);
+      console.log('💵 [PAYOUT] Available from transactions (dollars):', availableAmount / 100);
 
       if (availableAmount <= 0) {
         console.log('⚠️ [PAYOUT] No released transactions to withdraw');

@@ -7,10 +7,113 @@ import { notificationService } from '@/services/notification.service';
 import { sendEmail } from '@/utils/email.resend';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
+  apiVersion: '2023-10-16', // Latest supported by stripe@14.25.0 - upgrade to stripe@17+ for newer versions
 });
 
-// Create payment intent
+// Create checkout session (RECOMMENDED)
+export const createCheckoutSession = async (req: Request, res: Response) => {
+  try {
+    const { contractId, milestoneId } = req.body;
+    const userId = req.user?._id;
+
+    // Find contract and validate
+    const contract = await Contract.findById(contractId)
+      .populate('client', 'email profile stripeCustomerId')
+      .populate('freelancer', 'email profile stripeConnectedAccountId');
+
+    if (!contract) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Contract not found',
+      });
+    }
+
+    // Verify user is the client
+    const clientId = typeof contract.client === 'object' 
+      ? ((contract.client as any)._id?.toString() || (contract.client as any).toString())
+      : (contract.client as any).toString();
+    if (clientId !== userId?.toString()) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Only the client can make payments',
+      });
+    }
+
+    // Find milestone
+    const milestone = (contract.milestones as any).id(milestoneId);
+    if (!milestone) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Milestone not found',
+      });
+    }
+
+    // Check milestone status
+    if (milestone.status !== 'approved') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Milestone must be approved before payment',
+      });
+    }
+
+    // Check if already paid
+    const existingTransaction = await Transaction.findOne({
+      contract: contractId,
+      milestone: milestoneId,
+      status: { $in: ['held_in_escrow', 'released', 'paid_out', 'processing'] },
+    });
+
+    if (existingTransaction) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Payment already processed for this milestone',
+      });
+    }
+
+    const freelancerId = typeof contract.freelancer === 'object'
+      ? ((contract.freelancer as any)._id?.toString() || (contract.freelancer as any).toString())
+      : (contract.freelancer as any).toString();
+
+    // Convert milestone amount (dollars) to cents
+    const amountInCents = Math.round(milestone.amount * 100);
+
+    // Generate idempotency key
+    const idempotencyKey = `checkout_${contractId}_${milestoneId}_${Date.now()}`;
+
+    // Use payment service to create checkout session
+    const { paymentService } = await import('@/services/payment.service');
+    const result = await paymentService.createCheckoutSession(
+      contractId.toString(),
+      amountInCents,
+      clientId.toString(),
+      freelancerId,
+      milestoneId.toString()
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        checkoutUrl: result.checkoutUrl,
+        sessionId: result.session.id,
+        transaction: result.transaction,
+        breakdown: {
+          amount: result.transaction.amount / 100, // Convert back to dollars for display
+          commission: result.transaction.platformCommission / 100,
+          freelancerAmount: result.transaction.freelancerAmount / 100,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Checkout session creation error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to create checkout session',
+      error: error.message,
+    });
+  }
+};
+
+// Create payment intent (LEGACY - kept for backward compatibility)
 export const createPaymentIntent = async (req: Request, res: Response) => {
   try {
     const { contractId, milestoneId } = req.body;
@@ -60,7 +163,7 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
     const existingTransaction = await Transaction.findOne({
       contract: contractId,
       milestone: milestoneId,
-      status: { $in: ['completed', 'processing'] },
+      status: { $in: ['held_in_escrow', 'released', 'paid_out', 'processing'] },
     });
 
     if (existingTransaction) {
@@ -70,76 +173,37 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
       });
     }
 
-    // Get platform settings for commission
-    const settings = await PlatformSettings.findOne().sort({ createdAt: -1 });
-    if (!settings) {
-      return res.status(500).json({
-        status: 'error',
-        message: 'Platform settings not configured',
-      });
-    }
-
-    // Calculate commission
-    let commission = 0;
-    const commissionRate = settings.commissionRate || 10;
-    commission = (milestone.amount * commissionRate) / 100;
-
-    // Apply min/max limits
-    if (settings.minCommission > 0 && commission < settings.minCommission) {
-      commission = settings.minCommission;
-    }
-    if (settings.maxCommission > 0 && commission > settings.maxCommission) {
-      commission = settings.maxCommission;
-    }
-
-    const freelancerAmount = milestone.amount - commission;
-
-    // Create Stripe payment intent
     const freelancerId = typeof contract.freelancer === 'object'
       ? ((contract.freelancer as any)._id?.toString() || (contract.freelancer as any).toString())
       : (contract.freelancer as any).toString();
-    
-    const clientObj = typeof contract.client === 'object' ? contract.client : null;
-    
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(milestone.amount * 100), // Convert to cents
-      currency: (settings.currency || 'USD').toLowerCase(),
-      customer: (clientObj as any)?.stripeCustomerId,
-      metadata: {
-        contractId: contractId.toString(),
-        milestoneId: milestoneId.toString(),
-        clientId: clientId.toString(),
-        freelancerId: freelancerId,
-        commission: commission.toString(),
-        freelancerAmount: freelancerAmount.toString(),
-      },
-      description: `Payment for milestone: ${milestone.title}`,
-    });
 
-    // Create transaction record
-    const transaction = await Transaction.create({
-      contract: contractId,
-      milestone: milestoneId,
-      amount: milestone.amount,
-      platformCommission: commission,
-      freelancerAmount,
-      status: 'pending',
-      stripePaymentIntentId: paymentIntent.id,
-      client: clientId.toString(),
-      freelancer: freelancerId,
-      currency: (settings.currency || 'USD').toUpperCase(),
-    });
+    // Convert milestone amount (dollars) to cents
+    const amountInCents = Math.round(milestone.amount * 100);
+
+    // Generate idempotency key
+    const idempotencyKey = `payment_${contractId}_${milestoneId}_${Date.now()}`;
+
+    // Use payment service
+    const { paymentService } = await import('@/services/payment.service');
+    const result = await paymentService.createPaymentIntent(
+      contractId.toString(),
+      amountInCents,
+      clientId.toString(),
+      freelancerId,
+      milestoneId.toString(),
+      idempotencyKey
+    );
 
     res.status(200).json({
       status: 'success',
       data: {
-        clientSecret: paymentIntent.client_secret,
-        transaction,
+        clientSecret: result.clientSecret,
+        paymentIntentId: result.paymentIntent.id,
+        transaction: result.transaction,
         breakdown: {
-          amount: milestone.amount,
-          commission,
-          freelancerAmount,
-          commissionPercentage: settings.commissionRate,
+          amount: result.transaction.amount / 100, // Convert back to dollars for display
+          commission: result.transaction.platformCommission / 100,
+          freelancerAmount: result.transaction.freelancerAmount / 100,
         },
       },
     });
@@ -305,14 +369,15 @@ export const releasePayment = async (req: Request, res: Response) => {
 
     if (freelancerObj.stripeConnectedAccountId) {
       console.log('💸 [RELEASE_PAYMENT] Creating Stripe transfer:', {
-        amount: Math.round(transaction.freelancerAmount * 100),
+        amount: transaction.freelancerAmount, // Already in cents
+        amountDollars: transaction.freelancerAmount / 100,
         currency: (transaction.currency || 'USD').toLowerCase(),
         destination: freelancerObj.stripeConnectedAccountId,
       });
 
       try {
         const transfer = await stripe.transfers.create({
-          amount: Math.round(transaction.freelancerAmount * 100),
+          amount: transaction.freelancerAmount, // Already in cents
           currency: (transaction.currency || 'USD').toLowerCase(),
           destination: freelancerObj.stripeConnectedAccountId,
           metadata: {

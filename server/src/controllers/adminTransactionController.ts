@@ -107,7 +107,7 @@ export const autoReleaseEscrowPayments = async () => {
   try {
     const Stripe = require('stripe');
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-      apiVersion: '2023-10-16',
+      apiVersion: '2023-10-16', // Latest supported by stripe@14.25.0 - upgrade to stripe@17+ for newer versions
     });
 
     // Find transactions that are past their escrow release date
