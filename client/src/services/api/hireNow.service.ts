@@ -60,12 +60,12 @@ export class HireNowService {
 
   // Freelancer: Accept a hire now request
   async acceptRequest(requestId: string, responseMessage?: string) {
-    return apiCore.post(`${this.basePath}/${requestId}/accept`, { responseMessage });
+    return apiCore.put(`${this.basePath}/${requestId}/accept`, { responseMessage });
   }
 
   // Freelancer: Reject a hire now request
   async rejectRequest(requestId: string, responseMessage?: string) {
-    return apiCore.post(`${this.basePath}/${requestId}/reject`, { responseMessage });
+    return apiCore.put(`${this.basePath}/${requestId}/reject`, { responseMessage });
   }
 }
 

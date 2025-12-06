@@ -12,6 +12,11 @@ import {
   Divider,
   Alert,
   Pagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material';
 import {
   CheckCircle,
@@ -21,7 +26,7 @@ import {
   AttachMoney,
   Schedule,
 } from '@mui/icons-material';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
@@ -30,14 +35,20 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { format } from 'date-fns';
+import toast from 'react-hot-toast';
 
 const ITEMS_PER_PAGE = 6;
 
 export const HireNowRequestsPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useSelector((state: RootState) => state.auth);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [acceptDialogOpen, setAcceptDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<HireNowRequest | null>(null);
+  const [responseMessage, setResponseMessage] = useState('');
 
   const isClient = user?.role === 'client';
   const isFreelancer = user?.role === 'freelancer';
@@ -66,6 +77,80 @@ export const HireNowRequestsPage: React.FC = () => {
       return requests;
     },
   });
+
+  // Accept mutation
+  const acceptMutation = useMutation({
+    mutationFn: async ({ requestId, message }: { requestId: string; message: string }) => {
+      console.log('[ACCEPT] Accepting request:', requestId, 'with message:', message);
+      const response = await hireNowService.acceptRequest(requestId, message);
+      console.log('[ACCEPT] Response:', response);
+      return response;
+    },
+    onSuccess: (data) => {
+      console.log('[ACCEPT] Success! Contract created:', data);
+      queryClient.invalidateQueries({ queryKey: ['hire-now-requests'] });
+      toast.success('Request accepted! Contract created successfully.');
+      setAcceptDialogOpen(false);
+      setResponseMessage('');
+      setSelectedRequest(null);
+    },
+    onError: (error: any) => {
+      console.error('[ACCEPT] Error:', error);
+      toast.error(error.response?.data?.message || 'Failed to accept request');
+    },
+  });
+
+  // Reject mutation
+  const rejectMutation = useMutation({
+    mutationFn: async ({ requestId, message }: { requestId: string; message: string }) => {
+      console.log('[REJECT] Rejecting request:', requestId, 'with message:', message);
+      const response = await hireNowService.rejectRequest(requestId, message);
+      console.log('[REJECT] Response:', response);
+      return response;
+    },
+    onSuccess: () => {
+      console.log('[REJECT] Success!');
+      queryClient.invalidateQueries({ queryKey: ['hire-now-requests'] });
+      toast.success('Request declined.');
+      setRejectDialogOpen(false);
+      setResponseMessage('');
+      setSelectedRequest(null);
+    },
+    onError: (error: any) => {
+      console.error('[REJECT] Error:', error);
+      toast.error(error.response?.data?.message || 'Failed to decline request');
+    },
+  });
+
+  const handleAcceptClick = (request: HireNowRequest) => {
+    console.log('[ACCEPT CLICK] Request:', request);
+    setSelectedRequest(request);
+    setAcceptDialogOpen(true);
+  };
+
+  const handleRejectClick = (request: HireNowRequest) => {
+    console.log('[REJECT CLICK] Request:', request);
+    setSelectedRequest(request);
+    setRejectDialogOpen(true);
+  };
+
+  const handleAcceptConfirm = () => {
+    if (selectedRequest) {
+      acceptMutation.mutate({
+        requestId: selectedRequest._id,
+        message: responseMessage,
+      });
+    }
+  };
+
+  const handleRejectConfirm = () => {
+    if (selectedRequest) {
+      rejectMutation.mutate({
+        requestId: selectedRequest._id,
+        message: responseMessage,
+      });
+    }
+  };
 
   const requests = data || [];
 
@@ -299,7 +384,10 @@ export const HireNowRequestsPage: React.FC = () => {
                           <Button
                             variant="outlined"
                             size="small"
-                            onClick={() => navigate(`/freelancer/${request.freelancer?._id}`)}
+                            onClick={() => {
+                              console.log('[VIEW FREELANCER] Navigating to:', `/freelancer/${request.freelancer?._id}`);
+                              navigate(`/freelancer/${request.freelancer?._id}`);
+                            }}
                           >
                             View Freelancer
                           </Button>
@@ -307,7 +395,10 @@ export const HireNowRequestsPage: React.FC = () => {
                             <Button
                               variant="contained"
                               size="small"
-                              onClick={() => navigate('/dashboard/contracts')}
+                              onClick={() => {
+                                console.log('[VIEW CONTRACT] Navigating to contracts page');
+                                navigate('/dashboard/contracts');
+                              }}
                             >
                               View Contract
                             </Button>
@@ -318,7 +409,13 @@ export const HireNowRequestsPage: React.FC = () => {
                           <Button
                             variant="outlined"
                             size="small"
-                            onClick={() => navigate(`/freelancer/${request.client?._id}`)}
+                            onClick={() => {
+                              console.log('[VIEW CLIENT] Client ID:', request.client?._id);
+                              console.log('[VIEW CLIENT] Full client object:', request.client);
+                              // Navigate to client's public profile (clients don't have freelancer profiles)
+                              // For now, show a message since clients don't have public profiles
+                              toast('Client profiles are not publicly viewable', { icon: 'ℹ️' });
+                            }}
                           >
                             View Client
                           </Button>
@@ -328,10 +425,7 @@ export const HireNowRequestsPage: React.FC = () => {
                                 variant="contained"
                                 size="small"
                                 color="success"
-                                onClick={() => {
-                                  // TODO: Add accept dialog
-                                  console.log('Accept request:', request._id);
-                                }}
+                                onClick={() => handleAcceptClick(request)}
                               >
                                 Accept
                               </Button>
@@ -339,14 +433,23 @@ export const HireNowRequestsPage: React.FC = () => {
                                 variant="outlined"
                                 size="small"
                                 color="error"
-                                onClick={() => {
-                                  // TODO: Add reject dialog
-                                  console.log('Reject request:', request._id);
-                                }}
+                                onClick={() => handleRejectClick(request)}
                               >
                                 Decline
                               </Button>
                             </>
+                          )}
+                          {request.status === 'accepted' && (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              onClick={() => {
+                                console.log('[VIEW CONTRACT] Navigating to contracts page');
+                                navigate('/dashboard/contracts');
+                              }}
+                            >
+                              View Contract
+                            </Button>
                           )}
                         </>
                       )}
@@ -363,13 +466,103 @@ export const HireNowRequestsPage: React.FC = () => {
               <Pagination
                 count={totalPages}
                 page={page}
-                onChange={(_, value) => setPage(value)}
+             onChange={(_, value) => setPage(value)}
                 color="primary"
               />
             </Box>
           )}
         </>
       )}
+
+      {/* Accept Dialog */}
+      <Dialog open={acceptDialogOpen} onClose={() => setAcceptDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Accept Hire Now Request</DialogTitle>
+        <DialogContent>
+          <Alert severity="success" sx={{ mb: 2 }}>
+            Accepting this request will create a contract and project automatically.
+          </Alert>
+          {selectedRequest && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                <strong>Project:</strong> {selectedRequest.projectTitle}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                <strong>Budget:</strong> ${selectedRequest.budget}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Timeline:</strong> {selectedRequest.timeline.duration} {selectedRequest.timeline.unit}
+              </Typography>
+            </Box>
+          )}
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Response Message (Optional)"
+            placeholder="Add a message to the client..."
+            value={responseMessage}
+            onChange={(e) => setResponseMessage(e.target.value)}
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAcceptDialogOpen(false)} disabled={acceptMutation.isPending}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleAcceptConfirm}
+            variant="contained"
+            color="success"
+            disabled={acceptMutation.isPending}
+          >
+            {acceptMutation.isPending ? 'Accepting...' : 'Accept Request'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Reject Dialog */}
+      <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Decline Hire Now Request</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Are you sure you want to decline this request?
+          </Alert>
+          {selectedRequest && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                <strong>Project:</strong> {selectedRequest.projectTitle}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                <strong>Budget:</strong> ${selectedRequest.budget}
+              </Typography>
+            </Box>
+          )}
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Response Message (Optional)"
+            placeholder="Let the client know why you're declining..."
+            value={responseMessage}
+            onChange={(e) => setResponseMessage(e.target.value)}
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRejectDialogOpen(false)} disabled={rejectMutation.isPending}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleRejectConfirm}
+            variant="contained"
+            color="error"
+            disabled={rejectMutation.isPending}
+          >
+            {rejectMutation.isPending ? 'Declining...' : 'Decline Request'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
+ 

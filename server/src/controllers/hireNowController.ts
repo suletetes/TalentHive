@@ -3,6 +3,7 @@ import { HireNowRequest } from '@/models/HireNowRequest';
 import { Contract } from '@/models/Contract';
 import { Project } from '@/models/Project';
 import { Notification } from '@/models/Notification';
+import { Category } from '@/models/Category';
 import { AppError } from '@/middleware/errorHandler';
 import { sendEmail } from '@/utils/email.resend';
 import { User } from '@/models/User';
@@ -197,11 +198,14 @@ export const acceptHireNowRequest = async (
     await hireNowRequest.accept(responseMessage);
 
     // Create project
+    // Get a default category
+    const defaultCategory = await Category.findOne({});
+    
     const project = await Project.create({
       title: hireNowRequest.projectTitle,
       description: hireNowRequest.projectDescription,
       client: hireNowRequest.client._id,
-      category: 'General', // Default category
+      category: defaultCategory?._id,
       skills: [],
       budget: {
         type: 'fixed',
