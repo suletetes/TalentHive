@@ -54,7 +54,7 @@ export const useSubmitMilestone = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       contractId,
       milestoneId,
       data,
@@ -62,7 +62,9 @@ export const useSubmitMilestone = () => {
       contractId: string;
       milestoneId: string;
       data: any;
-    }) => contractsService.submitMilestone(contractId, milestoneId, data),
+    }) => {
+      return contractsService.submitMilestone(contractId, milestoneId, data);
+    },
     onSuccess: (_, variables) => {
       // Invalidate both the list and the specific contract
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
@@ -75,7 +77,7 @@ export const useApproveMilestone = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       contractId,
       milestoneId,
       data,
@@ -83,7 +85,9 @@ export const useApproveMilestone = () => {
       contractId: string;
       milestoneId: string;
       data: any;
-    }) => contractsService.approveMilestone(contractId, milestoneId, data),
+    }) => {
+      return contractsService.approveMilestone(contractId, milestoneId, data);
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       queryClient.invalidateQueries({ queryKey: ['contract', variables.contractId] });
@@ -95,7 +99,7 @@ export const useRejectMilestone = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       contractId,
       milestoneId,
       data,
@@ -103,7 +107,9 @@ export const useRejectMilestone = () => {
       contractId: string;
       milestoneId: string;
       data: any;
-    }) => contractsService.rejectMilestone(contractId, milestoneId, data),
+    }) => {
+      return contractsService.rejectMilestone(contractId, milestoneId, data);
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       queryClient.invalidateQueries({ queryKey: ['contract', variables.contractId] });

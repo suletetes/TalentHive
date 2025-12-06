@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
+import mongoose from 'mongoose';
 import { Contract } from '@/models/Contract';
 import { Proposal } from '@/models/Proposal';
 import { Project } from '@/models/Project';
@@ -61,8 +62,9 @@ export const createContract = catchAsync(async (req: Request, res: Response, nex
     return next(new AppError('Contract already exists for this proposal', 400));
   }
 
-  // Use custom milestones or proposal milestones
-  const milestones = customMilestones || proposal.milestones.map((milestone: any) => ({
+  // Use custom milestones or proposal milestones - always generate explicit _id
+  const milestones = (customMilestones || proposal.milestones).map((milestone: any) => ({
+    _id: new mongoose.Types.ObjectId(),
     title: milestone.title,
     description: milestone.description,
     amount: milestone.amount,

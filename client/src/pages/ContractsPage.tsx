@@ -386,7 +386,6 @@ export const ContractsPage: React.FC = () => {
             <MenuItem value="proposal">Proposal</MenuItem>
             <MenuItem value="hire_now">Direct Hire</MenuItem>
             <MenuItem value="service_request">Service Request</MenuItem>
-            <MenuItem value="service">Service Package</MenuItem>
           </Select>
         </FormControl>
         <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center', ml: 'auto' }}>
