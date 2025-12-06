@@ -422,12 +422,13 @@ export const orderServicePackage = async (req: Request, res: Response) => {
     console.log(`[SERVICE ORDER] Package: ${servicePackage.title}, Price: $${price}, Delivery: ${deliveryDays} days`);
 
     // Create project
+    // Note: servicePackage.skills contains string names, not ObjectIds, so we use empty array
     const project = await Project.create({
       title: `Service: ${servicePackage.title}`,
       description: servicePackage.description + (requirements ? `\n\nClient Requirements: ${requirements}` : ''),
       client: clientId,
       category: servicePackage.category || 'General',
-      skills: servicePackage.skills || [],
+      skills: [],
       budget: {
         type: 'fixed',
         min: price,

@@ -20,7 +20,7 @@ import { FeaturedFreelancersManager } from '@/components/admin/FeaturedFreelance
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import toast from 'react-hot-toast';
-import axios from 'axios';
+import { apiCore } from '@/services/api/core';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -49,20 +49,39 @@ export const AdminSettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [tabValue, setTabValue] = useState(0);
 
-  // Fetch settings
+  // Fetch platform settings
   const { data: settingsData, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-settings'],
     queryFn: async () => {
-      const response = await axios.get('/api/v1/settings');
-      return response.data.data;
+      const response = await apiCore.get('/settings');
+      return response.data?.data || {};
     },
     enabled: user?.role === 'admin',
+  });
+
+  // Fetch commission settings from the Settings model
+  const { data: commissionData, isLoading: commissionLoading } = useQuery({
+    queryKey: ['admin-commission-settings'],
+    queryFn: async () => {
+      const response = await apiCore.get('/admin/settings/commission');
+      console.log('[DEBUG] Full response:', response);
+      console.log('[DEBUG] response.data:', response.data);
+      console.log('[DEBUG] response.data.data:', response.data?.data);
+      // The API returns { status: 'success', data: [...] }
+      const result = response.data?.data || response.data || [];
+      console.log('[DEBUG] Returning:', result);
+      return result;
+    },
+    enabled: user?.role === 'admin',
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Update settings mutation
   const updateSettingsMutation = useMutation({
     mutationFn: async (settings: any) => {
-      const response = await axios.put('/api/v1/settings', settings);
+      const response = await apiCore.put('/settings', settings);
       return response.data.data;
     },
     onSuccess: () => {
@@ -78,10 +97,23 @@ export const AdminSettingsPage: React.FC = () => {
     setTabValue(newValue);
   };
 
+  // Update commission settings mutation
+  const updateCommissionMutation = useMutation({
+    mutationFn: async (commissionSettings: any) => {
+      const response = await apiCore.put('/admin/settings/commission', { commissionSettings });
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-commission-settings'] });
+      toast.success('Commission settings updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update commission settings');
+    },
+  });
+
   const handleSaveCommissionSettings = async (settings: any) => {
-    updateSettingsMutation.mutate({
-      commission: settings,
-    });
+    updateCommissionMutation.mutate(settings);
   };
 
   if (user?.role !== 'admin') {
@@ -131,8 +163,8 @@ export const AdminSettingsPage: React.FC = () => {
 
         <TabPanel value={tabValue} index={0}>
           <CommissionSettings
-            settings={settingsData?.commission || []}
-            isLoading={updateSettingsMutation.isPending}
+            settings={commissionData || []}
+            isLoading={updateCommissionMutation.isPending || commissionLoading}
             onSave={handleSaveCommissionSettings}
           />
         </TabPanel>

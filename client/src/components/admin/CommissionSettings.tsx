@@ -20,15 +20,13 @@ import {
 import { Save as SaveIcon } from '@mui/icons-material';
 
 interface CommissionSetting {
-  _id: string;
+  _id?: string;
   name: string;
-  percentage: number;
-  minAmount: number;
-  maxAmount: number;
-  description: string;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
+  commissionPercentage: number;
+  minAmount?: number;
+  maxAmount?: number;
+  description?: string;
+  isActive: boolean;
 }
 
 interface CommissionSettingsProps {
@@ -42,9 +40,14 @@ export const CommissionSettings: React.FC<CommissionSettingsProps> = ({
   isLoading = false,
   onSave,
 }) => {
+  // Debug log
+  console.log('[CommissionSettings] settings prop:', settings);
+  console.log('[CommissionSettings] settings.length:', settings.length);
+  console.log('[CommissionSettings] isLoading:', isLoading);
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<CommissionSetting>>({
-    percentage: 0,
+    commissionPercentage: 0,
     minAmount: 0,
     maxAmount: 0,
     description: '',
@@ -60,7 +63,7 @@ export const CommissionSettings: React.FC<CommissionSettingsProps> = ({
   const handleCancel = () => {
     setEditingId(null);
     setFormData({
-      percentage: 0,
+      commissionPercentage: 0,
       minAmount: 0,
       maxAmount: 0,
       description: '',
@@ -122,8 +125,8 @@ export const CommissionSettings: React.FC<CommissionSettingsProps> = ({
                 <TextField
                   label="Commission Percentage"
                   type="number"
-                  value={formData.percentage || 0}
-                  onChange={(e) => handleChange('percentage', parseFloat(e.target.value))}
+                  value={formData.commissionPercentage || 0}
+                  onChange={(e) => handleChange('commissionPercentage', parseFloat(e.target.value))}
                   fullWidth
                   inputProps={{ step: '0.1', min: '0', max: '100' }}
                   helperText="Enter percentage (0-100)"
@@ -203,31 +206,35 @@ export const CommissionSettings: React.FC<CommissionSettingsProps> = ({
                   </TableCell>
                 </TableRow>
               ) : (
-                settings.map((setting) => (
-                  <TableRow key={setting._id}>
+                settings.map((setting, index) => (
+                  <TableRow key={setting._id || index}>
                     <TableCell>
                       <Typography variant="body2" fontWeight="medium">
                         {setting.name}
                       </Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <Typography variant="body2">{setting.percentage}%</Typography>
+                      <Typography variant="body2">{setting.commissionPercentage}%</Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <Typography variant="body2">${setting.minAmount.toFixed(2)}</Typography>
+                      <Typography variant="body2">
+                        {setting.minAmount ? `$${setting.minAmount.toFixed(2)}` : '-'}
+                      </Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <Typography variant="body2">${setting.maxAmount.toFixed(2)}</Typography>
+                      <Typography variant="body2">
+                        {setting.maxAmount ? `$${setting.maxAmount.toFixed(2)}` : '-'}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">
-                        {setting.description}
+                        {setting.description || '-'}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={setting.active ? 'Active' : 'Inactive'}
-                        color={setting.active ? 'success' : 'default'}
+                        label={setting.isActive ? 'Active' : 'Inactive'}
+                        color={setting.isActive ? 'success' : 'default'}
                         size="small"
                       />
                     </TableCell>

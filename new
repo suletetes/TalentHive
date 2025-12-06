@@ -17,28 +17,12 @@ read very very well the issues and create a readme and solve 100% very well. aft
 
 ===
 
-===========
-
-1. update the docs at /docs and the readmes at client and server dont use emojis
-
-
-2. search the npm and remove any unused or uselesses package and update the package.json doit both at client and server
-try and fix the commands at package.json refactor them
-
-===
-
-
-
-
-
-http://localhost:3000/dashboard/hire-now-requests
-
 there should be a simple client page 
 review
 past works
 
 and for freelancer
 
-
-payment issue like adding zero 30 to 300
-
+=====
+work on tommorrow
+http://localhost:3000/admin/settings
