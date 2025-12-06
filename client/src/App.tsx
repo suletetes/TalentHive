@@ -54,6 +54,7 @@ import { CreateProfilePage } from '@/pages/CreateProfilePage';
 import { HowItWorksPage } from '@/pages/HowItWorksPage';
 import { FindFreelancersPage } from '@/pages/FindFreelancersPage';
 import { AdminTransactionsPage } from '@/pages/admin/AdminTransactionsPage';
+import { ReleasePaymentPage } from '@/pages/ReleasePaymentPage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { ToastProvider } from '@/components/ui/ToastProvider';
@@ -125,6 +126,7 @@ function App() {
           <Route path="organizations" element={<OrganizationListPage />} />
           <Route path="organizations/:id" element={<OrganizationDashboardPage />} />
           <Route path="contracts/:id" element={<ContractDetailPage />} />
+          <Route path="contracts/:contractId/release/:milestoneId" element={<ReleasePaymentPage />} />
           <Route path="time-tracking" element={<TimeTrackingPage />} />
           <Route path="hire-now-requests" element={<HireNowRequestsPage />} />
           <Route path="services" element={<ServicesPage />} />

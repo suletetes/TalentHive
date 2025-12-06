@@ -144,7 +144,7 @@ export const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, contrac
                 Amount
               </Typography>
               <Typography variant="body1" fontWeight="bold">
-                ${(milestone.amount / 100).toFixed(2)}
+                ${milestone.amount?.toLocaleString()}
               </Typography>
             </Box>
             <Box>
