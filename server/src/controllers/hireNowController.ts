@@ -60,15 +60,15 @@ export const createHireNowRequest = async (
     // Create in-app notification for freelancer
     try {
       await Notification.create({
-        recipient: freelancerId,
-        type: 'hire_now',
+        user: freelancerId,
+        type: 'system',
         title: `New Hire Now Request: ${projectTitle}`,
-        message: `You have received a new hire now request for "${projectTitle}" with a budget of $${budget}`,
-        data: {
-          hireNowRequestId: hireNowRequest._id,
-          projectTitle,
-          budget,
-          clientName: req.user?.profile?.firstName,
+        message: `You have received a new hire now request for "${projectTitle}" with a budget of ${budget}`,
+        link: '/dashboard/hire-now-requests',
+        priority: 'high',
+        metadata: {
+          senderId: clientId,
+          amount: budget,
         },
         isRead: false,
       });
@@ -282,15 +282,16 @@ export const acceptHireNowRequest = async (
     // Create in-app notification for client
     try {
       await Notification.create({
-        recipient: hireNowRequest.client._id,
-        type: 'hire_now',
+        user: hireNowRequest.client._id,
+        type: 'contract',
         title: `Hire Now Request Accepted: ${hireNowRequest.projectTitle}`,
         message: `${(hireNowRequest.freelancer as any).profile.firstName} ${(hireNowRequest.freelancer as any).profile.lastName} has accepted your hire now request. Contract created.`,
-        data: {
-          hireNowRequestId: hireNowRequest._id,
+        link: `/dashboard/contracts/${contract._id}`,
+        priority: 'high',
+        metadata: {
           contractId: contract._id,
-          projectTitle: hireNowRequest.projectTitle,
-          freelancerName: `${(hireNowRequest.freelancer as any).profile.firstName} ${(hireNowRequest.freelancer as any).profile.lastName}`,
+          senderId: hireNowRequest.freelancer._id,
+          amount: hireNowRequest.budget,
         },
         isRead: false,
       });
@@ -370,15 +371,14 @@ export const rejectHireNowRequest = async (
     // Create in-app notification for client
     try {
       await Notification.create({
-        recipient: hireNowRequest.client._id,
-        type: 'hire_now',
+        user: hireNowRequest.client._id,
+        type: 'system',
         title: `Hire Now Request Declined: ${hireNowRequest.projectTitle}`,
         message: `${(hireNowRequest.freelancer as any).profile.firstName} ${(hireNowRequest.freelancer as any).profile.lastName} has declined your hire now request.`,
-        data: {
-          hireNowRequestId: hireNowRequest._id,
-          projectTitle: hireNowRequest.projectTitle,
-          freelancerName: `${(hireNowRequest.freelancer as any).profile.firstName} ${(hireNowRequest.freelancer as any).profile.lastName}`,
-          responseMessage,
+        link: '/dashboard/hire-now-requests',
+        priority: 'normal',
+        metadata: {
+          senderId: hireNowRequest.freelancer._id,
         },
         isRead: false,
       });
@@ -411,3 +411,6 @@ export const rejectHireNowRequest = async (
     next(new AppError(error.message || 'Failed to reject hire now request', 500));
   }
 };
+
+
+
