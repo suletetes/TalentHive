@@ -49,6 +49,7 @@ import { PaymentErrorPage } from '@/pages/PaymentErrorPage';
 import { ContractDetailPage } from '@/pages/ContractDetailPage';
 import { TimeTrackingPage } from '@/pages/TimeTrackingPage';
 import { HireNowRequestsPage } from '@/pages/HireNowRequestsPage';
+import { ServicesPage } from '@/pages/ServicesPage';
 import { CreateProfilePage } from '@/pages/CreateProfilePage';
 import { HowItWorksPage } from '@/pages/HowItWorksPage';
 import { FindFreelancersPage } from '@/pages/FindFreelancersPage';
@@ -126,6 +127,7 @@ function App() {
           <Route path="contracts/:id" element={<ContractDetailPage />} />
           <Route path="time-tracking" element={<TimeTrackingPage />} />
           <Route path="hire-now-requests" element={<HireNowRequestsPage />} />
+          <Route path="services" element={<ServicesPage />} />
         </Route>
 
         {/* Admin routes */}

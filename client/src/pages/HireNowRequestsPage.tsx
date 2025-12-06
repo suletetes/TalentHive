@@ -23,6 +23,8 @@ import {
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 import { hireNowService, HireNowRequest } from '@/services/api/hireNow.service';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -33,18 +35,25 @@ const ITEMS_PER_PAGE = 6;
 
 export const HireNowRequestsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useSelector((state: RootState) => state.auth);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  // Fetch sent hire now requests
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['hire-now-sent'],
+  const isClient = user?.role === 'client';
+  const isFreelancer = user?.role === 'freelancer';
+
+  // Fetch hire now requests based on user role
+  const { data, isLoading, error, refetch } = useQuery<HireNowRequest[], Error>({
+    queryKey: ['hire-now-requests', user?.role],
     queryFn: async () => {
-      const response = await hireNowService.getSentRequests();
+      const response: any = isClient 
+        ? await hireNowService.getSentRequests()
+        : await hireNowService.getReceivedRequests();
+      
       console.log('[HIRE NOW PAGE] Response:', response);
       
       // Handle different response structures
-      let requests = [];
+      let requests: HireNowRequest[] = [];
       if (response?.data?.data && Array.isArray(response.data.data)) {
         requests = response.data.data;
       } else if (response?.data && Array.isArray(response.data)) {
@@ -54,7 +63,7 @@ export const HireNowRequestsPage: React.FC = () => {
       }
       
       console.log('[HIRE NOW PAGE] Parsed requests:', requests);
-      return requests as HireNowRequest[];
+      return requests;
     },
   });
 
@@ -106,7 +115,11 @@ export const HireNowRequestsPage: React.FC = () => {
   if (error) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <ErrorState error={error} onRetry={refetch} />
+        <ErrorState 
+          type="server"
+          message={error.message || 'Failed to load hire now requests'}
+          onRetry={() => refetch()} 
+        />
       </Container>
     );
   }
@@ -115,10 +128,13 @@ export const HireNowRequestsPage: React.FC = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          My Hire Now Requests
+          {isClient ? 'My Hire Now Requests' : 'Hire Now Requests'}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Track the status of your direct hire requests to freelancers
+          {isClient 
+            ? 'Track the status of your direct hire requests to freelancers'
+            : 'View and respond to direct hire requests from clients'
+          }
         </Typography>
       </Box>
 
@@ -159,11 +175,19 @@ export const HireNowRequestsPage: React.FC = () => {
 
       {filteredRequests.length === 0 ? (
         <EmptyState
-          message={
+          title={
             statusFilter === 'all'
-              ? "You haven't sent any hire now requests yet"
-              : `No ${statusFilter} requests found`
+              ? "No hire now requests yet"
+              : `No ${statusFilter} requests`
           }
+          description={
+            statusFilter === 'all'
+              ? isClient 
+                ? "You haven't sent any hire now requests yet. Browse freelancers to send direct hire requests."
+                : "You haven't received any hire now requests yet."
+              : `No ${statusFilter} requests found. Try adjusting your filters.`
+          }
+          variant="contracts"
         />
       ) : (
         <>
@@ -191,21 +215,27 @@ export const HireNowRequestsPage: React.FC = () => {
                           />
                         </Box>
 
-                        {/* Freelancer Info */}
+                        {/* Client/Freelancer Info */}
                         <Box display="flex" alignItems="center" gap={1.5} mb={2}>
                           <Avatar
-                            src={request.freelancer?.profile?.avatar}
+                            src={isClient ? request.freelancer?.profile?.avatar : request.client?.profile?.avatar}
                             sx={{ width: 40, height: 40 }}
                           >
                             <Person />
                           </Avatar>
                           <Box>
                             <Typography variant="body2" fontWeight={500}>
-                              {request.freelancer?.profile?.firstName}{' '}
-                              {request.freelancer?.profile?.lastName}
+                              {isClient ? 'To: ' : 'From: '}
+                              {isClient 
+                                ? `${request.freelancer?.profile?.firstName} ${request.freelancer?.profile?.lastName}`
+                                : `${request.client?.profile?.firstName} ${request.client?.profile?.lastName}`
+                              }
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {request.freelancer?.freelancerProfile?.title || 'Freelancer'}
+                              {isClient 
+                                ? (request.freelancer?.freelancerProfile?.title || 'Freelancer')
+                                : 'Client'
+                              }
                             </Typography>
                           </Box>
                         </Box>
@@ -264,21 +294,61 @@ export const HireNowRequestsPage: React.FC = () => {
                     </Box>
 
                     <Box display="flex" gap={2} flexWrap="wrap">
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => navigate(`/dashboard/freelancers/${request.freelancer?._id}`)}
-                      >
-                        View Freelancer
-                      </Button>
-                      {request.status === 'accepted' && (
-                        <Button
-                          variant="contained"
-                          size="small"
-                          onClick={() => navigate('/dashboard/contracts')}
-                        >
-                          View Contract
-                        </Button>
+                      {isClient ? (
+                        <>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => navigate(`/freelancer/${request.freelancer?._id}`)}
+                          >
+                            View Freelancer
+                          </Button>
+                          {request.status === 'accepted' && (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              onClick={() => navigate('/dashboard/contracts')}
+                            >
+                              View Contract
+                            </Button>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => navigate(`/freelancer/${request.client?._id}`)}
+                          >
+                            View Client
+                          </Button>
+                          {request.status === 'pending' && (
+                            <>
+                              <Button
+                                variant="contained"
+                                size="small"
+                                color="success"
+                                onClick={() => {
+                                  // TODO: Add accept dialog
+                                  console.log('Accept request:', request._id);
+                                }}
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                color="error"
+                                onClick={() => {
+                                  // TODO: Add reject dialog
+                                  console.log('Reject request:', request._id);
+                                }}
+                              >
+                                Decline
+                              </Button>
+                            </>
+                          )}
+                        </>
                       )}
                     </Box>
                   </CardContent>
