@@ -14,7 +14,9 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "seed": "ts-node -r tsconfig-paths/register src/scripts/seed.ts",
     "seed:complete-profiles": "ts-node -r tsconfig-paths/register src/scripts/seedWithCompleteProfiles.ts",
-    "seed:work-logs": "ts-node -r tsconfig-paths/register src/scripts/seedWorkLogs.ts"
+    "seed:work-logs": "ts-node -r tsconfig-paths/register src/scripts/seedWorkLogs.ts",
+    "recalculate-ratings": "ts-node -r tsconfig-paths/register src/scripts/recalculateRatings.ts",
+    "update-contract-sources": "ts-node -r tsconfig-paths/register src/scripts/updateContractSourceTypes.ts"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.0",

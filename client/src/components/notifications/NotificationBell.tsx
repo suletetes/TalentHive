@@ -5,11 +5,14 @@ import { useNavigate } from 'react-router-dom';
 import { useUnreadCount } from '@/hooks/api/useNotifications';
 import { socketService } from '@/services/socket';
 import { NotificationDropdown } from './NotificationDropdown';
+import { useAuth } from '@/hooks/useAuth';
 
 export const NotificationBell: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const { data: unreadCount, refetch } = useUnreadCount();
+  // ISSUE #3 FIX: Only fetch unread count when user is authenticated
+  const { data: unreadCount, refetch } = useUnreadCount(!!user);
 
   const displayUnreadCount = typeof unreadCount === 'number' ? unreadCount : 0;
 
