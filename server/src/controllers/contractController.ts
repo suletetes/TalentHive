@@ -10,6 +10,27 @@ import { deleteCache } from '@/config/redis';
 import { notificationService } from '@/services/notification.service';
 import crypto from 'crypto';
 
+// Helper function to extract user ID from populated or unpopulated field
+const extractUserId = (userField: any): string => {
+  if (!userField) return '';
+  // If it's a string, return as-is
+  if (typeof userField === 'string') return userField;
+  // If it's an ObjectId, convert to string
+  if (userField instanceof mongoose.Types.ObjectId) return userField.toString();
+  // If it's a populated object with _id
+  if (typeof userField === 'object' && userField._id) {
+    return userField._id.toString();
+  }
+  // If it has an id property (virtual)
+  if (typeof userField === 'object' && userField.id) {
+    return userField.id.toString();
+  }
+  // Last resort - try to convert to string but check if it looks like an ObjectId
+  const str = String(userField);
+  if (/^[a-f\d]{24}$/i.test(str)) return str;
+  return '';
+};
+
 export const createContractValidation = [
   body('title').trim().isLength({ min: 5, max: 200 }).withMessage('Title must be between 5 and 200 characters'),
   body('description').trim().isLength({ min: 10, max: 2000 }).withMessage('Description must be between 10 and 2000 characters'),
@@ -413,14 +434,10 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
   try {
     const freelancer = await User.findById(req.user._id);
     const freelancerName = `${freelancer?.profile.firstName} ${freelancer?.profile.lastName}`;
-    // Extract client ID - handle populated object, ObjectId, or string
-    let clientId: string;
-    if (typeof contract.client === 'string') {
-      clientId = contract.client;
-    } else if (typeof contract.client === 'object' && contract.client !== null && '_id' in contract.client) {
-      clientId = (contract.client as any)._id.toString();
-    } else {
-      clientId = String(contract.client);
+    // Extract client ID using helper function
+    const clientId = extractUserId(contract.client);
+    if (!clientId) {
+      throw new Error('Could not extract client ID');
     }
     await notificationService.notifyMilestoneSubmitted(
       clientId,
@@ -491,14 +508,10 @@ export const approveMilestone = catchAsync(async (req: AuthRequest, res: Respons
   try {
     const client = await User.findById(req.user._id);
     const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
-    // Extract freelancer ID - handle populated object, ObjectId, or string
-    let freelancerId: string;
-    if (typeof contract.freelancer === 'string') {
-      freelancerId = contract.freelancer;
-    } else if (typeof contract.freelancer === 'object' && contract.freelancer !== null && '_id' in contract.freelancer) {
-      freelancerId = (contract.freelancer as any)._id.toString();
-    } else {
-      freelancerId = String(contract.freelancer);
+    // Extract freelancer ID using helper function
+    const freelancerId = extractUserId(contract.freelancer);
+    if (!freelancerId) {
+      throw new Error('Could not extract freelancer ID');
     }
     await notificationService.notifyMilestoneApproved(
       freelancerId,
@@ -781,23 +794,12 @@ export const createDispute = catchAsync(async (req: AuthRequest, res: Response, 
 
   // Send notification to other party
   try {
-    // Extract IDs - handle populated object, ObjectId, or string
-    let clientId: string;
-    if (typeof contract.client === 'string') {
-      clientId = contract.client;
-    } else if (typeof contract.client === 'object' && contract.client !== null && '_id' in contract.client) {
-      clientId = (contract.client as any)._id.toString();
-    } else {
-      clientId = String(contract.client);
-    }
+    // Extract IDs using helper function
+    const clientId = extractUserId(contract.client);
+    const freelancerId = extractUserId(contract.freelancer);
     
-    let freelancerId: string;
-    if (typeof contract.freelancer === 'string') {
-      freelancerId = contract.freelancer;
-    } else if (typeof contract.freelancer === 'object' && contract.freelancer !== null && '_id' in contract.freelancer) {
-      freelancerId = (contract.freelancer as any)._id.toString();
-    } else {
-      freelancerId = String(contract.freelancer);
+    if (!clientId || !freelancerId) {
+      throw new Error('Could not extract user IDs');
     }
     
     const otherPartyId = clientId === req.user._id.toString() 
@@ -969,14 +971,10 @@ export const releasePayment = catchAsync(async (req: AuthRequest, res: Response,
   try {
     const client = await User.findById(userId);
     const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
-    // Extract freelancer ID - handle populated object, ObjectId, or string
-    let freelancerId: string;
-    if (typeof contract.freelancer === 'string') {
-      freelancerId = contract.freelancer;
-    } else if (typeof contract.freelancer === 'object' && contract.freelancer !== null && '_id' in contract.freelancer) {
-      freelancerId = (contract.freelancer as any)._id.toString();
-    } else {
-      freelancerId = String(contract.freelancer);
+    // Extract freelancer ID using helper function
+    const freelancerId = extractUserId(contract.freelancer);
+    if (!freelancerId) {
+      throw new Error('Could not extract freelancer ID');
     }
     await notificationService.notifyPaymentReleased(
       freelancerId,

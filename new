@@ -13,8 +13,6 @@ read very very well the issues and create a readme and solve 100% very well. aft
 
 
 1. get the app ready for prod reduce both  client and server logs. remove all client logs.
-2. fix the cicd  and check well if executed is it going to succeded. and what secrets do i need for cicd just comment prod for now.
-3. update well the client and server readme avoid emoji
 
 
 ===
@@ -40,4 +38,7 @@ review
 past works
 
 and for freelancer
+
+
+payment issue like adding zero 30 to 300
 
