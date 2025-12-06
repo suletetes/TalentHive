@@ -12,11 +12,13 @@ export const EditProjectPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Fetch project data
-  const { data: project, isLoading, error } = useQuery({
+  const { data: projectResponse, isLoading, error } = useQuery({
     queryKey: ['projects', 'detail', id],
     queryFn: () => projectsService.getProjectById(id!),
     enabled: !!id,
   });
+
+  const project = projectResponse?.data;
 
   const handleSuccess = () => {
     navigate(`/dashboard/projects/${id}`);
@@ -24,6 +26,38 @@ export const EditProjectPage: React.FC = () => {
 
   const handleCancel = () => {
     navigate(`/dashboard/projects/${id}`);
+  };
+
+  // Transform project data for the form
+  const getInitialData = () => {
+    if (!project) return undefined;
+
+    console.log('[EDIT PROJECT] Raw project data:', project);
+    
+    // Extract organization ID
+    let organizationId = '';
+    if (project.organization) {
+      organizationId = typeof project.organization === 'object' && project.organization?._id
+        ? project.organization._id
+        : project.organization;
+    }
+    
+    const transformedData = {
+      ...project,
+      // Extract category ID if it's an object
+      category: typeof project.category === 'object' && project.category?._id 
+        ? project.category._id 
+        : project.category,
+      // Extract skill IDs if they're objects
+      skills: project.skills?.map((skill: any) => 
+        typeof skill === 'object' && skill?._id ? skill._id : skill
+      ) || [],
+      // Only include organization if it has a value
+      organization: organizationId || undefined,
+    };
+
+    console.log('[EDIT PROJECT] Transformed data:', transformedData);
+    return transformedData;
   };
 
   if (isLoading) {
@@ -83,7 +117,7 @@ export const EditProjectPage: React.FC = () => {
       </Box>
 
       <ProjectForm 
-        initialData={project}
+        initialData={getInitialData()}
         onSuccess={handleSuccess}
         onCancel={handleCancel}
       />
