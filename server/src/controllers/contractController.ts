@@ -349,6 +349,13 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
     const ms = contract.milestones.find((m: any) => m._id.toString() === milestoneId);
     console.log('  - Milestone found:', !!ms);
     console.log('  - Milestone status:', ms?.status);
+    console.log('  - Requested milestone ID:', milestoneId);
+    console.log('  - Available milestone IDs:', contract.milestones.map((m: any) => m._id.toString()));
+    
+    // Provide more helpful error message
+    if (!ms) {
+      return next(new AppError(`Milestone not found. Available milestones: ${contract.milestones.map((m: any) => m._id.toString()).join(', ')}`, 404));
+    }
     return next(new AppError('You cannot submit this milestone', 403));
   }
 

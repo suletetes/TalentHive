@@ -197,15 +197,20 @@ export const acceptHireNowRequest = async (
     // Accept the request
     await hireNowRequest.accept(responseMessage);
 
-    // Create project
-    // Get a default category
+    // Get a default category - MUST be a valid ObjectId
     const defaultCategory = await Category.findOne({});
-    
+    if (!defaultCategory) {
+      console.log(`[HIRE NOW ACCEPT ERROR] No categories found in database`);
+      return next(new AppError('System configuration error: No categories available', 500));
+    }
+    console.log(`[HIRE NOW ACCEPT] Using category: ${defaultCategory.name} (${defaultCategory._id})`);
+
+    // Create project
     const project = await Project.create({
       title: hireNowRequest.projectTitle,
       description: hireNowRequest.projectDescription,
       client: hireNowRequest.client._id,
-      category: defaultCategory?._id,
+      category: defaultCategory._id,
       skills: [],
       budget: {
         type: 'fixed',
