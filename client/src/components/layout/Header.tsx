@@ -39,6 +39,7 @@ const navigationConfig: NavigationItem[] = [
   { label: 'Post Project', path: '/dashboard/projects/new', roles: ['client'] },
   { label: 'My Projects', path: '/dashboard/projects', roles: ['client'] },
   { label: 'My Contracts', path: '/dashboard/contracts', roles: ['client'] },
+  { label: 'Hire Now Requests', path: '/dashboard/hire-now-requests', roles: ['client'] },
   { label: 'Find Talent', path: '/freelancers', roles: ['client'] },
   
   // Admin-specific
