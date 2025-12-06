@@ -89,37 +89,37 @@ client/
 ├── public/              # Static assets
 ├── src/
 │   ├── components/      # Reusable React components
-│   │   ├── admin/      # Admin-specific components
-│   │   ├── auth/       # Authentication components
-│   │   ├── contracts/  # Contract management
-│   │   ├── layout/     # Layout components (Header, Footer)
-│   │   ├── messaging/  # Real-time messaging
+│   │   ├── admin/       # Admin-specific components
+│   │   ├── auth/        # Authentication components
+│   │   ├── contracts/   # Contract management
+│   │   ├── layout/      # Layout components (Header, Footer)
+│   │   ├── messaging/   # Real-time messaging
 │   │   ├── notifications/ # Notification system
-│   │   ├── payments/   # Payment components
-│   │   ├── profile/    # User profile components
-│   │   ├── projects/   # Project management
-│   │   ├── proposals/  # Proposal system
-│   │   ├── reviews/    # Review and rating
-│   │   └── ui/         # Generic UI components
-│   ├── hooks/          # Custom React hooks
-│   │   └── api/        # API-specific hooks
-│   ├── pages/          # Route-level page components
-│   ├── services/       # API service layer
-│   │   └── api/        # API service modules
-│   ├── store/          # Redux store configuration
-│   │   └── slices/     # Redux Toolkit slices
-│   ├── theme/          # MUI theme configuration
-│   ├── types/          # TypeScript type definitions
-│   ├── utils/          # Utility functions
-│   ├── App.tsx         # Main application component
-│   └── main.tsx        # Application entry point
-├── .env                # Environment variables
-├── .env.example        # Environment variables template
-├── index.html          # HTML template
-├── package.json        # Dependencies and scripts
-├── tsconfig.json       # TypeScript configuration
-├── vite.config.ts      # Vite configuration
-└── README.md           # This file
+│   │   ├── payments/    # Payment components
+│   │   ├── profile/     # User profile components
+│   │   ├── projects/    # Project management
+│   │   ├── proposals/   # Proposal system
+│   │   ├── reviews/     # Review and rating
+│   │   └── ui/          # Generic UI components
+│   ├── hooks/           # Custom React hooks
+│   │   └── api/         # API-specific hooks
+│   ├── pages/           # Route-level page components
+│   ├── services/        # API service layer
+│   │   └── api/         # API service modules
+│   ├── store/           # Redux store configuration
+│   │   └── slices/      # Redux Toolkit slices
+│   ├── theme/           # MUI theme configuration
+│   ├── types/           # TypeScript type definitions
+│   ├── utils/           # Utility functions
+│   ├── App.tsx          # Main application component
+│   └── main.tsx         # Application entry point
+├── .env                 # Environment variables
+├── .env.example         # Environment variables template
+├── index.html           # HTML template
+├── package.json         # Dependencies and scripts
+├── tsconfig.json        # TypeScript configuration
+├── vite.config.ts       # Vite configuration
+└── README.md            # This file
 ```
 
 ## Key Features
@@ -260,22 +260,19 @@ docker run -p 80:80 talenthive-client
 
 ### Common Issues
 
-**Port already in use**
+Port already in use:
 ```bash
-# Kill process on port 3000
 npx kill-port 3000
 ```
 
-**Module not found errors**
+Module not found errors:
 ```bash
-# Clear node_modules and reinstall
 rm -rf node_modules package-lock.json
 npm install
 ```
 
-**Build errors**
+Build errors:
 ```bash
-# Clear Vite cache
 rm -rf node_modules/.vite
 npm run build
 ```

@@ -297,6 +297,14 @@ npm run seed:complete-profiles
 npm run seed:work-logs
 ```
 
+### Test Accounts
+
+After seeding, use these accounts for testing:
+
+- Client: john.client@example.com / Password123!
+- Freelancer: alice.dev@example.com / Password123!
+- Admin: admin@talenthive.com / Password123!
+
 ## Authentication
 
 JWT-based authentication with refresh tokens:
@@ -435,24 +443,23 @@ docker run -p 5000:5000 talenthive-server
 
 ### Common Issues
 
-**MongoDB connection failed**
+MongoDB connection failed:
 - Check MongoDB is running
 - Verify connection string
 - Check network access
 
-**Redis connection failed**
+Redis connection failed:
 - Check Redis is running
 - Verify Redis URL
 - Check firewall settings
 
-**Stripe webhook errors**
+Stripe webhook errors:
 - Verify webhook secret
 - Check endpoint URL
 - Test with Stripe CLI
 
-**Port already in use**
+Port already in use:
 ```bash
-# Kill process on port 5000
 npx kill-port 5000
 ```
 
