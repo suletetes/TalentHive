@@ -224,10 +224,15 @@ export const acceptHireNowRequest = async (
 
     // Create a dummy proposal for the contract (required field)
     const Proposal = (await import('@/models/Proposal')).Proposal;
+    // Ensure cover letter is at least 50 characters
+    const coverLetterBase = `Direct hire request accepted for project "${hireNowRequest.projectTitle}". `;
+    const coverLetterDesc = hireNowRequest.projectDescription || 'Project details as discussed.';
+    const coverLetter = coverLetterBase + coverLetterDesc;
+    
     const dummyProposal = await Proposal.create({
       project: project._id,
       freelancer: hireNowRequest.freelancer._id,
-      coverLetter: `Direct hire request accepted: ${hireNowRequest.projectDescription}`,
+      coverLetter: coverLetter.length >= 50 ? coverLetter : coverLetter.padEnd(50, ' '),
       bidAmount: hireNowRequest.budget,
       timeline: hireNowRequest.timeline,
       milestones: hireNowRequest.milestones.length > 0 ? hireNowRequest.milestones : [{

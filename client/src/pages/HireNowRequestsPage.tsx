@@ -51,7 +51,6 @@ export const HireNowRequestsPage: React.FC = () => {
   const [responseMessage, setResponseMessage] = useState('');
 
   const isClient = user?.role === 'client';
-  const isFreelancer = user?.role === 'freelancer';
 
   // Fetch hire now requests based on user role
   const { data, isLoading, error, refetch } = useQuery<HireNowRequest[], Error>({
@@ -135,7 +134,7 @@ export const HireNowRequestsPage: React.FC = () => {
   };
 
   const handleAcceptConfirm = () => {
-    if (selectedRequest) {
+    if (selectedRequest && !acceptMutation.isPending) {
       acceptMutation.mutate({
         requestId: selectedRequest._id,
         message: responseMessage,
@@ -144,7 +143,7 @@ export const HireNowRequestsPage: React.FC = () => {
   };
 
   const handleRejectConfirm = () => {
-    if (selectedRequest) {
+    if (selectedRequest && !rejectMutation.isPending) {
       rejectMutation.mutate({
         requestId: selectedRequest._id,
         message: responseMessage,
