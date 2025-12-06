@@ -417,8 +417,8 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
     let clientId: string;
     if (typeof contract.client === 'string') {
       clientId = contract.client;
-    } else if (contract.client._id) {
-      clientId = contract.client._id.toString();
+    } else if (typeof contract.client === 'object' && contract.client !== null && '_id' in contract.client) {
+      clientId = (contract.client as any)._id.toString();
     } else {
       clientId = String(contract.client);
     }
@@ -495,8 +495,8 @@ export const approveMilestone = catchAsync(async (req: AuthRequest, res: Respons
     let freelancerId: string;
     if (typeof contract.freelancer === 'string') {
       freelancerId = contract.freelancer;
-    } else if (contract.freelancer._id) {
-      freelancerId = contract.freelancer._id.toString();
+    } else if (typeof contract.freelancer === 'object' && contract.freelancer !== null && '_id' in contract.freelancer) {
+      freelancerId = (contract.freelancer as any)._id.toString();
     } else {
       freelancerId = String(contract.freelancer);
     }
@@ -781,13 +781,12 @@ export const createDispute = catchAsync(async (req: AuthRequest, res: Response, 
 
   // Send notification to other party
   try {
-    // Extract IDs - handle both populated object and ObjectId
     // Extract IDs - handle populated object, ObjectId, or string
     let clientId: string;
     if (typeof contract.client === 'string') {
       clientId = contract.client;
-    } else if (contract.client._id) {
-      clientId = contract.client._id.toString();
+    } else if (typeof contract.client === 'object' && contract.client !== null && '_id' in contract.client) {
+      clientId = (contract.client as any)._id.toString();
     } else {
       clientId = String(contract.client);
     }
@@ -795,8 +794,8 @@ export const createDispute = catchAsync(async (req: AuthRequest, res: Response, 
     let freelancerId: string;
     if (typeof contract.freelancer === 'string') {
       freelancerId = contract.freelancer;
-    } else if (contract.freelancer._id) {
-      freelancerId = contract.freelancer._id.toString();
+    } else if (typeof contract.freelancer === 'object' && contract.freelancer !== null && '_id' in contract.freelancer) {
+      freelancerId = (contract.freelancer as any)._id.toString();
     } else {
       freelancerId = String(contract.freelancer);
     }
@@ -974,8 +973,8 @@ export const releasePayment = catchAsync(async (req: AuthRequest, res: Response,
     let freelancerId: string;
     if (typeof contract.freelancer === 'string') {
       freelancerId = contract.freelancer;
-    } else if (contract.freelancer._id) {
-      freelancerId = contract.freelancer._id.toString();
+    } else if (typeof contract.freelancer === 'object' && contract.freelancer !== null && '_id' in contract.freelancer) {
+      freelancerId = (contract.freelancer as any)._id.toString();
     } else {
       freelancerId = String(contract.freelancer);
     }
