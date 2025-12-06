@@ -1866,12 +1866,13 @@ async function seedContracts(users: any[], projects: any[], proposals: any[], hi
     const endDate = new Date(Date.now() + deliveryDays * 24 * 60 * 60 * 1000);
     
     // Create project for service
+    // Note: servicePackage.skills contains string names, not ObjectIds, so we use empty array
     const serviceProject = await Project.create({
       title: `Service: ${servicePackage.title}`,
       description: servicePackage.description,
       client: client._id,
       category: servicePackage.category || defaultCategory?._id,
-      skills: servicePackage.skills || [],
+      skills: [],
       budget: {
         type: 'fixed',
         min: price,
