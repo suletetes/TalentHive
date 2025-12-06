@@ -1596,8 +1596,70 @@ async function seedHireNowRequests(users: any[]) {
   return createdRequests;
 }
 
-async function seedContracts(users: any[], projects: any[], proposals: any[]) {
+async function seedContracts(users: any[], projects: any[], proposals: any[], hireNowRequests: any[]) {
   logger.info('📄 Seeding contracts...');
+  
+  // Create contract for accepted hire now request (Bob's logo redesign)
+  const acceptedHireNow = hireNowRequests.find((r: any) => r.status === 'accepted');
+  if (acceptedHireNow) {
+    logger.info('📄 Creating contract for accepted hire now request...');
+    
+    // Use an existing design project
+    const designProject = projects.find((p: any) => p.title.includes('UI/UX') || p.title.includes('Design'));
+    
+    // Create a dummy proposal for the hire now contract
+    const hireNowProposal = await Proposal.create({
+      project: designProject._id,
+      freelancer: acceptedHireNow.freelancer,
+      proposedBudget: {
+        amount: acceptedHireNow.budget,
+        type: 'fixed',
+      },
+      coverLetter: 'Hire Now Request - Auto-generated proposal',
+      timeline: acceptedHireNow.timeline,
+      milestones: acceptedHireNow.milestones,
+      status: 'accepted',
+      createdAt: acceptedHireNow.createdAt,
+    });
+    
+    // Create the hire now contract
+    const startDate = new Date(acceptedHireNow.respondedAt);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + acceptedHireNow.timeline.duration);
+    
+    const contractMilestones = acceptedHireNow.milestones.map((m: any) => ({
+      title: m.title,
+      description: m.description,
+      amount: m.amount,
+      dueDate: m.dueDate,
+      status: 'pending',
+    }));
+    
+    const hireNowContract = await Contract.create({
+      project: designProject._id,
+      client: acceptedHireNow.client,
+      freelancer: acceptedHireNow.freelancer,
+      proposal: hireNowProposal._id,
+      title: acceptedHireNow.projectTitle,
+      description: acceptedHireNow.projectDescription,
+      totalAmount: acceptedHireNow.budget,
+      currency: 'USD',
+      startDate,
+      endDate,
+      status: 'active',
+      sourceType: 'hire_now',
+      milestones: contractMilestones,
+      terms: {
+        paymentTerms: 'Payment will be released upon milestone completion and client approval.',
+        cancellationPolicy: 'Either party may cancel this contract with 7 days written notice.',
+        intellectualProperty: 'All work product created under this contract will be owned by the client.',
+        confidentiality: 'Both parties agree to maintain confidentiality of all project information.',
+        disputeResolution: 'Disputes will be resolved through the platform\'s dispute resolution process.',
+      },
+    });
+    
+    logger.info(`✅ Created hire now contract: ${hireNowContract._id} with sourceType: hire_now`);
+  }
   
   const acceptedProposals = proposals.filter(p => p.status === 'accepted');
   
@@ -2497,7 +2559,7 @@ async function seedDatabase() {
     const servicePackages = await seedServicePackages(users);
     const proposals = await seedProposals(users, projects);
     const hireNowRequests = await seedHireNowRequests(users);
-    const contracts = await seedContracts(users, projects, proposals);
+    const contracts = await seedContracts(users, projects, proposals, hireNowRequests);
     const reviews = await seedReviews(users, contracts, projects);
     const timeEntries = await seedTimeEntries(users, contracts);
     const payments = await seedPayments(users, contracts);
