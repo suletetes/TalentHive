@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import mongoose from 'mongoose';
 import { HireNowRequest } from '@/models/HireNowRequest';
 import { Contract } from '@/models/Contract';
 import { Project } from '@/models/Project';
@@ -253,6 +254,7 @@ export const acceptHireNowRequest = async (
     
     const contractMilestones = hireNowRequest.milestones.length > 0 
       ? hireNowRequest.milestones.map((m: any) => ({
+          _id: new mongoose.Types.ObjectId(),
           title: m.title,
           description: m.description || 'Milestone delivery',
           amount: m.amount,
@@ -260,6 +262,7 @@ export const acceptHireNowRequest = async (
           status: 'pending',
         }))
       : [{
+          _id: new mongoose.Types.ObjectId(),
           title: 'Project Completion',
           description: 'Complete the project as described',
           amount: hireNowRequest.budget,
