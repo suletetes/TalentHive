@@ -43,8 +43,9 @@ export const useSignContract = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       contractsService.signContract(id, data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['contract', variables.id] });
     },
   });
 };
@@ -62,8 +63,10 @@ export const useSubmitMilestone = () => {
       milestoneId: string;
       data: any;
     }) => contractsService.submitMilestone(contractId, milestoneId, data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // Invalidate both the list and the specific contract
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['contract', variables.contractId] });
     },
   });
 };
@@ -81,8 +84,9 @@ export const useApproveMilestone = () => {
       milestoneId: string;
       data: any;
     }) => contractsService.approveMilestone(contractId, milestoneId, data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['contract', variables.contractId] });
     },
   });
 };
@@ -100,8 +104,9 @@ export const useRejectMilestone = () => {
       milestoneId: string;
       data: any;
     }) => contractsService.rejectMilestone(contractId, milestoneId, data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['contract', variables.contractId] });
     },
   });
 };

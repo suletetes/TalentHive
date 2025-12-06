@@ -344,17 +344,29 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
 
   if (!canSubmit) {
     console.log('[SUBMIT MILESTONE] Cannot submit - checking why...');
-    console.log('  - Is freelancer:', contract.freelancer.toString() === userId.toString());
-    console.log('  - Contract status:', contract.status);
+    const isFreelancer = contract.freelancer.toString() === userId.toString();
     const ms = contract.milestones.find((m: any) => m._id.toString() === milestoneId);
+    const availableIds = contract.milestones.map((m: any) => m._id.toString());
+    
+    console.log('  - Is freelancer:', isFreelancer);
+    console.log('  - Contract status:', contract.status);
     console.log('  - Milestone found:', !!ms);
     console.log('  - Milestone status:', ms?.status);
     console.log('  - Requested milestone ID:', milestoneId);
-    console.log('  - Available milestone IDs:', contract.milestones.map((m: any) => m._id.toString()));
+    console.log('  - Available milestone IDs:', availableIds);
     
-    // Provide more helpful error message
+    // Provide specific error messages
+    if (!isFreelancer) {
+      return next(new AppError('Only the freelancer can submit milestones', 403));
+    }
+    if (contract.status !== 'active') {
+      return next(new AppError(`Contract must be active to submit milestones. Current status: ${contract.status}`, 400));
+    }
     if (!ms) {
-      return next(new AppError(`Milestone not found. Available milestones: ${contract.milestones.map((m: any) => m._id.toString()).join(', ')}`, 404));
+      return next(new AppError(`Milestone not found. The milestone ID "${milestoneId}" does not exist in this contract. Please refresh the page and try again.`, 404));
+    }
+    if (!['pending', 'in_progress', 'rejected'].includes(ms.status)) {
+      return next(new AppError(`Cannot submit milestone with status "${ms.status}". Only pending, in_progress, or rejected milestones can be submitted.`, 400));
     }
     return next(new AppError('You cannot submit this milestone', 403));
   }

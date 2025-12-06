@@ -274,7 +274,21 @@ export const ContractsPage: React.FC = () => {
     
     const filtered = contracts.filter((c: Contract) => {
       const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
-      const matchesSource = sourceFilter === 'all' || (c as any).sourceType === sourceFilter;
+      
+      // Handle source filter with special case for service_request
+      let matchesSource = false;
+      if (sourceFilter === 'all') {
+        matchesSource = true;
+      } else if (sourceFilter === 'service_request') {
+        // Service requests are hire_now contracts with "Service Request:" in title
+        matchesSource = (c as any).sourceType === 'hire_now' && c.title?.startsWith('Service Request:');
+      } else if (sourceFilter === 'hire_now') {
+        // Direct hire excludes service requests
+        matchesSource = (c as any).sourceType === 'hire_now' && !c.title?.startsWith('Service Request:');
+      } else {
+        matchesSource = (c as any).sourceType === sourceFilter;
+      }
+      
       const passes = matchesStatus && matchesSource;
       
       if (!passes) {
@@ -306,11 +320,18 @@ export const ContractsPage: React.FC = () => {
   // Helper to get source type display
   const getSourceInfo = (contract: Contract) => {
     const sourceType = (contract as any).sourceType || 'proposal';
+    
+    // Check if title starts with "Service Request:" - these are service requests via hire now
+    const isServiceRequest = contract.title?.startsWith('Service Request:');
+    
     switch (sourceType) {
       case 'hire_now':
-        return { label: 'Hire Now', color: 'secondary' as const, icon: <HireNowIcon fontSize="small" /> };
+        if (isServiceRequest) {
+          return { label: 'Service Request', color: 'info' as const, icon: <ServiceIcon fontSize="small" /> };
+        }
+        return { label: 'Direct Hire', color: 'secondary' as const, icon: <HireNowIcon fontSize="small" /> };
       case 'service':
-        return { label: 'Service', color: 'info' as const, icon: <ServiceIcon fontSize="small" /> };
+        return { label: 'Service Package', color: 'info' as const, icon: <ServiceIcon fontSize="small" /> };
       default:
         return { label: 'Proposal', color: 'default' as const, icon: <ProposalIcon fontSize="small" /> };
     }
@@ -363,8 +384,9 @@ export const ContractsPage: React.FC = () => {
           >
             <MenuItem value="all">All Sources</MenuItem>
             <MenuItem value="proposal">Proposal</MenuItem>
-            <MenuItem value="hire_now">Hire Now</MenuItem>
-            <MenuItem value="service">Service</MenuItem>
+            <MenuItem value="hire_now">Direct Hire</MenuItem>
+            <MenuItem value="service_request">Service Request</MenuItem>
+            <MenuItem value="service">Service Package</MenuItem>
           </Select>
         </FormControl>
         <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center', ml: 'auto' }}>

@@ -115,8 +115,26 @@ export const ContractDetailPage: React.FC = () => {
 
   // Submit milestone mutation
   const submitMutation = useMutation({
-    mutationFn: async ({ milestoneId, notes }: { milestoneId: string; notes: string }) => {
-      const result = await contractsService.submitMilestone(id!, milestoneId, {
+    mutationFn: async ({ milestoneId, milestoneTitle, notes }: { milestoneId: string; milestoneTitle: string; notes: string }) => {
+      console.log('[SUBMIT MILESTONE] Starting submission for milestone:', milestoneId, 'title:', milestoneTitle);
+      
+      // First, refetch the contract to get fresh milestone IDs
+      const freshContractResponse = await contractsService.getContractById(id!);
+      const freshContract = freshContractResponse?.data?.contract || freshContractResponse?.contract || freshContractResponse?.data || freshContractResponse;
+      
+      console.log('[SUBMIT MILESTONE] Fresh contract milestones:', freshContract?.milestones?.map((m: any) => ({ id: m._id, title: m.title })));
+      
+      // Find the milestone by title (more reliable than ID which can change)
+      const freshMilestone = freshContract?.milestones?.find((m: any) => m.title === milestoneTitle);
+      
+      if (!freshMilestone) {
+        throw new Error(`Milestone "${milestoneTitle}" not found in contract. Please refresh the page.`);
+      }
+      
+      const actualMilestoneId = freshMilestone._id;
+      console.log('[SUBMIT MILESTONE] Using fresh milestone ID:', actualMilestoneId);
+      
+      const result = await contractsService.submitMilestone(id!, actualMilestoneId, {
         deliverables: [],
         freelancerNotes: notes,
       });
@@ -124,45 +142,89 @@ export const ContractDetailPage: React.FC = () => {
     },
     onSuccess: async () => {
       toast.success('Milestone submitted for review');
+      // Invalidate both queries to ensure fresh data
       await queryClient.invalidateQueries({ queryKey: ['contract', id] });
+      await queryClient.invalidateQueries({ queryKey: ['contracts'] });
       await refetch();
       setSubmitDialog(null);
       setSubmitNotes('');
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Failed to submit milestone');
+      console.error('[SUBMIT MILESTONE] Error:', err);
+      const errorMessage = err?.response?.data?.message || err.message || 'Failed to submit milestone';
+      toast.error(errorMessage);
+      // Refetch to get fresh data in case of stale milestone IDs
+      refetch();
     },
   });
 
   // Approve milestone mutation
   const approveMutation = useMutation({
-    mutationFn: async ({ milestoneId, feedback }: { milestoneId: string; feedback: string }) => {
-      return contractsService.approveMilestone(id!, milestoneId, { clientFeedback: feedback });
+    mutationFn: async ({ milestoneId, milestoneTitle, feedback }: { milestoneId: string; milestoneTitle: string; feedback: string }) => {
+      console.log('[APPROVE MILESTONE] Starting approval for milestone:', milestoneId, 'title:', milestoneTitle);
+      
+      // Refetch contract to get fresh milestone IDs
+      const freshContractResponse = await contractsService.getContractById(id!);
+      const freshContract = freshContractResponse?.data?.contract || freshContractResponse?.contract || freshContractResponse?.data || freshContractResponse;
+      const freshMilestone = freshContract?.milestones?.find((m: any) => m.title === milestoneTitle);
+      
+      if (!freshMilestone) {
+        throw new Error(`Milestone "${milestoneTitle}" not found. Please refresh the page.`);
+      }
+      
+      const actualMilestoneId = freshMilestone._id;
+      console.log('[APPROVE MILESTONE] Using fresh milestone ID:', actualMilestoneId);
+      
+      return contractsService.approveMilestone(id!, actualMilestoneId, { clientFeedback: feedback });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Milestone approved!');
-      queryClient.invalidateQueries({ queryKey: ['contract', id] });
+      await queryClient.invalidateQueries({ queryKey: ['contract', id] });
+      await queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      await refetch();
       setReviewDialog(null);
       setReviewFeedback('');
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Failed to approve milestone');
+      console.error('[APPROVE MILESTONE] Error:', err);
+      const errorMessage = err?.response?.data?.message || err.message || 'Failed to approve milestone';
+      toast.error(errorMessage);
+      refetch();
     },
   });
 
   // Reject milestone mutation
   const rejectMutation = useMutation({
-    mutationFn: async ({ milestoneId, feedback }: { milestoneId: string; feedback: string }) => {
-      return contractsService.rejectMilestone(id!, milestoneId, { clientFeedback: feedback });
+    mutationFn: async ({ milestoneId, milestoneTitle, feedback }: { milestoneId: string; milestoneTitle: string; feedback: string }) => {
+      console.log('[REJECT MILESTONE] Starting rejection for milestone:', milestoneId, 'title:', milestoneTitle);
+      
+      // Refetch contract to get fresh milestone IDs
+      const freshContractResponse = await contractsService.getContractById(id!);
+      const freshContract = freshContractResponse?.data?.contract || freshContractResponse?.contract || freshContractResponse?.data || freshContractResponse;
+      const freshMilestone = freshContract?.milestones?.find((m: any) => m.title === milestoneTitle);
+      
+      if (!freshMilestone) {
+        throw new Error(`Milestone "${milestoneTitle}" not found. Please refresh the page.`);
+      }
+      
+      const actualMilestoneId = freshMilestone._id;
+      console.log('[REJECT MILESTONE] Using fresh milestone ID:', actualMilestoneId);
+      
+      return contractsService.rejectMilestone(id!, actualMilestoneId, { clientFeedback: feedback });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Milestone rejected');
-      queryClient.invalidateQueries({ queryKey: ['contract', id] });
+      await queryClient.invalidateQueries({ queryKey: ['contract', id] });
+      await queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      await refetch();
       setReviewDialog(null);
       setReviewFeedback('');
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Failed to reject milestone');
+      console.error('[REJECT MILESTONE] Error:', err);
+      const errorMessage = err?.response?.data?.message || err.message || 'Failed to reject milestone';
+      toast.error(errorMessage);
+      refetch();
     },
   });
 
@@ -406,7 +468,7 @@ export const ContractDetailPage: React.FC = () => {
           <Button onClick={() => setSubmitDialog(null)}>Cancel</Button>
           <Button
             variant="contained"
-            onClick={() => submitMutation.mutate({ milestoneId: submitDialog._id, notes: submitNotes })}
+            onClick={() => submitMutation.mutate({ milestoneId: submitDialog._id, milestoneTitle: submitDialog.title, notes: submitNotes })}
             disabled={submitMutation.isPending}
           >
             {submitMutation.isPending ? 'Submitting...' : 'Submit'}
@@ -442,7 +504,7 @@ export const ContractDetailPage: React.FC = () => {
           <Button
             color="error"
             startIcon={<Cancel />}
-            onClick={() => rejectMutation.mutate({ milestoneId: reviewDialog._id, feedback: reviewFeedback })}
+            onClick={() => rejectMutation.mutate({ milestoneId: reviewDialog._id, milestoneTitle: reviewDialog.title, feedback: reviewFeedback })}
             disabled={rejectMutation.isPending}
           >
             Reject
@@ -451,7 +513,7 @@ export const ContractDetailPage: React.FC = () => {
             variant="contained"
             color="success"
             startIcon={<CheckCircle />}
-            onClick={() => approveMutation.mutate({ milestoneId: reviewDialog._id, feedback: reviewFeedback })}
+            onClick={() => approveMutation.mutate({ milestoneId: reviewDialog._id, milestoneTitle: reviewDialog.title, feedback: reviewFeedback })}
             disabled={approveMutation.isPending}
           >
             Approve
