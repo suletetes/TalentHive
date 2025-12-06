@@ -1430,7 +1430,7 @@ async function seedProposals(users: any[], projects: any[]) {
     {
       project: ecommerceProject._id,
       freelancer: bob._id,
-      coverLetter: 'I can help with the frontend design of your e-commerce platform.',
+      coverLetter: 'I can help with the frontend design of your e-commerce platform. With my expertise in UI/UX design, I will create a beautiful and user-friendly interface.',
       bidAmount: 7500,
       timeline: {
         duration: 60,
@@ -1443,7 +1443,7 @@ async function seedProposals(users: any[], projects: any[]) {
     {
       project: marketingProject._id,
       freelancer: carol._id,
-      coverLetter: 'I can help with content for your marketing website.',
+      coverLetter: 'I can help with content for your marketing website. I specialize in creating engaging copy that converts visitors into customers.',
       bidAmount: 3000,
       timeline: {
         duration: 30,
@@ -1767,10 +1767,14 @@ async function seedContracts(users: any[], projects: any[], proposals: any[], hi
     });
     
     // Create proposal for hire now
+    // Ensure cover letter is at least 50 characters
+    const baseCoverLetter = `Direct hire request accepted for project "${hireNowRequest.projectTitle}". ${hireNowRequest.projectDescription}`;
+    const coverLetter = baseCoverLetter.length >= 50 ? baseCoverLetter : baseCoverLetter.padEnd(50, ' ');
+    
     const hireNowProposal = await Proposal.create({
       project: hireNowProject._id,
       freelancer: hireNowRequest.freelancer,
-      coverLetter: `Direct hire request accepted: ${hireNowRequest.projectDescription}`,
+      coverLetter: coverLetter,
       bidAmount: hireNowRequest.budget,
       timeline: hireNowRequest.timeline,
       milestones: hireNowRequest.milestones.length > 0 ? hireNowRequest.milestones : [{
@@ -1881,11 +1885,14 @@ async function seedContracts(users: any[], projects: any[], proposals: any[], hi
       selectedFreelancer: servicePackage.freelancer,
     });
     
-    // Create proposal for service
+    // Create proposal for service - ensure cover letter is at least 50 characters
+    const serviceCoverLetterBase = `Service package order: ${servicePackage.title}. ${servicePackage.description || 'Professional service delivery as described in the package.'}`;
+    const serviceCoverLetter = serviceCoverLetterBase.length >= 50 ? serviceCoverLetterBase : serviceCoverLetterBase.padEnd(50, ' ');
+    
     const serviceProposal = await Proposal.create({
       project: serviceProject._id,
       freelancer: servicePackage.freelancer,
-      coverLetter: `Service package order: ${servicePackage.title}`,
+      coverLetter: serviceCoverLetter,
       bidAmount: price,
       timeline: {
         duration: deliveryDays,
