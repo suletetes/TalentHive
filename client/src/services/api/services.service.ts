@@ -83,7 +83,11 @@ export class ServicesService {
   }
 
   async purchasePackage(id: string): Promise<{ data: any }> {
-    return apiCore.post<{ data: any }>(`${this.basePath}/packages/${id}/purchase`);
+    return apiCore.post<{ data: any }>(`${this.basePath}/packages/${id}/order`);
+  }
+
+  async orderPackage(id: string, data?: { requirements?: string; message?: string }): Promise<{ data: any }> {
+    return apiCore.post<{ data: any }>(`${this.basePath}/packages/${id}/order`, data || {});
   }
 
   async getPackageStats(): Promise<{ data: any }> {

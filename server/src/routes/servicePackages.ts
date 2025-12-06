@@ -3,7 +3,9 @@ import { authenticate, authorize } from '@/middleware/auth';
 import {
   createServicePackage,
   getServicePackages,
+  getServicePackageById,
   updateServicePackage,
+  orderServicePackage,
   createProjectTemplate,
   getProjectTemplates,
   createProjectFromTemplate,
@@ -21,7 +23,9 @@ router.use(authenticate);
 // Service package routes (freelancers)
 router.post('/packages', authorize('freelancer'), createServicePackage);
 router.get('/packages', getServicePackages);
+router.get('/packages/:packageId', getServicePackageById);
 router.patch('/packages/:packageId', authorize('freelancer'), updateServicePackage);
+router.post('/packages/:packageId/order', authorize('client'), orderServicePackage);
 
 // Project template routes (clients)
 router.post('/templates', authorize('client'), createProjectTemplate);
