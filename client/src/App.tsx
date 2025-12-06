@@ -48,14 +48,10 @@ import { PaymentSuccessPage } from '@/pages/PaymentSuccessPage';
 import { PaymentErrorPage } from '@/pages/PaymentErrorPage';
 import { ContractDetailPage } from '@/pages/ContractDetailPage';
 import { TimeTrackingPage } from '@/pages/TimeTrackingPage';
-import { ServicesPage } from '@/pages/ServicesPage';
+import { HireNowRequestsPage } from '@/pages/HireNowRequestsPage';
 import { CreateProfilePage } from '@/pages/CreateProfilePage';
 import { HowItWorksPage } from '@/pages/HowItWorksPage';
 import { FindFreelancersPage } from '@/pages/FindFreelancersPage';
-import { HireNowRequestsPage } from '@/pages/HireNowRequestsPage';
-import { HireNowSentPage } from '@/pages/HireNowSentPage';
-import { EarningsPage } from '@/pages/EarningsPage';
-import { ReleasePaymentPage } from '@/pages/ReleasePaymentPage';
 import { AdminTransactionsPage } from '@/pages/admin/AdminTransactionsPage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
@@ -128,12 +124,8 @@ function App() {
           <Route path="organizations" element={<OrganizationListPage />} />
           <Route path="organizations/:id" element={<OrganizationDashboardPage />} />
           <Route path="contracts/:id" element={<ContractDetailPage />} />
-          <Route path="contracts/:contractId/release/:milestoneId" element={<ReleasePaymentPage />} />
           <Route path="time-tracking" element={<TimeTrackingPage />} />
-          <Route path="services" element={<ServicesPage />} />
           <Route path="hire-now-requests" element={<HireNowRequestsPage />} />
-          <Route path="hire-now-sent" element={<HireNowSentPage />} />
-          <Route path="earnings" element={<EarningsPage />} />
         </Route>
 
         {/* Admin routes */}
