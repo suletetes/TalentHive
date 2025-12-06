@@ -312,16 +312,6 @@ export const ProjectDetailPage = () => {
 
   const project = projectResponse.data;
   
-  // Debug logging for skills
-  console.log('🎯 [PROJECT DETAIL] Project:', project);
-  console.log('🎯 [PROJECT DETAIL] Skills:', project.skills);
-  console.log('🎯 [PROJECT DETAIL] Skills type:', typeof project.skills);
-  console.log('🎯 [PROJECT DETAIL] Skills is array:', Array.isArray(project.skills));
-  if (project.skills && project.skills.length > 0) {
-    console.log('🎯 [PROJECT DETAIL] First skill:', project.skills[0]);
-    console.log('🎯 [PROJECT DETAIL] First skill type:', typeof project.skills[0]);
-  }
-  
   const isFreelancer = user?.role === 'freelancer';
   const isClient = user?.role === 'client';
   
