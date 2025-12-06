@@ -8,13 +8,16 @@ export const messageKeys = {
   detail: (id: string) => [...messageKeys.all, 'detail', id] as const,
 };
 
-export const useConversations = () => {
+export const useConversations = (enabled = true) => {
   return useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
       const response = await messagesService.getConversations();
       return response.data;
     },
+    enabled, // ISSUE #3 FIX: Only fetch when authenticated
+    retry: 1, // Only retry once on failure
+    retryOnMount: false, // Don't retry when component mounts
   });
 };
 

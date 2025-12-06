@@ -416,6 +416,7 @@ export const acceptProposal = catchAsync(async (req: AuthRequest, res: Response,
     },
     startDate,
     endDate,
+    sourceType: 'proposal',
     milestones,
     terms: {
       paymentTerms: 'Payment will be released upon milestone completion and client approval.',

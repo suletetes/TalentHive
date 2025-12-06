@@ -1611,11 +1611,12 @@ async function seedContracts(users: any[], projects: any[], proposals: any[], hi
     const hireNowProposal = await Proposal.create({
       project: designProject._id,
       freelancer: acceptedHireNow.freelancer,
+      bidAmount: acceptedHireNow.budget,
       proposedBudget: {
         amount: acceptedHireNow.budget,
         type: 'fixed',
       },
-      coverLetter: 'Hire Now Request - Auto-generated proposal',
+      coverLetter: 'This proposal was automatically generated from a Hire Now request. I am excited to work on this project and deliver high-quality results.',
       timeline: acceptedHireNow.timeline,
       milestones: acceptedHireNow.milestones,
       status: 'accepted',

@@ -24,11 +24,13 @@ export const getSkills = catchAsync(async (req: Request, res: Response) => {
     query.isActive = isActive === 'true';
   }
   
-  const skills = await Skill.find(query).sort({ usageCount: -1, name: 1 });
+  const skills = await Skill.find(query).sort({ projectCount: -1, freelancerCount: -1, name: 1 });
   
   res.json({
     status: 'success',
-    data: skills,
+    data: {
+      skills,
+    },
   });
 });
 

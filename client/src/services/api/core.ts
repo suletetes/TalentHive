@@ -15,9 +15,11 @@ const PUBLIC_ENDPOINTS = [
 
 // Endpoints that should silently fail on 401 (non-critical background requests)
 const SILENT_FAIL_ENDPOINTS = [
+  '/notifications/unread-count',
   '/notifications',
-  '/conversations',
+  '/messages/conversations',
   '/messages/unread',
+  '/conversations',
 ];
 
 export class ApiCore {

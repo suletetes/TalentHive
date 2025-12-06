@@ -265,6 +265,7 @@ export const acceptHireNowRequest = async (
       startDate: new Date(),
       endDate: endDate,
       status: 'active',
+      sourceType: 'hire_now',
       milestones: contractMilestones,
       terms: {
         paymentTerms: 'Payment will be released upon milestone completion and client approval.',
