@@ -413,8 +413,17 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
   try {
     const freelancer = await User.findById(req.user._id);
     const freelancerName = `${freelancer?.profile.firstName} ${freelancer?.profile.lastName}`;
+    // Extract client ID - handle populated object, ObjectId, or string
+    let clientId: string;
+    if (typeof contract.client === 'string') {
+      clientId = contract.client;
+    } else if (contract.client._id) {
+      clientId = contract.client._id.toString();
+    } else {
+      clientId = String(contract.client);
+    }
     await notificationService.notifyMilestoneSubmitted(
-      contract.client.toString(),
+      clientId,
       freelancerName,
       contract._id.toString(),
       milestone.title
@@ -482,8 +491,17 @@ export const approveMilestone = catchAsync(async (req: AuthRequest, res: Respons
   try {
     const client = await User.findById(req.user._id);
     const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
+    // Extract freelancer ID - handle populated object, ObjectId, or string
+    let freelancerId: string;
+    if (typeof contract.freelancer === 'string') {
+      freelancerId = contract.freelancer;
+    } else if (contract.freelancer._id) {
+      freelancerId = contract.freelancer._id.toString();
+    } else {
+      freelancerId = String(contract.freelancer);
+    }
     await notificationService.notifyMilestoneApproved(
-      contract.freelancer.toString(),
+      freelancerId,
       clientName,
       contract._id.toString(),
       milestone.title
@@ -763,9 +781,29 @@ export const createDispute = catchAsync(async (req: AuthRequest, res: Response, 
 
   // Send notification to other party
   try {
-    const otherPartyId = contract.client.toString() === req.user._id.toString() 
-      ? contract.freelancer.toString() 
-      : contract.client.toString();
+    // Extract IDs - handle both populated object and ObjectId
+    // Extract IDs - handle populated object, ObjectId, or string
+    let clientId: string;
+    if (typeof contract.client === 'string') {
+      clientId = contract.client;
+    } else if (contract.client._id) {
+      clientId = contract.client._id.toString();
+    } else {
+      clientId = String(contract.client);
+    }
+    
+    let freelancerId: string;
+    if (typeof contract.freelancer === 'string') {
+      freelancerId = contract.freelancer;
+    } else if (contract.freelancer._id) {
+      freelancerId = contract.freelancer._id.toString();
+    } else {
+      freelancerId = String(contract.freelancer);
+    }
+    
+    const otherPartyId = clientId === req.user._id.toString() 
+      ? freelancerId 
+      : clientId;
     
     const user = await User.findById(req.user._id);
     const userName = `${user?.profile.firstName} ${user?.profile.lastName}`;
@@ -932,8 +970,17 @@ export const releasePayment = catchAsync(async (req: AuthRequest, res: Response,
   try {
     const client = await User.findById(userId);
     const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
+    // Extract freelancer ID - handle populated object, ObjectId, or string
+    let freelancerId: string;
+    if (typeof contract.freelancer === 'string') {
+      freelancerId = contract.freelancer;
+    } else if (contract.freelancer._id) {
+      freelancerId = contract.freelancer._id.toString();
+    } else {
+      freelancerId = String(contract.freelancer);
+    }
     await notificationService.notifyPaymentReleased(
-      contract.freelancer.toString(),
+      freelancerId,
       clientName,
       contract._id.toString(),
       milestone.title,

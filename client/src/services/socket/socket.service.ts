@@ -17,7 +17,6 @@ export class SocketService {
     const token = state.auth.token;
 
     if (!token) {
-      console.warn('No auth token available for socket connection');
       this.isConnecting = false;
       return;
     }
@@ -39,31 +38,27 @@ export class SocketService {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
-      console.log('Socket connected:', this.socket?.id);
       this.reconnectAttempts = 0;
     });
 
-    this.socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
+    this.socket.on('disconnect', () => {
+      // Socket disconnected
     });
 
-    this.socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+    this.socket.on('connect_error', () => {
       this.reconnectAttempts++;
 
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.error('Max reconnection attempts reached');
         this.disconnect();
       }
     });
 
-    this.socket.on('reconnect', (attemptNumber) => {
-      console.log('Socket reconnected after', attemptNumber, 'attempts');
+    this.socket.on('reconnect', () => {
       this.reconnectAttempts = 0;
     });
 
-    this.socket.on('error', (error) => {
-      console.error('Socket error:', error);
+    this.socket.on('error', () => {
+      // Socket error occurred
     });
   }
 
