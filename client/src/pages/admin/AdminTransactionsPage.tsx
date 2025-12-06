@@ -61,6 +61,12 @@ interface Transaction {
   createdAt: string;
 }
 
+// Helper function to format cents to dollars
+const formatCurrency = (cents: number | undefined): string => {
+  if (cents === undefined || cents === null) return '$0.00';
+  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 export const AdminTransactionsPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const toast = useToast();
@@ -204,7 +210,7 @@ export const AdminTransactionsPage: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="subtitle2" color="text.secondary">Total Volume</Typography>
-              <Typography variant="h5">${stats.totalVolume?.toLocaleString() || '0'}</Typography>
+              <Typography variant="h5">{formatCurrency(stats.totalVolume)}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -213,7 +219,7 @@ export const AdminTransactionsPage: React.FC = () => {
             <CardContent>
               <Typography variant="subtitle2" color="text.secondary">Platform Revenue</Typography>
               <Typography variant="h5" color="success.main">
-                ${stats.totalCommission?.toLocaleString() || '0'}
+                {formatCurrency(stats.totalCommission)}
               </Typography>
             </CardContent>
           </Card>
@@ -334,10 +340,10 @@ export const AdminTransactionsPage: React.FC = () => {
                         <TableCell>
                           {tx.freelancer?.profile?.firstName} {tx.freelancer?.profile?.lastName}
                         </TableCell>
-                        <TableCell>${tx.amount?.toLocaleString()}</TableCell>
+                        <TableCell>{formatCurrency(tx.amount)}</TableCell>
                         <TableCell color="success">
                           <Typography color="success.main">
-                            ${tx.platformCommission?.toLocaleString()}
+                            {formatCurrency(tx.platformCommission)}
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -432,17 +438,17 @@ export const AdminTransactionsPage: React.FC = () => {
                 </Grid>
                 <Grid item xs={6}>
                   <Typography variant="subtitle2" color="text.secondary">Amount</Typography>
-                  <Typography>${selectedTransaction.amount?.toLocaleString()}</Typography>
+                  <Typography>{formatCurrency(selectedTransaction.amount)}</Typography>
                 </Grid>
                 <Grid item xs={6}>
                   <Typography variant="subtitle2" color="text.secondary">Platform Commission</Typography>
                   <Typography color="success.main">
-                    ${selectedTransaction.platformCommission?.toLocaleString()}
+                    {formatCurrency(selectedTransaction.platformCommission)}
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
                   <Typography variant="subtitle2" color="text.secondary">Freelancer Amount</Typography>
-                  <Typography>${selectedTransaction.freelancerAmount?.toLocaleString()}</Typography>
+                  <Typography>{formatCurrency(selectedTransaction.freelancerAmount)}</Typography>
                 </Grid>
                 <Grid item xs={6}>
                   <Typography variant="subtitle2" color="text.secondary">Currency</Typography>
@@ -490,12 +496,12 @@ export const AdminTransactionsPage: React.FC = () => {
         <DialogContent>
           {actionDialog?.type === 'release' ? (
             <Alert severity="info">
-              This will release ${actionDialog.tx.freelancerAmount?.toLocaleString()} to the freelancer's account.
+              This will release {formatCurrency(actionDialog.tx.freelancerAmount)} to the freelancer's account.
             </Alert>
           ) : (
             <>
               <Alert severity="warning" sx={{ mb: 2 }}>
-                This will refund ${actionDialog?.tx.amount?.toLocaleString()} to the client.
+                This will refund {formatCurrency(actionDialog?.tx.amount)} to the client.
               </Alert>
               <TextField
                 fullWidth

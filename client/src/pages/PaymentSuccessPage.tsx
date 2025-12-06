@@ -26,8 +26,6 @@ export const PaymentSuccessPage: React.FC = () => {
   const [confirmed, setConfirmed] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
-  console.log('[PAYMENT SUCCESS] Params:', { paymentIntentId, transactionId, contractId });
-
   // Confirm payment mutation
   const confirmMutation = useMutation({
     mutationFn: async (intentId: string) => {

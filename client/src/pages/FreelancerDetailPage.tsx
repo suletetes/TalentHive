@@ -101,20 +101,10 @@ export const FreelancerDetailPage = () => {
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
     queryKey: ['freelancer-reviews', id],
     queryFn: async () => {
-      console.log(`[FREELANCER REVIEWS] Fetching reviews for freelancer: ${id}`);
-      try {
-        const response = await apiService.get(`/reviews/freelancer/${id}`);
-        console.log(`[FREELANCER REVIEWS] Response:`, response.data);
-        // Handle both response structures
-        const reviews = response.data?.data || response.data || [];
-        console.log(`[FREELANCER REVIEWS] Parsed reviews:`, reviews);
-        console.log(`[FREELANCER REVIEWS] Is array:`, Array.isArray(reviews));
-        console.log(`[FREELANCER REVIEWS] Count:`, Array.isArray(reviews) ? reviews.length : 0);
-        return Array.isArray(reviews) ? reviews : [];
-      } catch (error) {
-        console.error(`[FREELANCER REVIEWS ERROR]`, error);
-        throw error;
-      }
+      const response = await apiService.get(`/reviews/freelancer/${id}`);
+      // Handle both response structures
+      const reviews = response.data?.data || response.data || [];
+      return Array.isArray(reviews) ? reviews : [];
     },
     enabled: !!id,
   });
