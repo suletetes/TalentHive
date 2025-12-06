@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface User {
   id: string;
+  _id: string; // Alias for id - some components use _id
   email: string;
   role: 'admin' | 'freelancer' | 'client';
   profile: {

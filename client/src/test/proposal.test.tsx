@@ -23,13 +23,45 @@ import { ProposalList } from '../components/proposals/ProposalList';
 import { ProposalDetailModal } from '../components/proposals/ProposalDetailModal';
 import { theme } from '../theme';
 import { apiService } from '../services/api';
+import { vi } from 'vitest';
 
 // Mock dependencies
-jest.mock('../services/api');
-jest.mock('react-hot-toast');
+vi.mock('../services/api');
+vi.mock('react-hot-toast', () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+    loading: vi.fn(),
+  },
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    loading: vi.fn(),
+  },
+}));
 
-const mockApiService = apiService as jest.Mocked<typeof apiService>;
-const mockToast = toast as jest.Mocked<typeof toast>;
+// Mock socket
+const mockSocket = {
+  on: vi.fn(),
+  off: vi.fn(),
+  emit: vi.fn(),
+  connect: vi.fn(),
+  disconnect: vi.fn(),
+  isConnected: vi.fn(() => true),
+  getSocketId: vi.fn(() => 'mock-socket-id'),
+};
+
+vi.mock('../services/socket/socket.service', () => ({
+  default: mockSocket,
+  socketService: mockSocket,
+}));
+
+vi.mock('../hooks/useSocket', () => ({
+  useSocket: () => mockSocket,
+}));
+
+const mockApiService = apiService as any;
+const mockToast = toast as any;
 
 // Test wrapper component
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -117,7 +149,7 @@ const mockProposal = {
 
 describe('ProposalForm', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders proposal form correctly', () => {
@@ -127,11 +159,11 @@ describe('ProposalForm', () => {
       </TestWrapper>
     );
 
-    expect(screen.getByText('Submit Proposal')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Submit Proposal/i })).toBeInTheDocument();
     expect(screen.getByText('Test Project')).toBeInTheDocument();
-    expect(screen.getByLabelText('Cover Letter')).toBeInTheDocument();
-    expect(screen.getByLabelText('Your Bid')).toBeInTheDocument();
-    expect(screen.getByLabelText('Duration')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Cover Letter/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Your Bid/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Duration/i)).toBeInTheDocument();
   });
 
   it('validates cover letter length', async () => {
@@ -141,8 +173,8 @@ describe('ProposalForm', () => {
       </TestWrapper>
     );
 
-    const coverLetterInput = screen.getByLabelText('Cover Letter');
-    const submitButton = screen.getByText('Submit Proposal');
+    const coverLetterInput = screen.getByLabelText(/Cover Letter/i);
+    const submitButton = screen.getByRole('button', { name: /Submit Proposal/i });
 
     // Enter short cover letter
     fireEvent.change(coverLetterInput, { target: { value: 'Too short' } });
@@ -159,7 +191,7 @@ describe('ProposalForm', () => {
       createMockResponse({ status: 'success', data: { proposal: mockProposal } })
     );
 
-    const onSuccess = jest.fn();
+    const onSuccess = vi.fn();
 
     render(
       <TestWrapper>
@@ -168,15 +200,15 @@ describe('ProposalForm', () => {
     );
 
     // Fill form
-    fireEvent.change(screen.getByLabelText('Cover Letter'), {
+    fireEvent.change(screen.getByLabelText(/Cover Letter/i), {
       target: { value: 'I am very interested in this project and have the required skills to complete it successfully. I have extensive experience in web development.' },
     });
-    fireEvent.change(screen.getByLabelText('Your Bid'), {
+    fireEvent.change(screen.getByLabelText(/Your Bid/i), {
       target: { value: '1500' },
     });
 
     // Submit form
-    fireEvent.click(screen.getByText('Submit Proposal'));
+    fireEvent.click(screen.getByRole('button', { name: /Submit Proposal/i }));
 
     await waitFor(() => {
       expect(mockApiService.post).toHaveBeenCalledWith(
@@ -192,7 +224,7 @@ describe('ProposalForm', () => {
     });
   });
 
-  it('adds and removes milestones', () => {
+  it('adds and removes milestones', async () => {
     render(
       <TestWrapper>
         <ProposalForm project={mockProject} />
@@ -200,25 +232,35 @@ describe('ProposalForm', () => {
     );
 
     // Add milestone
-    fireEvent.change(screen.getByLabelText('Milestone Title'), {
+    const titleInput = screen.getByLabelText(/Milestone Title/i);
+    const amountInput = screen.getByLabelText(/Amount/i);
+    const descriptionInput = screen.getByLabelText(/Milestone Description/i);
+    
+    fireEvent.change(titleInput, {
       target: { value: 'Test Milestone' },
     });
-    fireEvent.change(screen.getByLabelText('Amount'), {
+    fireEvent.change(amountInput, {
       target: { value: '500' },
     });
-    fireEvent.change(screen.getByLabelText('Milestone Description'), {
+    fireEvent.change(descriptionInput, {
       target: { value: 'Test milestone description' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /add/i }));
+    const addButton = screen.getByRole('button', { name: /add milestone/i });
+    fireEvent.click(addButton);
 
-    expect(screen.getByText('Test Milestone')).toBeInTheDocument();
-    expect(screen.getByText('Test milestone description')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Test Milestone/i)).toBeInTheDocument();
+      expect(screen.getByText(/Test milestone description/i)).toBeInTheDocument();
+    });
 
     // Remove milestone
-    fireEvent.click(screen.getByTestId('DeleteIcon'));
+    const deleteButton = screen.getByTestId('DeleteIcon');
+    fireEvent.click(deleteButton);
 
-    expect(screen.queryByText('Test Milestone')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText(/Test Milestone/i)).not.toBeInTheDocument();
+    });
   });
 });
 
@@ -262,8 +304,8 @@ describe('ProposalCard', () => {
   });
 
   it('calls action handlers', () => {
-    const onAccept = jest.fn();
-    const onReject = jest.fn();
+    const onAccept = vi.fn();
+    const onReject = vi.fn();
 
     render(
       <TestWrapper>
@@ -310,8 +352,8 @@ describe('ProposalList', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Project Proposals')).toBeInTheDocument();
-      expect(screen.getByText('1 proposal found')).toBeInTheDocument();
+      expect(screen.getByText(/Project Proposals/i)).toBeInTheDocument();
+      expect(screen.getByText(/1 proposal found/i)).toBeInTheDocument();
     });
   });
 
@@ -323,7 +365,7 @@ describe('ProposalList', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('My Proposals')).toBeInTheDocument();
+      expect(screen.getByText(/My Proposals/i)).toBeInTheDocument();
     });
   });
 
@@ -356,7 +398,12 @@ describe('ProposalList', () => {
       </TestWrapper>
     );
 
-    const searchInput = screen.getByPlaceholderText('Search proposals...');
+    await waitFor(() => {
+      const searchInput = screen.getByPlaceholderText(/Search proposals/i);
+      expect(searchInput).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/Search proposals/i);
     fireEvent.change(searchInput, { target: { value: 'test search' } });
 
     await waitFor(() => {
@@ -373,7 +420,7 @@ describe('ProposalDetailModal', () => {
       <TestWrapper>
         <ProposalDetailModal
           open={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           proposal={mockProposal}
           viewMode="client"
         />
@@ -392,7 +439,7 @@ describe('ProposalDetailModal', () => {
       <TestWrapper>
         <ProposalDetailModal
           open={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           proposal={mockProposal}
           viewMode="client"
         />
@@ -413,13 +460,13 @@ describe('ProposalDetailModal', () => {
       createMockResponse({ status: 'success', data: { proposal: { ...mockProposal, status: 'accepted' } } })
     );
 
-    const onAction = jest.fn();
+    const onAction = vi.fn();
 
     render(
       <TestWrapper>
         <ProposalDetailModal
           open={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           proposal={mockProposal}
           viewMode="client"
           onAction={onAction}
@@ -455,15 +502,15 @@ describe('ProposalDetailModal', () => {
 
     // Mock window.confirm
     const originalConfirm = window.confirm;
-    window.confirm = jest.fn(() => true);
+    window.confirm = vi.fn(() => true);
 
-    const onAction = jest.fn();
+    const onAction = vi.fn();
 
     render(
       <TestWrapper>
         <ProposalDetailModal
           open={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           proposal={mockProposal}
           viewMode="freelancer"
           onAction={onAction}

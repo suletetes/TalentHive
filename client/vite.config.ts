@@ -37,5 +37,21 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    testTimeout: 5000,
+    hookTimeout: 5000,
+    teardownTimeout: 5000,
+    isolate: false,
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: true,
+      },
+    },
+    coverage: {
+      enabled: false,
+    },
+    reporters: ['basic'],
+    logHeapUsage: false,
+    css: false,
   },
-});
+}); 

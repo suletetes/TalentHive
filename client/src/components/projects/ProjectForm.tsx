@@ -7,34 +7,64 @@ import {
   Button,
   Typography,
   Paper,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
 
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { BudgetTimelineStep } from './steps/BudgetTimelineStep';
 import { RequirementsStep } from './steps/RequirementsStep';
 import { ReviewStep } from './steps/ReviewStep';
-import { apiService } from '@/services/api';
+import { useCreateProject, useUpdateProject } from '@/hooks/api/useProjects';
+import { getErrorMessage } from '@/utils/errorHandler';
+import { useToast } from '@/components/ui/ToastProvider';
 
 const steps = ['Basic Information', 'Budget & Timeline', 'Requirements', 'Review'];
 
 const projectSchema = yup.object({
-  title: yup.string().required('Title is required').max(200, 'Title too long'),
-  description: yup.string().required('Description is required').min(10, 'Description too short').max(5000, 'Description too long'),
-  category: yup.string().required('Category is required'),
-  skills: yup.array().of(yup.string()).min(1, 'At least one skill is required'),
+  title: yup.string()
+    .required('Title is required')
+    .min(5, 'Title must be at least 5 characters')
+    .max(200, 'Title must be at most 200 characters'),
+  description: yup.string()
+    .required('Description is required')
+    .min(20, 'Description must be at least 20 characters')
+    .max(5000, 'Description must be at most 5000 characters'),
+  category: yup.string()
+    .required('Category is required')
+    .min(1, 'Please select a valid category'),
+  skills: yup.array()
+    .of(yup.string())
+    .min(1, 'At least one skill is required')
+    .max(10, 'Maximum 10 skills allowed'),
   budget: yup.object({
-    type: yup.string().oneOf(['fixed', 'hourly']).required(),
-    min: yup.number().min(0, 'Budget must be positive').required(),
-    max: yup.number().min(0, 'Budget must be positive').required(),
+    type: yup.string()
+      .oneOf(['fixed', 'hourly'], 'Budget type must be fixed or hourly')
+      .required('Budget type is required'),
+    min: yup.number()
+      .min(1, 'Minimum budget must be at least $1')
+      .max(1000000, 'Minimum budget cannot exceed $1,000,000')
+      .required('Minimum budget is required'),
+    max: yup.number()
+      .min(1, 'Maximum budget must be at least $1')
+      .max(1000000, 'Maximum budget cannot exceed $1,000,000')
+      .required('Maximum budget is required')
+      .test('max-greater-than-min', 'Maximum budget must be greater than minimum budget', function(value) {
+        return !value || !this.parent.min || value >= this.parent.min;
+      }),
   }),
   timeline: yup.object({
-    duration: yup.number().min(1, 'Duration must be at least 1').required(),
-    unit: yup.string().oneOf(['days', 'weeks', 'months']).required(),
+    duration: yup.number()
+      .min(1, 'Duration must be at least 1')
+      .max(365, 'Duration cannot exceed 365 days')
+      .required('Duration is required'),
+    unit: yup.string()
+      .oneOf(['days', 'weeks', 'months'], 'Timeline unit must be days, weeks, or months')
+      .required('Timeline unit is required'),
   }),
+  organization: yup.string().optional(),
 });
 
 interface ProjectFormProps {
@@ -49,17 +79,31 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
   onCancel,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
-  const queryClient = useQueryClient();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const toast = useToast();
+  const isEditMode = !!initialData?._id;
 
-  const createMutation = useMutation({
-    mutationFn: (data: any) => apiService.post('/projects', data),
+  const createMutation = useCreateProject({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success('Project created successfully!');
       onSuccess?.();
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create project');
+    onError: (error) => {
+      const errorMessage = getErrorMessage(error);
+      setSubmitError(errorMessage);
+      toast.error(errorMessage);
+    },
+  });
+
+  const updateMutation = useUpdateProject({
+    onSuccess: () => {
+      toast.success('Project updated successfully!');
+      onSuccess?.();
+    },
+    onError: (error) => {
+      const errorMessage = getErrorMessage(error);
+      setSubmitError(errorMessage);
+      toast.error(errorMessage);
     },
   });
 
@@ -84,12 +128,33 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       visibility: initialData?.visibility || 'public',
       isUrgent: initialData?.isUrgent || false,
       applicationDeadline: initialData?.applicationDeadline || '',
+      status: initialData?.status || 'open',
+      organization: initialData?.organization?._id || '',
     },
     validationSchema: projectSchema,
     onSubmit: (values) => {
-      createMutation.mutate(values);
+      setSubmitError(null);
+      
+      if (isEditMode) {
+        updateMutation.mutate({ id: initialData._id, data: values });
+      } else {
+        createMutation.mutate(values);
+      }
     },
   });
+
+  const handleSaveAsDraft = () => {
+    setSubmitError(null);
+    const draftValues = { ...formik.values, status: 'draft' };
+    
+    if (isEditMode) {
+      updateMutation.mutate({ id: initialData._id, data: draftValues });
+    } else {
+      createMutation.mutate(draftValues);
+    }
+  };
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const handleNext = () => {
     setActiveStep((prevStep) => prevStep + 1);
@@ -115,6 +180,10 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     }
   };
 
+  const handleEditStep = (step: number) => {
+    setActiveStep(step);
+  };
+
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
@@ -124,15 +193,14 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       case 2:
         return <RequirementsStep formik={formik} />;
       case 3:
-        return <ReviewStep formik={formik} />;
+        return <ReviewStep formik={formik} onEditStep={handleEditStep} />;
       default:
         return null;
     }
   };  return (
-
     <Paper sx={{ p: 4 }}>
       <Typography variant="h5" gutterBottom>
-        {initialData ? 'Edit Project' : 'Create New Project'}
+        {isEditMode ? 'Edit Project' : 'Create New Project'}
       </Typography>
 
       <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
@@ -143,6 +211,12 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         ))}
       </Stepper>
 
+      {submitError && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setSubmitError(null)}>
+          {submitError}
+        </Alert>
+      )}
+
       <Box component="form" onSubmit={formik.handleSubmit}>
         {renderStepContent(activeStep)}
 
@@ -150,24 +224,39 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           <Button
             onClick={activeStep === 0 ? onCancel : handleBack}
             variant="outlined"
+            disabled={isSubmitting}
           >
             {activeStep === 0 ? 'Cancel' : 'Back'}
           </Button>
 
-          <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {isSubmitting && <CircularProgress size={24} />}
+            
             {activeStep === steps.length - 1 ? (
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={createMutation.isPending}
-              >
-                {createMutation.isPending ? 'Creating...' : 'Create Project'}
-              </Button>
+              <>
+                <Button
+                  onClick={handleSaveAsDraft}
+                  variant="outlined"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Saving...' : 'Save as Draft'}
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={isSubmitting || !formik.isValid}
+                >
+                  {isSubmitting 
+                    ? (isEditMode ? 'Updating...' : 'Publishing...') 
+                    : (isEditMode ? 'Update Project' : 'Publish Project')
+                  }
+                </Button>
+              </>
             ) : (
               <Button
                 onClick={handleNext}
                 variant="contained"
-                disabled={!isStepValid(activeStep)}
+                disabled={!isStepValid(activeStep) || isSubmitting}
               >
                 Next
               </Button>

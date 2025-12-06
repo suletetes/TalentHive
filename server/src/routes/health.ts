@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { redisClient } from '@/config/redis';
+import { redisClient, isRedisEnabled } from '@/config/redis';
 
 const router = Router();
 
@@ -32,12 +32,16 @@ router.get('/health', async (req: Request, res: Response) => {
     }
 
     // Check Redis connection
-    try {
-      await redisClient.ping();
-      health.services.redis = 'connected';
-    } catch (error) {
-      health.services.redis = 'disconnected';
-      health.status = 'degraded';
+    if (isRedisEnabled() && redisClient) {
+      try {
+        await redisClient.ping();
+        health.services.redis = 'connected';
+      } catch (error) {
+        health.services.redis = 'disconnected';
+        health.status = 'degraded';
+      }
+    } else {
+      health.services.redis = 'not configured';
     }
 
     const statusCode = health.status === 'healthy' ? 200 : 503;
@@ -56,7 +60,11 @@ router.get('/ready', async (req: Request, res: Response) => {
   try {
     // Check if all critical services are ready
     const isMongoReady = mongoose.connection.readyState === 1;
-    const isRedisReady = await redisClient.ping().then(() => true).catch(() => false);
+    let isRedisReady = true; // Redis is optional, so default to true
+    
+    if (isRedisEnabled() && redisClient) {
+      isRedisReady = await redisClient.ping().then(() => true).catch(() => false);
+    }
 
     if (isMongoReady && isRedisReady) {
       res.status(200).json({
@@ -69,7 +77,7 @@ router.get('/ready', async (req: Request, res: Response) => {
         timestamp: new Date().toISOString(),
         services: {
           database: isMongoReady ? 'ready' : 'not ready',
-          redis: isRedisReady ? 'ready' : 'not ready',
+          redis: isRedisEnabled() ? (isRedisReady ? 'ready' : 'not ready') : 'not configured',
         },
       });
     }

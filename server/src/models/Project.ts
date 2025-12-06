@@ -49,14 +49,18 @@ const projectSchema = new Schema<IProject>({
     ref: 'User',
     required: true,
   },
+  organization: {
+    type: Schema.Types.ObjectId,
+    ref: 'Organization',
+  },
   category: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: 'Category',
     required: true,
-    trim: true,
   },
   skills: [{
-    type: String,
-    trim: true,
+    type: Schema.Types.ObjectId,
+    ref: 'Skill',
   }],
   budget: {
     type: budgetSchema,
@@ -70,7 +74,7 @@ const projectSchema = new Schema<IProject>({
   status: {
     type: String,
     enum: ['draft', 'open', 'in_progress', 'completed', 'cancelled'],
-    default: 'draft',
+    default: 'open',
   },
   visibility: {
     type: String,
@@ -103,6 +107,20 @@ const projectSchema = new Schema<IProject>({
     type: Boolean,
     default: false,
   },
+  // Draft functionality fields
+  isDraft: {
+    type: Boolean,
+    default: false,
+  },
+  draftSavedAt: Date,
+  publishedAt: Date,
+  // Proposal acceptance control
+  acceptingProposals: {
+    type: Boolean,
+    default: true,
+  },
+  proposalsClosed: Boolean,
+  proposalsClosedAt: Date,
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -111,13 +129,13 @@ const projectSchema = new Schema<IProject>({
 
 // Indexes for better performance
 projectSchema.index({ client: 1 });
+projectSchema.index({ organization: 1 });
 projectSchema.index({ status: 1 });
 projectSchema.index({ skills: 1 });
 projectSchema.index({ category: 1 });
-projectSchema.index({ createdAt: -1 });
-projectSchema.index({ budget: 1 });
 projectSchema.index({ visibility: 1, status: 1 });
 projectSchema.index({ isFeatured: 1, createdAt: -1 });
+projectSchema.index({ isDraft: 1 });
 projectSchema.index({ isUrgent: 1, createdAt: -1 });
 
 // Text search index
@@ -130,11 +148,12 @@ projectSchema.index({
 
 // Virtual for proposal count
 projectSchema.virtual('proposalCount').get(function() {
-  return this.proposals.length;
+  return this.proposals?.length || 0;
 });
 
 // Virtual for budget range display
 projectSchema.virtual('budgetDisplay').get(function() {
+  if (!this.budget) return 'N/A';
   const { type, min, max } = this.budget;
   if (type === 'fixed') {
     return min === max ? `$${min}` : `$${min} - $${max}`;
@@ -145,6 +164,7 @@ projectSchema.virtual('budgetDisplay').get(function() {
 
 // Virtual for timeline display
 projectSchema.virtual('timelineDisplay').get(function() {
+  if (!this.timeline) return 'N/A';
   const { duration, unit } = this.timeline;
   return `${duration} ${unit}`;
 });
@@ -181,6 +201,21 @@ projectSchema.statics.searchProjects = function(query: string) {
     visibility: 'public',
   }).sort({ score: { $meta: 'textScore' } });
 };
+
+// Pre-save middleware to sync draft status
+projectSchema.pre('save', function(next) {
+  // Sync isDraft with status
+  if (this.status === 'draft') {
+    this.isDraft = true;
+    this.draftSavedAt = new Date();
+  } else {
+    this.isDraft = false;
+    if (this.isModified('status') && this.status === 'open' && !this.publishedAt) {
+      this.publishedAt = new Date();
+    }
+  }
+  next();
+});
 
 // Pre-save middleware to validate budget
 projectSchema.pre('save', function(next) {

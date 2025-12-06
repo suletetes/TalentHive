@@ -37,6 +37,7 @@ describe('Proposal System', () => {
         lastName: 'Client',
       },
       isEmailVerified: true,
+      isActive: true,
     });
 
     freelancerUser = await User.create({
@@ -55,6 +56,7 @@ describe('Proposal System', () => {
       },
       rating: 4.5,
       isEmailVerified: true,
+      isActive: true,
     });
 
     // Create test project
@@ -186,7 +188,7 @@ describe('Proposal System', () => {
       await Proposal.create({
         project: project._id,
         freelancer: freelancerUser._id,
-        coverLetter: 'Test proposal 1',
+        coverLetter: 'I am very interested in this project and have the required skills to complete it successfully.',
         bidAmount: 1500,
         timeline: { duration: 10, unit: 'days' },
         status: 'submitted',
@@ -228,7 +230,7 @@ describe('Proposal System', () => {
       await Proposal.create({
         project: project._id,
         freelancer: freelancerUser._id,
-        coverLetter: 'My test proposal',
+        coverLetter: 'I am very interested in this project and have the required skills to complete it successfully.',
         bidAmount: 1500,
         timeline: { duration: 10, unit: 'days' },
         status: 'submitted',
@@ -262,7 +264,7 @@ describe('Proposal System', () => {
       proposal = await Proposal.create({
         project: project._id,
         freelancer: freelancerUser._id,
-        coverLetter: 'Test proposal for acceptance',
+        coverLetter: 'I am very interested in this project and have the required skills to complete it successfully.',
         bidAmount: 1500,
         timeline: { duration: 10, unit: 'days' },
         status: 'submitted',
@@ -295,7 +297,7 @@ describe('Proposal System', () => {
     });
 
     it('should fail for non-submitted proposal', async () => {
-      proposal.status = 'draft';
+      proposal.status = 'rejected';
       await proposal.save();
 
       await request(app)
@@ -312,7 +314,7 @@ describe('Proposal System', () => {
       proposal = await Proposal.create({
         project: project._id,
         freelancer: freelancerUser._id,
-        coverLetter: 'Test proposal for rejection',
+        coverLetter: 'I am very interested in this project and have the required skills to complete it successfully.',
         bidAmount: 1500,
         timeline: { duration: 10, unit: 'days' },
         status: 'submitted',
@@ -340,7 +342,7 @@ describe('Proposal System', () => {
       proposal = await Proposal.create({
         project: project._id,
         freelancer: freelancerUser._id,
-        coverLetter: 'Test proposal for withdrawal',
+        coverLetter: 'I am very interested in this project and have the required skills to complete it successfully.',
         bidAmount: 1500,
         timeline: { duration: 10, unit: 'days' },
         status: 'submitted',
@@ -383,7 +385,7 @@ describe('Proposal System', () => {
       const proposalData = {
         project: project._id,
         freelancer: freelancerUser._id,
-        coverLetter: 'Test proposal with invalid milestones',
+        coverLetter: 'I am very interested in this project and have the required skills to complete it successfully.',
         bidAmount: 1500,
         timeline: { duration: 10, unit: 'days' },
         milestones: [
@@ -404,7 +406,7 @@ describe('Proposal System', () => {
 
       try {
         await Proposal.create(proposalData);
-        fail('Should have thrown validation error');
+        throw new Error('Should have thrown validation error');
       } catch (error: any) {
         expect(error.message).toContain('Total milestone amount must equal bid amount');
       }
@@ -414,7 +416,7 @@ describe('Proposal System', () => {
       const proposalData = {
         project: project._id,
         freelancer: freelancerUser._id,
-        coverLetter: 'First proposal',
+        coverLetter: 'I am very interested in this project and have the required skills to complete it successfully.',
         bidAmount: 1500,
         timeline: { duration: 10, unit: 'days' },
       };
@@ -424,8 +426,8 @@ describe('Proposal System', () => {
 
       // Try to create duplicate
       try {
-        await Proposal.create({ ...proposalData, coverLetter: 'Second proposal' });
-        fail('Should have thrown duplicate key error');
+        await Proposal.create({ ...proposalData, coverLetter: 'I am very interested in this project and have the required skills to complete it successfully. This is my second attempt.' });
+        throw new Error('Should have thrown duplicate key error');
       } catch (error: any) {
         expect(error.code).toBe(11000); // MongoDB duplicate key error
       }
@@ -439,10 +441,10 @@ describe('Proposal System', () => {
       proposal = new Proposal({
         project: project._id,
         freelancer: freelancerUser._id,
-        coverLetter: 'Test proposal for status workflow',
+        coverLetter: 'I am very interested in this project and have the required skills to complete it successfully.',
         bidAmount: 1500,
         timeline: { duration: 10, unit: 'days' },
-        status: 'draft',
+        status: 'submitted',
       });
     });
 

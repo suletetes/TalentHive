@@ -18,31 +18,44 @@ import {
   ListItemSecondaryAction,
   IconButton,
   Chip,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
-import { AttachMoney, Schedule, Add, Delete, Upload } from '@mui/icons-material';
+import { AttachMoney, Schedule, Add, Delete } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
-import { apiService } from '@/services/api';
+import { useCreateProposal } from '@/hooks/api/useProposals';
+import { ErrorHandler, ValidationErrorHandler } from '@/utils/errorHandler';
+import { useToast } from '@/components/ui/ToastProvider';
 
 const proposalSchema = yup.object({
   coverLetter: yup.string()
     .required('Cover letter is required')
     .min(50, 'Cover letter must be at least 50 characters')
-    .max(2000, 'Cover letter cannot exceed 2000 characters'),
+    .max(2000, 'Cover letter cannot exceed 2000 characters')
+    .test('no-spam', 'Cover letter appears to be spam', function(value) {
+      if (!value) return true;
+      // Check for excessive repetition
+      const words = value.split(' ');
+      const uniqueWords = new Set(words);
+      return uniqueWords.size > words.length * 0.3; // At least 30% unique words
+    }),
   bidAmount: yup.number()
     .required('Bid amount is required')
-    .min(1, 'Bid amount must be positive'),
+    .min(1, 'Bid amount must be at least $1')
+    .max(1000000, 'Bid amount cannot exceed $1,000,000')
+    .typeError('Bid amount must be a valid number'),
   timeline: yup.object({
     duration: yup.number()
       .required('Duration is required')
-      .min(1, 'Duration must be at least 1'),
+      .min(1, 'Duration must be at least 1')
+      .max(365, 'Duration cannot exceed 365 days')
+      .typeError('Duration must be a valid number'),
     unit: yup.string()
-      .required('Unit is required')
-      .oneOf(['days', 'weeks', 'months']),
+      .required('Timeline unit is required')
+      .oneOf(['days', 'weeks', 'months'], 'Timeline unit must be days, weeks, or months'),
   }),
 });
 
@@ -78,21 +91,36 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
     deliverables: [],
   });
   const [attachments, setAttachments] = useState<string[]>([]);
-  
-  const queryClient = useQueryClient();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const toast = useToast();
 
-  const submitMutation = useMutation({
-    mutationFn: (data: any) => apiService.post(`/proposals/project/${project._id}`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      toast.success('Proposal submitted successfully!');
+  const submitMutation = useCreateProposal();
+
+  // Handle success
+  React.useEffect(() => {
+    if (submitMutation.isSuccess) {
+      formik.resetForm();
+      setMilestones([]);
+      setAttachments([]);
+      setSubmitError(null);
       onSuccess?.();
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to submit proposal');
-    },
-  });
+    }
+  }, [submitMutation.isSuccess]);
+
+  // Handle error
+  React.useEffect(() => {
+    if (submitMutation.isError) {
+      const error = submitMutation.error as any;
+      const apiError = ErrorHandler.handle(error);
+      setSubmitError(apiError.message);
+      
+      // Extract field-specific errors
+      const fieldErrors = ValidationErrorHandler.extractFieldErrors(apiError);
+      Object.entries(fieldErrors).forEach(([field, message]) => {
+        formik.setFieldError(field, message);
+      });
+    }
+  }, [submitMutation.isError, submitMutation.error]);
 
   const formik = useFormik({
     initialValues: {
@@ -105,18 +133,34 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
     },
     validationSchema: proposalSchema,
     onSubmit: (values) => {
+      setSubmitError(null);
+      
+      // Remove temporary _tempId from milestones before sending
+      const cleanMilestones = milestones.map(({ _tempId, ...milestone }) => milestone);
+      
       const data = {
-        ...values,
-        milestones,
-        attachments,
+        coverLetter: values.coverLetter,
+        bidAmount: values.bidAmount,
+        timeline: values.timeline,
+        milestones: cleanMilestones.length > 0 ? cleanMilestones : undefined,
+        attachments: attachments.length > 0 ? attachments : undefined,
       };
-      submitMutation.mutate(data);
+      
+      submitMutation.mutate({ projectId: project._id, data });
     },
   });
 
   const handleAddMilestone = () => {
-    if (newMilestone.title && newMilestone.description && newMilestone.amount > 0) {
-      setMilestones([...milestones, { ...newMilestone, id: Date.now() }]);
+    if (newMilestone.title && newMilestone.description && newMilestone.amount > 0 && newMilestone.dueDate) {
+      const { title, description, amount, dueDate, deliverables } = newMilestone;
+      setMilestones([...milestones, { 
+        title, 
+        description, 
+        amount, 
+        dueDate, 
+        deliverables,
+        _tempId: Date.now() // Temporary ID for UI only
+      }]);
       setNewMilestone({
         title: '',
         description: '',
@@ -128,7 +172,7 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
   };
 
   const handleRemoveMilestone = (id: number) => {
-    setMilestones(milestones.filter(m => m.id !== id));
+    setMilestones(milestones.filter(m => m._tempId !== id));
   };
 
   const getTotalMilestoneAmount = () => {
@@ -156,6 +200,12 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         {getBudgetGuidance()}
       </Typography>
+
+      {submitError && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setSubmitError(null)}>
+          {submitError}
+        </Alert>
+      )}
 
       <Box component="form" onSubmit={formik.handleSubmit}>
         {/* Cover Letter */}
@@ -292,7 +342,7 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
             <Button
               variant="outlined"
               onClick={handleAddMilestone}
-              disabled={!newMilestone.title || !newMilestone.amount}
+              disabled={!newMilestone.title || !newMilestone.description || !newMilestone.amount || !newMilestone.dueDate}
               sx={{ height: '40px' }}
             >
               <Add />
@@ -314,7 +364,7 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
           <Box sx={{ mb: 3 }}>
             <List>
               {milestones.map((milestone) => (
-                <ListItem key={milestone.id} divider>
+                <ListItem key={milestone._tempId} divider>
                   <ListItemText
                     primary={milestone.title}
                     secondary={
@@ -334,7 +384,7 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
                     }
                   />
                   <ListItemSecondaryAction>
-                    <IconButton onClick={() => handleRemoveMilestone(milestone.id)}>
+                    <IconButton onClick={() => handleRemoveMilestone(milestone._tempId)}>
                       <Delete />
                     </IconButton>
                   </ListItemSecondaryAction>
@@ -358,19 +408,27 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
         <Divider sx={{ my: 3 }} />
 
         {/* Actions */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-          <Button onClick={onCancel} variant="outlined">
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
+          <Button 
+            onClick={onCancel} 
+            variant="outlined"
+            disabled={submitMutation.isPending}
+          >
             Cancel
           </Button>
           
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={submitMutation.isPending}
-            size="large"
-          >
-            {submitMutation.isPending ? 'Submitting...' : 'Submit Proposal'}
-          </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {submitMutation.isPending && <CircularProgress size={24} />}
+            
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={submitMutation.isPending || !formik.isValid}
+              size="large"
+            >
+              {submitMutation.isPending ? 'Submitting...' : 'Submit Proposal'}
+            </Button>
+          </Box>
         </Box>
       </Box>
     </Paper>

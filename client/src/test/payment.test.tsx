@@ -23,25 +23,37 @@ import { EscrowAccountSetup } from '../components/payments/EscrowAccountSetup';
 import { PayoutManager } from '../components/payments/PayoutManager';
 import { theme } from '../theme';
 import { apiService } from '../services/api';
+import { vi } from 'vitest';
 
 // Mock dependencies
-jest.mock('../services/api');
-jest.mock('react-hot-toast');
-jest.mock('@stripe/stripe-js');
-jest.mock('@stripe/react-stripe-js', () => ({
+vi.mock('../services/api');
+vi.mock('react-hot-toast', () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+    loading: vi.fn(),
+  },
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    loading: vi.fn(),
+  },
+}));
+vi.mock('@stripe/stripe-js');
+vi.mock('@stripe/react-stripe-js', () => ({
   Elements: ({ children }: any) => children,
   CardElement: () => <div data-testid="card-element">Card Element</div>,
   useStripe: () => ({
-    createPaymentMethod: jest.fn(),
-    confirmCardPayment: jest.fn(),
+    createPaymentMethod: vi.fn(),
+    confirmCardPayment: vi.fn(),
   }),
   useElements: () => ({
-    getElement: jest.fn(() => ({})),
+    getElement: vi.fn(() => ({})),
   }),
 }));
 
-const mockApiService = apiService as jest.Mocked<typeof apiService>;
-const mockToast = toast as jest.Mocked<typeof toast>;
+const mockApiService = apiService as any;
+const mockToast = toast as any;
 
 // Test wrapper component
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -147,7 +159,7 @@ const mockEscrowAccount = {
 
 describe('PaymentForm', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders payment form correctly', () => {
@@ -188,14 +200,14 @@ describe('PaymentForm', () => {
 
   it('handles payment submission', async () => {
     const mockStripe = {
-      createPaymentMethod: jest.fn().mockResolvedValue({
+      createPaymentMethod: vi.fn().mockResolvedValue({
         error: null,
         paymentMethod: { id: 'pm_test_123' },
       }),
     };
 
     const mockElements = {
-      getElement: jest.fn().mockReturnValue({}),
+      getElement: vi.fn().mockReturnValue({}),
     };
 
     // Mock the Stripe hooks
@@ -216,7 +228,7 @@ describe('PaymentForm', () => {
       })
     );
 
-    const onSuccess = jest.fn();
+    const onSuccess = vi.fn();
 
     render(
       <TestWrapper>
@@ -303,11 +315,16 @@ describe('PaymentHistory', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Status')).toBeInTheDocument();
+      expect(screen.getByText('Payment History')).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText('Status'), {
-      target: { value: 'completed' },
+    // Find the Status select by its label
+    const statusSelect = screen.getByRole('combobox', { name: /Status/i });
+    fireEvent.mouseDown(statusSelect);
+
+    await waitFor(() => {
+      const completedOption = screen.getByText('Completed');
+      fireEvent.click(completedOption);
     });
 
     await waitFor(() => {
@@ -487,24 +504,26 @@ describe('PayoutManager', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Request Payout')).toBeInTheDocument();
+      expect(screen.getByText('Payout Management')).toBeInTheDocument();
     });
 
-    // Click request payout button
-    fireEvent.click(screen.getByText('Request Payout'));
+    // Click request payout button (use getAllByRole to handle multiple buttons)
+    const payoutButtons = screen.getAllByRole('button', { name: /Request Payout/i });
+    fireEvent.click(payoutButtons[0]);
 
     // Should open dialog
     await waitFor(() => {
-      expect(screen.getByText('Request Payout')).toBeInTheDocument();
-      expect(screen.getByLabelText('Payout Amount')).toBeInTheDocument();
+      expect(screen.getByLabelText(/Payout Amount/i)).toBeInTheDocument();
     });
 
     // Fill amount and submit
-    fireEvent.change(screen.getByLabelText('Payout Amount'), {
+    fireEvent.change(screen.getByLabelText(/Payout Amount/i), {
       target: { value: '1000' },
     });
 
-    fireEvent.click(screen.getAllByText('Request Payout')[1]); // Button in dialog
+    // Find and click the submit button in the dialog
+    const submitButtons = screen.getAllByRole('button', { name: /Request Payout/i });
+    fireEvent.click(submitButtons[submitButtons.length - 1]); // Last button is in dialog
 
     await waitFor(() => {
       expect(mockApiService.post).toHaveBeenCalledWith(

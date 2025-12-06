@@ -13,15 +13,18 @@ describe('Organization API', () => {
   let memberId: string;
   let organizationId: string;
 
-  beforeAll(async () => {
-    // Create test users
+  beforeEach(async () => {
+    // Create test users before each test
     const owner = await User.create({
       email: 'owner@test.com',
       password: 'Test123!',
-      firstName: 'John',
-      lastName: 'Owner',
+      profile: {
+        firstName: 'John',
+        lastName: 'Owner',
+      },
       role: 'client',
       isEmailVerified: true,
+      isActive: true,
     });
     ownerId = (owner._id as any).toString();
     ownerToken = generateToken(ownerId);
@@ -29,20 +32,35 @@ describe('Organization API', () => {
     const member = await User.create({
       email: 'member@test.com',
       password: 'Test123!',
-      firstName: 'Jane',
-      lastName: 'Member',
+      profile: {
+        firstName: 'Jane',
+        lastName: 'Member',
+      },
       role: 'client',
       isEmailVerified: true,
+      isActive: true,
     });
     memberId = (member._id as any).toString();
     memberToken = generateToken(memberId);
-  });
 
-  afterAll(async () => {
-    await User.deleteMany({});
-    await Organization.deleteMany({});
-    await BudgetApproval.deleteMany({});
-    await mongoose.connection.close();
+    // Create a test organization for tests that need it
+    const org = await Organization.create({
+      name: 'Test Organization',
+      description: 'Test description',
+      industry: 'Technology',
+      size: '11-50',
+      website: 'https://test.com',
+      owner: ownerId,
+      members: [
+        {
+          user: ownerId,
+          role: 'owner',
+          permissions: ['*'],
+          joinedAt: new Date(),
+        },
+      ],
+    });
+    organizationId = (org._id as any).toString();
   });
 
   describe('POST /api/organizations', () => {
@@ -51,19 +69,17 @@ describe('Organization API', () => {
         .post('/api/organizations')
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({
-          name: 'Test Organization',
-          description: 'Test description',
-          industry: 'Technology',
-          size: '11-50',
-          website: 'https://test.com',
+          name: 'Another Organization',
+          description: 'Another test description',
+          industry: 'Finance',
+          size: '51-200',
+          website: 'https://another.com',
         });
 
       expect(response.status).toBe(201);
       expect(response.body.status).toBe('success');
       expect(response.body.data.organization).toHaveProperty('_id');
-      expect(response.body.data.organization.name).toBe('Test Organization');
-      
-      organizationId = response.body.data.organization._id;
+      expect(response.body.data.organization.name).toBe('Another Organization');
     });
 
     it('should require authentication', async () => {

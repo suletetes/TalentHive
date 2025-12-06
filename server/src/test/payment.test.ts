@@ -1,15 +1,4 @@
-import request from 'supertest';
-import { app } from '../index';
-import { User } from '../models/User';
-import { Project } from '../models/Project';
-import { Proposal } from '../models/Proposal';
-import { Contract } from '../models/Contract';
-import { Payment, EscrowAccount } from '../models/Payment';
-import { connectDB, disconnectDB } from '../config/database';
-import { generateToken } from '../utils/jwt';
-import { stripe } from '../config/stripe';
-
-// Mock Stripe
+// Mock Stripe - must be before imports due to hoisting
 jest.mock('../config/stripe', () => ({
   stripe: {
     paymentIntents: {
@@ -39,6 +28,17 @@ jest.mock('../config/stripe', () => ({
     ESCROW_HOLD_DAYS: 7,
   },
 }));
+
+import request from 'supertest';
+import { app } from '../index';
+import { User } from '../models/User';
+import { Project } from '../models/Project';
+import { Proposal } from '../models/Proposal';
+import { Contract } from '../models/Contract';
+import { Payment, EscrowAccount } from '../models/Payment';
+import { connectDB, disconnectDB } from '../config/database';
+import { generateToken } from '../utils/jwt';
+import { stripe } from '../config/stripe';
 
 describe('Payment System', () => {
   let clientUser: any;
@@ -79,6 +79,7 @@ describe('Payment System', () => {
         lastName: 'Client',
       },
       isEmailVerified: true,
+      isActive: true,
     });
 
     freelancerUser = await User.create({
@@ -97,6 +98,7 @@ describe('Payment System', () => {
       },
       rating: 4.5,
       isEmailVerified: true,
+      isActive: true,
     });
 
     // Create test project and contract
@@ -115,7 +117,7 @@ describe('Payment System', () => {
     proposal = await Proposal.create({
       project: project._id,
       freelancer: freelancerUser._id,
-      coverLetter: 'Test proposal',
+      coverLetter: 'This is a test proposal with sufficient length to meet the minimum requirement of 50 characters for the cover letter field.',
       bidAmount: 1500,
       timeline: { duration: 10, unit: 'days' },
       status: 'accepted',
@@ -159,7 +161,7 @@ describe('Payment System', () => {
     it('should create payment intent successfully', async () => {
       const milestoneId = contract.milestones[0]._id;
 
-      mockStripe.paymentIntents.create.mockResolvedValueOnce({
+      (stripe.paymentIntents.create as jest.Mock).mockResolvedValueOnce({
         id: 'pi_test_123',
         status: 'requires_confirmation',
         client_secret: 'pi_test_123_secret',
@@ -181,7 +183,7 @@ describe('Payment System', () => {
       expect(response.body.status).toBe('success');
       expect(response.body.data.payment).toBeDefined();
       expect(response.body.data.paymentIntent).toBeDefined();
-      expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
+      expect(stripe.paymentIntents.create).toHaveBeenCalledWith(
         expect.objectContaining({
           amount: 150000, // 1500 * 100 cents
           currency: 'usd',
@@ -247,7 +249,7 @@ describe('Payment System', () => {
     });
 
     it('should confirm successful payment', async () => {
-      mockStripe.paymentIntents.retrieve.mockResolvedValueOnce({
+      (stripe.paymentIntents.retrieve as jest.Mock).mockResolvedValueOnce({
         id: 'pi_test_123',
         status: 'succeeded',
       } as any);
@@ -262,7 +264,7 @@ describe('Payment System', () => {
     });
 
     it('should handle failed payment', async () => {
-      mockStripe.paymentIntents.retrieve.mockResolvedValueOnce({
+      (stripe.paymentIntents.retrieve as jest.Mock).mockResolvedValueOnce({
         id: 'pi_test_123',
         status: 'payment_failed',
       } as any);
@@ -325,11 +327,11 @@ describe('Payment System', () => {
 
   describe('POST /api/payments/escrow/account', () => {
     it('should create escrow account for freelancer', async () => {
-      mockStripe.accounts.create.mockResolvedValueOnce({
+      (stripe.accounts.create as jest.Mock).mockResolvedValueOnce({
         id: 'acct_test_123',
       } as any);
 
-      mockStripe.accountLinks.create.mockResolvedValueOnce({
+      (stripe.accountLinks.create as jest.Mock).mockResolvedValueOnce({
         url: 'https://connect.stripe.com/setup/test',
       } as any);
 
@@ -342,7 +344,7 @@ describe('Payment System', () => {
       expect(response.body.status).toBe('success');
       expect(response.body.data.escrowAccount).toBeDefined();
       expect(response.body.data.onboardingUrl).toBeDefined();
-      expect(mockStripe.accounts.create).toHaveBeenCalled();
+      expect(stripe.accounts.create).toHaveBeenCalled();
     });
 
     it('should fail if account already exists', async () => {
@@ -373,7 +375,7 @@ describe('Payment System', () => {
     });
 
     it('should get escrow account details', async () => {
-      mockStripe.accounts.retrieve.mockResolvedValueOnce({
+      (stripe.accounts.retrieve as jest.Mock).mockResolvedValueOnce({
         id: 'acct_test_123',
         charges_enabled: true,
         payouts_enabled: true,
@@ -421,7 +423,7 @@ describe('Payment System', () => {
     });
 
     it('should request payout successfully', async () => {
-      mockStripe.transfers.create.mockResolvedValueOnce({
+      (stripe.transfers.create as jest.Mock).mockResolvedValueOnce({
         id: 'tr_test_123',
         amount: 50000, // $500 in cents
         status: 'pending',
@@ -441,7 +443,7 @@ describe('Payment System', () => {
       expect(response.body.status).toBe('success');
       expect(response.body.data.payment).toBeDefined();
       expect(response.body.data.transfer).toBeDefined();
-      expect(mockStripe.transfers.create).toHaveBeenCalled();
+      expect(stripe.transfers.create).toHaveBeenCalled();
 
       // Check balance was updated
       const updatedAccount = await EscrowAccount.findById(escrowAccount._id);
@@ -493,7 +495,7 @@ describe('Payment System', () => {
     });
 
     it('should refund payment successfully', async () => {
-      mockStripe.refunds.create.mockResolvedValueOnce({
+      (stripe.refunds.create as jest.Mock).mockResolvedValueOnce({
         id: 'rf_test_123',
         amount: 150000,
         status: 'succeeded',
@@ -512,7 +514,7 @@ describe('Payment System', () => {
 
       expect(response.body.status).toBe('success');
       expect(response.body.data.payment.status).toBe('refunded');
-      expect(mockStripe.refunds.create).toHaveBeenCalled();
+      expect(stripe.refunds.create).toHaveBeenCalled();
     });
 
     it('should fail for non-authorized user', async () => {

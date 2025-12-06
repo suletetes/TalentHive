@@ -3,6 +3,22 @@ import { logger } from '@/utils/logger';
 
 export const connectDB = async (): Promise<void> => {
   try {
+    // Skip if already connected (important for tests)
+    if (mongoose.connection.readyState === 1) {
+      logger.info('MongoDB already connected, skipping connection');
+      return;
+    }
+
+    // Skip if connecting (readyState === 2)
+    if (mongoose.connection.readyState === 2) {
+      logger.info('MongoDB connection in progress, waiting...');
+      // Wait for connection to complete
+      await new Promise((resolve) => {
+        mongoose.connection.once('connected', resolve);
+      });
+      return;
+    }
+    
     const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive_dev';
     
     await mongoose.connect(mongoUri, {

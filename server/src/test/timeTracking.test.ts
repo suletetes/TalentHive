@@ -4,6 +4,7 @@ import { app } from '../index';
 import { User } from '../models/User';
 import { Project } from '../models/Project';
 import { Contract } from '../models/Contract';
+import { Proposal } from '../models/Proposal';
 import TimeEntry from '../models/TimeEntry';
 import WorkSession from '../models/WorkSession';
 import { generateToken } from '../utils/jwt';
@@ -16,15 +17,18 @@ describe('Time Tracking API', () => {
   let projectId: string;
   let contractId: string;
 
-  beforeAll(async () => {
-    // Create test users
+  beforeEach(async () => {
+    // Create test users before each test
     const freelancer = await User.create({
       email: 'freelancer@test.com',
       password: 'Test123!',
-      firstName: 'John',
-      lastName: 'Freelancer',
+      profile: {
+        firstName: 'John',
+        lastName: 'Freelancer',
+      },
       role: 'freelancer',
       isEmailVerified: true,
+      isActive: true,
     });
     freelancerId = (freelancer._id as any).toString();
     freelancerToken = generateToken(freelancerId);
@@ -32,10 +36,13 @@ describe('Time Tracking API', () => {
     const client = await User.create({
       email: 'client@test.com',
       password: 'Test123!',
-      firstName: 'Jane',
-      lastName: 'Client',
+      profile: {
+        firstName: 'Jane',
+        lastName: 'Client',
+      },
       role: 'client',
       isEmailVerified: true,
+      isActive: true,
     });
     clientId = (client._id as any).toString();
     clientToken = generateToken(clientId);
@@ -45,25 +52,52 @@ describe('Time Tracking API', () => {
       title: 'Test Project',
       description: 'Test project description',
       client: clientId,
-      budget: { min: 1000, max: 5000 },
-      duration: 30,
+      budget: { type: 'fixed', min: 1000, max: 5000 },
+      timeline: { duration: 30, unit: 'days' },
+      category: 'Web Development',
       skills: ['JavaScript', 'React'],
-      status: 'active',
+      status: 'in_progress',
     });
     projectId = (project._id as any).toString();
+
+    // Create a proposal first (required for contract)
+    const proposal = await Proposal.create({
+      project: projectId,
+      freelancer: freelancerId,
+      coverLetter: 'I am very interested in this project and have the required skills to complete it successfully.',
+      bidAmount: 2000,
+      timeline: { duration: 30, unit: 'days' },
+      status: 'accepted',
+    });
 
     // Create test contract
     const contract = await Contract.create({
       project: projectId,
       client: clientId,
       freelancer: freelancerId,
+      proposal: proposal._id,
       title: 'Test Contract',
       description: 'Test contract description',
-      amount: 2000,
-      hourlyRate: 50,
-      status: 'active',
+      totalAmount: 2000,
       startDate: new Date(),
       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      status: 'active',
+      milestones: [
+        {
+          title: 'Complete Project',
+          description: 'Complete all project deliverables',
+          amount: 2000,
+          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          status: 'pending',
+        },
+      ],
+      terms: {
+        paymentTerms: 'Payment upon completion',
+        cancellationPolicy: '7 days notice',
+        intellectualProperty: 'Client owns work',
+        confidentiality: 'Maintain confidentiality',
+        disputeResolution: 'Platform resolution',
+      },
     });
     contractId = (contract._id as any).toString();
   });

@@ -9,16 +9,51 @@ import {
   ListItem,
   ListItemText,
   Grid,
-  Divider,
+  Button,
+  IconButton,
 } from '@mui/material';
-import { Schedule, AttachMoney, Visibility, Flag } from '@mui/icons-material';
+import { Schedule, AttachMoney, Visibility, Flag, Edit } from '@mui/icons-material';
+import { useQuery } from '@tanstack/react-query';
+import { apiService } from '@/services/api';
 
 interface ReviewStepProps {
   formik: any;
+  onEditStep?: (step: number) => void;
 }
 
-export const ReviewStep: React.FC<ReviewStepProps> = ({ formik }) => {
+export const ReviewStep: React.FC<ReviewStepProps> = ({ formik, onEditStep }) => {
   const { values } = formik;
+
+  // Fetch categories to display names
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await apiService.get('/categories');
+      return response.data.data;
+    },
+  });
+
+  // Fetch skills to display names
+  const { data: skillsData } = useQuery({
+    queryKey: ['skills'],
+    queryFn: async () => {
+      const response = await apiService.get('/skills');
+      return response.data?.data || response.data || [];
+    },
+  });
+
+  const categories = categoriesData || [];
+  const skills = skillsData || [];
+
+  const getCategoryName = (categoryId: string) => {
+    const category = categories.find((cat: any) => cat._id === categoryId);
+    return category ? category.name : categoryId;
+  };
+
+  const getSkillName = (skillId: string) => {
+    const skill = skills.find((s: any) => s._id === skillId);
+    return skill ? skill.name : skillId;
+  };
 
   return (
     <Box>
@@ -26,7 +61,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik }) => {
         Review Your Project
       </Typography>
       <Typography variant="body2" color="text.secondary" paragraph>
-        Please review all the details before creating your project. You can edit these later if needed.
+        Please review all the details before creating your project. You can go back to edit any section.
       </Typography>
 
       <Grid container spacing={3}>
@@ -34,11 +69,22 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik }) => {
         <Grid item xs={12}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Typography variant="h6">
+                  Basic Information
+                </Typography>
+                {onEditStep && (
+                  <IconButton size="small" onClick={() => onEditStep(0)} color="primary">
+                    <Edit fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
+
+              <Typography variant="h5" gutterBottom>
                 {values.title}
               </Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Category: {values.category}
+                Category: {getCategoryName(values.category)}
               </Typography>
               <Typography variant="body1" paragraph>
                 {values.description}
@@ -49,13 +95,13 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik }) => {
                   Required Skills
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {values.skills.map((skill: string) => (
-                    <Chip key={skill} label={skill} size="small" />
+                  {values.skills.map((skillId: string) => (
+                    <Chip key={skillId} label={getSkillName(skillId)} size="small" />
                   ))}
                 </Box>
               </Box>
 
-              {values.tags.length > 0 && (
+              {values.tags && values.tags.length > 0 && (
                 <Box>
                   <Typography variant="subtitle2" gutterBottom>
                     Tags
@@ -75,10 +121,17 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik }) => {
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AttachMoney />
-                Budget
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <AttachMoney />
+                  Budget
+                </Typography>
+                {onEditStep && (
+                  <IconButton size="small" onClick={() => onEditStep(1)} color="primary">
+                    <Edit fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
               <Typography variant="body1">
                 Type: {values.budget.type === 'fixed' ? 'Fixed Price' : 'Hourly Rate'}
               </Typography>
@@ -93,10 +146,17 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik }) => {
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Schedule />
-                Timeline
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Schedule />
+                  Timeline
+                </Typography>
+                {onEditStep && (
+                  <IconButton size="small" onClick={() => onEditStep(1)} color="primary">
+                    <Edit fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
               <Typography variant="h5" color="primary">
                 {values.timeline.duration} {values.timeline.unit}
               </Typography>
@@ -105,16 +165,23 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik }) => {
         </Grid>
 
         {/* Requirements & Deliverables */}
-        {(values.requirements.length > 0 || values.deliverables.length > 0) && (
+        {(values.requirements?.length > 0 || values.deliverables?.length > 0) && (
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Requirements & Deliverables
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                  <Typography variant="h6">
+                    Requirements & Deliverables
+                  </Typography>
+                  {onEditStep && (
+                    <IconButton size="small" onClick={() => onEditStep(2)} color="primary">
+                      <Edit fontSize="small" />
+                    </IconButton>
+                  )}
+                </Box>
                 
                 <Grid container spacing={2}>
-                  {values.requirements.length > 0 && (
+                  {values.requirements?.length > 0 && (
                     <Grid item xs={12} md={6}>
                       <Typography variant="subtitle2" gutterBottom>
                         Requirements
@@ -129,7 +196,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik }) => {
                     </Grid>
                   )}
 
-                  {values.deliverables.length > 0 && (
+                  {values.deliverables?.length > 0 && (
                     <Grid item xs={12} md={6}>
                       <Typography variant="subtitle2" gutterBottom>
                         Deliverables
@@ -153,9 +220,16 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik }) => {
         <Grid item xs={12}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Project Settings
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Typography variant="h6">
+                  Project Settings
+                </Typography>
+                {onEditStep && (
+                  <IconButton size="small" onClick={() => onEditStep(2)} color="primary">
+                    <Edit fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
               
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
                 <Visibility fontSize="small" />
@@ -177,7 +251,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik }) => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Schedule fontSize="small" />
                   <Typography>
-                    Application Deadline: {new Date(values.applicationDeadline).toLocaleString()}
+                    Application Deadline: {new Date(values.applicationDeadline).toLocaleDateString()}
                   </Typography>
                 </Box>
               )}
@@ -186,10 +260,10 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik }) => {
         </Grid>
       </Grid>
 
-      <Box sx={{ mt: 3, p: 2, bgcolor: 'info.50', borderRadius: 1, border: '1px solid', borderColor: 'info.200' }}>
-        <Typography variant="body2" color="info.main">
-          <strong>Note:</strong> Once you create this project, it will be visible to freelancers who can then submit proposals. 
-          You can edit the project details later, but some changes may not be possible once proposals are received.
+      <Box sx={{ mt: 3, p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
+        <Typography variant="body2">
+          <strong>Note:</strong> Once you publish this project, it will be visible to freelancers who can then submit proposals. 
+          You can also save it as a draft to continue editing later.
         </Typography>
       </Box>
     </Box>

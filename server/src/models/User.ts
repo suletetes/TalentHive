@@ -57,6 +57,34 @@ const portfolioItemSchema = new Schema({
   completedAt: { type: Date, required: true },
 });
 
+const workExperienceSchema = new Schema({
+  title: { type: String, required: true },
+  company: { type: String, required: true },
+  location: String,
+  startDate: { type: Date, required: true },
+  endDate: Date,
+  current: { type: Boolean, default: false },
+  description: { type: String, maxlength: 2000 },
+}, { _id: true });
+
+const educationSchema = new Schema({
+  degree: { type: String, required: true },
+  institution: { type: String, required: true },
+  fieldOfStudy: String,
+  startDate: { type: Date, required: true },
+  endDate: Date,
+  description: { type: String, maxlength: 1000 },
+}, { _id: true });
+
+const languageSchema = new Schema({
+  language: { type: String, required: true },
+  proficiency: {
+    type: String,
+    enum: ['basic', 'conversational', 'fluent', 'native'],
+    required: true,
+  },
+}, { _id: false });
+
 const projectTemplateSchema = new Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
@@ -118,6 +146,9 @@ const userSchema = new Schema<IUser>({
     skills: [String],
     experience: String,
     portfolio: [portfolioItemSchema],
+    workExperience: [workExperienceSchema],
+    education: [educationSchema],
+    languages: [languageSchema],
     availability: {
       status: {
         type: String,
@@ -166,8 +197,35 @@ const userSchema = new Schema<IUser>({
     average: { type: Number, default: 0, min: 0, max: 5 },
     count: { type: Number, default: 0, min: 0 },
   },
+  accountStatus: {
+    type: String,
+    enum: ['active', 'suspended', 'deactivated'],
+    default: 'active',
+  },
   isVerified: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
+  // Featured freelancer fields
+  isFeatured: { type: Boolean, default: false },
+  featuredOrder: { type: Number, default: 0 },
+  featuredSince: Date,
+  // Additional roles
+  roles: [{
+    type: String,
+    enum: ['admin', 'freelancer', 'client', 'work_verifier', 'moderator', 'support'],
+  }],
+  primaryRole: {
+    type: String,
+    enum: ['admin', 'freelancer', 'client'],
+  },
+  // Stripe integration
+  stripeCustomerId: String,
+  stripeConnectedAccountId: String,
+  // Theme preference
+  themePreference: {
+    type: String,
+    enum: ['light', 'dark', 'system'],
+    default: 'system',
+  },
   emailVerificationToken: String,
   emailVerificationExpires: Date,
   passwordResetToken: String,
@@ -180,12 +238,14 @@ const userSchema = new Schema<IUser>({
 });
 
 // Indexes for better performance
-userSchema.index({ email: 1 });
+// Note: email already has unique index from schema definition
 userSchema.index({ role: 1 });
 userSchema.index({ 'freelancerProfile.skills': 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ isVerified: 1 });
 userSchema.index({ 'rating.average': -1 });
+userSchema.index({ isFeatured: 1, featuredOrder: 1 });
+userSchema.index({ roles: 1 });
 
 // Virtual for full name
 userSchema.virtual('fullName').get(function() {

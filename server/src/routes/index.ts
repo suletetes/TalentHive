@@ -8,11 +8,17 @@ import paymentRoutes from './payments';
 import messageRoutes from './messages';
 import reviewRoutes from './reviews';
 import notificationRoutes from './notifications';
+import settingsRoutes from './settings';
 import adminRoutes from './admin';
 import healthRoutes from './health';
+import transactionRoutes from './transactions';
+import verificationRoutes from './verification';
+import uploadRoutes from './upload';
 import timeTrackingRoutes from './timeTracking';
+import workLogRoutes from './workLog';
 import organizationRoutes from './organizations';
 import servicePackageRoutes from './servicePackages';
+import disputeRoutes from './disputes';
 
 const router = Router();
 
@@ -39,13 +45,41 @@ router.use('/payments', paymentRoutes);
 router.use('/messages', messageRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/settings', settingsRoutes);
+router.use('/transactions', transactionRoutes);
+router.use('/verification', verificationRoutes);
+router.use('/upload', uploadRoutes);
 router.use('/admin', adminRoutes);
 router.use('/time-tracking', timeTrackingRoutes);
+router.use('/work-logs', workLogRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/services', servicePackageRoutes);
+router.use('/disputes', disputeRoutes);
 
 // Import and use search routes
 import searchRoutes from './search';
 router.use('/search', searchRoutes);
+
+// Category and skill routes
+import categoryRoutes from './categories';
+import skillRoutes from './skills';
+router.use('/categories', categoryRoutes);
+router.use('/skills', skillRoutes);
+
+// Webhook routes
+import webhookRoutes from './webhook.routes';
+router.use('/webhooks', webhookRoutes);
+
+// Analytics routes (admin only)
+import analyticsRoutes from './analytics.routes';
+router.use('/analytics', analyticsRoutes);
+
+// Hire Now routes
+import hireNowRoutes from './hireNow.routes';
+router.use('/hire-now', hireNowRoutes);
+
+// Featured freelancers (public route)
+import { getFeaturedFreelancers } from '@/controllers/adminController';
+router.get('/featured-freelancers', getFeaturedFreelancers);
 
 export default router;

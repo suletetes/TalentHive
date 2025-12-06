@@ -1,24 +1,36 @@
 import { createClient, RedisClientType } from 'redis';
 import { logger } from '@/utils/logger';
 
-let redisClient: RedisClientType;
+let redisClient: RedisClientType | null = null;
+let redisEnabled = false;
 
 export const connectRedis = async (): Promise<void> => {
+  // Check if Redis is configured
+  const redisUrl = process.env.REDIS_URL;
+  const redisHost = process.env.REDIS_HOST;
+  
+  if (!redisUrl && !redisHost) {
+    logger.warn('⚠️  Redis not configured - running without cache');
+    redisEnabled = false;
+    return;
+  }
+
   try {
-    // Support both URL format (Redis Cloud) and traditional host/port format
-    const redisUrl = process.env.REDIS_URL;
-    
     if (redisUrl) {
       // Use URL format (e.g., redis://username:password@host:port)
       redisClient = createClient({
         url: redisUrl,
+        socket: {
+          reconnectStrategy: false as false, // Disable auto-reconnect
+        },
       });
     } else {
       // Use traditional format
       redisClient = createClient({
         socket: {
-          host: process.env.REDIS_HOST || 'localhost',
+          host: redisHost || 'localhost',
           port: parseInt(process.env.REDIS_PORT || '6379'),
+          reconnectStrategy: false as false, // Disable auto-reconnect
         },
         password: process.env.REDIS_PASSWORD || undefined,
         database: parseInt(process.env.REDIS_DB || '0'),
@@ -26,7 +38,8 @@ export const connectRedis = async (): Promise<void> => {
     }
 
     redisClient.on('error', (error) => {
-      logger.error('Redis connection error:', error);
+      logger.error('Redis connection error - disabling cache:', error);
+      redisEnabled = false;
     });
 
     redisClient.on('connect', () => {
@@ -35,28 +48,36 @@ export const connectRedis = async (): Promise<void> => {
 
     redisClient.on('ready', () => {
       logger.info('🔴 Redis connected and ready');
+      redisEnabled = true;
     });
 
     redisClient.on('end', () => {
       logger.warn('Redis connection ended');
-    });
-
-    redisClient.on('reconnecting', () => {
-      logger.info('Redis reconnecting...');
+      redisEnabled = false;
     });
 
     await redisClient.connect();
+    redisEnabled = true;
   } catch (error) {
-    logger.error('Redis connection failed:', error);
-    throw error;
+    logger.warn('⚠️  Redis connection failed - continuing without cache');
+    redisEnabled = false;
+    if (redisClient) {
+      try {
+        await redisClient.disconnect();
+      } catch (e) {
+        // Ignore disconnect errors
+      }
+    }
+    redisClient = null;
   }
 };
 
-export const getRedisClient = (): RedisClientType => {
-  if (!redisClient) {
-    throw new Error('Redis client not initialized. Call connectRedis() first.');
-  }
+export const getRedisClient = (): RedisClientType | null => {
   return redisClient;
+};
+
+export const isRedisEnabled = (): boolean => {
+  return redisEnabled && redisClient !== null;
 };
 
 // Export redisClient directly for compatibility
@@ -64,20 +85,26 @@ export { redisClient };
 
 export const disconnectRedis = async (): Promise<void> => {
   try {
-    if (redisClient) {
+    if (redisClient && redisEnabled) {
       await redisClient.quit();
       logger.info('Redis connection closed');
+      redisEnabled = false;
     }
   } catch (error) {
     logger.error('Error closing Redis connection:', error);
-    throw error;
   }
 };
 
 // Cache utility functions
 export const setCache = async (key: string, value: any, expireInSeconds?: number): Promise<void> => {
+  if (!isRedisEnabled()) {
+    return; // Silently skip if Redis is not available
+  }
+  
   try {
     const client = getRedisClient();
+    if (!client) return;
+    
     const serializedValue = JSON.stringify(value);
     
     if (expireInSeconds) {
@@ -87,13 +114,19 @@ export const setCache = async (key: string, value: any, expireInSeconds?: number
     }
   } catch (error) {
     logger.error('Error setting cache:', error);
-    throw error;
+    // Don't throw - allow app to continue without cache
   }
 };
 
 export const getCache = async (key: string): Promise<any> => {
+  if (!isRedisEnabled()) {
+    return null; // Return null if Redis is not available
+  }
+  
   try {
     const client = getRedisClient();
+    if (!client) return null;
+    
     const value = await client.get(key);
     
     if (value) {
@@ -102,23 +135,34 @@ export const getCache = async (key: string): Promise<any> => {
     return null;
   } catch (error) {
     logger.error('Error getting cache:', error);
-    throw error;
+    return null; // Return null on error
   }
 };
 
 export const deleteCache = async (key: string): Promise<void> => {
+  if (!isRedisEnabled()) {
+    return; // Silently skip if Redis is not available
+  }
+  
   try {
     const client = getRedisClient();
+    if (!client) return;
+    
     await client.del(key);
   } catch (error) {
     logger.error('Error deleting cache:', error);
-    throw error;
+    // Don't throw - allow app to continue
   }
 };
 
 export const clearCache = async (pattern?: string): Promise<void> => {
+  if (!isRedisEnabled()) {
+    return; // Silently skip if Redis is not available
+  }
+  
   try {
     const client = getRedisClient();
+    if (!client) return;
     
     if (pattern) {
       const keys = await client.keys(pattern);
@@ -130,7 +174,7 @@ export const clearCache = async (pattern?: string): Promise<void> => {
     }
   } catch (error) {
     logger.error('Error clearing cache:', error);
-    throw error;
+    // Don't throw - allow app to continue
   }
 };
 

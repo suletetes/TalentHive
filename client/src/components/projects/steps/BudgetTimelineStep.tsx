@@ -159,18 +159,18 @@ export const BudgetTimelineStep: React.FC<BudgetTimelineStepProps> = ({ formik }
       </Box>
 
       {/* Budget Summary */}
-      <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+      <Box sx={{ mt: 3, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
         <Typography variant="subtitle2" gutterBottom>
           Budget Summary
         </Typography>
-        <Typography variant="body2">
+        <Typography variant="body2" color="text.primary">
           Type: {formik.values.budget.type === 'fixed' ? 'Fixed Price' : 'Hourly Rate'}
         </Typography>
-        <Typography variant="body2">
+        <Typography variant="body2" color="text.primary">
           Range: ${formik.values.budget.min} - ${formik.values.budget.max}
           {formik.values.budget.type === 'hourly' && '/hr'}
         </Typography>
-        <Typography variant="body2">
+        <Typography variant="body2" color="text.primary">
           Timeline: {formik.values.timeline.duration} {formik.values.timeline.unit}
         </Typography>
       </Box>

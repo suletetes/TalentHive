@@ -1,0 +1,28 @@
+
+Admin: admin@talenthive.com / Password123!
+Client: john.client@example.com / Password123!
+Freelancer: alice.dev@example.com / Password123!
+-----------------
+
+1. from the client frontend give the things i should test 
+2. from the freelancer frontend give the things i should test 
+3. from the admin frontend give the things i should test
+
+============
+read very very well the issues and create a readme and solve 100% very well. after fixing test and see everything works well
+
+
+1. get the app ready for prod reduce both  client and server logs. remove all client logs.
+
+
+===
+
+there should be a simple client page 
+review
+past works
+
+and for freelancer
+
+=====
+work on tommorrow
+http://localhost:3000/admin/settings

@@ -19,7 +19,8 @@
     "client:lint": "cd client && npm run lint",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "prepare": "husky install",
-    "seed": "cd server && npm run seed"
+    "seed": "cd server && npm run seed",
+    "seed:complete-profiles": "cd server && npm run seed:complete-profiles"
   },
   "keywords": [
     "freelancing",

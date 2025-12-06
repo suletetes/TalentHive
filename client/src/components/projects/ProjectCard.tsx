@@ -21,6 +21,69 @@ import {
 } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+
+// Helper function to get category display name
+const getCategoryDisplay = (category: any): string => {
+  console.log(`[CATEGORY DEBUG] Input:`, category, `Type:`, typeof category);
+  
+  if (!category) {
+    console.log(`[CATEGORY DEBUG] No category, returning General`);
+    return 'General';
+  }
+  
+  // If category is an object with name property (populated from DB)
+  if (typeof category === 'object' && category !== null) {
+    if (category.name) {
+      console.log(`[CATEGORY DEBUG] Found object with name:`, category.name);
+      return category.name;
+    }
+    // Check for _id only (not populated)
+    if (category._id && !category.name) {
+      console.log(`[CATEGORY DEBUG] Object has _id but no name, returning General`);
+      return 'General';
+    }
+  }
+  
+  // If category is a string
+  if (typeof category === 'string') {
+    // Check if it looks like a MongoDB ObjectId (24 hex characters)
+    const isObjectId = /^[a-f\d]{24}$/i.test(category);
+    if (isObjectId) {
+      console.log(`[CATEGORY DEBUG] String is ObjectId, returning General`);
+      return 'General';
+    }
+    // It's a regular string (category name)
+    console.log(`[CATEGORY DEBUG] String category:`, category);
+    return category;
+  }
+  
+  console.log(`[CATEGORY DEBUG] Fallback to General`);
+  return 'General';
+};
+
+// Helper function to get skill display name
+const getSkillDisplay = (skill: any): string => {
+  if (!skill) return '';
+  
+  // If skill is an object with name property (populated)
+  if (typeof skill === 'object' && skill?.name) {
+    return skill.name;
+  }
+  
+  // If skill is a string
+  if (typeof skill === 'string') {
+    // Check if it looks like a MongoDB ObjectId (24 hex characters)
+    const isObjectId = /^[a-f\d]{24}$/i.test(skill);
+    if (isObjectId) {
+      return ''; // Return empty to filter out
+    }
+    return skill;
+  }
+  
+  return '';
+};
 
 interface ProjectCardProps {
   project: {
@@ -57,6 +120,8 @@ interface ProjectCardProps {
     viewCount: number;
     isUrgent: boolean;
     isFeatured: boolean;
+    status?: string;
+    isDraft?: boolean;
     createdAt: string;
     applicationDeadline?: string;
   };
@@ -71,6 +136,21 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   isBookmarked = false,
   showBookmark = false,
 }) => {
+  const { user } = useSelector((state: RootState) => state.auth);
+  
+  // Check if current user is the project owner
+  const isProjectOwner = user?._id === project.client?._id;
+  const isClient = user?.role === 'client';
+
+  // Log category and skills for debugging (removed verbose logging)
+  React.useEffect(() => {
+    if (typeof project.category === 'object') {
+      // Category is populated
+    }
+    console.log(`[PROJECT CARD] Skills:`, project.skills);
+    console.log(`[PROJECT CARD] Skills type:`, typeof project.skills);
+  }, [project._id]);
+
   const getBudgetDisplay = () => {
     const { type, min, max } = project.budget;
     const suffix = type === 'hourly' ? '/hr' : '';
@@ -107,8 +187,29 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         },
       }}
     >
+      {/* Draft Badge */}
+      {(project.isDraft || project.status === 'draft') && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            bgcolor: 'warning.main',
+            color: 'white',
+            px: 1,
+            py: 0.5,
+            borderRadius: 1,
+            fontSize: '0.75rem',
+            fontWeight: 'bold',
+            zIndex: 1,
+          }}
+        >
+          DRAFT
+        </Box>
+      )}
+
       {/* Featured Badge */}
-      {project.isFeatured && (
+      {project.isFeatured && !(project.isDraft || project.status === 'draft') && (
         <Box
           sx={{
             position: 'absolute',
@@ -156,7 +257,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               </Tooltip>
             )}
             <Typography variant="body2" color="text.secondary">
-              {project.category}
+              {getCategoryDisplay(project.category)}
             </Typography>
             {isDeadlineApproaching() && (
               <Chip
@@ -190,17 +291,21 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {/* Skills */}
         <Box sx={{ mb: 2 }}>
           <Box display="flex" flexWrap="wrap" gap={0.5}>
-            {project.skills.slice(0, 5).map((skill) => (
+            {project.skills
+              .map((skill) => getSkillDisplay(skill))
+              .filter((s) => s) // Filter out empty strings (ObjectIds)
+              .slice(0, 5)
+              .map((skillName) => (
+                <Chip
+                  key={skillName}
+                  label={skillName}
+                  size="small"
+                  variant="outlined"
+                />
+              ))}
+            {project.skills.filter((s) => getSkillDisplay(s)).length > 5 && (
               <Chip
-                key={skill}
-                label={skill}
-                size="small"
-                variant="outlined"
-              />
-            ))}
-            {project.skills.length > 5 && (
-              <Chip
-                label={`+${project.skills.length - 5} more`}
+                label={`+${project.skills.filter((s) => getSkillDisplay(s)).length - 5} more`}
                 size="small"
                 variant="outlined"
                 color="primary"
@@ -230,15 +335,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Box display="flex" alignItems="center" gap={1}>
             <Avatar
-              src={project.client.profile.avatar}
-              alt={`${project.client.profile.firstName} ${project.client.profile.lastName}`}
+              src={project.client?.profile?.avatar}
+              alt={`${project.client?.profile?.firstName || ''} ${project.client?.profile?.lastName || ''}`}
               sx={{ width: 24, height: 24 }}
-            />
+            >
+              {project.client?.profile?.firstName?.[0] || 'C'}
+            </Avatar>
             <Typography variant="body2">
-              {project.client.clientProfile?.companyName ||
-                `${project.client.profile.firstName} ${project.client.profile.lastName}`}
+              {project.client?.clientProfile?.companyName ||
+                `${project.client?.profile?.firstName || ''} ${project.client?.profile?.lastName || ''}`}
             </Typography>
-            {project.client.rating.count > 0 && (
+            {project.client?.rating?.count > 0 && (
               <Typography variant="body2" color="text.secondary">
                 ★ {project.client.rating.average.toFixed(1)}
               </Typography>
@@ -274,16 +381,32 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           </Typography>
         )}
 
-        {/* Action Button */}
-        <Button
-          variant="contained"
-          component={Link}
-          to={`/projects/${project._id}`}
-          fullWidth
-          size="small"
-        >
-          View Details
-        </Button>
+        {/* Action Buttons */}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="contained"
+            component={Link}
+            to={`/projects/${project._id}`}
+            fullWidth
+            size="small"
+          >
+            View Details
+          </Button>
+          
+          {/* View Proposals Button - For project owner (client) */}
+          {project.proposalCount > 0 && (isProjectOwner || (isClient && project.client?._id === user?._id)) && (
+            <Button
+              variant="outlined"
+              component={Link}
+              to={`/dashboard/projects/${project._id}/proposals`}
+              fullWidth
+              size="small"
+              color="secondary"
+            >
+              Proposals ({project.proposalCount})
+            </Button>
+          )}
+        </Box>
       </CardContent>
     </Card>
   );

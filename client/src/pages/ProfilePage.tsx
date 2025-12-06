@@ -12,7 +12,27 @@ import {
   TextField,
   DialogActions,
   Button,
+  Tabs,
+  Tab,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  MenuItem,
+  Divider,
+  Chip,
+  Link as MuiLink,
 } from '@mui/material';
+import { 
+  Add as AddIcon, 
+  Delete as DeleteIcon,
+  Work as WorkIcon,
+  School as SchoolIcon,
+  CardMembership as CertificationIcon,
+  Language as LanguageIcon,
+  OpenInNew,
+} from '@mui/icons-material';
+import { format } from 'date-fns';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { useFormik } from 'formik';
@@ -22,6 +42,10 @@ import toast from 'react-hot-toast';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { SkillsManager } from '@/components/profile/SkillsManager';
 import { PortfolioManager } from '@/components/profile/PortfolioManager';
+import { WorkExperienceManager } from '@/components/profile/WorkExperienceManager';
+import { EducationManager } from '@/components/profile/EducationManager';
+import { CertificationsManager } from '@/components/profile/CertificationsManager';
+import { LanguagesManager } from '@/components/profile/LanguagesManager';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { RootState } from '@/store';
 import { apiService } from '@/services/api';
@@ -52,6 +76,7 @@ const profileSchema = yup.object({
 
 export const ProfilePage: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
   const { user: currentUser } = useSelector((state: RootState) => state.auth);
   const queryClient = useQueryClient();
 
@@ -73,7 +98,7 @@ export const ProfilePage: React.FC = () => {
     },
   });
 
-  const user = profileData?.data?.data?.user;
+  const user = profileData?.data?.user;
 
   const formik = useFormik({
     initialValues: {
@@ -87,6 +112,13 @@ export const ProfilePage: React.FC = () => {
       freelancerProfile: {
         title: user?.freelancerProfile?.title || '',
         hourlyRate: user?.freelancerProfile?.hourlyRate || 0,
+        availability: {
+          status: user?.freelancerProfile?.availability?.status || 'available',
+        },
+        workExperience: user?.freelancerProfile?.workExperience || [],
+        education: user?.freelancerProfile?.education || [],
+        certifications: user?.freelancerProfile?.certifications || [],
+        languages: user?.freelancerProfile?.languages || [],
       },
       clientProfile: {
         companyName: user?.clientProfile?.companyName || '',
@@ -225,6 +257,62 @@ export const ProfilePage: React.FC = () => {
             </Card>
           </Grid>
         )}
+
+        {/* Work Experience Section (for freelancers) */}
+        {user.role === 'freelancer' && (
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <WorkExperienceManager
+                  workExperience={user.freelancerProfile?.workExperience || []}
+                  isEditable={true}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {/* Education Section (for freelancers) */}
+        {user.role === 'freelancer' && (
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <EducationManager
+                  education={user.freelancerProfile?.education || []}
+                  isEditable={true}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {/* Certifications Section (for freelancers) */}
+        {user.role === 'freelancer' && (
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <CertificationsManager
+                  certifications={user.freelancerProfile?.certifications || []}
+                  isEditable={true}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {/* Languages Section (for freelancers) */}
+        {user.role === 'freelancer' && (
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <LanguagesManager
+                  languages={user.freelancerProfile?.languages || []}
+                  isEditable={true}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
 
       {/* Edit Profile Dialog */}
@@ -322,6 +410,33 @@ export const ProfilePage: React.FC = () => {
                       error={formik.touched.freelancerProfile?.hourlyRate && Boolean(formik.errors.freelancerProfile?.hourlyRate)}
                       helperText={formik.touched.freelancerProfile?.hourlyRate && formik.errors.freelancerProfile?.hourlyRate as string}
                     />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      name="freelancerProfile.availability.status"
+                      label="Availability Status"
+                      value={formik.values.freelancerProfile.availability?.status || 'available'}
+                      onChange={formik.handleChange}
+                      SelectProps={{
+                        native: true,
+                      }}
+                    >
+                      <option value="available">Available</option>
+                      <option value="busy">Busy</option>
+                      <option value="not_available">Not Available</option>
+                    </TextField>
+                  </Grid>
+                  
+                  <Grid item xs={12}>
+                    <Box sx={{ mt: 2, p: 2, bgcolor: 'info.lighter', borderRadius: 1 }}>
+                      <Typography variant="body2" color="info.main">
+                        <strong>Note:</strong> To manage your Work Experience, Education, Certifications, and Languages, 
+                        these sections are displayed on your profile page. You can view them there, and full editing 
+                        capabilities for these detailed sections will be available in a future update.
+                      </Typography>
+                    </Box>
                   </Grid>
                 </>
               )}

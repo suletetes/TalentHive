@@ -170,7 +170,7 @@ export const TrustSafetyPage: React.FC = () => {
         </Grid>
       </Grid>
 
-      <Card sx={{ p: 4, bgcolor: 'grey.50' }}>
+      <Card sx={{ p: 4, bgcolor: 'background.default' }}>
         <Typography variant="h4" gutterBottom>
           Safety Guidelines
         </Typography>

@@ -85,10 +85,38 @@ export interface IAdminPermission {
   actions: string[];
 }
 
+export interface IWorkExperience {
+  _id?: ObjectId;
+  title: string;
+  company: string;
+  location?: string;
+  startDate: Date;
+  endDate?: Date;
+  current: boolean;
+  description?: string;
+}
+
+export interface IEducation {
+  _id?: ObjectId;
+  degree: string;
+  institution: string;
+  fieldOfStudy?: string;
+  startDate: Date;
+  endDate?: Date;
+  description?: string;
+}
+
+export interface ILanguage {
+  language: string;
+  proficiency: 'basic' | 'conversational' | 'fluent' | 'native';
+}
+
 export interface IUser extends Document {
   email: string;
   password: string;
   role: 'admin' | 'freelancer' | 'client';
+  roles?: string[]; // Additional roles for multi-role support
+  primaryRole?: string;
   profile: {
     firstName: string;
     lastName: string;
@@ -96,7 +124,17 @@ export interface IUser extends Document {
     bio?: string;
     location?: string;
     timezone?: string;
+    website?: string;
   };
+  // Featured freelancer fields
+  isFeatured?: boolean;
+  featuredOrder?: number;
+  featuredSince?: Date;
+  // Theme preference
+  themePreference?: 'light' | 'dark' | 'system';
+  // Stripe integration
+  stripeCustomerId?: string;
+  stripeConnectedAccountId?: string;
   freelancerProfile?: {
     title: string;
     hourlyRate: number;
@@ -112,6 +150,9 @@ export interface IUser extends Document {
     servicePackages: IServicePackage[];
     teamMembers?: ITeamMember[];
     certifications: ICertification[];
+    workExperience?: IWorkExperience[];
+    education?: IEducation[];
+    languages?: ILanguage[];
     timeTracking: {
       isEnabled: boolean;
       screenshotFrequency?: number; // minutes
@@ -141,6 +182,7 @@ export interface IUser extends Document {
     average: number;
     count: number;
   };
+  accountStatus: 'active' | 'suspended' | 'deactivated';
   isVerified: boolean;
   isActive: boolean;
   emailVerificationToken?: string;

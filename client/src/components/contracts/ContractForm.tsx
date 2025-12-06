@@ -110,15 +110,15 @@ export const ContractForm: React.FC<ContractFormProps> = ({
     },
   });
 
-  const calculateEndDate = (): Date => {
+  const calculateEndDate = (startDate?: string): Date => {
     const { duration, unit } = proposal.timeline;
-    const startDate: Date = formik.values.startDate ? new Date(formik.values.startDate) : new Date();
+    const start: Date = startDate ? new Date(startDate) : new Date();
     
     let days = duration;
     if (unit === 'weeks') days *= 7;
     if (unit === 'months') days *= 30;
     
-    return addDays(startDate, days);
+    return addDays(start, days);
   };
 
   const formik: any = useFormik({

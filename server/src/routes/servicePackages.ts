@@ -1,9 +1,11 @@
 import { Router } from 'express';
-import { protect, restrictTo } from '@/middleware/auth';
+import { authenticate, authorize } from '@/middleware/auth';
 import {
   createServicePackage,
   getServicePackages,
+  getServicePackageById,
   updateServicePackage,
+  orderServicePackage,
   createProjectTemplate,
   getProjectTemplates,
   createProjectFromTemplate,
@@ -16,22 +18,24 @@ import {
 const router = Router();
 
 // All routes require authentication
-router.use(protect);
+router.use(authenticate);
 
 // Service package routes (freelancers)
-router.post('/packages', restrictTo('freelancer'), createServicePackage);
+router.post('/packages', authorize('freelancer'), createServicePackage);
 router.get('/packages', getServicePackages);
-router.patch('/packages/:packageId', restrictTo('freelancer'), updateServicePackage);
+router.get('/packages/:packageId', getServicePackageById);
+router.patch('/packages/:packageId', authorize('freelancer'), updateServicePackage);
+router.post('/packages/:packageId/order', authorize('client'), orderServicePackage);
 
 // Project template routes (clients)
-router.post('/templates', restrictTo('client'), createProjectTemplate);
-router.get('/templates', restrictTo('client'), getProjectTemplates);
-router.post('/templates/:templateId/create-project', restrictTo('client'), createProjectFromTemplate);
+router.post('/templates', authorize('client'), createProjectTemplate);
+router.get('/templates', authorize('client'), getProjectTemplates);
+router.post('/templates/:templateId/create-project', authorize('client'), createProjectFromTemplate);
 
 // Preferred vendor routes (clients)
-router.post('/preferred-vendors', restrictTo('client'), addPreferredVendor);
-router.get('/preferred-vendors', restrictTo('client'), getPreferredVendors);
-router.patch('/preferred-vendors/:vendorId', restrictTo('client'), updatePreferredVendor);
-router.delete('/preferred-vendors/:vendorId', restrictTo('client'), removePreferredVendor);
+router.post('/preferred-vendors', authorize('client'), addPreferredVendor);
+router.get('/preferred-vendors', authorize('client'), getPreferredVendors);
+router.patch('/preferred-vendors/:vendorId', authorize('client'), updatePreferredVendor);
+router.delete('/preferred-vendors/:vendorId', authorize('client'), removePreferredVendor);
 
 export default router;

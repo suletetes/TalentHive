@@ -9,7 +9,12 @@ interface AuthRequest extends Request {
 }
 
 export const getProfile = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const user = await User.findById(req.user._id).populate('clientProfile.preferredVendors', 'profile rating');
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  const user = await User.findById(userId).populate('clientProfile.preferredVendors', 'profile rating');
   
   if (!user) {
     return next(new AppError('User not found', 404));
@@ -83,18 +88,21 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
     minRating, 
     maxRate, 
     availability,
-    search 
+    search,
+    sortBy = 'rating.average',
+    sortOrder = 'desc'
   } = req.query;
 
   const query: any = { 
     role: 'freelancer', 
-    isActive: true,
-    isVerified: true 
+    // Only filter by role - let the frontend see all freelancers
+    // isActive and isVerified filters can hide valid freelancers
   };
 
   // Add filters
   if (skills) {
-    const skillsArray = (skills as string).split(',');
+    const skillsArray = (skills as string).split(',').map(s => s.trim());
+    console.log('[FREELANCERS] Filtering by skills:', skillsArray);
     query['freelancerProfile.skills'] = { $in: skillsArray };
   }
 
@@ -119,16 +127,24 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
     ];
   }
 
+  // Build sort object
+  const sort: any = {};
+  sort[sortBy as string] = sortOrder === 'desc' ? -1 : 1;
+
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+  
+  console.log('[FREELANCERS] Query:', JSON.stringify(query, null, 2));
   
   const [freelancers, total] = await Promise.all([
     User.find(query)
       .select('-password -emailVerificationToken -passwordResetToken')
-      .sort({ 'rating.average': -1, createdAt: -1 })
+      .sort(sort)
       .skip(skip)
       .limit(parseInt(limit as string)),
     User.countDocuments(query),
   ]);
+  
+  console.log(`[FREELANCERS] Found ${freelancers.length} freelancers out of ${total} total`);
 
   res.json({
     status: 'success',
@@ -147,13 +163,18 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
 export const getFreelancerById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
 
+  console.log(`[FREELANCER DETAIL] Fetching freelancer with ID: ${id}`);
+
   const freelancer = await User.findOne({
     _id: id,
     role: 'freelancer',
     isActive: true,
   }).select('-password -emailVerificationToken -passwordResetToken');
 
+  console.log(`[FREELANCER DETAIL] Found freelancer:`, freelancer ? 'YES' : 'NO');
+
   if (!freelancer) {
+    console.log(`[FREELANCER DETAIL] Freelancer not found for ID: ${id}`);
     return next(new AppError('Freelancer not found', 404));
   }
 
@@ -167,9 +188,12 @@ export const getFreelancerById = catchAsync(async (req: Request, res: Response, 
 
 export const addSkill = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { skill, rate } = req.body;
-  const userId = req.user._id;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
-  if (req.user.role !== 'freelancer') {
+  if (req.user?.role !== 'freelancer') {
     return next(new AppError('Only freelancers can add skills', 403));
   }
 
@@ -213,9 +237,12 @@ export const addSkill = catchAsync(async (req: AuthRequest, res: Response, next:
 
 export const removeSkill = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { skill } = req.params;
-  const userId = req.user._id;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
-  if (req.user.role !== 'freelancer') {
+  if (req.user?.role !== 'freelancer') {
     return next(new AppError('Only freelancers can remove skills', 403));
   }
 
@@ -249,9 +276,12 @@ export const removeSkill = catchAsync(async (req: AuthRequest, res: Response, ne
 
 export const updateAvailability = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { status, schedule, calendar } = req.body;
-  const userId = req.user._id;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
-  if (req.user.role !== 'freelancer') {
+  if (req.user?.role !== 'freelancer') {
     return next(new AppError('Only freelancers can update availability', 403));
   }
 
@@ -291,9 +321,12 @@ export const updateAvailability = catchAsync(async (req: AuthRequest, res: Respo
 
 export const addPortfolioItem = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { title, description, images, projectUrl, technologies, completedAt } = req.body;
-  const userId = req.user._id;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
-  if (req.user.role !== 'freelancer') {
+  if (req.user?.role !== 'freelancer') {
     return next(new AppError('Only freelancers can add portfolio items', 403));
   }
 
@@ -331,9 +364,12 @@ export const addPortfolioItem = catchAsync(async (req: AuthRequest, res: Respons
 export const updatePortfolioItem = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { itemId } = req.params;
   const updateData = req.body;
-  const userId = req.user._id;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
-  if (req.user.role !== 'freelancer') {
+  if (req.user?.role !== 'freelancer') {
     return next(new AppError('Only freelancers can update portfolio items', 403));
   }
 
@@ -362,9 +398,12 @@ export const updatePortfolioItem = catchAsync(async (req: AuthRequest, res: Resp
 
 export const deletePortfolioItem = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { itemId } = req.params;
-  const userId = req.user._id;
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
 
-  if (req.user.role !== 'freelancer') {
+  if (req.user?.role !== 'freelancer') {
     return next(new AppError('Only freelancers can delete portfolio items', 403));
   }
 
@@ -387,5 +426,64 @@ export const deletePortfolioItem = catchAsync(async (req: AuthRequest, res: Resp
   res.json({
     status: 'success',
     message: 'Portfolio item deleted successfully',
+  });
+});
+
+// Change password validation
+export const changePasswordValidation = [
+  body('currentPassword').notEmpty().withMessage('Current password is required'),
+  body('newPassword')
+    .isLength({ min: 8 })
+    .withMessage('New password must be at least 8 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage('New password must contain at least one uppercase letter, one lowercase letter, and one number'),
+  body('confirmPassword')
+    .custom((value, { req }) => value === req.body.newPassword)
+    .withMessage('Passwords do not match'),
+];
+
+// Change password
+export const changePassword = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new AppError('Validation failed', 400));
+  }
+
+  const { currentPassword, newPassword } = req.body;
+
+  // Get user with password field
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  const user = await User.findById(userId).select('+password');
+  
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  // Verify current password
+  const isPasswordCorrect = await user.comparePassword(currentPassword);
+  if (!isPasswordCorrect) {
+    return next(new AppError('Current password is incorrect', 401));
+  }
+
+  // Check if new password is same as current
+  const isSamePassword = await user.comparePassword(newPassword);
+  if (isSamePassword) {
+    return next(new AppError('New password must be different from current password', 400));
+  }
+
+  // Update password
+  user.password = newPassword;
+  await user.save();
+
+  // Clear user cache
+  await deleteCache(`user:${user._id}`);
+
+  res.json({
+    status: 'success',
+    message: 'Password changed successfully',
   });
 });

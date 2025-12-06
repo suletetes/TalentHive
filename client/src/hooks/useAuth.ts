@@ -5,22 +5,7 @@ import toast from 'react-hot-toast';
 
 import { RootState } from '@/store';
 import { loginStart, loginSuccess, loginFailure, logout } from '@/store/slices/authSlice';
-import { apiService } from '@/services/api';
-
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface RegisterData {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  role: 'freelancer' | 'client' | 'admin';
-  companyName?: string;
-  title?: string;
-}
+import { authService, LoginCredentials, RegisterData } from '@/services/api/auth.service';
 
 export const useAuth = () => {
   const dispatch = useDispatch();
@@ -29,17 +14,23 @@ export const useAuth = () => {
   const { user, isAuthenticated, isLoading } = useSelector((state: RootState) => state.auth);
 
   const loginMutation = useMutation({
-    mutationFn: (credentials: LoginCredentials) => apiService.login(credentials),
+    mutationFn: (credentials: LoginCredentials) => authService.login(credentials),
     onMutate: () => {
       dispatch(loginStart());
     },
     onSuccess: (response) => {
-      const { user, tokens } = response.data.data;
-      dispatch(loginSuccess({
-        user,
-        token: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      }));
+      const { user, tokens } = response.data;
+      dispatch(
+        loginSuccess({
+          user: {
+            ...user,
+            _id: user.id, // Add _id alias for components that use it
+            role: user.role as 'admin' | 'freelancer' | 'client',
+          },
+          token: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+        })
+      );
       toast.success('Login successful!');
       navigate('/dashboard');
     },
@@ -51,7 +42,7 @@ export const useAuth = () => {
   });
 
   const registerMutation = useMutation({
-    mutationFn: (userData: RegisterData) => apiService.register(userData),
+    mutationFn: (userData: RegisterData) => authService.register(userData),
     onSuccess: (response) => {
       toast.success('Registration successful! Please check your email for verification.');
       navigate('/login');
@@ -63,7 +54,7 @@ export const useAuth = () => {
   });
 
   const logoutMutation = useMutation({
-    mutationFn: () => apiService.logout(),
+    mutationFn: () => authService.logout(),
     onSuccess: () => {
       dispatch(logout());
       queryClient.clear();
@@ -79,7 +70,7 @@ export const useAuth = () => {
   });
 
   const verifyEmailMutation = useMutation({
-    mutationFn: (token: string) => apiService.verifyEmail(token),
+    mutationFn: (token: string) => authService.verifyEmail(token),
     onSuccess: () => {
       toast.success('Email verified successfully! You can now log in.');
       navigate('/login');

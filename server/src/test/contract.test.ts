@@ -41,6 +41,7 @@ describe('Contract System', () => {
         lastName: 'Client',
       },
       isEmailVerified: true,
+      isActive: true,
     });
 
     freelancerUser = await User.create({
@@ -59,6 +60,7 @@ describe('Contract System', () => {
       },
       rating: 4.5,
       isEmailVerified: true,
+      isActive: true,
     });
 
     // Create test project

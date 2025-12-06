@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
-import { createClient } from 'redis';
+
+// Mock Redis before any imports that use it
+jest.mock('@/config/redis');
 
 // Load environment variables
 dotenv.config();
@@ -13,6 +15,8 @@ process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'test-jwt-ref
 process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 process.env.JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 process.env.SENDGRID_API_KEY = 'SG.test-api-key-for-testing';
+process.env.FROM_EMAIL = 'test@talenthive.com';
+process.env.FROM_NAME = 'TalentHive Test';
 
 let mongoServer: MongoMemoryServer;
 let redisClient: any;
@@ -23,33 +27,16 @@ beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   const mongoUri = mongoServer.getUri();
   
-  await mongoose.connect(mongoUri);
-
-  // Setup test Redis client (you might want to use redis-mock for testing)
-  redisClient = createClient({
-    socket: {
-      host: 'localhost',
-      port: 6380, // Different port for testing
-    },
-  });
+  // Set the MongoDB URI for tests
+  process.env.MONGODB_URI = mongoUri;
   
-  // Mock Redis for tests if not available
-  if (process.env.NODE_ENV === 'test') {
-    jest.mock('@/config/redis', () => ({
-      getRedisClient: () => ({
-        get: jest.fn(),
-        set: jest.fn(),
-        setEx: jest.fn(),
-        del: jest.fn(),
-        flushDb: jest.fn(),
-        keys: jest.fn(),
-      }),
-      setCache: jest.fn(),
-      getCache: jest.fn(),
-      deleteCache: jest.fn(),
-      clearCache: jest.fn(),
-    }));
+  // Only connect if not already connected
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(mongoUri);
   }
+
+  // Don't actually connect to Redis in tests - it's mocked
+  redisClient = null;
 });
 
 // Clean up after each test
@@ -66,7 +53,11 @@ afterAll(async () => {
   await mongoose.disconnect();
   await mongoServer.stop();
   
-  if (redisClient) {
-    await redisClient.quit();
+  if (redisClient && redisClient.isOpen) {
+    try {
+      await redisClient.quit();
+    } catch (error) {
+      // Ignore errors during cleanup
+    }
   }
 });

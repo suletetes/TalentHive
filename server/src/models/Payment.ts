@@ -204,8 +204,7 @@ paymentSchema.index({ type: 1 });
 paymentSchema.index({ createdAt: -1 });
 paymentSchema.index({ stripePaymentIntentId: 1 });
 
-escrowAccountSchema.index({ user: 1 });
-escrowAccountSchema.index({ stripeAccountId: 1 });
+// Note: user and stripeAccountId already have unique indexes from schema definition
 escrowAccountSchema.index({ status: 1 });
 
 transactionSchema.index({ payment: 1 });
@@ -213,7 +212,7 @@ transactionSchema.index({ type: 1 });
 transactionSchema.index({ status: 1 });
 transactionSchema.index({ stripeTransactionId: 1 });
 
-paymentWebhookSchema.index({ stripeEventId: 1 });
+// Note: stripeEventId already has unique index from schema definition
 paymentWebhookSchema.index({ processed: 1 });
 paymentWebhookSchema.index({ createdAt: -1 });
 
@@ -257,7 +256,27 @@ paymentSchema.pre('save', function(next) {
   next();
 });
 
+// Post-init hook to calculate fees for newly created documents (not yet saved)
+paymentSchema.post('init', function() {
+  if (!this.platformFee && this.amount) {
+    this.calculatePlatformFee();
+  }
+  if (!this.escrowReleaseDate && this.type === 'milestone_payment') {
+    this.escrowReleaseDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  }
+});
+
+// Also calculate on document creation (before save)
+paymentSchema.pre('validate', function(next) {
+  if (!this.platformFee && this.amount) {
+    this.calculatePlatformFee();
+  }
+  if (!this.escrowReleaseDate && this.type === 'milestone_payment') {
+    this.escrowReleaseDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  }
+  next();
+});
+
 export const Payment = mongoose.model<IPayment>('Payment', paymentSchema);
 export const EscrowAccount = mongoose.model<IEscrowAccount>('EscrowAccount', escrowAccountSchema);
-export const Transaction = mongoose.model<ITransaction>('Transaction', transactionSchema);
 export const PaymentWebhook = mongoose.model<IPaymentWebhook>('PaymentWebhook', paymentWebhookSchema);

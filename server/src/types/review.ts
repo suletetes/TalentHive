@@ -1,5 +1,12 @@
 import { Document, ObjectId } from 'mongoose';
 
+export interface IReviewResponse {
+  content: string;
+  createdAt: Date;
+  updatedAt?: Date;
+  isEdited?: boolean;
+}
+
 export interface IReview extends Document {
   contract: ObjectId;
   project: ObjectId;
@@ -14,7 +21,7 @@ export interface IReview extends Document {
     deadlines: number;
   };
   isPublic: boolean;
-  response?: string;
+  response?: IReviewResponse;
   respondedAt?: Date;
   status: 'pending' | 'published' | 'flagged' | 'removed';
   createdAt: Date;

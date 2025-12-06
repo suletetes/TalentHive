@@ -1,8 +1,17 @@
 import rateLimit from 'express-rate-limit';
 import { logger } from '@/utils/logger';
 
+// Check if rate limiting should be disabled for testing
+const shouldBypassRateLimit = process.env.DISABLE_RATE_LIMIT_FOR_TESTING === 'true';
+
+if (shouldBypassRateLimit) {
+  console.log('⚠️  Rate limiting is DISABLED for testing');
+}
+
 // General rate limiter
-export const rateLimiter = rateLimit({
+export const rateLimiter = shouldBypassRateLimit
+  ? (req: any, res: any, next: any) => next()
+  : rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // limit each IP to 100 requests per windowMs
   message: {
@@ -23,7 +32,7 @@ export const rateLimiter = rateLimit({
 // Strict rate limiter for authentication endpoints
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
+  max: process.env.NODE_ENV === 'test' ? 1000 : 5, // Higher limit in test environment
   message: {
     status: 'error',
     message: 'Too many authentication attempts, please try again later.',
@@ -31,6 +40,7 @@ export const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true, // Don't count successful requests
+  skip: (req) => process.env.NODE_ENV === 'test', // Skip rate limiting in tests
   handler: (req, res) => {
     logger.warn(`Auth rate limit exceeded for IP: ${req.ip}`);
     res.status(429).json({

@@ -3,12 +3,23 @@ import ServicePackage from '@/models/ServicePackage';
 import ProjectTemplate from '@/models/ProjectTemplate';
 import PreferredVendor from '@/models/PreferredVendor';
 import { Project } from '@/models/Project';
+import { Contract } from '@/models/Contract';
+import { Proposal } from '@/models/Proposal';
+import { Notification } from '@/models/Notification';
+import { User } from '@/models/User';
 import { logger } from '@/utils/logger';
+import { sendEmail } from '@/utils/email.resend';
 
 // Create service package
 export const createServicePackage = async (req: Request, res: Response) => {
   try {
-    const freelancerId = req.user._id;
+    const freelancerId = req.user?._id;
+    if (!freelancerId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
     const packageData = { ...req.body, freelancer: freelancerId };
 
     const servicePackage = await ServicePackage.create(packageData);
@@ -63,7 +74,13 @@ export const getServicePackages = async (req: Request, res: Response) => {
 export const updateServicePackage = async (req: Request, res: Response) => {
   try {
     const { packageId } = req.params;
-    const freelancerId = req.user._id;
+    const freelancerId = req.user?._id;
+    if (!freelancerId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const servicePackage = await ServicePackage.findOne({
       _id: packageId,
@@ -96,7 +113,13 @@ export const updateServicePackage = async (req: Request, res: Response) => {
 // Create project template
 export const createProjectTemplate = async (req: Request, res: Response) => {
   try {
-    const clientId = req.user._id;
+    const clientId = req.user?._id;
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
     const templateData = { ...req.body, client: clientId };
 
     const template = await ProjectTemplate.create(templateData);
@@ -117,7 +140,13 @@ export const createProjectTemplate = async (req: Request, res: Response) => {
 // Get project templates
 export const getProjectTemplates = async (req: Request, res: Response) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const templates = await ProjectTemplate.find({ client: userId })
       .populate('preferredVendors', 'firstName lastName profilePicture rating')
@@ -141,7 +170,13 @@ export const getProjectTemplates = async (req: Request, res: Response) => {
 export const createProjectFromTemplate = async (req: Request, res: Response) => {
   try {
     const { templateId } = req.params;
-    const clientId = req.user._id;
+    const clientId = req.user?._id;
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const template = await ProjectTemplate.findOne({
       _id: templateId,
@@ -188,7 +223,13 @@ export const createProjectFromTemplate = async (req: Request, res: Response) => 
 // Add preferred vendor
 export const addPreferredVendor = async (req: Request, res: Response) => {
   try {
-    const clientId = req.user._id;
+    const clientId = req.user?._id;
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
     const { freelancerId, category, rating, notes, isPriority } = req.body;
 
     const vendor = await PreferredVendor.create({
@@ -216,7 +257,13 @@ export const addPreferredVendor = async (req: Request, res: Response) => {
 // Get preferred vendors
 export const getPreferredVendors = async (req: Request, res: Response) => {
   try {
-    const clientId = req.user._id;
+    const clientId = req.user?._id;
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
     const { category } = req.query;
 
     const query: any = { client: clientId };
@@ -244,7 +291,13 @@ export const getPreferredVendors = async (req: Request, res: Response) => {
 export const updatePreferredVendor = async (req: Request, res: Response) => {
   try {
     const { vendorId } = req.params;
-    const clientId = req.user._id;
+    const clientId = req.user?._id;
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const vendor = await PreferredVendor.findOne({
       _id: vendorId,
@@ -278,7 +331,13 @@ export const updatePreferredVendor = async (req: Request, res: Response) => {
 export const removePreferredVendor = async (req: Request, res: Response) => {
   try {
     const { vendorId } = req.params;
-    const clientId = req.user._id;
+    const clientId = req.user?._id;
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
 
     const result = await PreferredVendor.deleteOne({
       _id: vendorId,
@@ -301,6 +360,238 @@ export const removePreferredVendor = async (req: Request, res: Response) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to remove preferred vendor',
+    });
+  }
+};
+
+// Order a service package (creates project and contract)
+export const orderServicePackage = async (req: Request, res: Response) => {
+  try {
+    const { packageId } = req.params;
+    const clientId = req.user?._id;
+    const { requirements, message } = req.body;
+
+    if (!clientId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Unauthorized',
+      });
+    }
+
+    console.log(`[SERVICE ORDER] Client ${clientId} ordering package ${packageId}`);
+
+    // Get the service package
+    const servicePackage = await ServicePackage.findById(packageId);
+    if (!servicePackage) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Service package not found',
+      });
+    }
+
+    if (!servicePackage.isActive) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'This service package is not available',
+      });
+    }
+
+    // Get freelancer details
+    const freelancer = await User.findById(servicePackage.freelancer);
+    if (!freelancer) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Freelancer not found',
+      });
+    }
+
+    // Get client details
+    const client = await User.findById(clientId);
+    if (!client) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Client not found',
+      });
+    }
+
+    // Calculate price and end date
+    const price = servicePackage.pricing.amount || servicePackage.pricing.hourlyRate || 0;
+    const deliveryDays = servicePackage.deliveryTime;
+    const endDate = new Date(Date.now() + deliveryDays * 24 * 60 * 60 * 1000);
+
+    console.log(`[SERVICE ORDER] Package: ${servicePackage.title}, Price: $${price}, Delivery: ${deliveryDays} days`);
+
+    // Create project
+    // Note: servicePackage.skills contains string names, not ObjectIds, so we use empty array
+    const project = await Project.create({
+      title: `Service: ${servicePackage.title}`,
+      description: servicePackage.description + (requirements ? `\n\nClient Requirements: ${requirements}` : ''),
+      client: clientId,
+      category: servicePackage.category || 'General',
+      skills: [],
+      budget: {
+        type: 'fixed',
+        min: price,
+        max: price,
+      },
+      timeline: {
+        duration: deliveryDays,
+        unit: 'days',
+      },
+      status: 'in_progress',
+      selectedFreelancer: servicePackage.freelancer,
+    });
+
+    console.log(`[SERVICE ORDER] Project created: ${project._id}`);
+
+    // Create a proposal for the contract (required field)
+    const proposal = await Proposal.create({
+      project: project._id,
+      freelancer: servicePackage.freelancer,
+      coverLetter: `Service package order: ${servicePackage.title}\n\n${servicePackage.description}`,
+      bidAmount: price,
+      timeline: {
+        duration: deliveryDays,
+        unit: 'days',
+      },
+      milestones: [{
+        title: 'Service Delivery',
+        description: `Complete delivery of ${servicePackage.title}`,
+        amount: price,
+        dueDate: endDate,
+      }],
+      status: 'accepted',
+    });
+
+    console.log(`[SERVICE ORDER] Proposal created: ${proposal._id}`);
+
+    // Create contract with sourceType: 'service'
+    const contract = await Contract.create({
+      project: project._id,
+      client: clientId,
+      freelancer: servicePackage.freelancer,
+      proposal: proposal._id,
+      title: servicePackage.title,
+      description: servicePackage.description,
+      totalAmount: price,
+      currency: 'USD',
+      startDate: new Date(),
+      endDate: endDate,
+      status: 'active',
+      sourceType: 'service',
+      servicePackage: servicePackage._id,
+      milestones: [{
+        title: 'Service Delivery',
+        description: `Complete delivery of ${servicePackage.title}`,
+        amount: price,
+        dueDate: endDate,
+        status: 'pending',
+      }],
+      terms: {
+        paymentTerms: 'Payment will be released upon service completion and client approval.',
+        cancellationPolicy: 'Either party may cancel this contract with 7 days written notice.',
+        intellectualProperty: 'All work product created under this contract will be owned by the client.',
+        confidentiality: 'Both parties agree to maintain confidentiality of all project information.',
+        disputeResolution: 'Disputes will be resolved through the platform\'s dispute resolution process.',
+      },
+    });
+
+    console.log(`[SERVICE ORDER] Contract created: ${contract._id}, sourceType: ${contract.sourceType}`);
+
+    // Increment order count on service package
+    servicePackage.orders = (servicePackage.orders || 0) + 1;
+    await servicePackage.save();
+
+    // Create notification for freelancer
+    try {
+      await Notification.create({
+        user: servicePackage.freelancer,
+        type: 'contract',
+        title: `New Service Order: ${servicePackage.title}`,
+        message: `${client.profile.firstName} ${client.profile.lastName} has ordered your service "${servicePackage.title}"`,
+        link: `/dashboard/contracts/${contract._id}`,
+        priority: 'high',
+        metadata: {
+          contractId: contract._id,
+          senderId: clientId,
+          amount: price,
+        },
+        isRead: false,
+      });
+    } catch (notificationError) {
+      console.error('Failed to create service order notification:', notificationError);
+    }
+
+    // Send email notification to freelancer
+    try {
+      await sendEmail({
+        to: freelancer.email,
+        subject: `New Service Order: ${servicePackage.title}`,
+        html: `
+          <h2>You have a new service order!</h2>
+          <p><strong>Service:</strong> ${servicePackage.title}</p>
+          <p><strong>Client:</strong> ${client.profile.firstName} ${client.profile.lastName}</p>
+          <p><strong>Amount:</strong> $${price}</p>
+          <p><strong>Delivery Time:</strong> ${deliveryDays} days</p>
+          ${message ? `<p><strong>Message:</strong> ${message}</p>` : ''}
+          <p>Log in to your dashboard to view the contract and start working.</p>
+        `,
+      });
+    } catch (emailError) {
+      console.error('Failed to send service order email:', emailError);
+    }
+
+    console.log(`[SERVICE ORDER] ✅ Success - Contract ${contract._id} created with sourceType: service`);
+
+    res.status(201).json({
+      status: 'success',
+      message: 'Service ordered successfully',
+      data: {
+        project,
+        contract,
+        servicePackage: {
+          _id: servicePackage._id,
+          title: servicePackage.title,
+        },
+      },
+    });
+  } catch (error: any) {
+    logger.error('Error ordering service package:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message || 'Failed to order service package',
+    });
+  }
+};
+
+// Get a single service package by ID
+export const getServicePackageById = async (req: Request, res: Response) => {
+  try {
+    const { packageId } = req.params;
+
+    const servicePackage = await ServicePackage.findById(packageId)
+      .populate('freelancer', 'profile rating freelancerProfile');
+
+    if (!servicePackage) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Service package not found',
+      });
+    }
+
+    // Increment view count
+    servicePackage.views = (servicePackage.views || 0) + 1;
+    await servicePackage.save();
+
+    res.json({
+      status: 'success',
+      data: { servicePackage },
+    });
+  } catch (error) {
+    logger.error('Error fetching service package:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch service package',
     });
   }
 };

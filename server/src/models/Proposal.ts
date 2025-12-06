@@ -4,23 +4,23 @@ import { IProposal } from '@/types/proposal';
 const milestoneSchema = new Schema({
   title: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
     maxlength: 200,
   },
   description: {
     type: String,
-    required: true,
+    required: false,
     maxlength: 1000,
   },
   amount: {
     type: Number,
-    required: true,
+    required: false,
     min: 0,
   },
   dueDate: {
     type: Date,
-    required: true,
+    required: false,
   },
   deliverables: [String],
 }, { _id: false });
@@ -68,8 +68,8 @@ const proposalSchema = new Schema<IProposal>({
   milestones: [milestoneSchema],
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'rejected', 'withdrawn'],
-    default: 'pending',
+    enum: ['submitted', 'accepted', 'rejected', 'withdrawn'],
+    default: 'submitted',
   },
   clientFeedback: {
     type: String,
@@ -99,13 +99,15 @@ proposalSchema.index({ project: 1, freelancer: 1 }, { unique: true }); // Preven
 
 // Virtual for timeline display
 proposalSchema.virtual('timelineDisplay').get(function() {
+  if (!this.timeline) return '';
   const { duration, unit } = this.timeline;
   return `${duration} ${unit}`;
 });
 
 // Virtual for total milestone amount
 proposalSchema.virtual('totalMilestoneAmount').get(function() {
-  return this.milestones.reduce((total, milestone) => total + milestone.amount, 0);
+  if (!this.milestones || !Array.isArray(this.milestones)) return 0;
+  return this.milestones.reduce((total, milestone) => total + (milestone.amount || 0), 0);
 });
 
 // Method to check if proposal is expired
@@ -114,10 +116,20 @@ proposalSchema.methods.isExpired = function() {
   return false; // Will be implemented when we have project reference
 };
 
+// Method to check if proposal can be modified
+proposalSchema.methods.canBeModified = function() {
+  return ['submitted'].includes(this.status);
+};
+
+// Method to check if proposal can be withdrawn
+proposalSchema.methods.canBeWithdrawn = function() {
+  return this.status === 'submitted';
+};
+
 // Method to withdraw proposal
 proposalSchema.methods.withdraw = function() {
-  if (this.status !== 'pending') {
-    throw new Error('Can only withdraw pending proposals');
+  if (this.status !== 'submitted') {
+    throw new Error('Can only withdraw submitted proposals');
   }
   this.status = 'withdrawn';
   return this.save();
@@ -125,8 +137,8 @@ proposalSchema.methods.withdraw = function() {
 
 // Method to accept proposal
 proposalSchema.methods.accept = function(feedback?: string) {
-  if (this.status !== 'pending') {
-    throw new Error('Can only accept pending proposals');
+  if (this.status !== 'submitted') {
+    throw new Error('Can only accept submitted proposals');
   }
   this.status = 'accepted';
   this.respondedAt = new Date();
@@ -138,8 +150,8 @@ proposalSchema.methods.accept = function(feedback?: string) {
 
 // Method to reject proposal
 proposalSchema.methods.reject = function(feedback?: string) {
-  if (this.status !== 'pending') {
-    throw new Error('Can only reject pending proposals');
+  if (this.status !== 'submitted') {
+    throw new Error('Can only reject submitted proposals');
   }
   this.status = 'rejected';
   this.respondedAt = new Date();
@@ -172,6 +184,18 @@ proposalSchema.statics.findByFreelancer = function(freelancerId: string) {
 
 // Pre-save middleware to validate bid amount against project budget
 proposalSchema.pre('save', async function(next) {
+  // Set submittedAt when status is submitted
+  if (this.isNew && this.status === 'submitted' && !this.submittedAt) {
+    this.submittedAt = new Date();
+  }
+  
+  // Set respondedAt when status changes to accepted/rejected
+  if (this.isModified('status')) {
+    if (['accepted', 'rejected'].includes(this.status) && !this.respondedAt) {
+      this.respondedAt = new Date();
+    }
+  }
+  
   if (this.isNew || this.isModified('bidAmount')) {
     try {
       const Project = mongoose.model('Project');
@@ -193,5 +217,12 @@ proposalSchema.pre('save', async function(next) {
   }
   next();
 });
+
+// Instance method to check if proposal can be modified
+proposalSchema.methods.canBeModified = function(): boolean {
+  // Proposals can be modified if they are in draft or submitted status
+  // Once accepted or rejected, they cannot be modified
+  return ['draft', 'submitted'].includes(this.status);
+};
 
 export const Proposal = mongoose.model<IProposal>('Proposal', proposalSchema);

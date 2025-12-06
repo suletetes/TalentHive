@@ -5,13 +5,16 @@ export interface IContract extends Document {
   client: ObjectId;
   freelancer: ObjectId;
   proposal: ObjectId;
+  sourceType?: 'proposal' | 'hire_now' | 'service';
+  hireNowRequest?: ObjectId;
+  servicePackage?: ObjectId;
   title: string;
   description: string;
   totalAmount: number;
   currency: string;
   startDate: Date;
   endDate: Date;
-  status: 'draft' | 'active' | 'completed' | 'cancelled' | 'disputed';
+  status: 'draft' | 'active' | 'completed' | 'cancelled' | 'disputed' | 'paused';
   milestones: IMilestone[];
   terms: IContractTerms;
   deliverables: IDeliverable[];
@@ -24,6 +27,11 @@ export interface IContract extends Document {
   totalPaid: number;
   remainingAmount: number;
   overdueMilestones: IMilestone[];
+  
+  // Methods
+  isFullySigned(): boolean;
+  canSubmitMilestone(milestoneId: string, userId: string): boolean;
+  canApproveMilestone(milestoneId: string, userId: string): boolean;
 }
 
 export interface IMilestone extends Document {

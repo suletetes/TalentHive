@@ -209,6 +209,19 @@ const contractSchema = new Schema<IContract>({
     ref: 'Proposal',
     required: true,
   },
+  sourceType: {
+    type: String,
+    enum: ['proposal', 'hire_now', 'service'],
+    default: 'proposal',
+  },
+  hireNowRequest: {
+    type: Schema.Types.ObjectId,
+    ref: 'HireNowRequest',
+  },
+  servicePackage: {
+    type: Schema.Types.ObjectId,
+    ref: 'ServicePackage',
+  },
   title: {
     type: String,
     required: true,
@@ -269,41 +282,47 @@ contractSchema.index({ 'milestones.status': 1 });
 contractSchema.index({ 'milestones.dueDate': 1 });
 
 // Virtual for progress calculation
-contractSchema.virtual('progress').get(function() {
-  if (this.milestones.length === 0) return 0;
-  
+contractSchema.virtual('progress').get(function () {
+  if (!this.milestones || !Array.isArray(this.milestones) || this.milestones.length === 0) return 0;
+
   const completedMilestones = this.milestones.filter(
     (milestone: any) => milestone.status === 'approved' || milestone.status === 'paid'
   ).length;
-  
+
   return Math.round((completedMilestones / this.milestones.length) * 100);
 });
 
 // Virtual for total paid amount
 contractSchema.virtual('totalPaid').get(function() {
+  if (!this.milestones || !Array.isArray(this.milestones) || this.milestones.length === 0) {
+    return 0;
+  }
   return this.milestones
-    .filter((milestone: any) => milestone.status === 'paid')
-    .reduce((total: number, milestone: any) => total + milestone.amount, 0);
+    .filter((milestone: any) => milestone && (milestone.status === 'paid' || milestone.status === 'completed'))
+    .reduce((total: number, milestone: any) => total + (milestone.amount || 0), 0);
 });
 
 // Virtual for remaining amount
 contractSchema.virtual('remainingAmount').get(function() {
-  return this.totalAmount - this.totalPaid;
+  if (!this.totalAmount) return 0;
+  return Math.max(0, this.totalAmount - (this.totalPaid || 0));
 });
 
 // Virtual for overdue milestones
 contractSchema.virtual('overdueMilestones').get(function() {
+  if (!this.milestones || !Array.isArray(this.milestones)) return [];
   const now = new Date();
-  return this.milestones.filter((milestone: any) => 
+  return this.milestones.filter((milestone: any) => milestone && 
     milestone.dueDate < now && 
     !['approved', 'paid'].includes(milestone.status)
   );
 });
 
 // Virtual for next milestone
-contractSchema.virtual('nextMilestone').get(function() {
+contractSchema.virtual('nextMilestone').get(function () {
+  if (!this.milestones || !Array.isArray(this.milestones)) return null;
   return this.milestones
-    .filter((milestone: any) => ['pending', 'in_progress'].includes(milestone.status))
+    .filter((milestone: any) => milestone && ['pending', 'in_progress'].includes(milestone.status))
     .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
 });
 
@@ -322,53 +341,63 @@ contractSchema.methods.canBeModified = function(userId: string) {
 };
 
 // Method to check if milestone can be submitted
-contractSchema.methods.canSubmitMilestone = function(milestoneId: string, userId: string) {
+contractSchema.methods.canSubmitMilestone = function (milestoneId: string, userId: string) {
   if (this.freelancer.toString() !== userId) return false;
   if (this.status !== 'active') return false;
-  
-  const milestone = this.milestones.id(milestoneId);
+  if (!this.milestones || !Array.isArray(this.milestones)) return false;
+
+  const milestone = this.milestones.find((m: any) => m._id.toString() === milestoneId);
   return milestone && ['pending', 'in_progress', 'rejected'].includes(milestone.status);
 };
 
 // Method to check if milestone can be approved
-contractSchema.methods.canApproveMilestone = function(milestoneId: string, userId: string) {
+contractSchema.methods.canApproveMilestone = function (milestoneId: string, userId: string) {
   if (this.client.toString() !== userId) return false;
   if (this.status !== 'active') return false;
-  
-  const milestone = this.milestones.id(milestoneId);
+  if (!this.milestones || !Array.isArray(this.milestones)) return false;
+
+  const milestone = this.milestones.find((m: any) => m._id.toString() === milestoneId);
   return milestone && milestone.status === 'submitted';
 };
 
 // Pre-save middleware to validate contract dates
-contractSchema.pre('save', function(next) {
+contractSchema.pre('save', function (next) {
   if (this.startDate >= this.endDate) {
-    next(new Error('End date must be after start date'));
+    return next(new Error('End date must be after start date'));
   }
-  
-  // Validate milestone amounts equal total amount
-  const totalMilestoneAmount = this.milestones.reduce(
-    (total: number, milestone: any) => total + milestone.amount, 0
-  );
-  
-  if (Math.abs(totalMilestoneAmount - this.totalAmount) > 0.01) {
-    next(new Error('Total milestone amount must equal contract total amount'));
+
+  // Validate milestone amounts equal total amount (only if milestones exist)
+  if (this.milestones && Array.isArray(this.milestones) && this.milestones.length > 0) {
+    const totalMilestoneAmount = this.milestones.reduce(
+      (total: number, milestone: any) => total + (milestone?.amount || 0),
+      0
+    );
+
+    if (Math.abs(totalMilestoneAmount - this.totalAmount) > 0.01) {
+      return next(new Error('Total milestone amount must equal contract total amount'));
+    }
   }
-  
+
   next();
 });
 
 // Pre-save middleware to update contract status based on milestones
-contractSchema.pre('save', function(next) {
-  if (this.status === 'active' && this.milestones.length > 0) {
+contractSchema.pre('save', function (next) {
+  if (
+    this.status === 'active' &&
+    this.milestones &&
+    Array.isArray(this.milestones) &&
+    this.milestones.length > 0
+  ) {
     const allMilestonesCompleted = this.milestones.every(
-      (milestone: any) => milestone.status === 'paid'
+      (milestone: any) => milestone && milestone.status === 'paid'
     );
-    
+
     if (allMilestonesCompleted) {
       this.status = 'completed';
     }
   }
-  
+
   next();
 });
 

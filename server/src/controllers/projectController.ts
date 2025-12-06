@@ -36,6 +36,28 @@ export const createProject = catchAsync(async (req: AuthRequest, res: Response, 
     client: req.user._id,
   };
 
+  // Remove empty organization string
+  if (!projectData.organization || projectData.organization === '') {
+    delete projectData.organization;
+  }
+
+  // If organization is provided, verify user is a member
+  if (projectData.organization) {
+    const { Organization } = await import('@/models/Organization');
+    const org = await Organization.findById(projectData.organization);
+    
+    if (!org) {
+      return next(new AppError('Organization not found', 404));
+    }
+
+    const isMember = org.owner.toString() === req.user._id.toString() ||
+      org.members.some((m: any) => m.user.toString() === req.user._id.toString());
+    
+    if (!isMember) {
+      return next(new AppError('You are not a member of this organization', 403));
+    }
+  }
+
   // Validate budget range
   if (projectData.budget.min > projectData.budget.max) {
     return next(new AppError('Minimum budget cannot be greater than maximum budget', 400));
@@ -43,6 +65,15 @@ export const createProject = catchAsync(async (req: AuthRequest, res: Response, 
 
   const project = new Project(projectData);
   await project.save();
+
+  // If organization is linked, add project to organization
+  if (projectData.organization) {
+    const { Organization } = await import('@/models/Organization');
+    await Organization.findByIdAndUpdate(
+      projectData.organization,
+      { $push: { projects: project._id } }
+    );
+  }
 
   // Update client's project count
   await User.findByIdAndUpdate(req.user._id, {
@@ -77,7 +108,16 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
     status = 'open',
     featured,
     urgent,
+    organization,
   } = req.query;
+
+  console.log(`[GET PROJECTS] Fetching projects with filters:`, {
+    page,
+    limit,
+    category,
+    skills,
+    status,
+  });
 
   // Build cache key
   const cacheKey = `projects:${JSON.stringify(req.query)}`;
@@ -85,6 +125,7 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
   // Try to get from cache first
   const cachedResult = await getCache(cacheKey);
   if (cachedResult) {
+    console.log(`[GET PROJECTS] Returning cached result`);
     return res.json({
       status: 'success',
       data: cachedResult,
@@ -96,14 +137,21 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
     status: status || 'open',
   };
 
+  // Add organization filter
+  if (organization) {
+    query.organization = organization;
+  }
+
   // Add filters
   if (category) {
     query.category = category;
+    console.log(`[GET PROJECTS] Filtering by category: ${category}`);
   }
 
   if (skills) {
     const skillsArray = (skills as string).split(',');
     query.skills = { $in: skillsArray };
+    console.log(`[GET PROJECTS] Filtering by skills:`, skillsArray);
   }
 
   if (budgetMin || budgetMax) {
@@ -153,14 +201,38 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
   const [projects, total] = await Promise.all([
     Project.find(query)
       .populate('client', 'profile rating clientProfile')
+      .populate('organization', 'name logo budget')
+      .populate('category', '_id name')
       .sort(sort)
       .skip(skip)
-      .limit(parseInt(limit as string)),
+      .limit(parseInt(limit as string))
+      .lean(),
     Project.countDocuments(query),
   ]);
 
+  console.log(`[GET PROJECTS] Found ${projects.length} projects`);
+  
+  // Log first project to check data format
+  if (projects.length > 0) {
+    const firstProject = projects[0];
+    console.log(`[GET PROJECTS] First project category type:`, typeof firstProject.category);
+    console.log(`[GET PROJECTS] First project category:`, firstProject.category);
+    console.log(`[GET PROJECTS] First project skills:`, firstProject.skills);
+  }
+
+  // Add proposal counts to each project
+  const { Proposal } = await import('@/models/Proposal');
+  const projectsWithCounts = await Promise.all(
+    projects.map(async (project: any) => {
+      const proposalCount = await Proposal.countDocuments({ 
+        project: project._id 
+      });
+      return { ...project, proposalCount };
+    })
+  );
+
   const result = {
-    projects,
+    projects: projectsWithCounts,
     pagination: {
       page: parseInt(page as string),
       limit: parseInt(limit as string),
@@ -168,6 +240,8 @@ export const getProjects = catchAsync(async (req: Request, res: Response, next: 
       pages: Math.ceil(total / parseInt(limit as string)),
     },
   };
+
+  console.log(`[GET PROJECTS] Returning ${projectsWithCounts.length} projects with counts`);
 
   // Cache the result for 5 minutes
   await setCache(cacheKey, result, 300);
@@ -183,6 +257,9 @@ export const getProjectById = catchAsync(async (req: Request, res: Response, nex
 
   const project = await Project.findById(id)
     .populate('client', 'profile rating clientProfile')
+    .populate('organization', 'name logo budget members')
+    .populate('category', '_id name')
+    .populate('skills', '_id name')
     .populate('selectedFreelancer', 'profile rating freelancerProfile')
     .populate({
       path: 'proposals',
@@ -194,6 +271,15 @@ export const getProjectById = catchAsync(async (req: Request, res: Response, nex
 
   if (!project) {
     return next(new AppError('Project not found', 404));
+  }
+
+  console.log('🔍 [PROJECT] Project ID:', id);
+  console.log('🔍 [PROJECT] Skills raw:', project.skills);
+  console.log('🔍 [PROJECT] Skills type:', typeof project.skills);
+  console.log('🔍 [PROJECT] Skills length:', project.skills?.length);
+  if (project.skills && project.skills.length > 0) {
+    console.log('🔍 [PROJECT] First skill:', project.skills[0]);
+    console.log('🔍 [PROJECT] First skill type:', typeof project.skills[0]);
   }
 
   // Increment view count (don't await to avoid blocking)
@@ -225,11 +311,56 @@ export const updateProject = catchAsync(async (req: AuthRequest, res: Response, 
     return next(new AppError('Cannot update project in current status', 400));
   }
 
+  // ISSUE #8 FIX: Warn if changing budget when proposals exist
+  if (req.body.budget && project.proposals && project.proposals.length > 0) {
+    const hasSubmittedProposals = await import('@/models/Proposal').then(({ Proposal }) => 
+      Proposal.countDocuments({ project: id, status: 'submitted' })
+    );
+    
+    if (hasSubmittedProposals > 0) {
+      console.log(`[PROJECT UPDATE] Warning: Updating budget for project with ${hasSubmittedProposals} submitted proposals`);
+      // Allow the update but log it - proposals are based on original budget
+    }
+  }
+
+  // Handle organization change
+  if (req.body.organization && req.body.organization !== project.organization?.toString()) {
+    const { Organization } = await import('@/models/Organization');
+    const org = await Organization.findById(req.body.organization);
+    
+    if (!org) {
+      return next(new AppError('Organization not found', 404));
+    }
+
+    const isMember = org.owner.toString() === req.user._id.toString() ||
+      org.members.some((m: any) => m.user.toString() === req.user._id.toString());
+    
+    if (!isMember) {
+      return next(new AppError('You are not a member of this organization', 403));
+    }
+
+    // Remove from old organization if it exists
+    if (project.organization) {
+      await Organization.findByIdAndUpdate(
+        project.organization,
+        { $pull: { projects: project._id } }
+      );
+    }
+
+    // Add to new organization
+    await Organization.findByIdAndUpdate(
+      req.body.organization,
+      { $push: { projects: project._id } }
+    );
+  }
+
   const updatedProject = await Project.findByIdAndUpdate(
     id,
     { ...req.body, updatedAt: new Date() },
     { new: true, runValidators: true }
-  ).populate('client', 'profile rating clientProfile');
+  ).populate('client', 'profile rating clientProfile')
+   .populate('organization', 'name logo budget')
+   .populate('category', '_id name');
 
   // Clear cache
   await deleteCache('projects:*');
@@ -259,6 +390,15 @@ export const deleteProject = catchAsync(async (req: AuthRequest, res: Response, 
   // Don't allow deletion if project has proposals or is in progress
   if (project.proposals.length > 0 || project.status === 'in_progress') {
     return next(new AppError('Cannot delete project with proposals or in progress', 400));
+  }
+
+  // Remove from organization if linked
+  if (project.organization) {
+    const { Organization } = await import('@/models/Organization');
+    await Organization.findByIdAndUpdate(
+      project.organization,
+      { $pull: { projects: project._id } }
+    );
   }
 
   await Project.findByIdAndDelete(id);
@@ -299,16 +439,30 @@ const getMyProjects = catchAsync(async (req: AuthRequest, res: Response, next: N
   const [projects, total] = await Promise.all([
     Project.find(query)
       .populate('selectedFreelancer', 'profile rating freelancerProfile')
+      .populate('client', 'profile rating clientProfile')
+      .populate('category', '_id name')
       .sort(sort)
       .skip(skip)
-      .limit(parseInt(limit as string)),
+      .limit(parseInt(limit as string))
+      .lean(),
     Project.countDocuments(query),
   ]);
+
+  // Add proposal counts to each project
+  const { Proposal } = await import('@/models/Proposal');
+  const projectsWithCounts = await Promise.all(
+    projects.map(async (project: any) => {
+      const proposalCount = await Proposal.countDocuments({ 
+        project: project._id 
+      });
+      return { ...project, proposalCount };
+    })
+  );
 
   res.json({
     status: 'success',
     data: {
-      projects,
+      projects: projectsWithCounts,
       pagination: {
         page: parseInt(page as string),
         limit: parseInt(limit as string),
@@ -453,6 +607,141 @@ export const toggleProjectStatus = catchAsync(async (req: AuthRequest, res: Resp
   res.json({
     status: 'success',
     message: 'Project status updated successfully',
+    data: {
+      project,
+    },
+  });
+});
+
+// Get dashboard stats for user
+export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user._id;
+  const userRole = req.user.role;
+  
+  console.log(`[DASHBOARD STATS] Fetching stats for user: ${userId}, role: ${userRole}`);
+  
+  const { Proposal } = await import('@/models/Proposal');
+  const { Contract } = await import('@/models/Contract');
+  const { Review } = await import('@/models/Review');
+  
+  if (userRole === 'client') {
+    console.log(`[DASHBOARD STATS] Client stats requested`);
+    
+    // Get all project IDs for this client
+    const projectIds = await Project.find({ client: userId }).distinct('_id');
+    console.log(`[DASHBOARD STATS] Found ${projectIds.length} projects for client`);
+    
+    const [totalProjects, activeProjects, completedProjects, receivedProposals, totalSpent, totalContracts, ongoingContracts] = await Promise.all([
+      Project.countDocuments({ client: userId }),
+      Project.countDocuments({ client: userId, status: 'open' }),
+      Project.countDocuments({ client: userId, status: 'completed' }),
+      Proposal.countDocuments({ 
+        project: { $in: projectIds },
+        status: 'submitted'
+      }),
+      Contract.aggregate([
+        { $match: { client: userId, status: { $in: ['active', 'completed'] } } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      ]).then(result => result[0]?.total || 0),
+      Contract.countDocuments({ client: userId }),
+      Contract.countDocuments({ client: userId, status: 'active' }),
+    ]);
+    
+    console.log(`[DASHBOARD STATS] Client stats:`, {
+      totalProjects,
+      activeProjects,
+      completedProjects,
+      receivedProposals,
+      totalSpent,
+      totalContracts,
+      ongoingContracts,
+    });
+    
+    return res.json({
+      status: 'success',
+      data: {
+        totalProjects,
+        activeProjects,
+        completedProjects,
+        receivedProposals,
+        totalSpent,
+        totalContracts,
+        ongoingContracts,
+      },
+    });
+  }
+  
+  if (userRole === 'freelancer') {
+    const { Payment } = await import('@/models/Payment');
+
+    const [totalProposals, acceptedProposals, activeContracts, totalEarnings, totalContracts, totalReviews] = await Promise.all([
+      Proposal.countDocuments({ freelancer: userId }),
+      Proposal.countDocuments({ freelancer: userId, status: 'accepted' }),
+      Contract.countDocuments({ freelancer: userId, status: 'active' }),
+      // Get earnings from completed payments (freelancerAmount is after platform fee)
+      Payment.aggregate([
+        { $match: { freelancer: userId, status: 'completed' } },
+        { $group: { _id: null, total: { $sum: '$freelancerAmount' } } }
+      ]).then(result => result[0]?.total || 0),
+      Contract.countDocuments({ freelancer: userId }),
+      // Reviews where this user is the reviewee (received reviews)
+      Review.countDocuments({ reviewee: userId }),
+    ]);
+
+    return res.json({
+      status: 'success',
+      data: {
+        totalProposals,
+        acceptedProposals,
+        activeProjects: activeContracts,
+        totalEarnings,
+        totalContracts,
+        totalReviews,
+      },
+    });
+  }
+  
+  res.json({
+    status: 'success',
+    data: {},
+  });
+});
+
+// Close/Open proposal acceptance for a project
+export const toggleProposalAcceptance = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const userId = req.user?._id;
+
+  const project = await Project.findById(id);
+  if (!project) {
+    return next(new AppError('Project not found', 404));
+  }
+
+  // Check if user owns the project
+  if (project.client.toString() !== userId?.toString()) {
+    return next(new AppError('You can only modify your own projects', 403));
+  }
+
+  // Toggle proposal acceptance
+  project.acceptingProposals = !project.acceptingProposals;
+  
+  if (!project.acceptingProposals) {
+    project.proposalsClosed = true;
+    project.proposalsClosedAt = new Date();
+  } else {
+    project.proposalsClosed = false;
+    project.proposalsClosedAt = undefined;
+  }
+
+  await project.save();
+
+  // Clear cache
+  await deleteCache(`project:${id}`);
+  await deleteCache('projects:*');
+
+  res.json({
+    status: 'success',
+    message: `Proposal acceptance ${project.acceptingProposals ? 'opened' : 'closed'}`,
     data: {
       project,
     },

@@ -152,7 +152,7 @@ export const searchFreelancers = catchAsync(async (req: AuthRequest, res: Respon
 });
 
 export const getRecommendations = catchAsync(async (req: AuthRequest, res: Response) => {
-  if (req.user.role !== 'freelancer') {
+  if (req.user?.role !== 'freelancer') {
     return res.json({
       status: 'success',
       data: { projects: [] },

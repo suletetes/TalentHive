@@ -281,8 +281,8 @@ describe('Profile Components', () => {
         </TestWrapper>
       );
 
-      // Check for verified icon (using title attribute)
-      const verifiedIcon = screen.getByTitle('Verified freelancer');
+      // Check for verified icon (using aria-label attribute)
+      const verifiedIcon = screen.getByLabelText('Verified freelancer');
       expect(verifiedIcon).toBeInTheDocument();
     });
 
@@ -299,10 +299,10 @@ describe('Profile Components', () => {
         </TestWrapper>
       );
 
-      const favoriteButton = screen.getByRole('button', { name: /favorite/i });
+      const favoriteButton = screen.getByTestId('FavoriteBorderIcon').closest('button');
       expect(favoriteButton).toBeInTheDocument();
       
-      fireEvent.click(favoriteButton);
+      fireEvent.click(favoriteButton!);
       expect(mockOnFavorite).toHaveBeenCalledWith('1');
     });
 

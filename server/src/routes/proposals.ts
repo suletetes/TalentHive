@@ -11,30 +11,30 @@ import {
   rejectProposal,
   highlightProposal,
   getProposalStats,
+  deleteProposal,
 } from '@/controllers/proposalController';
 import { authenticate, authorize } from '@/middleware/auth';
 
 const router = Router();
 
-// Public routes
-router.get('/project/:projectId', getProposalsForProject);
-router.get('/:id', getProposalById);
-
 // Protected routes (require authentication)
 router.use(authenticate);
 
-// Freelancer routes
+// Specific routes must come before parameterized routes
+router.get('/my', authorize('freelancer'), getMyProposals);
+router.get('/stats', getProposalStats);
+router.get('/project/:projectId', getProposalsForProject);
 router.post('/project/:projectId', authorize('freelancer'), createProposalValidation, createProposal);
-router.get('/my/proposals', authorize('freelancer'), getMyProposals);
+
+// Freelancer routes with :id parameter
+router.get('/:id', getProposalById);
 router.put('/:id', authorize('freelancer'), updateProposal);
-router.delete('/:id', authorize('freelancer'), withdrawProposal);
+router.patch('/:id/withdraw', authorize('freelancer'), withdrawProposal);
+router.delete('/:id/delete', authorize('freelancer'), deleteProposal);
 router.patch('/:id/highlight', authorize('freelancer'), highlightProposal);
 
 // Client routes
 router.post('/:id/accept', authorize('client'), acceptProposal);
 router.post('/:id/reject', authorize('client'), rejectProposal);
-
-// General stats
-router.get('/my/stats', getProposalStats);
 
 export default router;

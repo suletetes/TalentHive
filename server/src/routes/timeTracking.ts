@@ -3,6 +3,7 @@ import { protect, restrictTo } from '@/middleware/auth';
 import {
   startWorkSession,
   stopWorkSession,
+  getActiveSession,
   createTimeEntry,
   updateTimeEntry,
   submitTimeEntries,
@@ -17,6 +18,7 @@ const router = Router();
 router.use(protect);
 
 // Work session routes (freelancers only)
+router.get('/sessions/active', restrictTo('freelancer'), getActiveSession);
 router.post('/sessions/start', restrictTo('freelancer'), startWorkSession);
 router.patch('/sessions/:sessionId/stop', restrictTo('freelancer'), stopWorkSession);
 

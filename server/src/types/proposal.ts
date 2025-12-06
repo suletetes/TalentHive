@@ -11,13 +11,20 @@ export interface IProposal extends Document {
   };
   attachments: string[];
   milestones: IMilestone[];
-  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+  status: 'submitted' | 'accepted' | 'rejected' | 'withdrawn';
   clientFeedback?: string;
   isHighlighted: boolean;
   submittedAt: Date;
   respondedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  // Methods
+  isExpired(): boolean;
+  canBeModified(): boolean;
+  canBeWithdrawn(): boolean;
+  withdraw(): Promise<IProposal>;
+  accept(feedback?: string): Promise<IProposal>;
+  reject(feedback?: string): Promise<IProposal>;
 }
 
 export interface IMilestone {

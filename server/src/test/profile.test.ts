@@ -232,10 +232,10 @@ describe('Profile Management', () => {
 
       expect(response.body.status).toBe('success');
       expect(response.body.data.skills).toContain('TypeScript');
-      expect(response.body.data.skillRates).toContainEqual({
-        skill: 'TypeScript',
-        rate: 65,
-      });
+      // Check that the skill rate exists with correct values (ignore _id fields)
+      const typescriptRate = response.body.data.skillRates.find((sr: any) => sr.skill === 'TypeScript');
+      expect(typescriptRate).toBeDefined();
+      expect(typescriptRate.rate).toBe(65);
     });
 
     it('should not allow clients to add skills', async () => {

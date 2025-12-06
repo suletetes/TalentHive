@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { Review } from '@/models/Review';
 import { Contract } from '@/models/Contract';
+import { User } from '@/models/User';
 import { AppError, catchAsync } from '@/middleware/errorHandler';
+import { notificationService } from '@/services/notification.service';
 
 interface AuthRequest extends Request {
   user?: any;
@@ -49,6 +51,34 @@ export const createReview = catchAsync(async (req: AuthRequest, res: Response, n
 
   await review.populate('reviewer', 'profile');
 
+  // ISSUE #16 FIX: Update reviewee's rating
+  try {
+    const revieweeUser = await User.findById(reviewee);
+    if (revieweeUser) {
+      revieweeUser.updateRating(rating);
+      await revieweeUser.save();
+      console.log(`[REVIEW] Updated rating for user ${reviewee}: ${revieweeUser.rating.average} (${revieweeUser.rating.count} reviews)`);
+    }
+  } catch (error) {
+    console.error('Failed to update user rating:', error);
+  }
+
+  // Send notification to reviewee (only if reviewing a freelancer)
+  if (isClient) {
+    try {
+      const client = await User.findById(req.user._id);
+      const clientName = `${client?.profile.firstName} ${client?.profile.lastName}`;
+      await notificationService.notifyNewReview(
+        reviewee.toString(),
+        clientName,
+        rating,
+        contract.project.toString()
+      );
+    } catch (error) {
+      console.error('Failed to send review notification:', error);
+    }
+  }
+
   res.status(201).json({
     status: 'success',
     data: { review },
@@ -57,53 +87,83 @@ export const createReview = catchAsync(async (req: AuthRequest, res: Response, n
 
 export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => {
   const { userId } = req.params;
-  const { page = 1, limit = 10 } = req.query;
 
-  const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
-
-  const [reviews, total] = await Promise.all([
-    Review.find({ reviewee: userId, status: 'published', isPublic: true })
-      .populate('reviewer', 'profile')
+  // Fetch BOTH reviews received (as reviewee) AND reviews given (as reviewer)
+  const [reviewsReceived, reviewsGiven] = await Promise.all([
+    Review.find({ reviewee: userId })
+      .lean()
+      .populate('reviewer', 'profile email')
+      .populate('reviewee', 'profile email')
       .populate('project', 'title')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit as string)),
-    Review.countDocuments({ reviewee: userId, status: 'published', isPublic: true }),
+      .sort({ createdAt: -1 }),
+    Review.find({ reviewer: userId })
+      .lean()
+      .populate('reviewer', 'profile email')
+      .populate('reviewee', 'profile email')
+      .populate('project', 'title')
+      .sort({ createdAt: -1 }),
   ]);
+
+  // Combine all reviews (frontend will filter by received/given)
+  const allReviews = [...reviewsReceived, ...reviewsGiven];
+
+  // Remove duplicates (in case a user reviewed themselves somehow)
+  const uniqueReviews = allReviews.filter((review, index, self) =>
+    index === self.findIndex((r) => r._id.toString() === review._id.toString())
+  );
+
+  // Map reviews to include 'client' field for frontend compatibility
+  const reviewsWithClient = uniqueReviews.map((review) => ({
+    ...review,
+    client: review.reviewer,
+  }));
 
   res.json({
     status: 'success',
-    data: {
-      reviews,
-      pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total,
-        pages: Math.ceil(total / parseInt(limit as string)),
-      },
-    },
+    data: reviewsWithClient,
   });
 });
 
 export const respondToReview = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { reviewId } = req.params;
-  const { response } = req.body;
+  const { content } = req.body;
 
   const review = await Review.findById(reviewId);
   if (!review) {
     return next(new AppError('Review not found', 404));
   }
 
-  if (review.reviewee.toString() !== req.user._id.toString()) {
+  const userId = req.user?._id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  if (review.reviewee.toString() !== userId.toString()) {
     return next(new AppError('Not authorized', 403));
   }
 
-  review.response = response;
-  review.respondedAt = new Date();
+  const now = new Date();
+  const existingResponse = review.response as { content?: string; createdAt?: Date } | undefined;
+  const isEditing = !!(existingResponse && existingResponse.content);
+
+  // Set the response object directly on the document and save
+  review.response = {
+    content: content,
+    createdAt: existingResponse?.createdAt || now,
+    updatedAt: now,
+    isEdited: isEditing,
+  };
+  review.respondedAt = now;
+
   await review.save();
+
+  // Re-fetch with population
+  const updatedReview = await Review.findById(reviewId)
+    .populate('reviewer', 'profile email')
+    .lean();
 
   res.json({
     status: 'success',
-    data: { review },
+    data: { review: updatedReview },
   });
 });

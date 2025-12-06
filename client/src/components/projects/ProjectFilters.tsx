@@ -15,6 +15,7 @@ import {
   IconButton,
   Grid,
   Autocomplete,
+  CircularProgress,
 } from '@mui/material';
 import {
   Search,
@@ -23,6 +24,7 @@ import {
   ExpandMore,
   ExpandLess,
 } from '@mui/icons-material';
+import { useOrganizations } from '@/hooks/useOrganization';
 
 const PROJECT_CATEGORIES = [
   'Web Development',
@@ -59,6 +61,7 @@ interface ProjectFiltersProps {
     sortOrder: string;
     featured: boolean;
     urgent: boolean;
+    organization?: string;
   };
   onFiltersChange: (filters: any) => void;
   onClearFilters: () => void;
@@ -70,6 +73,8 @@ export const ProjectFilters: React.FC<ProjectFiltersProps> = ({
   onClearFilters,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const { data: organizationsData, isLoading: loadingOrganizations } = useOrganizations();
+  const organizations = organizationsData?.data || [];
 
   const handleFilterChange = (key: string, value: any) => {
     onFiltersChange({
@@ -95,6 +100,7 @@ export const ProjectFilters: React.FC<ProjectFiltersProps> = ({
       filters.timeline ||
       filters.featured ||
       filters.urgent ||
+      filters.organization ||
       filters.budgetRange[0] > 0 ||
       filters.budgetRange[1] < 10000
     );
@@ -238,6 +244,36 @@ export const ProjectFilters: React.FC<ProjectFiltersProps> = ({
             </FormControl>
           </Grid>
 
+          {/* Organization */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Autocomplete
+              options={organizations}
+              getOptionLabel={(option: any) => option.name || ''}
+              value={organizations.find((org: any) => org._id === filters.organization) || null}
+              onChange={(event, newValue) => {
+                handleFilterChange('organization', newValue?._id || '');
+              }}
+              loading={loadingOrganizations}
+              size="small"
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Organization"
+                  placeholder="Filter by organization"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {loadingOrganizations && <CircularProgress color="inherit" size={20} />}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+            />
+          </Grid>
+
           {/* Skills */}
           <Grid item xs={12} md={6}>
             <Autocomplete
@@ -333,6 +369,13 @@ export const ProjectFilters: React.FC<ProjectFiltersProps> = ({
                 label="Urgent"
                 size="small"
                 onDelete={() => handleFilterChange('urgent', false)}
+              />
+            )}
+            {filters.organization && (
+              <Chip
+                label={`Organization: ${organizations.find((org: any) => org._id === filters.organization)?.name || 'Unknown'}`}
+                size="small"
+                onDelete={() => handleFilterChange('organization', '')}
               />
             )}
             {filters.skills.map((skill) => (

@@ -15,7 +15,8 @@ export interface IProject extends Document {
   title: string;
   description: string;
   client: ObjectId;
-  category: string;
+  organization?: ObjectId;
+  category: ObjectId;
   skills: string[];
   budget: IBudget;
   timeline: ITimeline;
@@ -33,6 +34,14 @@ export interface IProject extends Document {
   viewCount: number;
   isUrgent: boolean;
   isFeatured: boolean;
+  // Draft functionality
+  isDraft?: boolean;
+  draftSavedAt?: Date;
+  publishedAt?: Date;
+  // Proposal acceptance control
+  acceptingProposals?: boolean;
+  proposalsClosed?: boolean;
+  proposalsClosedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   

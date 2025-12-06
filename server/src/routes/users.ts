@@ -11,6 +11,8 @@ import {
   addPortfolioItem,
   updatePortfolioItem,
   deletePortfolioItem,
+  changePassword,
+  changePasswordValidation,
 } from '@/controllers/userController';
 import {
   uploadAvatar,
@@ -26,10 +28,11 @@ const router = Router();
 // Profile management (requires authentication)
 router.get('/profile', authenticate, getProfile);
 router.put('/profile', authenticate, updateProfileValidation, updateProfile);
+router.put('/change-password', authenticate, changePasswordValidation, changePassword);
 
 // Public freelancer discovery
 router.get('/freelancers', getFreelancers);
-router.get('/freelancers/:id', getFreelancerById);
+router.get('/freelancer/:id', getFreelancerById);
 
 // File uploads (requires authentication and rate limiting)
 router.post('/upload-avatar', authenticate, uploadRateLimiter, upload.single('avatar'), uploadAvatar);
