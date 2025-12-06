@@ -12,6 +12,7 @@ import { ProfilePage } from '@/pages/ProfilePage';
 import { ProjectsPage } from '@/pages/ProjectsPage';
 import { ProjectDetailPage } from '@/pages/ProjectDetailPage';
 import { NewProjectPage } from '@/pages/NewProjectPage';
+import { EditProjectPage } from '@/pages/EditProjectPage';
 import { MessagesPage } from '@/pages/MessagesPage';
 import { ProposalsPage } from '@/pages/ProposalsPage';
 import { ProjectProposalsPage } from '@/pages/ProjectProposalsPage';
@@ -116,6 +117,7 @@ function App() {
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/new" element={<NewProjectPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="projects/:id/edit" element={<EditProjectPage />} />
           <Route path="projects/:projectId/proposals" element={<ProjectProposalsPage />} />
           <Route path="proposals" element={<ProposalsPage />} />
           <Route path="contracts" element={<ContractsPage />} />

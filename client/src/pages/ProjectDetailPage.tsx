@@ -476,6 +476,14 @@ export const ProjectDetailPage = () => {
         {isClient && user?._id === project.client?._id && (
           <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
             <Button
+              variant="outlined"
+              size="large"
+              fullWidth
+              onClick={() => navigate(`/dashboard/projects/${id}/edit`)}
+            >
+              Edit Project
+            </Button>
+            <Button
               variant="contained"
               size="large"
               fullWidth
