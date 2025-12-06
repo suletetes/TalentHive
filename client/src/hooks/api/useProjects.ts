@@ -130,12 +130,21 @@ export function useCreateProject(options?: any) {
 }
 
 // Update project mutation with optimistic update
-export function useUpdateProject() {
+export function useUpdateProject(options?: any) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateProjectDto }) =>
-      projectsService.updateProject(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateProjectDto }) => {
+      // Clean the data before sending to API
+      const cleanedData = { ...data };
+      
+      // Remove empty string organization field (optional field)
+      if (cleanedData.organization === '' || cleanedData.organization === undefined) {
+        delete cleanedData.organization;
+      }
+      
+      return projectsService.updateProject(id, cleanedData);
+    },
     onMutate: async ({ id, data }) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: projectKeys.detail(id) });
@@ -156,13 +165,23 @@ export function useUpdateProject() {
       if (context?.previousProject) {
         queryClient.setQueryData(projectKeys.detail(variables.id), context.previousProject);
       }
-      const message = error.response?.data?.message || 'Failed to update project';
-      toast.error(message);
+      
+      if (options?.onError) {
+        options.onError(error, variables, context);
+      } else {
+        const message = error.response?.data?.message || 'Failed to update project';
+        toast.error(message);
+      }
     },
-    onSuccess: (response, variables) => {
+    onSuccess: (response, variables, context) => {
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
       queryClient.invalidateQueries({ queryKey: projectKeys.my() });
-      toast.success('Project updated successfully!');
+      
+      if (!options?.onSuccess) {
+        toast.success('Project updated successfully!');
+      } else {
+        options.onSuccess(response, variables, context);
+      }
     },
   });
 }

@@ -161,29 +161,41 @@ interface AuthRequest extends Request {
 export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { page = 1, limit = 10, status, role } = req.query;
 
+  console.log('[GET MY CONTRACTS] ========== START ==========');
+  console.log('[GET MY CONTRACTS] User ID:', req.user?._id);
+  console.log('[GET MY CONTRACTS] User Role:', req.user?.role);
+  console.log('[GET MY CONTRACTS] Query params:', { page, limit, status, role });
+
   const query: any = {};
 
   // Filter by user role
   const userId = req.user?._id;
   if (!userId) {
+    console.log('[GET MY CONTRACTS] ❌ No user ID - unauthorized');
     return next(new AppError('Unauthorized', 401));
   }
 
   if (role === 'client') {
     query.client = userId;
+    console.log('[GET MY CONTRACTS] Filtering by client:', userId);
   } else if (role === 'freelancer') {
     query.freelancer = userId;
+    console.log('[GET MY CONTRACTS] Filtering by freelancer:', userId);
   } else {
     // Show all contracts where user is either client or freelancer
     query.$or = [
       { client: userId },
       { freelancer: userId },
     ];
+    console.log('[GET MY CONTRACTS] Filtering by client OR freelancer:', userId);
   }
 
   if (status) {
     query.status = status;
+    console.log('[GET MY CONTRACTS] Filtering by status:', status);
   }
+
+  console.log('[GET MY CONTRACTS] Final query:', JSON.stringify(query, null, 2));
 
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
@@ -198,6 +210,33 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
       .lean(),
     Contract.countDocuments(query),
   ]);
+
+  console.log('[GET MY CONTRACTS] Found contracts:', contracts.length);
+  console.log('[GET MY CONTRACTS] Total in DB:', total);
+  
+  // Debug each contract
+  contracts.forEach((contract: any, index: number) => {
+    console.log(`[GET MY CONTRACTS] Contract ${index + 1}:`, {
+      id: contract._id,
+      title: contract.title,
+      status: contract.status,
+      sourceType: contract.sourceType || 'NOT SET',
+      client: contract.client?._id || contract.client,
+      freelancer: contract.freelancer?._id || contract.freelancer,
+      hasServicePackage: !!contract.servicePackage,
+      hasHireNowRequest: !!contract.hireNowRequest,
+    });
+  });
+
+  // Count by source type
+  const bySource = contracts.reduce((acc: any, c: any) => {
+    const source = c.sourceType || 'unknown';
+    acc[source] = (acc[source] || 0) + 1;
+    return acc;
+  }, {});
+  console.log('[GET MY CONTRACTS] By source type:', bySource);
+
+  console.log('[GET MY CONTRACTS] ========== END ==========');
 
   res.json({
     status: 'success',
