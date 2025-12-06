@@ -30,6 +30,7 @@ export const ProposalsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   // Fetch proposals
@@ -62,12 +63,24 @@ export const ProposalsPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-proposals'] });
       toast.success('Proposal deleted successfully');
+      setDeleteDialogOpen(false);
       setSelectedProposal(null);
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to delete proposal');
     },
   });
+
+  const handleDeleteClick = (proposal: Proposal) => {
+    setSelectedProposal(proposal);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedProposal) {
+      deleteMutation.mutate(selectedProposal._id);
+    }
+  };
 
   const handleViewDetails = (proposal: Proposal) => {
     setSelectedProposal(proposal);
@@ -209,11 +222,7 @@ export const ProposalsPage: React.FC = () => {
                           variant="outlined"
                           color="error"
                           size="small"
-                          onClick={() => {
-                            if (window.confirm('Are you sure you want to delete this proposal? This action cannot be undone.')) {
-                              deleteMutation.mutate(proposal._id);
-                            }
-                          }}
+                          onClick={() => handleDeleteClick(proposal)}
                           disabled={deleteMutation.isPending}
                         >
                           Delete
@@ -341,8 +350,11 @@ export const ProposalsPage: React.FC = () => {
       >
         <DialogTitle>Withdraw Proposal</DialogTitle>
         <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            This action cannot be undone.
+          </Alert>
           <Typography>
-            Are you sure you want to withdraw this proposal? This action cannot be undone.
+            Are you sure you want to withdraw this proposal? The client will be notified and you won't be able to resubmit it.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -354,6 +366,35 @@ export const ProposalsPage: React.FC = () => {
             disabled={withdrawMutation.isPending}
           >
             {withdrawMutation.isPending ? 'Withdrawing...' : 'Withdraw'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Delete Proposal</DialogTitle>
+        <DialogContent>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            This action cannot be undone.
+          </Alert>
+          <Typography>
+            Are you sure you want to permanently delete this proposal? All associated data will be removed from the system.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

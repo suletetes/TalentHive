@@ -117,13 +117,19 @@ export const ProjectDetailPage = () => {
       }
       return proposalsService.createProposal(id || '', data);
     },
-    onSuccess: () => {
-      // Invalidate project detail cache (matches useProject hook key)
-      queryClient.invalidateQueries({ queryKey: ['projects', 'detail', id] });
-      queryClient.invalidateQueries({ queryKey: ['my-proposals'] });
-      toast.success(isEditMode ? 'Proposal updated successfully!' : 'Proposal submitted successfully!');
+    onSuccess: async () => {
+      // Close dialog and show success message first
       setProposalDialogOpen(false);
       resetForm();
+      toast.success(isEditMode ? 'Proposal updated successfully!' : 'Proposal submitted successfully!');
+      
+      // Small delay to ensure backend has updated
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Invalidate and refetch project detail cache
+      await queryClient.invalidateQueries({ queryKey: ['projects', 'detail', id] });
+      await queryClient.refetchQueries({ queryKey: ['projects', 'detail', id] });
+      queryClient.invalidateQueries({ queryKey: ['my-proposals'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to submit proposal');
@@ -133,12 +139,18 @@ export const ProjectDetailPage = () => {
   // Withdraw proposal mutation
   const withdrawProposalMutation = useMutation({
     mutationFn: () => proposalsService.withdrawProposal(userProposal?._id),
-    onSuccess: () => {
-      // Invalidate project detail cache (matches useProject hook key)
-      queryClient.invalidateQueries({ queryKey: ['projects', 'detail', id] });
-      queryClient.invalidateQueries({ queryKey: ['my-proposals'] });
-      toast.success('Proposal withdrawn successfully');
+    onSuccess: async () => {
+      // Close dialog and show success message first
       setWithdrawDialogOpen(false);
+      toast.success('Proposal withdrawn successfully');
+      
+      // Small delay to ensure backend has updated
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Invalidate and refetch project detail cache
+      await queryClient.invalidateQueries({ queryKey: ['projects', 'detail', id] });
+      await queryClient.refetchQueries({ queryKey: ['projects', 'detail', id] });
+      queryClient.invalidateQueries({ queryKey: ['my-proposals'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to withdraw proposal');

@@ -52,17 +52,27 @@ export const FreelancersPage = () => {
   }, [searchTerm]);
 
   // Fetch skills from database
-  const { data: skillsData } = useQuery({
+  const { data: skillsData, isLoading: skillsLoading, error: skillsError } = useQuery({
     queryKey: ['skills'],
     queryFn: async () => {
+      console.log('[SKILLS] Fetching skills...');
       // apiService.get returns response.data directly
       const response: any = await apiService.get('/skills');
+      console.log('[SKILLS] Raw response:', response);
+      console.log('[SKILLS] Response.data:', response?.data);
       const skills = response?.data?.skills || response?.skills || response?.data || response || [];
+      console.log('[SKILLS] Parsed skills:', skills);
+      console.log('[SKILLS] Is array:', Array.isArray(skills));
       return Array.isArray(skills) ? skills : [];
     },
   });
 
   const skills = skillsData || [];
+  
+  console.log('[SKILLS] Final skills:', skills);
+  console.log('[SKILLS] Skills count:', skills.length);
+  console.log('[SKILLS] Loading:', skillsLoading);
+  console.log('[SKILLS] Error:', skillsError);
 
   // Fetch freelancers with filters
   const {
