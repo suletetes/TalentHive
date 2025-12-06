@@ -95,13 +95,14 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
 
   const query: any = { 
     role: 'freelancer', 
-    isActive: true,
-    isVerified: true 
+    // Only filter by role - let the frontend see all freelancers
+    // isActive and isVerified filters can hide valid freelancers
   };
 
   // Add filters
   if (skills) {
-    const skillsArray = (skills as string).split(',');
+    const skillsArray = (skills as string).split(',').map(s => s.trim());
+    console.log('[FREELANCERS] Filtering by skills:', skillsArray);
     query['freelancerProfile.skills'] = { $in: skillsArray };
   }
 
@@ -132,6 +133,8 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
 
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
   
+  console.log('[FREELANCERS] Query:', JSON.stringify(query, null, 2));
+  
   const [freelancers, total] = await Promise.all([
     User.find(query)
       .select('-password -emailVerificationToken -passwordResetToken')
@@ -140,6 +143,8 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
       .limit(parseInt(limit as string)),
     User.countDocuments(query),
   ]);
+  
+  console.log(`[FREELANCERS] Found ${freelancers.length} freelancers out of ${total} total`);
 
   res.json({
     status: 'success',

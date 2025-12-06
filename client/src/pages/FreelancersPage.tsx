@@ -99,9 +99,9 @@ export const FreelancersPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSkillToggle = (skillId: string) => {
+  const handleSkillToggle = (skillName: string) => {
     setSelectedSkills((prev) =>
-      prev.includes(skillId) ? prev.filter((s) => s !== skillId) : [...prev, skillId]
+      prev.includes(skillName) ? prev.filter((s) => s !== skillName) : [...prev, skillName]
     );
     setPage(1);
   };
@@ -234,8 +234,8 @@ export const FreelancersPage = () => {
                   <Chip
                     key={skill._id}
                     label={skill.name}
-                    onClick={() => handleSkillToggle(skill._id)}
-                    color={selectedSkills.includes(skill._id) ? 'primary' : 'default'}
+                    onClick={() => handleSkillToggle(skill.name)}
+                    color={selectedSkills.includes(skill.name) ? 'primary' : 'default'}
                     sx={{ mb: 1 }}
                   />
                 ))}
