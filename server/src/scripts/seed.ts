@@ -1599,10 +1599,8 @@ async function seedHireNowRequests(users: any[]) {
 async function seedContracts(users: any[], projects: any[], proposals: any[], hireNowRequests: any[]) {
   logger.info('📄 Seeding contracts...');
   
-  // Note: Hire now contracts are created when freelancers accept hire now requests through the API
-  // The hireNowController automatically creates contracts with sourceType: 'hire_now'
-  
   const acceptedProposals = proposals.filter(p => p.status === 'accepted');
+  const acceptedHireNowRequests = hireNowRequests.filter((r: any) => r.status === 'accepted');
   
   const contracts = [];
   
@@ -1740,8 +1738,227 @@ async function seedContracts(users: any[], projects: any[], proposals: any[], hi
     contracts.push(contractData);
   }
   
+  // Create contracts for accepted hire now requests
+  logger.info(`📄 Creating contracts for ${acceptedHireNowRequests.length} accepted hire now requests...`);
+  
+  // Get default category for hire now projects
+  const defaultCategory = await Category.findOne({});
+  
+  for (const hireNowRequest of acceptedHireNowRequests) {
+    const startDate = new Date();
+    const timelineMultiplier = hireNowRequest.timeline.unit === 'days' ? 1 : hireNowRequest.timeline.unit === 'weeks' ? 7 : 30;
+    const endDate = new Date(Date.now() + (hireNowRequest.timeline.duration * timelineMultiplier * 24 * 60 * 60 * 1000));
+    
+    // Create project for hire now
+    const hireNowProject = await Project.create({
+      title: hireNowRequest.projectTitle,
+      description: hireNowRequest.projectDescription,
+      client: hireNowRequest.client,
+      category: defaultCategory?._id,
+      skills: [],
+      budget: {
+        type: 'fixed',
+        min: hireNowRequest.budget,
+        max: hireNowRequest.budget,
+      },
+      timeline: hireNowRequest.timeline,
+      status: 'in_progress',
+      selectedFreelancer: hireNowRequest.freelancer,
+    });
+    
+    // Create proposal for hire now
+    const hireNowProposal = await Proposal.create({
+      project: hireNowProject._id,
+      freelancer: hireNowRequest.freelancer,
+      coverLetter: `Direct hire request accepted: ${hireNowRequest.projectDescription}`,
+      bidAmount: hireNowRequest.budget,
+      timeline: hireNowRequest.timeline,
+      milestones: hireNowRequest.milestones.length > 0 ? hireNowRequest.milestones : [{
+        title: 'Project Completion',
+        description: 'Complete the project as described',
+        amount: hireNowRequest.budget,
+        dueDate: endDate,
+      }],
+      status: 'accepted',
+    });
+    
+    // Create milestones for contract
+    const hireNowMilestones = hireNowRequest.milestones.length > 0 
+      ? hireNowRequest.milestones.map((m: any) => ({
+          title: m.title,
+          description: m.description || 'Milestone delivery',
+          amount: m.amount,
+          dueDate: m.dueDate || endDate,
+          status: 'pending',
+        }))
+      : [{
+          title: 'Project Completion',
+          description: 'Complete the project as described',
+          amount: hireNowRequest.budget,
+          dueDate: endDate,
+          status: 'pending',
+        }];
+    
+    // Generate signatures
+    const signedAt = new Date(startDate.getTime() - 24 * 60 * 60 * 1000);
+    const signatures = [
+      {
+        signedBy: hireNowRequest.client,
+        signedAt: signedAt,
+        ipAddress: '192.168.1.1',
+        userAgent: 'Mozilla/5.0 (Seed Script)',
+        signatureHash: `client-sig-hirenow-${hireNowRequest._id}`,
+      },
+      {
+        signedBy: hireNowRequest.freelancer,
+        signedAt: new Date(signedAt.getTime() + 60 * 60 * 1000),
+        ipAddress: '192.168.1.2',
+        userAgent: 'Mozilla/5.0 (Seed Script)',
+        signatureHash: `freelancer-sig-hirenow-${hireNowRequest._id}`,
+      },
+    ];
+    
+    contracts.push({
+      project: hireNowProject._id,
+      client: hireNowRequest.client,
+      freelancer: hireNowRequest.freelancer,
+      proposal: hireNowProposal._id,
+      sourceType: 'hire_now',
+      hireNowRequest: hireNowRequest._id,
+      title: hireNowRequest.projectTitle,
+      description: hireNowRequest.projectDescription,
+      totalAmount: hireNowRequest.budget,
+      currency: 'USD',
+      startDate: startDate,
+      endDate: endDate,
+      status: 'active',
+      milestones: hireNowMilestones,
+      signatures: signatures,
+      terms: {
+        paymentTerms: 'Payment will be released upon milestone completion and client approval.',
+        cancellationPolicy: 'Either party may cancel this contract with 7 days written notice.',
+        intellectualProperty: 'All work product created under this contract will be owned by the client.',
+        confidentiality: 'Both parties agree to maintain confidentiality of all project information.',
+        disputeResolution: 'Disputes will be resolved through the platform\'s dispute resolution process.',
+      },
+    });
+    
+    logger.info(`✅ Created hire_now contract for: ${hireNowRequest.projectTitle}`);
+  }
+  
+  // Create contracts for service packages (simulate some orders)
+  logger.info('📄 Creating sample service package contracts...');
+  
+  const servicePackages = await ServicePackage.find({ isActive: true }).limit(2);
+  const clients = users.filter(u => u.role === 'client');
+  
+  for (let i = 0; i < servicePackages.length && i < clients.length; i++) {
+    const servicePackage = servicePackages[i];
+    const client = clients[i];
+    
+    const price = servicePackage.pricing.amount || servicePackage.pricing.hourlyRate || 1000;
+    const deliveryDays = servicePackage.deliveryTime || 14;
+    const startDate = new Date();
+    const endDate = new Date(Date.now() + deliveryDays * 24 * 60 * 60 * 1000);
+    
+    // Create project for service
+    const serviceProject = await Project.create({
+      title: `Service: ${servicePackage.title}`,
+      description: servicePackage.description,
+      client: client._id,
+      category: servicePackage.category || defaultCategory?._id,
+      skills: servicePackage.skills || [],
+      budget: {
+        type: 'fixed',
+        min: price,
+        max: price,
+      },
+      timeline: {
+        duration: deliveryDays,
+        unit: 'days',
+      },
+      status: 'in_progress',
+      selectedFreelancer: servicePackage.freelancer,
+    });
+    
+    // Create proposal for service
+    const serviceProposal = await Proposal.create({
+      project: serviceProject._id,
+      freelancer: servicePackage.freelancer,
+      coverLetter: `Service package order: ${servicePackage.title}`,
+      bidAmount: price,
+      timeline: {
+        duration: deliveryDays,
+        unit: 'days',
+      },
+      milestones: [{
+        title: 'Service Delivery',
+        description: `Complete delivery of ${servicePackage.title}`,
+        amount: price,
+        dueDate: endDate,
+      }],
+      status: 'accepted',
+    });
+    
+    // Generate signatures
+    const signedAt = new Date(startDate.getTime() - 24 * 60 * 60 * 1000);
+    const signatures = [
+      {
+        signedBy: client._id,
+        signedAt: signedAt,
+        ipAddress: '192.168.1.1',
+        userAgent: 'Mozilla/5.0 (Seed Script)',
+        signatureHash: `client-sig-service-${servicePackage._id}`,
+      },
+      {
+        signedBy: servicePackage.freelancer,
+        signedAt: new Date(signedAt.getTime() + 60 * 60 * 1000),
+        ipAddress: '192.168.1.2',
+        userAgent: 'Mozilla/5.0 (Seed Script)',
+        signatureHash: `freelancer-sig-service-${servicePackage._id}`,
+      },
+    ];
+    
+    contracts.push({
+      project: serviceProject._id,
+      client: client._id,
+      freelancer: servicePackage.freelancer,
+      proposal: serviceProposal._id,
+      sourceType: 'service',
+      servicePackage: servicePackage._id,
+      title: servicePackage.title,
+      description: servicePackage.description,
+      totalAmount: price,
+      currency: 'USD',
+      startDate: startDate,
+      endDate: endDate,
+      status: 'active',
+      milestones: [{
+        title: 'Service Delivery',
+        description: `Complete delivery of ${servicePackage.title}`,
+        amount: price,
+        dueDate: endDate,
+        status: 'pending',
+      }],
+      signatures: signatures,
+      terms: {
+        paymentTerms: 'Payment will be released upon service completion and client approval.',
+        cancellationPolicy: 'Either party may cancel this contract with 7 days written notice.',
+        intellectualProperty: 'All work product created under this contract will be owned by the client.',
+        confidentiality: 'Both parties agree to maintain confidentiality of all project information.',
+        disputeResolution: 'Disputes will be resolved through the platform\'s dispute resolution process.',
+      },
+    });
+    
+    // Increment order count
+    servicePackage.orders = (servicePackage.orders || 0) + 1;
+    await servicePackage.save();
+    
+    logger.info(`✅ Created service contract for: ${servicePackage.title}`);
+  }
+  
   const createdContracts = await Contract.insertMany(contracts);
-  logger.info(`✅ Created ${createdContracts.length} contracts`);
+  logger.info(`✅ Created ${createdContracts.length} contracts (proposal: ${acceptedProposals.length}, hire_now: ${acceptedHireNowRequests.length}, service: ${servicePackages.length})`);
   
   return createdContracts;
 }
