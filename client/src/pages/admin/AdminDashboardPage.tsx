@@ -31,7 +31,7 @@ import {
 import {
   People as PeopleIcon,
   Work as WorkIcon,
-  Description as DescriptionIcon,
+  Assignment as ContractIcon,
   AttachMoney as MoneyIcon,
   Refresh as RefreshIcon,
   Download as DownloadIcon,
@@ -279,7 +279,7 @@ export const AdminDashboardPage: React.FC = () => {
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
-                <DescriptionIcon color="info" sx={{ mr: 1, fontSize: 40 }} />
+                <ContractIcon color="info" sx={{ mr: 1, fontSize: 40 }} />
                 <Box>
                   <Typography variant="h4" color="info.main">
                     {stats.totalContracts}

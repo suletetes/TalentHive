@@ -64,13 +64,7 @@ export const AdminSettingsPage: React.FC = () => {
     queryKey: ['admin-commission-settings'],
     queryFn: async () => {
       const response = await apiCore.get('/admin/settings/commission');
-      console.log('[DEBUG] Full response:', response);
-      console.log('[DEBUG] response.data:', response.data);
-      console.log('[DEBUG] response.data.data:', response.data?.data);
-      // The API returns { status: 'success', data: [...] }
-      const result = response.data?.data || response.data || [];
-      console.log('[DEBUG] Returning:', result);
-      return result;
+      return response.data?.data || response.data || [];
     },
     enabled: user?.role === 'admin',
     staleTime: 0,
