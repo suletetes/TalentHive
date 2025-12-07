@@ -37,10 +37,10 @@ export const Footer: React.FC = () => {
               For Clients
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Link component={RouterLink} to="/post-project" color="grey.400">
+              <Link component={RouterLink} to="/dashboard/projects/new" color="grey.400">
                 Post a Project
               </Link>
-              <Link component={RouterLink} to="/find-freelancers" color="grey.400">
+              <Link component={RouterLink} to="/freelancers" color="grey.400">
                 Find Freelancers
               </Link>
               <Link component={RouterLink} to="/how-it-works" color="grey.400">

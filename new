@@ -3,7 +3,7 @@ Admin: admin@talenthive.com / Password123!
 Client: john.client@example.com / Password123!
 Freelancer: alice.dev@example.com / Password123!
 -----------------
-features to workon 
+features to work on (later)
 1. freelancer and client can talk to admin.
 2. the freelancer profile should have the project and rating. --  
 2.1 freelancer should have url slug (freelancer/alice-dev) and can be edited
@@ -12,4 +12,9 @@ features to workon
 for 2.1 and 3.1 add proper validation to see if other slug are not taken.
 4. i havent tested well the signup for 3 roles
 5. add onboarding after signing up for all the roles (admin, freelancer and client)
+6. favicon only shown at the home.
 
+-----
+features to work on (later) hard to implement
+1. under /dashboard/projects/new organization field infinitely loads
+2. work on organization.
