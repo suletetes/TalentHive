@@ -2,27 +2,24 @@
 Admin: admin@talenthive.com / Password123!
 Client: john.client@example.com / Password123!
 Freelancer: alice.dev@example.com / Password123!
+
+-----
+fix cicd issue
+
+
 -----------------
+features to work on (later)
+1. freelancer and client can talk to admin.
+2. the freelancer profile should have the project and rating. --  
+2.1 freelancer should have url slug (freelancer/alice-dev) and can be edited
+3. the client profile should have the project and rating. so that the client can view the client see his past projects( and rating) and profile.
+3.1 client should have url slug (client/john) and can be edited
+for 2.1 and 3.1 add proper validation to see if other slug are not taken.
+4. i havent tested well the signup for 3 roles
+5. add onboarding after signing up for all the roles (admin, freelancer and client)
+6. favicon only shown at the home.
 
-1. from the client frontend give the things i should test 
-2. from the freelancer frontend give the things i should test 
-3. from the admin frontend give the things i should test
-
-============
-read very very well the issues and create a readme and solve 100% very well. after fixing test and see everything works well
-
-
-1. get the app ready for prod reduce both  client and server logs. remove all client logs.
-
-
-===
-
-there should be a simple client page 
-review
-past works
-
-and for freelancer
-
-=====
-work on tommorrow
-http://localhost:3000/admin/settings
+-----
+features to work on (later) hard to implement
+1. under /dashboard/projects/new organization field infinitely loads
+2. work on organization.

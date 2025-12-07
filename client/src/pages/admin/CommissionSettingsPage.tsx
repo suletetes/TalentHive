@@ -36,15 +36,17 @@ export const CommissionSettingsPage: React.FC = () => {
 
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['commissionSettings'],
     queryFn: () => settingsService.getCommissionSettings(),
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const updateMutation = useMutation({
     mutationFn: settingsService.updateCommissionSettings,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['commissionSettings'] });
+    onSuccess: async () => {
+      await refetch();
       toast.success('Commission settings updated successfully');
       setEditDialogOpen(false);
     },

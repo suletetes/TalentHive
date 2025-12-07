@@ -21,18 +21,44 @@ export class PaymentService {
       throw new Error('Platform settings not found');
     }
 
-    // Calculate commission as percentage (all in cents)
-    let commission = Math.round((amountInCents * (settings.commissionRate || 10)) / 100);
+    // Get commission settings from Settings model
+    const { Settings } = await import('../models/Settings');
+    const commissionConfig = await Settings.findOne();
     
-    // Apply min/max limits (convert from dollars to cents), but cap at 50% of amount
-    const maxAllowedCommission = Math.floor(amountInCents * 0.5);
-    if (settings.minCommission && commission < settings.minCommission * 100) {
-      commission = Math.min(settings.minCommission * 100, maxAllowedCommission);
+    // Convert amount from cents to dollars for commission tier matching
+    const amountInDollars = amountInCents / 100;
+    
+    // Find applicable commission tier based on amount
+    let commissionPercentage = settings.commissionRate || 10; // Default fallback
+    
+    if (commissionConfig && commissionConfig.commissionSettings && commissionConfig.commissionSettings.length > 0) {
+      // Find the most specific tier that applies (with highest minAmount that's still below the transaction)
+      const applicableTiers = commissionConfig.commissionSettings
+        .filter((tier: any) => {
+          if (!tier.isActive) return false;
+          
+          const meetsMin = !tier.minAmount || amountInDollars >= tier.minAmount;
+          const meetsMax = !tier.maxAmount || amountInDollars <= tier.maxAmount;
+          
+          return meetsMin && meetsMax;
+        })
+        .sort((a: any, b: any) => {
+          // Sort by minAmount descending (highest minAmount first)
+          const aMin = a.minAmount || 0;
+          const bMin = b.minAmount || 0;
+          return bMin - aMin;
+        });
+      
+      if (applicableTiers.length > 0) {
+        commissionPercentage = applicableTiers[0].commissionPercentage;
+      }
     }
-    if (settings.maxCommission && commission > settings.maxCommission * 100) {
-      commission = settings.maxCommission * 100;
-    }
+
+    // Calculate commission as percentage (all in cents)
+    let commission = Math.round((amountInCents * commissionPercentage) / 100);
+    
     // Ensure commission doesn't exceed 50% of amount
+    const maxAllowedCommission = Math.floor(amountInCents * 0.5);
     commission = Math.min(commission, maxAllowedCommission);
 
     // Calculate processing fee (cap at reasonable percentage)
@@ -59,8 +85,6 @@ export class PaymentService {
       tax = Math.floor(tax * ratio);
       freelancerAmount = amountInCents - commission - processingFee - tax;
     }
-
-    console.log('[FEES] Amount (cents):', amountInCents, 'Commission:', commission, 'Processing:', processingFee, 'Tax:', tax, 'Freelancer:', freelancerAmount);
 
     return {
       amount: amountInCents,

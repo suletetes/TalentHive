@@ -10,7 +10,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
-import { Work, Person, Payment, Star } from '@mui/icons-material';
+import { Work, Person, Payment, Star, Assignment } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
@@ -146,10 +146,10 @@ export const DashboardPage: React.FC = () => {
             <Card sx={{ cursor: 'pointer' }} onClick={() => navigate('/admin/dashboard')}>
               <CardContent>
                 <Box display="flex" alignItems="center" mb={2}>
-                  <Star color="warning" sx={{ mr: 1 }} />
+                  <Assignment color="info" sx={{ mr: 1 }} />
                   <Typography variant="h6">Contracts</Typography>
                 </Box>
-                <Typography variant="h4" color="warning.main">
+                <Typography variant="h4" color="info.main">
                   {stats.totalContracts || 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">

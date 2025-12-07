@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -63,14 +63,8 @@ export const AdminSettingsPage: React.FC = () => {
   const { data: commissionData, isLoading: commissionLoading } = useQuery({
     queryKey: ['admin-commission-settings'],
     queryFn: async () => {
-      const response = await apiCore.get('/admin/settings/commission');
-      console.log('[DEBUG] Full response:', response);
-      console.log('[DEBUG] response.data:', response.data);
-      console.log('[DEBUG] response.data.data:', response.data?.data);
-      // The API returns { status: 'success', data: [...] }
-      const result = response.data?.data || response.data || [];
-      console.log('[DEBUG] Returning:', result);
-      return result;
+      const response: any = await apiCore.get('/admin/settings/commission');
+      return response?.data || [];
     },
     enabled: user?.role === 'admin',
     staleTime: 0,
@@ -100,11 +94,11 @@ export const AdminSettingsPage: React.FC = () => {
   // Update commission settings mutation
   const updateCommissionMutation = useMutation({
     mutationFn: async (commissionSettings: any) => {
-      const response = await apiCore.put('/admin/settings/commission', { commissionSettings });
-      return response.data.data;
+      const response: any = await apiCore.put('/admin/settings/commission', { commissionSettings });
+      return response?.data || response;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-commission-settings'] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['admin-commission-settings'] });
       toast.success('Commission settings updated successfully');
     },
     onError: (error: any) => {
@@ -113,7 +107,12 @@ export const AdminSettingsPage: React.FC = () => {
   });
 
   const handleSaveCommissionSettings = async (settings: any) => {
-    updateCommissionMutation.mutate(settings);
+    return new Promise<void>((resolve, reject) => {
+      updateCommissionMutation.mutate(settings, {
+        onSuccess: () => resolve(),
+        onError: (error) => reject(error),
+      });
+    });
   };
 
   if (user?.role !== 'admin') {
