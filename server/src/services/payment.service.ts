@@ -51,9 +51,6 @@ export class PaymentService {
       
       if (applicableTiers.length > 0) {
         commissionPercentage = applicableTiers[0].commissionPercentage;
-        console.log('[FEES] Using commission tier:', applicableTiers[0].name, 'Rate:', commissionPercentage + '%');
-      } else {
-        console.log('[FEES] No applicable commission tier found, using default:', commissionPercentage + '%');
       }
     }
 
@@ -88,8 +85,6 @@ export class PaymentService {
       tax = Math.floor(tax * ratio);
       freelancerAmount = amountInCents - commission - processingFee - tax;
     }
-
-    console.log('[FEES] Amount (cents):', amountInCents, 'Commission:', commission, 'Processing:', processingFee, 'Tax:', tax, 'Freelancer:', freelancerAmount);
 
     return {
       amount: amountInCents,
