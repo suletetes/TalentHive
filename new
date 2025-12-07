@@ -2,6 +2,11 @@
 Admin: admin@talenthive.com / Password123!
 Client: john.client@example.com / Password123!
 Freelancer: alice.dev@example.com / Password123!
+
+-----
+fix cicd issue
+
+
 -----------------
 features to work on (later)
 1. freelancer and client can talk to admin.
