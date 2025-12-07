@@ -30,9 +30,6 @@ import { settingsService, CommissionSetting } from '@/services/api/settings.serv
 import { formatDollars } from '@/utils/currency';
 
 export const CommissionSettingsPage: React.FC = () => {
-  // Log on every render to confirm this component is being used
-  console.log('[CommissionSettingsPage] Component rendering');
-  
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingSetting, setEditingSetting] = useState<CommissionSetting | null>(null);
   const [isNewSetting, setIsNewSetting] = useState(false);
@@ -41,43 +38,30 @@ export const CommissionSettingsPage: React.FC = () => {
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['commissionSettings'],
-    queryFn: async () => {
-      const response = await settingsService.getCommissionSettings();
-      console.log('[CommissionSettingsPage] GET response:', response);
-      return response;
-    },
+    queryFn: () => settingsService.getCommissionSettings(),
     staleTime: 0,
     gcTime: 0,
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (settings: CommissionSetting[]) => {
-      console.log('[CommissionSettingsPage] Saving settings:', settings);
-      const response = await settingsService.updateCommissionSettings(settings);
-      console.log('[CommissionSettingsPage] Save response:', response);
-      return response;
-    },
+    mutationFn: settingsService.updateCommissionSettings,
     onSuccess: async () => {
-      console.log('[CommissionSettingsPage] Save successful, refetching...');
       await refetch();
       toast.success('Commission settings updated successfully');
       setEditDialogOpen(false);
     },
-    onError: (error) => {
-      console.error('[CommissionSettingsPage] Save error:', error);
+    onError: () => {
       toast.error('Failed to update commission settings');
     },
   });
 
   const handleEdit = (setting: CommissionSetting) => {
-    console.log('[CommissionSettingsPage] handleEdit called:', setting);
     setEditingSetting({ ...setting });
     setIsNewSetting(false);
     setEditDialogOpen(true);
   };
 
   const handleAdd = () => {
-    console.log('[CommissionSettingsPage] handleAdd called');
     setEditingSetting({
       name: '',
       commissionPercentage: 5,
@@ -91,41 +75,25 @@ export const CommissionSettingsPage: React.FC = () => {
   };
 
   const handleDelete = (index: number) => {
-    console.log('[CommissionSettingsPage] handleDelete called, index:', index);
     const settings = data?.data || [];
-    console.log('[CommissionSettingsPage] Current settings:', settings);
     const newSettings = settings.filter((_, i) => i !== index);
-    console.log('[CommissionSettingsPage] New settings after delete:', newSettings);
     updateMutation.mutate(newSettings);
   };
 
   const handleSave = () => {
-    console.log('[CommissionSettingsPage] handleSave called');
-    console.log('[CommissionSettingsPage] editingSetting:', editingSetting);
-    console.log('[CommissionSettingsPage] isNewSetting:', isNewSetting);
-    
-    if (!editingSetting) {
-      console.log('[CommissionSettingsPage] No editingSetting, returning');
-      return;
-    }
+    if (!editingSetting) return;
 
     const settings = data?.data || [];
-    console.log('[CommissionSettingsPage] Current settings from data:', settings);
-    
     let newSettings: CommissionSetting[];
 
     if (isNewSetting) {
       newSettings = [...settings, editingSetting];
-      console.log('[CommissionSettingsPage] Adding new setting, newSettings:', newSettings);
     } else {
       const index = settings.findIndex(s => s.name === editingSetting.name);
-      console.log('[CommissionSettingsPage] Editing existing setting at index:', index);
       newSettings = [...settings];
       newSettings[index] = editingSetting;
-      console.log('[CommissionSettingsPage] Updated settings:', newSettings);
     }
 
-    console.log('[CommissionSettingsPage] Calling mutation with:', newSettings);
     updateMutation.mutate(newSettings);
   };
 

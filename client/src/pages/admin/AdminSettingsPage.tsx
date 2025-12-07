@@ -49,9 +49,6 @@ export const AdminSettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [tabValue, setTabValue] = useState(0);
 
-  // Debug: Log on every render
-  console.log('[AdminSettingsPage] Render - user role:', user?.role);
-
   // Fetch platform settings
   const { data: settingsData, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-settings'],
@@ -63,30 +60,17 @@ export const AdminSettingsPage: React.FC = () => {
   });
 
   // Fetch commission settings from the Settings model
-  const { data: commissionData, isLoading: commissionLoading, dataUpdatedAt } = useQuery({
+  const { data: commissionData, isLoading: commissionLoading } = useQuery({
     queryKey: ['admin-commission-settings'],
     queryFn: async () => {
-      // apiCore.get returns response.data directly
-      // API returns { status: 'success', data: [...] }
       const response: any = await apiCore.get('/admin/settings/commission');
-      console.log('[COMMISSION] Raw API response:', response);
-      console.log('[COMMISSION] Response type:', typeof response);
-      console.log('[COMMISSION] Response keys:', response ? Object.keys(response) : 'null');
-      const data = response?.data || [];
-      console.log('[COMMISSION] Extracted data:', data);
-      console.log('[COMMISSION] Data length:', data.length);
-      return data;
+      return response?.data || [];
     },
     enabled: user?.role === 'admin',
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: 'always',
   });
-
-  // Log when commission data changes
-  useEffect(() => {
-    console.log('[COMMISSION] commissionData updated:', commissionData, 'at:', dataUpdatedAt);
-  }, [commissionData, dataUpdatedAt]);
 
   // Update settings mutation
   const updateSettingsMutation = useMutation({
@@ -110,36 +94,23 @@ export const AdminSettingsPage: React.FC = () => {
   // Update commission settings mutation
   const updateCommissionMutation = useMutation({
     mutationFn: async (commissionSettings: any) => {
-      console.log('[COMMISSION] Mutation sending:', { commissionSettings });
-      // apiCore.put returns response.data directly
       const response: any = await apiCore.put('/admin/settings/commission', { commissionSettings });
-      console.log('[COMMISSION] Mutation response:', response);
       return response?.data || response;
     },
-    onSuccess: async (data) => {
-      console.log('[COMMISSION] Mutation success, data:', data);
-      // Force refetch instead of just invalidating
+    onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ['admin-commission-settings'] });
       toast.success('Commission settings updated successfully');
     },
     onError: (error: any) => {
-      console.error('[COMMISSION] Mutation error:', error);
       toast.error(error.response?.data?.message || 'Failed to update commission settings');
     },
   });
 
   const handleSaveCommissionSettings = async (settings: any) => {
-    console.log('[COMMISSION] Saving settings:', settings);
     return new Promise<void>((resolve, reject) => {
       updateCommissionMutation.mutate(settings, {
-        onSuccess: () => {
-          console.log('[COMMISSION] Save successful');
-          resolve();
-        },
-        onError: (error) => {
-          console.log('[COMMISSION] Save failed:', error);
-          reject(error);
-        },
+        onSuccess: () => resolve(),
+        onError: (error) => reject(error),
       });
     });
   };
