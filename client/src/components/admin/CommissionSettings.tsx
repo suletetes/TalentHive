@@ -71,9 +71,7 @@ export const CommissionSettings: React.FC<CommissionSettingsProps> = ({
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    if (settings && settings.length > 0) {
-      setLocalSettings(settings);
-    }
+    setLocalSettings(settings || []);
   }, [settings]);
 
   const handleOpenDialog = (index?: number) => {
@@ -124,12 +122,13 @@ export const CommissionSettings: React.FC<CommissionSettingsProps> = ({
 
   const handleSaveAll = async () => {
     if (!onSave) return;
+    
     setIsSaving(true);
     try {
       await onSave(localSettings);
       setSuccessMessage('Commission settings saved successfully');
       setTimeout(() => setSuccessMessage(''), 3000);
-    } catch {
+    } catch (error) {
       // Error handled by parent
     } finally {
       setIsSaving(false);
