@@ -231,6 +231,29 @@ const userSchema = new Schema<IUser>({
   passwordResetToken: String,
   passwordResetExpires: Date,
   lastLoginAt: Date,
+  // Profile slug for custom URLs
+  profileSlug: {
+    type: String,
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    trim: true,
+    maxlength: 50,
+  },
+  slugHistory: [{
+    slug: { type: String, required: true },
+    changedAt: { type: Date, required: true, default: Date.now },
+  }],
+  // Onboarding tracking
+  onboardingCompleted: { type: Boolean, default: false },
+  onboardingStep: { type: Number, default: 0 },
+  onboardingSkippedAt: Date,
+  // Profile analytics
+  profileViews: { type: Number, default: 0, min: 0 },
+  profileViewers: [{
+    viewerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    viewedAt: { type: Date, required: true, default: Date.now },
+  }],
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -246,6 +269,8 @@ userSchema.index({ isVerified: 1 });
 userSchema.index({ 'rating.average': -1 });
 userSchema.index({ isFeatured: 1, featuredOrder: 1 });
 userSchema.index({ roles: 1 });
+userSchema.index({ profileSlug: 1 });
+userSchema.index({ onboardingCompleted: 1 });
 
 // Virtual for full name
 userSchema.virtual('fullName').get(function() {
