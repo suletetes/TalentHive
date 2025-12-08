@@ -1,33 +1,27 @@
-import { apiService } from './index';
+import { apiCore } from './core';
 
 export const onboardingService = {
   getOnboardingStatus: async () => {
-    const response = await apiService.get('/onboarding/status');
-    return response.data;
+    return apiCore.get('/onboarding/status');
   },
 
   updateOnboardingStep: async (step: number) => {
-    const response = await apiService.patch('/onboarding/step', { step });
-    return response.data;
+    return apiCore.patch('/onboarding/step', { step });
   },
 
   completeOnboarding: async () => {
-    const response = await apiService.post('/onboarding/complete');
-    return response.data;
+    return apiCore.post('/onboarding/complete');
   },
 
   skipOnboarding: async () => {
-    const response = await apiService.post('/onboarding/skip');
-    return response.data;
+    return apiCore.post('/onboarding/skip');
   },
 
   getOnboardingAnalytics: async () => {
-    const response = await apiService.get('/onboarding/analytics');
-    return response.data;
+    return apiCore.get('/onboarding/analytics');
   },
 
   getUserOnboardingAnalytics: async (userId: string) => {
-    const response = await apiService.get(`/onboarding/analytics/${userId}`);
-    return response.data;
+    return apiCore.get(`/onboarding/analytics/${userId}`);
   },
 };

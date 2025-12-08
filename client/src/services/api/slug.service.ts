@@ -1,4 +1,4 @@
-import { apiService } from './index';
+import { apiCore } from './core';
 
 export interface SlugValidationResponse {
   available: boolean;
@@ -25,54 +25,29 @@ export interface UserProfile {
 }
 
 class SlugService {
-  /**
-   * Get user by slug (with redirect handling)
-   */
   async getUserBySlug(slug: string): Promise<UserProfile> {
-    const response = await apiService.get(`/users/slug/${slug}`);
-    return response.data;
+    return apiCore.get(`/users/slug/${slug}`);
   }
 
-  /**
-   * Validate if a slug is available
-   */
   async validateSlug(slug: string): Promise<SlugValidationResponse> {
-    const response = await apiService.post('/users/slug/validate', { slug });
-    return response.data;
+    return apiCore.post('/users/slug/validate', { slug });
   }
 
-  /**
-   * Update user's profile slug
-   */
   async updateSlug(slug: string): Promise<UserProfile> {
-    const response = await apiService.patch('/users/profile/slug', { slug });
-    return response.data;
+    return apiCore.patch('/users/profile/slug', { slug });
   }
 
-  /**
-   * Get slug suggestions based on a name
-   */
   async getSlugSuggestions(baseName: string): Promise<string[]> {
-    const response = await apiService.get(`/users/slug/suggestions/${baseName}`);
-    return response.data.suggestions;
+    const response: any = await apiCore.get(`/users/slug/suggestions/${baseName}`);
+    return response.suggestions || [];
   }
 
-  /**
-   * Search users by slug (autocomplete)
-   */
   async searchBySlug(query: string): Promise<UserProfile[]> {
-    const response = await apiService.get('/users/slug/search', {
-      params: { q: query },
-    });
-    return response.data;
+    return apiCore.get('/users/slug/search', { params: { q: query } });
   }
 
-  /**
-   * Get slug change history for a user
-   */
   async getSlugHistory(userId: string): Promise<SlugHistoryItem[]> {
-    const response = await apiService.get(`/users/${userId}/slug-history`);
-    return response.data;
+    return apiCore.get(`/users/${userId}/slug-history`);
   }
 }
 

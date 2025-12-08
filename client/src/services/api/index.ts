@@ -43,14 +43,11 @@ export type {
   PaginatedResponse,
 } from './projects.service';
 export type { Proposal, CreateProposalDto, UpdateProposalDto } from './proposals.service';
-export type { Contract, CreateContractDto, Amendment } from './contracts.service';
+export type { Contract, Milestone } from './contracts.service';
 export type { Transaction, CreatePaymentIntentDto, ConfirmPaymentDto, RefundPaymentDto } from './payments.service';
 export type { Message, Conversation, SendMessageDto } from './messages.service';
 export type { Review, CreateReviewDto } from './reviews.service';
-export type {
-  Notification,
-  NotificationPreferences,
-} from './notifications.service';
+export type { Notification } from './notifications.service';
 export type { TimeEntry, CreateTimeEntryDto, TimeReport } from './timeTracking.service';
 export type {
   Organization,
