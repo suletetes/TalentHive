@@ -31,7 +31,7 @@ export const SupportTicketList: React.FC = () => {
     navigate(`/dashboard/support/${ticketId}`);
   };
 
-  const filteredTickets = tickets.filter((ticket) =>
+  const filteredTickets = (tickets || []).filter((ticket) =>
     searchQuery
       ? ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
         ticket.ticketId.toLowerCase().includes(searchQuery.toLowerCase())

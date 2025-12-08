@@ -14,15 +14,17 @@ import { slugService } from '@/services/api/slug.service';
 import { SlugSuggestions } from './SlugSuggestions';
 
 interface ProfileSlugEditorProps {
+  userId: string;
   currentSlug: string;
-  onSlugChange: (slug: string) => void;
-  disabled?: boolean;
+  userRole: 'freelancer' | 'client' | 'admin';
+  onSlugChange?: (newSlug: string) => void;
 }
 
 export const ProfileSlugEditor: React.FC<ProfileSlugEditorProps> = ({
+  userId,
   currentSlug,
+  userRole,
   onSlugChange,
-  disabled = false,
 }) => {
   const [slug, setSlug] = useState(currentSlug);
   const [isValidating, setIsValidating] = useState(false);
@@ -73,9 +75,31 @@ export const ProfileSlugEditor: React.FC<ProfileSlugEditorProps> = ({
       setIsValidating(true);
       try {
         const result = await slugService.validateSlug(debouncedSlug);
-        setValidationResult(result);
-        if (result.available) {
-          onSlugChange(debouncedSlug);
+        // Check if slug is available and valid
+        if (result.available && result.valid) {
+          setValidationResult({
+            available: true,
+            message: 'This slug is available!',
+          });
+          // Auto-update the slug
+          try {
+            await slugService.updateSlug(debouncedSlug);
+            if (onSlugChange) {
+              onSlugChange(debouncedSlug);
+            }
+          } catch (updateError: any) {
+            console.error('Failed to update slug:', updateError);
+            setValidationResult({
+              available: false,
+              message: updateError.response?.data?.message || 'Failed to update slug',
+            });
+          }
+        } else {
+          setValidationResult({
+            available: false,
+            message: result.error || 'This slug is not available',
+            suggestions: result.suggestions,
+          });
         }
       } catch (error: any) {
         setValidationResult({
@@ -113,7 +137,8 @@ export const ProfileSlugEditor: React.FC<ProfileSlugEditorProps> = ({
     return null;
   };
 
-  const baseUrl = `${window.location.origin}/freelancer/`;
+  const rolePrefix = userRole === 'client' ? 'client' : 'freelancer';
+  const baseUrl = `${window.location.origin}/${rolePrefix}/`;
 
   return (
     <Paper sx={{ p: 3 }}>
@@ -128,7 +153,6 @@ export const ProfileSlugEditor: React.FC<ProfileSlugEditorProps> = ({
         fullWidth
         value={slug}
         onChange={handleSlugChange}
-        disabled={disabled}
         placeholder="your-custom-slug"
         InputProps={{
           startAdornment: (

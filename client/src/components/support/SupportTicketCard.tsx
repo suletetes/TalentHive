@@ -36,7 +36,7 @@ export const SupportTicketCard: React.FC<SupportTicketCardProps> = ({ ticket, on
           transform: 'translateY(-2px)',
         },
       }}
-      onClick={() => onClick(ticket._id)}
+      onClick={() => onClick(ticket.ticketId)}
     >
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>

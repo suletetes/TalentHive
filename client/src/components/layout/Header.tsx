@@ -46,10 +46,12 @@ const navigationConfig: NavigationItem[] = [
   { label: 'Admin Dashboard', path: '/admin/dashboard', roles: ['admin'] },
   { label: 'Users', path: '/admin/users', roles: ['admin'] },
   { label: 'Projects', path: '/admin/projects', roles: ['admin'] },
+  { label: 'Support Tickets', path: '/admin/support', roles: ['admin'] },
   { label: 'Settings', path: '/admin/settings', roles: ['admin'] },
   
   // Common authenticated
   { label: 'Messages', path: '/dashboard/messages', roles: ['freelancer', 'client', 'admin'] },
+  { label: 'Support', path: '/dashboard/support', roles: ['freelancer', 'client'] },
   { label: 'Time Tracking', path: '/dashboard/time-tracking', roles: ['freelancer', 'client'] },
   
   // Unauthenticated
@@ -209,8 +211,8 @@ export const Header: React.FC = () => {
                   <MenuItem onClick={() => { navigate('/dashboard/profile'); handleClose(); }}>
                     Profile
                   </MenuItem>
-                  <MenuItem onClick={() => { navigate('/dashboard/projects'); handleClose(); }}>
-                    My Projects
+                  <MenuItem onClick={() => { navigate('/dashboard/support'); handleClose(); }}>
+                    Support
                   </MenuItem>
                   <MenuItem onClick={() => { navigate('/change-password'); handleClose(); }}>
                     Change Password
