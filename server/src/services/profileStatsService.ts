@@ -129,16 +129,19 @@ export class ProfileStatsService {
       throw new Error('User not found');
     }
 
-    // Get all projects posted by this client
-    const projects = await Project.find({ clientId: objectId });
+    // Get all projects posted by this client (use 'client' field to match Project model)
+    const projects = await Project.find({ client: objectId });
     const totalProjectsPosted = projects.length;
 
-    // Get all contracts for this client
-    const contracts = await Contract.find({ clientId: objectId });
+    // Get all contracts for this client (use 'client' field to match Contract model)
+    const contracts = await Contract.find({ client: objectId });
     const activeContracts = contracts.filter(c => 
       ['active', 'in-progress'].includes(c.status)
     );
     const completedContracts = contracts.filter(c => c.status === 'completed');
+
+    // Get reviews given by this client (use 'reviewer' field to match Review model)
+    const reviewsGiven = await Review.countDocuments({ reviewer: objectId });
 
     // Calculate average project budget
     const totalBudget = projects.reduce((sum, project) => {
@@ -163,6 +166,7 @@ export class ProfileStatsService {
       completedProjects: completedContracts.length,
       averageProjectBudget,
       averageRating: user.rating?.average || 0,
+      totalReviews: reviewsGiven,
       totalSpent,
       profileViews,
       uniqueViewers
