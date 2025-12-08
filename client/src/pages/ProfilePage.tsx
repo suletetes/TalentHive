@@ -46,9 +46,12 @@ import { WorkExperienceManager } from '@/components/profile/WorkExperienceManage
 import { EducationManager } from '@/components/profile/EducationManager';
 import { CertificationsManager } from '@/components/profile/CertificationsManager';
 import { LanguagesManager } from '@/components/profile/LanguagesManager';
+import { ProfileStatistics } from '@/components/profile/ProfileStatistics';
+import { ProfileSlugEditor } from '@/components/profile/ProfileSlugEditor';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { RootState } from '@/store';
 import { apiService } from '@/services/api';
+import { useNavigate } from 'react-router-dom';
 
 const profileSchema = yup.object({
   profile: yup.object({
@@ -79,6 +82,7 @@ export const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const { user: currentUser } = useSelector((state: RootState) => state.auth);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: profileData, isLoading } = useQuery({
     queryKey: ['profile'],
@@ -187,61 +191,18 @@ export const ProfilePage: React.FC = () => {
           </Grid>
         )}
 
-        {/* Statistics */}
-        <Grid item xs={12} md={user.role === 'freelancer' ? 6 : 12}>
+        {/* Profile Slug Editor */}
+        <Grid item xs={12}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Statistics
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {user.role === 'freelancer' && (
-                  <>
-                    <Box display="flex" justifyContent="space-between">
-                      <Typography>Projects Completed:</Typography>
-                      <Typography fontWeight="bold">
-                        {user.freelancerProfile?.portfolio?.length || 0}
-                      </Typography>
-                    </Box>
-                    <Box display="flex" justifyContent="space-between">
-                      <Typography>Client Rating:</Typography>
-                      <Typography fontWeight="bold">
-                        {user.rating.count > 0 
-                          ? `${user.rating.average.toFixed(1)}/5.0`
-                          : 'No ratings yet'
-                        }
-                      </Typography>
-                    </Box>
-                    <Box display="flex" justifyContent="space-between">
-                      <Typography>Skills:</Typography>
-                      <Typography fontWeight="bold">
-                        {user.freelancerProfile?.skills?.length || 0}
-                      </Typography>
-                    </Box>
-                  </>
-                )}
-                
-                {user.role === 'client' && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography>Projects Posted:</Typography>
-                    <Typography fontWeight="bold">
-                      {user.clientProfile?.projectsPosted || 0}
-                    </Typography>
-                  </Box>
-                )}
-                
-                <Box display="flex" justifyContent="space-between">
-                  <Typography>Member Since:</Typography>
-                  <Typography fontWeight="bold">
-                    {new Date(user.createdAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </Typography>
-                </Box>
-              </Box>
+              <ProfileSlugEditor userId={user._id} currentSlug={user.profileSlug} />
             </CardContent>
           </Card>
+        </Grid>
+
+        {/* Statistics */}
+        <Grid item xs={12} md={user.role === 'freelancer' ? 6 : 12}>
+          <ProfileStatistics userId={user._id} role={user.role} />
         </Grid>
 
         {/* Portfolio Section (for freelancers) */}
