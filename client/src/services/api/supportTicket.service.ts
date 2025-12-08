@@ -161,7 +161,37 @@ class SupportTicketService {
    * Get ticket statistics (admin only)
    */
   async getTicketStats(): Promise<TicketStats> {
-    return apiCore.get('/support/tickets/stats');
+    const response: any = await apiCore.get('/support/tickets/stats');
+    // Backend returns { success: true, data: { total, byStatus, urgent, unassigned, byCategory, avgResponseTimeHours } }
+    const data = response.data || response;
+    
+    // Transform backend response to match TicketStats interface
+    return {
+      total: data.total || 0,
+      open: data.byStatus?.open || 0,
+      inProgress: data.byStatus?.inProgress || 0,
+      resolved: data.byStatus?.resolved || 0,
+      closed: data.byStatus?.closed || 0,
+      byPriority: {
+        urgent: data.urgent || 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+      },
+      byCategory: this.transformCategoryStats(data.byCategory || []),
+      avgResponseTime: (data.avgResponseTimeHours || 0) * 60, // Convert hours to minutes
+      avgResolutionTime: 0,
+    };
+  }
+
+  private transformCategoryStats(byCategory: Array<{ _id: string; count: number }>): TicketStats['byCategory'] {
+    const result = { technical: 0, billing: 0, account: 0, project: 0, other: 0 };
+    for (const item of byCategory) {
+      if (item._id in result) {
+        result[item._id as keyof typeof result] = item.count;
+      }
+    }
+    return result;
   }
 }
 

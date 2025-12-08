@@ -38,6 +38,21 @@ export const AdminSupportDashboard: React.FC = () => {
     return `${hours}h ${mins}m`;
   };
 
+  // Default stats values
+  const defaultStats = {
+    total: 0,
+    open: 0,
+    inProgress: 0,
+    resolved: 0,
+    closed: 0,
+    byPriority: { urgent: 0, high: 0, medium: 0, low: 0 },
+    byCategory: { technical: 0, billing: 0, account: 0, project: 0, other: 0 },
+    avgResponseTime: 0,
+    avgResolutionTime: 0,
+  };
+
+  const displayStats = stats || defaultStats;
+
   if (loading && !stats) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -63,171 +78,167 @@ export const AdminSupportDashboard: React.FC = () => {
         Manage and monitor support tickets
       </Typography>
 
-      {stats && (
-        <>
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <ConfirmationNumber sx={{ mr: 1, color: 'primary.main' }} />
-                    <Typography variant="h6" color="text.secondary">
-                      Total
-                    </Typography>
-                  </Box>
-                  <Typography variant="h4">{stats.total}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <HourglassEmpty sx={{ mr: 1, color: 'warning.main' }} />
-                    <Typography variant="h6" color="text.secondary">
-                      Open
-                    </Typography>
-                  </Box>
-                  <Typography variant="h4">{stats.open}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <TrendingUp sx={{ mr: 1, color: 'info.main' }} />
-                    <Typography variant="h6" color="text.secondary">
-                      In Progress
-                    </Typography>
-                  </Box>
-                  <Typography variant="h4">{stats.inProgress}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
-                    <Typography variant="h6" color="text.secondary">
-                      Resolved
-                    </Typography>
-                  </Box>
-                  <Typography variant="h4">{stats.resolved}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  By Priority
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <ConfirmationNumber sx={{ mr: 1, color: 'primary.main' }} />
+                <Typography variant="h6" color="text.secondary">
+                  Total
                 </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="error.main">
-                      Urgent
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {stats.byPriority.urgent}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="warning.main">
-                      High
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {stats.byPriority.high}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="info.main">
-                      Medium
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {stats.byPriority.medium}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Low
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {stats.byPriority.low}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-            </Grid>
+              </Box>
+              <Typography variant="h4">{displayStats.total}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
 
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  By Category
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <HourglassEmpty sx={{ mr: 1, color: 'warning.main' }} />
+                <Typography variant="h6" color="text.secondary">
+                  Open
                 </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">Technical</Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {stats.byCategory.technical}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">Billing</Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {stats.byCategory.billing}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">Account</Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {stats.byCategory.account}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">Project</Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {stats.byCategory.project}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">Other</Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {stats.byCategory.other}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-            </Grid>
+              </Box>
+              <Typography variant="h4">{displayStats.open}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
 
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Speed sx={{ mr: 1, color: 'primary.main' }} />
-                  <Typography variant="h6">Avg Response Time</Typography>
-                </Box>
-                <Typography variant="h4">{formatTime(stats.avgResponseTime)}</Typography>
-              </Paper>
-            </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <TrendingUp sx={{ mr: 1, color: 'info.main' }} />
+                <Typography variant="h6" color="text.secondary">
+                  In Progress
+                </Typography>
+              </Box>
+              <Typography variant="h4">{displayStats.inProgress}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
 
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
-                  <Typography variant="h6">Avg Resolution Time</Typography>
-                </Box>
-                <Typography variant="h4">{formatTime(stats.avgResolutionTime)}</Typography>
-              </Paper>
-            </Grid>
-          </Grid>
-        </>
-      )}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
+                <Typography variant="h6" color="text.secondary">
+                  Resolved
+                </Typography>
+              </Box>
+              <Typography variant="h4">{displayStats.resolved}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              By Priority
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="error.main">
+                  Urgent
+                </Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {displayStats.byPriority?.urgent || 0}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="warning.main">
+                  High
+                </Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {displayStats.byPriority?.high || 0}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="info.main">
+                  Medium
+                </Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {displayStats.byPriority?.medium || 0}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Low
+                </Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {displayStats.byPriority?.low || 0}
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              By Category
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2">Technical</Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {displayStats.byCategory?.technical || 0}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2">Billing</Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {displayStats.byCategory?.billing || 0}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2">Account</Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {displayStats.byCategory?.account || 0}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2">Project</Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {displayStats.byCategory?.project || 0}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2">Other</Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {displayStats.byCategory?.other || 0}
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Speed sx={{ mr: 1, color: 'primary.main' }} />
+              <Typography variant="h6">Avg Response Time</Typography>
+            </Box>
+            <Typography variant="h4">{formatTime(displayStats.avgResponseTime || 0)}</Typography>
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
+              <Typography variant="h6">Avg Resolution Time</Typography>
+            </Box>
+            <Typography variant="h4">{formatTime(displayStats.avgResolutionTime || 0)}</Typography>
+          </Paper>
+        </Grid>
+      </Grid>
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
