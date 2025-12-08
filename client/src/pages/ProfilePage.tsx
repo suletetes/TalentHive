@@ -193,11 +193,11 @@ export const ProfilePage: React.FC = () => {
 
         {/* Profile Slug Editor */}
         <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <ProfileSlugEditor userId={user._id} currentSlug={user.profileSlug} />
-            </CardContent>
-          </Card>
+          <ProfileSlugEditor 
+            userId={user._id} 
+            currentSlug={user.profileSlug} 
+            userRole={user.role}
+          />
         </Grid>
 
         {/* Statistics */}

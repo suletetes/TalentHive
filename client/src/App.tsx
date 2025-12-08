@@ -63,6 +63,7 @@ import { FreelancerOnboardingPage } from '@/pages/onboarding/FreelancerOnboardin
 import { ClientOnboardingPage } from '@/pages/onboarding/ClientOnboardingPage';
 import { AdminOnboardingPage } from '@/pages/onboarding/AdminOnboardingPage';
 import { ProfileAnalyticsPage } from '@/pages/ProfileAnalyticsPage';
+import { ClientDetailPage } from '@/pages/ClientDetailPage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { ToastProvider } from '@/components/ui/ToastProvider';
@@ -103,6 +104,7 @@ function App() {
           <Route path="freelancers" element={<FreelancersPage />} />
           <Route path="freelancer/:id" element={<FreelancerDetailPage />} />
           <Route path="freelancer/:id/reviews" element={<FreelancerReviewsPage />} />
+          <Route path="client/:id" element={<ClientDetailPage />} />
           
           {/* Profile slug routes */}
           <Route path="@:slug" element={<FreelancerDetailPage />} />
