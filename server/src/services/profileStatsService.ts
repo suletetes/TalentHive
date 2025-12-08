@@ -24,6 +24,7 @@ interface ClientStats {
   completedProjects: number;
   averageProjectBudget: number;
   averageRating: number;
+  totalReviews: number;
   totalSpent: number;
   profileViews: number;
   uniqueViewers: number;
@@ -50,8 +51,8 @@ export class ProfileStatsService {
       throw new Error('User not found');
     }
 
-    // Get all contracts for this freelancer
-    const contracts = await Contract.find({ freelancerId: objectId });
+    // Get all contracts for this freelancer (use 'freelancer' field to match Contract model)
+    const contracts = await Contract.find({ freelancer: objectId });
     const completedContracts = contracts.filter(c => c.status === 'completed');
     const activeContracts = contracts.filter(c => 
       ['active', 'in-progress'].includes(c.status)
@@ -73,9 +74,9 @@ export class ProfileStatsService {
       ? Math.round((onTimeProjects / completedProjects) * 100)
       : 0;
 
-    // Calculate average response time
+    // Calculate average response time (use 'freelancer' field to match Proposal model)
     const proposals = await Proposal.find({ 
-      freelancerId: objectId,
+      freelancer: objectId,
       createdAt: { $exists: true }
     }).limit(20);
     
@@ -179,12 +180,8 @@ export class ProfileStatsService {
   static async getRatingDistribution(userId: string | Types.ObjectId): Promise<RatingDistribution> {
     const objectId = typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
 
-    const reviews = await Review.find({
-      $or: [
-        { freelancerId: objectId },
-        { clientId: objectId }
-      ]
-    });
+    // Use 'reviewee' field to match Review model (reviews received by this user)
+    const reviews = await Review.find({ reviewee: objectId });
 
     const distribution: RatingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
 
@@ -204,20 +201,22 @@ export class ProfileStatsService {
   static async getFreelancerProjects(userId: string | Types.ObjectId, limit = 10) {
     const objectId = typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
 
+    // Use 'freelancer' field to match Contract model
     const contracts = await Contract.find({
-      freelancerId: objectId,
+      freelancer: objectId,
       status: 'completed'
     })
-      .sort({ completedAt: -1 })
+      .sort({ updatedAt: -1 })
       .limit(limit)
-      .populate('projectId', 'title description')
-      .populate('clientId', 'profile.firstName profile.lastName profile.avatar');
+      .populate('project', 'title description')
+      .populate('client', 'profile.firstName profile.lastName profile.avatar');
 
     const projectsWithReviews = await Promise.all(
       contracts.map(async (contract) => {
+        // Use 'contract' and 'reviewee' fields to match Review model
         const review = await Review.findOne({
-          contractId: contract._id,
-          freelancerId: objectId
+          contract: contract._id,
+          reviewee: objectId
         });
 
         return {
