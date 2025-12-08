@@ -124,6 +124,30 @@ export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => 
   });
 });
 
+// Get reviews given by a client (reviews where client is the reviewer)
+export const getClientReviews = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { clientId } = req.params;
+
+  // Fetch reviews where this client is the reviewer
+  const reviews = await Review.find({ reviewer: clientId })
+    .lean()
+    .populate('reviewer', 'profile email')
+    .populate('reviewee', 'profile email role freelancerProfile')
+    .populate('project', 'title')
+    .sort({ createdAt: -1 });
+
+  // Map to include 'freelancer' field for frontend compatibility
+  const reviewsWithFreelancer = reviews.map((review) => ({
+    ...review,
+    freelancer: review.reviewee,
+  }));
+
+  res.json({
+    status: 'success',
+    data: reviewsWithFreelancer,
+  });
+});
+
 export const respondToReview = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { reviewId } = req.params;
   const { content } = req.body;
