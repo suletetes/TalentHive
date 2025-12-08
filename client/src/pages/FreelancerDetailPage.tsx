@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Container,
@@ -47,6 +47,7 @@ import { HireNowModal } from '@/components/hire-now/HireNowModal';
 import { MessageButton } from '@/components/messaging/MessageButton';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { usersService } from '@/services/api/users.service';
 
 export const FreelancerDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -58,6 +59,16 @@ export const FreelancerDetailPage = () => {
   const [requestMessage, setRequestMessage] = useState('');
   const { user } = useSelector((state: RootState) => state.auth);
   const isClient = user?.role === 'client';
+
+  // Track profile view when page loads
+  useEffect(() => {
+    if (id && user && user.id !== id) {
+      // Only track if viewing someone else's profile
+      usersService.trackProfileView(id).catch(err => {
+        console.error('Failed to track profile view:', err);
+      });
+    }
+  }, [id, user]);
 
   // Request service mutation
   const requestServiceMutation = useMutation({

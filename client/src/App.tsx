@@ -62,6 +62,7 @@ import { AdminSupportDashboard } from '@/pages/admin/AdminSupportDashboard';
 import { FreelancerOnboardingPage } from '@/pages/onboarding/FreelancerOnboardingPage';
 import { ClientOnboardingPage } from '@/pages/onboarding/ClientOnboardingPage';
 import { AdminOnboardingPage } from '@/pages/onboarding/AdminOnboardingPage';
+import { ProfileAnalyticsPage } from '@/pages/ProfileAnalyticsPage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { ToastProvider } from '@/components/ui/ToastProvider';
@@ -148,6 +149,7 @@ function App() {
           <Route path="support" element={<SupportTicketsPage />} />
           <Route path="support/new" element={<CreateTicketPage />} />
           <Route path="support/:ticketId" element={<TicketDetailPage />} />
+          <Route path="profile/analytics" element={<ProfileAnalyticsPage />} />
         </Route>
 
         {/* Admin routes */}
