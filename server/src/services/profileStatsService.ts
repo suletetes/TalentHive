@@ -241,18 +241,21 @@ export class ProfileStatsService {
   static async getClientProjects(userId: string | Types.ObjectId, limit = 10) {
     const objectId = typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
 
-    const projects = await Project.find({ clientId: objectId })
+    // Use 'client' field (not 'clientId') to match Project model
+    const projects = await Project.find({ client: objectId })
       .sort({ createdAt: -1 })
       .limit(limit);
 
     const projectsWithDetails = await Promise.all(
       projects.map(async (project) => {
-        const contract = await Contract.findOne({ projectId: project._id })
-          .populate('freelancerId', 'profile.firstName profile.lastName profile.avatar');
+        // Use 'project' field (not 'projectId') to match Contract model
+        const contract = await Contract.findOne({ project: project._id })
+          .populate('freelancer', 'profile.firstName profile.lastName profile.avatar');
 
+        // Use 'contract' and 'reviewer' fields to match Review model
         const review = contract ? await Review.findOne({
-          contractId: contract._id,
-          clientId: objectId
+          contract: contract._id,
+          reviewer: objectId
         }) : null;
 
         return {
