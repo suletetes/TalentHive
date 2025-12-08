@@ -66,8 +66,8 @@ export class ProfileStatsService {
 
     // Calculate on-time delivery
     const onTimeProjects = completedContracts.filter(c => {
-      if (!c.completedAt || !c.deadline) return false;
-      return new Date(c.completedAt) <= new Date(c.deadline);
+      if (!c.endDate) return false;
+      return new Date(c.endDate) <= new Date(c.endDate);
     }).length;
     const onTimeDelivery = completedProjects > 0
       ? Math.round((onTimeProjects / completedProjects) * 100)
@@ -83,7 +83,7 @@ export class ProfileStatsService {
     let responseCount = 0;
     
     for (const proposal of proposals) {
-      const project = await Project.findById(proposal.projectId);
+      const project = await Project.findById(proposal.project);
       if (project && project.createdAt && proposal.createdAt) {
         const diff = proposal.createdAt.getTime() - project.createdAt.getTime();
         totalResponseTime += diff;
@@ -218,16 +218,16 @@ export class ProfileStatsService {
 
         return {
           _id: contract._id,
-          title: (contract.projectId as any)?.title || 'Untitled Project',
-          description: (contract.projectId as any)?.description || '',
+          title: (contract.project as any)?.title || 'Untitled Project',
+          description: (contract.project as any)?.description || '',
           client: {
-            name: `${(contract.clientId as any)?.profile?.firstName || ''} ${(contract.clientId as any)?.profile?.lastName || ''}`.trim(),
-            avatar: (contract.clientId as any)?.profile?.avatar
+            name: `${(contract.client as any)?.profile?.firstName || ''} ${(contract.client as any)?.profile?.lastName || ''}`.trim(),
+            avatar: (contract.client as any)?.profile?.avatar
           },
-          completedAt: contract.completedAt,
+          completedAt: contract.endDate,
           amount: contract.totalAmount,
           rating: review?.rating || null,
-          review: review?.comment || null
+          review: review?.feedback || null
         };
       })
     );
@@ -262,8 +262,8 @@ export class ProfileStatsService {
           status: project.status,
           budget: project.budget,
           freelancer: contract ? {
-            name: `${(contract.freelancerId as any)?.profile?.firstName || ''} ${(contract.freelancerId as any)?.profile?.lastName || ''}`.trim(),
-            avatar: (contract.freelancerId as any)?.profile?.avatar
+            name: `${(contract.freelancer as any)?.profile?.firstName || ''} ${(contract.freelancer as any)?.profile?.lastName || ''}`.trim(),
+            avatar: (contract.freelancer as any)?.profile?.avatar
           } : null,
           createdAt: project.createdAt,
           rating: review?.rating || null

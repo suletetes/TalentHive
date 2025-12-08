@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
-import User from '../models/User';
-import SupportTicket from '../models/SupportTicket';
-import OnboardingAnalytics from '../models/OnboardingAnalytics';
+import { User } from '../models/User';
+import { SupportTicket } from '../models/SupportTicket';
+import { OnboardingAnalytics } from '../models/OnboardingAnalytics';
 import { generateSlug } from '../utils/slugUtils';
 
 /**
@@ -181,13 +181,14 @@ export async function createSupportTickets() {
     if (status !== 'open' && Math.random() > 0.3) {
       const responseTime = new Date(createdAt.getTime() + Math.random() * 24 * 60 * 60 * 1000);
       ticket.messages.push({
-        senderId: admin._id,
+        senderId: admin._id as any,
         message: `Thank you for contacting support. I've reviewed your issue and ${status === 'resolved' ? 'resolved it' : 'am working on it'}. Please let me know if you need further assistance.`,
         isAdminResponse: true,
         isRead: Math.random() > 0.5,
         createdAt: responseTime,
+        attachments: [],
       });
-      ticket.assignedAdminId = admin._id;
+      ticket.assignedAdminId = admin._id as any;
       ticket.lastResponseAt = responseTime;
       ticket.updatedAt = responseTime;
 
@@ -228,9 +229,9 @@ export async function addProfileViews() {
     const viewerCount = Math.min(viewCount, 10);
     for (let i = 0; i < viewerCount; i++) {
       const viewer = clients[Math.floor(Math.random() * clients.length)];
-      if (viewer) {
+      if (viewer && freelancer.profileViewers) {
         freelancer.profileViewers.push({
-          viewerId: viewer._id,
+          viewerId: viewer._id as any,
           viewedAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
         });
       }

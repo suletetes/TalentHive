@@ -193,6 +193,27 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   
+  // Profile slug for custom URLs
+  profileSlug?: string;
+  slugHistory?: Array<{
+    slug: string;
+    changedAt: Date;
+    reason?: string;
+  }>;
+  
+  // Profile analytics
+  profileViews?: number;
+  profileViewers?: Array<{
+    viewerId: ObjectId;
+    viewedAt: Date;
+    source?: string;
+  }>;
+  
+  // Onboarding tracking
+  onboardingCompleted?: boolean;
+  onboardingStep?: number;
+  onboardingSkippedAt?: Date;
+  
   // Instance methods
   comparePassword(candidatePassword: string): Promise<boolean>;
   updateRating(newRating: number): void;
