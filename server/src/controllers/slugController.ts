@@ -71,7 +71,7 @@ export const getUserBySlug = async (req: Request, res: Response) => {
 export const validateSlug = async (req: Request, res: Response) => {
   try {
     const { slug } = req.body;
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
 
     if (!slug) {
       return res.status(400).json({ message: 'Slug is required' });
@@ -90,7 +90,7 @@ export const validateSlug = async (req: Request, res: Response) => {
     }
 
     // Check availability
-    const available = await isSlugAvailable(sanitizedSlug, userId);
+    const available = await isSlugAvailable(sanitizedSlug, userId?.toString());
 
     res.json({
       available,
@@ -113,7 +113,7 @@ export const validateSlug = async (req: Request, res: Response) => {
 export const updateUserSlug = async (req: Request, res: Response) => {
   try {
     const { slug } = req.body;
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
 
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
@@ -134,7 +134,7 @@ export const updateUserSlug = async (req: Request, res: Response) => {
     }
 
     // Check availability
-    const available = await isSlugAvailable(sanitizedSlug, userId);
+    const available = await isSlugAvailable(sanitizedSlug, userId?.toString());
     if (!available) {
       return res.status(400).json({ 
         message: 'This slug is already taken',
@@ -261,7 +261,7 @@ export const searchBySlug = async (req: Request, res: Response) => {
 export const getSlugHistory = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const requestingUserId = req.user?.userId;
+    const requestingUserId = req.user?._id;
     const userRole = req.user?.role;
 
     // Only allow users to see their own history or admins to see any

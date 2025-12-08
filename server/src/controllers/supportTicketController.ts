@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { SupportTicket } from '@/models/SupportTicket';
 import { User } from '@/models/User';
-import { sendEmail } from '@/utils/emailService';
+import { sendEmail } from '@/utils/email';
 import { Notification } from '@/models/Notification';
 
 /**
@@ -11,7 +11,7 @@ import { Notification } from '@/models/Notification';
 export const createTicket = async (req: Request, res: Response) => {
   try {
     const { subject, category, priority, message } = req.body;
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
 
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
@@ -91,7 +91,7 @@ export const createTicket = async (req: Request, res: Response) => {
  */
 export const getTickets = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
     const userRole = req.user?.role;
     const { status, priority, category, assignedToMe } = req.query;
 
@@ -138,7 +138,7 @@ export const getTickets = async (req: Request, res: Response) => {
 export const getTicketById = async (req: Request, res: Response) => {
   try {
     const { ticketId } = req.params;
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
     const userRole = req.user?.role;
 
     if (!userId) {
@@ -193,7 +193,7 @@ export const addMessage = async (req: Request, res: Response) => {
   try {
     const { ticketId } = req.params;
     const { message, attachments } = req.body;
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
     const userRole = req.user?.role;
 
     if (!userId) {
