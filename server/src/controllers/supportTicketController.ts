@@ -24,8 +24,13 @@ export const createTicket = async (req: Request, res: Response) => {
       });
     }
 
+    // Generate ticket ID
+    const count = await SupportTicket.countDocuments();
+    const ticketId = `TKT-${String(count + 1).padStart(5, '0')}`;
+
     // Create ticket with initial message
     const ticket = await SupportTicket.create({
+      ticketId,
       userId,
       subject,
       category,
@@ -47,29 +52,34 @@ export const createTicket = async (req: Request, res: Response) => {
     for (const admin of admins) {
       // Create in-app notification
       await Notification.create({
-        userId: admin._id,
+        user: admin._id,
         type: 'system',
         title: 'New Support Ticket',
         message: `New support ticket: ${subject}`,
         link: `/admin/support/${ticket.ticketId}`,
       });
 
-      // Send email notification
-      await sendEmail({
-        to: admin.email,
-        subject: `New Support Ticket: ${subject}`,
-        html: `
-          <h2>New Support Ticket</h2>
-          <p><strong>Ticket ID:</strong> ${ticket.ticketId}</p>
-          <p><strong>From:</strong> ${(ticket.userId as any).profile.firstName} ${(ticket.userId as any).profile.lastName}</p>
-          <p><strong>Subject:</strong> ${subject}</p>
-          <p><strong>Category:</strong> ${category}</p>
-          <p><strong>Priority:</strong> ${priority || 'medium'}</p>
-          <p><strong>Message:</strong></p>
-          <p>${message}</p>
-          <p><a href="${process.env.CLIENT_URL}/admin/support/${ticket.ticketId}">View Ticket</a></p>
-        `,
-      });
+      // Send email notification (wrapped in try-catch to not block ticket creation)
+      try {
+        await sendEmail({
+          to: admin.email,
+          subject: `New Support Ticket: ${subject}`,
+          html: `
+            <h2>New Support Ticket</h2>
+            <p><strong>Ticket ID:</strong> ${ticket.ticketId}</p>
+            <p><strong>From:</strong> ${(ticket.userId as any).profile.firstName} ${(ticket.userId as any).profile.lastName}</p>
+            <p><strong>Subject:</strong> ${subject}</p>
+            <p><strong>Category:</strong> ${category}</p>
+            <p><strong>Priority:</strong> ${priority || 'medium'}</p>
+            <p><strong>Message:</strong></p>
+            <p>${message}</p>
+            <p><a href="${process.env.CLIENT_URL}/admin/support/${ticket.ticketId}">View Ticket</a></p>
+          `,
+        });
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+        // Continue execution even if email fails
+      }
     }
 
     res.status(201).json({
@@ -155,7 +165,8 @@ export const getTicketById = async (req: Request, res: Response) => {
     }
 
     // Check authorization
-    if (userRole !== 'admin' && ticket.userId.toString() !== userId) {
+    const ticketUserId = typeof ticket.userId === 'object' ? (ticket.userId as any)._id : ticket.userId;
+    if (userRole !== 'admin' && ticketUserId.toString() !== userId.toString()) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
@@ -212,7 +223,8 @@ export const addMessage = async (req: Request, res: Response) => {
     }
 
     // Check authorization
-    if (userRole !== 'admin' && ticket.userId._id.toString() !== userId) {
+    const ticketUserId = typeof ticket.userId === 'object' ? (ticket.userId as any)._id : ticket.userId;
+    if (userRole !== 'admin' && ticketUserId.toString() !== userId.toString()) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
@@ -237,26 +249,30 @@ export const addMessage = async (req: Request, res: Response) => {
     if (isAdminResponse) {
       // Notify ticket creator
       await Notification.create({
-        userId: ticket.userId._id,
+        user: ticket.userId._id,
         type: 'system',
         title: 'Support Ticket Response',
         message: `Admin responded to your ticket: ${ticket.subject}`,
         link: `/dashboard/support/${ticket.ticketId}`,
       });
 
-      // Send email
-      await sendEmail({
-        to: (ticket.userId as any).email,
-        subject: `Response to your support ticket: ${ticket.subject}`,
-        html: `
-          <h2>Support Ticket Response</h2>
-          <p><strong>Ticket ID:</strong> ${ticket.ticketId}</p>
-          <p><strong>Subject:</strong> ${ticket.subject}</p>
-          <p><strong>Admin Response:</strong></p>
-          <p>${message}</p>
-          <p><a href="${process.env.CLIENT_URL}/dashboard/support/${ticket.ticketId}">View Ticket</a></p>
-        `,
-      });
+      // Send email (wrapped in try-catch)
+      try {
+        await sendEmail({
+          to: (ticket.userId as any).email,
+          subject: `Response to your support ticket: ${ticket.subject}`,
+          html: `
+            <h2>Support Ticket Response</h2>
+            <p><strong>Ticket ID:</strong> ${ticket.ticketId}</p>
+            <p><strong>Subject:</strong> ${ticket.subject}</p>
+            <p><strong>Admin Response:</strong></p>
+            <p>${message}</p>
+            <p><a href="${process.env.CLIENT_URL}/dashboard/support/${ticket.ticketId}">View Ticket</a></p>
+          `,
+        });
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+      }
     } else {
       // Notify assigned admin or all admins
       const adminsToNotify = ticket.assignedAdminId 
@@ -267,7 +283,7 @@ export const addMessage = async (req: Request, res: Response) => {
         if (!admin) continue;
 
         await Notification.create({
-          userId: admin._id,
+          user: admin._id,
           type: 'system',
           title: 'Support Ticket Update',
           message: `User replied to ticket: ${ticket.subject}`,
@@ -326,25 +342,29 @@ export const updateTicketStatus = async (req: Request, res: Response) => {
 
     // Notify ticket creator
     await Notification.create({
-      userId: ticket.userId._id,
+      user: ticket.userId._id,
       type: 'system',
       title: 'Ticket Status Updated',
       message: `Your ticket "${ticket.subject}" status changed to: ${status}`,
       link: `/dashboard/support/${ticket.ticketId}`,
     });
 
-    // Send email
-    await sendEmail({
-      to: (ticket.userId as any).email,
-      subject: `Ticket Status Updated: ${ticket.subject}`,
-      html: `
-        <h2>Ticket Status Updated</h2>
-        <p><strong>Ticket ID:</strong> ${ticket.ticketId}</p>
-        <p><strong>Subject:</strong> ${ticket.subject}</p>
-        <p><strong>New Status:</strong> ${status}</p>
-        <p><a href="${process.env.CLIENT_URL}/dashboard/support/${ticket.ticketId}">View Ticket</a></p>
-      `,
-    });
+    // Send email (wrapped in try-catch)
+    try {
+      await sendEmail({
+        to: (ticket.userId as any).email,
+        subject: `Ticket Status Updated: ${ticket.subject}`,
+        html: `
+          <h2>Ticket Status Updated</h2>
+          <p><strong>Ticket ID:</strong> ${ticket.ticketId}</p>
+          <p><strong>Subject:</strong> ${ticket.subject}</p>
+          <p><strong>New Status:</strong> ${status}</p>
+          <p><a href="${process.env.CLIENT_URL}/dashboard/support/${ticket.ticketId}">View Ticket</a></p>
+        `,
+      });
+    } catch (emailError) {
+      console.error('Failed to send email notification:', emailError);
+    }
 
     res.json({
       success: true,
@@ -392,7 +412,7 @@ export const assignTicket = async (req: Request, res: Response) => {
 
     // Notify assigned admin
     await Notification.create({
-      userId: adminId,
+      user: adminId,
       type: 'system',
       title: 'Ticket Assigned',
       message: `You have been assigned to ticket: ${ticket.subject}`,

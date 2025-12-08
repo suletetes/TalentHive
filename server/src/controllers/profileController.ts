@@ -213,7 +213,7 @@ export const getUserStats = async (req: AuthRequest, res: Response) => {
 export const trackProfileView = async (req: AuthRequest, res: Response) => {
   try {
     const { userId } = req.params;
-    const viewerId = req.user?.userId;
+    const viewerId = req.user?._id;
 
     await ProfileStatsService.trackProfileView(userId, viewerId);
 
@@ -248,7 +248,7 @@ export const getProfileViewAnalytics = async (req: AuthRequest, res: Response) =
     }
 
     // Only allow users to view their own analytics or admins
-    if (req.user?.userId !== userId && req.user?.role !== 'admin') {
+    if (req.user?._id?.toString() !== userId && req.user?.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to view these analytics'
@@ -293,7 +293,7 @@ export const getProfileViewers = async (req: AuthRequest, res: Response) => {
     }
 
     // Only allow users to view their own viewers or admins
-    if (req.user?.userId !== userId && req.user?.role !== 'admin') {
+    if (req.user?._id?.toString() !== userId && req.user?.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to view this information'

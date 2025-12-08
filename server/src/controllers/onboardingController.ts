@@ -8,7 +8,7 @@ import { AuthRequest } from '@/types/auth';
  */
 export const getOnboardingStatus = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
 
     if (!userId) {
       return res.status(401).json({
@@ -58,7 +58,7 @@ export const getOnboardingStatus = async (req: AuthRequest, res: Response) => {
  */
 export const updateOnboardingStep = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
     const { step, stepName, timeSpent } = req.body;
 
     if (!userId) {
@@ -141,7 +141,7 @@ export const updateOnboardingStep = async (req: AuthRequest, res: Response) => {
  */
 export const completeOnboarding = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
 
     if (!userId) {
       return res.status(401).json({
@@ -192,7 +192,7 @@ export const completeOnboarding = async (req: AuthRequest, res: Response) => {
  */
 export const skipOnboarding = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?._id;
 
     if (!userId) {
       return res.status(401).json({
@@ -340,7 +340,7 @@ export const getUserOnboardingAnalytics = async (req: AuthRequest, res: Response
     const { userId } = req.params;
 
     // Verify permission (user can view their own, admin can view any)
-    if (req.user?.userId !== userId && req.user?.role !== 'admin') {
+    if (req.user?._id?.toString() !== userId && req.user?.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to view these analytics'
