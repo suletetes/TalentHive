@@ -21,7 +21,7 @@ export const CreateTicketPage: React.FC = () => {
     try {
       const result = await dispatch(createTicket(data)).unwrap();
       toast.success('Support ticket created successfully!');
-      navigate(`/dashboard/support/${result._id}`);
+      navigate(`/dashboard/support/${result.ticketId}`);
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to create ticket. Please try again.';
       setError(errorMessage);

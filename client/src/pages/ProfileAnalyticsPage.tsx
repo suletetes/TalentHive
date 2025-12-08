@@ -26,13 +26,19 @@ export const ProfileAnalyticsPage: React.FC = () => {
 
   const { data: analyticsData, isLoading, error } = useQuery({
     queryKey: ['profileAnalytics', user?.id],
-    queryFn: () => usersService.getProfileViewAnalytics(user!.id, 30),
+    queryFn: async () => {
+      const response = await usersService.getProfileViewAnalytics(user!.id, 30);
+      return response.data || response;
+    },
     enabled: !!user?.id,
   });
 
   const { data: viewersData } = useQuery({
     queryKey: ['profileViewers', user?.id],
-    queryFn: () => usersService.getProfileViewers(user!.id),
+    queryFn: async () => {
+      const response = await usersService.getProfileViewers(user!.id);
+      return response.data || response;
+    },
     enabled: !!user?.id,
   });
 
@@ -48,8 +54,8 @@ export const ProfileAnalyticsPage: React.FC = () => {
     );
   }
 
-  const analytics = analyticsData?.data || {};
-  const viewers = viewersData?.data || [];
+  const analytics = analyticsData || {};
+  const viewers = Array.isArray(viewersData) ? viewersData : [];
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
