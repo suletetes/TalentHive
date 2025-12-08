@@ -22,8 +22,8 @@ async function login(email, password) {
       email,
       password,
     });
-    userId = response.data.user._id;
-    return response.data.token;
+    userId = response.data.data.user.id;
+    return response.data.data.tokens.accessToken;
   } catch (error) {
     console.error('Login failed:', error.response?.data || error.message);
     throw error;
@@ -35,7 +35,10 @@ async function testValidateSlug(slug) {
   try {
     const response = await api.post('/users/slug/validate', { slug });
     console.log('✅ Validation result:', response.data.available ? 'Available' : 'Not available');
-    console.log('   Message:', response.data.message);
+    console.log('   Valid format:', response.data.valid);
+    if (response.data.error) {
+      console.log('   Error:', response.data.error);
+    }
     if (response.data.suggestions) {
       console.log('   Suggestions:', response.data.suggestions.join(', '));
     }
@@ -51,7 +54,9 @@ async function testGetSlugSuggestions(baseName) {
   try {
     const response = await api.get(`/users/slug/suggestions/${baseName}`);
     console.log('✅ Suggestions retrieved successfully');
-    console.log('   Suggestions:', response.data.suggestions.join(', '));
+    // API returns { success: true, data: ["slug1", "slug2", ...] }
+    const suggestions = response.data.data || [];
+    console.log('   Suggestions:', suggestions.join(', '));
     return response.data;
   } catch (error) {
     console.error('❌ Failed to get suggestions:', error.response?.data || error.message);
@@ -64,9 +69,12 @@ async function testUpdateSlug(slug) {
   try {
     const response = await api.patch('/users/profile/slug', { slug });
     console.log('✅ Slug updated successfully');
-    console.log('   New slug:', response.data.profileSlug);
-    testSlug = response.data.profileSlug;
-    return response.data;
+    // API returns { success: true, data: { slug: "...", profileUrl: "..." } }
+    const data = response.data.data || response.data;
+    console.log('   New slug:', data.slug);
+    console.log('   Profile URL:', data.profileUrl);
+    testSlug = data.slug || slug;
+    return data;
   } catch (error) {
     console.error('❌ Failed to update slug:', error.response?.data || error.message);
     throw error;
@@ -78,10 +86,11 @@ async function testGetUserBySlug(slug) {
   try {
     const response = await axios.get(`${API_URL}/users/slug/${slug}`);
     console.log('✅ User retrieved successfully');
-    console.log('   Name:', response.data.profile.firstName, response.data.profile.lastName);
-    console.log('   Role:', response.data.role);
-    console.log('   Slug:', response.data.profileSlug);
-    return response.data;
+    const user = response.data.data || response.data;
+    console.log('   Name:', user.profile.firstName, user.profile.lastName);
+    console.log('   Role:', user.role);
+    console.log('   Slug:', user.profileSlug);
+    return user;
   } catch (error) {
     console.error('❌ Failed to get user by slug:', error.response?.data || error.message);
     throw error;
@@ -95,11 +104,12 @@ async function testSearchBySlug(query) {
       params: { q: query },
     });
     console.log('✅ Search completed successfully');
-    console.log('   Results found:', response.data.length);
-    response.data.forEach((user, index) => {
+    const users = response.data.data || response.data;
+    console.log('   Results found:', users.length);
+    users.forEach((user, index) => {
       console.log(`   ${index + 1}. ${user.profile.firstName} ${user.profile.lastName} (@${user.profileSlug})`);
     });
-    return response.data;
+    return users;
   } catch (error) {
     console.error('❌ Failed to search:', error.response?.data || error.message);
     throw error;
@@ -111,11 +121,14 @@ async function testGetSlugHistory() {
   try {
     const response = await api.get(`/users/${userId}/slug-history`);
     console.log('✅ Slug history retrieved successfully');
-    console.log('   History entries:', response.data.length);
-    response.data.forEach((entry, index) => {
+    const data = response.data.data || response.data;
+    const history = data.history || [];
+    console.log('   Current slug:', data.currentSlug);
+    console.log('   History entries:', history.length);
+    history.forEach((entry, index) => {
       console.log(`   ${index + 1}. ${entry.slug} (changed at ${new Date(entry.changedAt).toLocaleString()})`);
     });
-    return response.data;
+    return data;
   } catch (error) {
     console.error('❌ Failed to get slug history:', error.response?.data || error.message);
     throw error;
@@ -128,7 +141,7 @@ async function runTests() {
   
   try {
     console.log('\n🔐 Logging in as user...');
-    authToken = await login('freelancer@test.com', 'password123');
+    authToken = await login('alice.dev@example.com', 'Password123!');
     console.log('✅ User logged in successfully');
     
     // Test slug validation

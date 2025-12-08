@@ -15,13 +15,13 @@ let testSlug = '';
 
 // Test credentials
 const testUser = {
-  email: 'test.freelancer@test.com',
+  email: 'alice.dev@example.com',
   password: 'Password123!',
 };
 
 const testAdmin = {
   email: 'admin@talenthive.com',
-  password: 'Admin123!',
+  password: 'Password123!',
 };
 
 // Helper function to make API calls
@@ -63,10 +63,12 @@ async function testSupportTickets() {
   );
   
   if (createResult.success) {
-    ticketId = createResult.data.data._id;
+    const ticket = createResult.data.data || createResult.data;
+    ticketId = ticket.ticketId; // Use ticketId field, not _id
     console.log('✓ Support ticket created:', ticketId);
   } else {
     console.log('✗ Failed to create ticket:', createResult.error);
+    console.log('   Status:', createResult.status);
     return false;
   }
 
@@ -285,8 +287,8 @@ async function runTests() {
     return;
   }
 
-  authToken = loginResult.data.token;
-  userId = loginResult.data.user._id;
+  authToken = loginResult.data.data.tokens.accessToken;
+  userId = loginResult.data.data.user.id;
   console.log('✓ Logged in successfully\n');
 
   // Run test suites

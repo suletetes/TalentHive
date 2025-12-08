@@ -24,7 +24,7 @@ async function login(email, password) {
       email,
       password,
     });
-    return response.data.token;
+    return response.data.data.tokens.accessToken;
   } catch (error) {
     console.error('Login failed:', error.response?.data || error.message);
     throw error;
@@ -41,11 +41,12 @@ async function testCreateTicket() {
       message: 'This is a test support ticket to verify the API is working correctly.',
     });
     
-    ticketId = response.data._id;
+    const ticket = response.data.data || response.data;
+    ticketId = ticket.ticketId; // Use ticketId field, not _id
     console.log('✅ Ticket created successfully');
-    console.log('   Ticket ID:', response.data.ticketId);
-    console.log('   Status:', response.data.status);
-    return response.data;
+    console.log('   Ticket ID:', ticket.ticketId);
+    console.log('   Status:', ticket.status);
+    return ticket;
   } catch (error) {
     console.error('❌ Failed to create ticket:', error.response?.data || error.message);
     throw error;
@@ -57,9 +58,9 @@ async function testGetTickets() {
   try {
     const response = await api.get('/support/tickets');
     console.log('✅ Retrieved tickets successfully');
-    console.log('   Total tickets:', response.data.total);
-    console.log('   Current page:', response.data.page);
-    return response.data;
+    const tickets = response.data.data || response.data;
+    console.log('   Total tickets:', tickets.length);
+    return tickets;
   } catch (error) {
     console.error('❌ Failed to get tickets:', error.response?.data || error.message);
     throw error;
@@ -71,9 +72,10 @@ async function testGetTicketById() {
   try {
     const response = await api.get(`/support/tickets/${ticketId}`);
     console.log('✅ Retrieved ticket successfully');
-    console.log('   Subject:', response.data.subject);
-    console.log('   Messages:', response.data.messages.length);
-    return response.data;
+    const ticket = response.data.data || response.data;
+    console.log('   Subject:', ticket.subject);
+    console.log('   Messages:', ticket.messages.length);
+    return ticket;
   } catch (error) {
     console.error('❌ Failed to get ticket:', error.response?.data || error.message);
     throw error;
@@ -87,8 +89,9 @@ async function testAddMessage() {
       message: 'This is a follow-up message on the support ticket.',
     });
     console.log('✅ Message added successfully');
-    console.log('   Total messages:', response.data.messages.length);
-    return response.data;
+    const ticket = response.data.data || response.data;
+    console.log('   Total messages:', ticket.messages.length);
+    return ticket;
   } catch (error) {
     console.error('❌ Failed to add message:', error.response?.data || error.message);
     throw error;
@@ -106,11 +109,12 @@ async function testAdminUpdateStatus() {
       status: 'in-progress',
     });
     console.log('✅ Status updated successfully');
-    console.log('   New status:', response.data.status);
+    const ticket = response.data.data || response.data;
+    console.log('   New status:', ticket.status);
     
     // Switch back to user token
     authToken = currentToken;
-    return response.data;
+    return ticket;
   } catch (error) {
     console.error('❌ Failed to update status:', error.response?.data || error.message);
     throw error;
@@ -126,14 +130,15 @@ async function testAdminGetStats() {
     
     const response = await api.get('/support/tickets/stats');
     console.log('✅ Stats retrieved successfully');
-    console.log('   Total tickets:', response.data.total);
-    console.log('   Open tickets:', response.data.open);
-    console.log('   In Progress:', response.data.inProgress);
-    console.log('   Resolved:', response.data.resolved);
+    const stats = response.data.data || response.data;
+    console.log('   Total tickets:', stats.total);
+    console.log('   Open tickets:', stats.byStatus?.open || 0);
+    console.log('   In Progress:', stats.byStatus?.inProgress || 0);
+    console.log('   Resolved:', stats.byStatus?.resolved || 0);
     
     // Switch back to user token
     authToken = currentToken;
-    return response.data;
+    return stats;
   } catch (error) {
     console.error('❌ Failed to get stats:', error.response?.data || error.message);
     throw error;
@@ -147,12 +152,12 @@ async function runTests() {
   try {
     // Login as regular user (freelancer or client)
     console.log('\n🔐 Logging in as user...');
-    authToken = await login('freelancer@test.com', 'password123');
+    authToken = await login('alice.dev@example.com', 'Password123!');
     console.log('✅ User logged in successfully');
     
     // Login as admin
     console.log('\n🔐 Logging in as admin...');
-    adminToken = await login('admin@talenthive.com', 'admin123');
+    adminToken = await login('admin@talenthive.com', 'Password123!');
     console.log('✅ Admin logged in successfully');
     
     // Run tests
