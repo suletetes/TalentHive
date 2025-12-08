@@ -5,6 +5,7 @@ import {
   updateProfileValidation,
   getFreelancers,
   getFreelancerById,
+  getClientById,
   addSkill,
   removeSkill,
   updateAvailability,
@@ -49,6 +50,7 @@ router.put('/change-password', authenticate, changePasswordValidation, changePas
 // Public freelancer discovery
 router.get('/freelancers', getFreelancers);
 router.get('/freelancer/:id', getFreelancerById);
+router.get('/client/:id', getClientById);
 
 // File uploads (requires authentication and rate limiting)
 router.post('/upload-avatar', authenticate, uploadRateLimiter, upload.single('avatar'), uploadAvatar);

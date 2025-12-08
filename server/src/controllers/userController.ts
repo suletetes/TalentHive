@@ -186,6 +186,32 @@ export const getFreelancerById = catchAsync(async (req: Request, res: Response, 
   });
 });
 
+export const getClientById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+
+  console.log(`[CLIENT DETAIL] Fetching client with ID: ${id}`);
+
+  const client = await User.findOne({
+    _id: id,
+    role: 'client',
+    isActive: true,
+  }).select('-password -emailVerificationToken -passwordResetToken');
+
+  console.log(`[CLIENT DETAIL] Found client:`, client ? 'YES' : 'NO');
+
+  if (!client) {
+    console.log(`[CLIENT DETAIL] Client not found for ID: ${id}`);
+    return next(new AppError('Client not found', 404));
+  }
+
+  res.json({
+    status: 'success',
+    data: {
+      client,
+    },
+  });
+});
+
 export const addSkill = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { skill, rate } = req.body;
   const userId = req.user?._id;

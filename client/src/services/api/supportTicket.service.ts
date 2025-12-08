@@ -92,7 +92,9 @@ class SupportTicketService {
    * Create a new support ticket
    */
   async createTicket(data: CreateTicketData): Promise<SupportTicket> {
-    return apiCore.post('/support/tickets', data);
+    const response: any = await apiCore.post('/support/tickets', data);
+    // Backend returns { success: true, data: ticket }
+    return response.data || response;
   }
 
   /**
@@ -105,21 +107,33 @@ class SupportTicketService {
     page?: number;
     limit?: number;
   }): Promise<{ tickets: SupportTicket[]; total: number; page: number; pages: number }> {
-    return apiCore.get('/support/tickets', { params });
+    const response: any = await apiCore.get('/support/tickets', { params });
+    // Backend returns { success: true, data: tickets[] }
+    const tickets = response.data || response || [];
+    return {
+      tickets: Array.isArray(tickets) ? tickets : [],
+      total: tickets.length || 0,
+      page: 1,
+      pages: 1,
+    };
   }
 
   /**
    * Get ticket by ID
    */
   async getTicketById(ticketId: string): Promise<SupportTicket> {
-    return apiCore.get(`/support/tickets/${ticketId}`);
+    const response: any = await apiCore.get(`/support/tickets/${ticketId}`);
+    // Backend returns { success: true, data: ticket }
+    return response.data || response;
   }
 
   /**
    * Add message to ticket
    */
   async addMessage(ticketId: string, data: AddMessageData): Promise<SupportTicket> {
-    return apiCore.post(`/support/tickets/${ticketId}/messages`, data);
+    const response: any = await apiCore.post(`/support/tickets/${ticketId}/messages`, data);
+    // Backend returns { success: true, data: ticket }
+    return response.data || response;
   }
 
   /**
