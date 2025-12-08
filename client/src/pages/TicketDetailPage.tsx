@@ -12,7 +12,7 @@ import {
 import { ArrowBack } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchTicketById, addTicketMessage } from '@/store/slices/supportTicketSlice';
+import { fetchTicketById, addMessage } from '@/store/slices/supportTicketSlice';
 import { RootState, AppDispatch } from '@/store';
 import { TicketConversation } from '@/components/support/TicketConversation';
 import { TicketMessageInput } from '@/components/support/TicketMessageInput';
@@ -41,7 +41,7 @@ export const TicketDetailPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await dispatch(addTicketMessage({ ticketId, message })).unwrap();
+      await dispatch(addMessage({ ticketId, data: { message } })).unwrap();
       toast.success('Message sent successfully');
     } catch (err: any) {
       toast.error(err.message || 'Failed to send message');
