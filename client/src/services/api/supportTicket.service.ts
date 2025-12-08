@@ -1,4 +1,4 @@
-import { apiService } from './index';
+import { apiCore } from './core';
 
 export interface SupportTicket {
   _id: string;
@@ -92,8 +92,7 @@ class SupportTicketService {
    * Create a new support ticket
    */
   async createTicket(data: CreateTicketData): Promise<SupportTicket> {
-    const response = await apiService.post('/support/tickets', data);
-    return response.data;
+    return apiCore.post('/support/tickets', data);
   }
 
   /**
@@ -106,56 +105,49 @@ class SupportTicketService {
     page?: number;
     limit?: number;
   }): Promise<{ tickets: SupportTicket[]; total: number; page: number; pages: number }> {
-    const response = await apiService.get('/support/tickets', { params });
-    return response.data;
+    return apiCore.get('/support/tickets', { params });
   }
 
   /**
    * Get ticket by ID
    */
   async getTicketById(ticketId: string): Promise<SupportTicket> {
-    const response = await apiService.get(`/support/tickets/${ticketId}`);
-    return response.data;
+    return apiCore.get(`/support/tickets/${ticketId}`);
   }
 
   /**
    * Add message to ticket
    */
   async addMessage(ticketId: string, data: AddMessageData): Promise<SupportTicket> {
-    const response = await apiService.post(`/support/tickets/${ticketId}/messages`, data);
-    return response.data;
+    return apiCore.post(`/support/tickets/${ticketId}/messages`, data);
   }
 
   /**
    * Update ticket status (admin only)
    */
   async updateStatus(ticketId: string, data: UpdateStatusData): Promise<SupportTicket> {
-    const response = await apiService.patch(`/support/tickets/${ticketId}/status`, data);
-    return response.data;
+    return apiCore.patch(`/support/tickets/${ticketId}/status`, data);
   }
 
   /**
    * Assign ticket to admin (admin only)
    */
   async assignTicket(ticketId: string, data: AssignTicketData): Promise<SupportTicket> {
-    const response = await apiService.patch(`/support/tickets/${ticketId}/assign`, data);
-    return response.data;
+    return apiCore.patch(`/support/tickets/${ticketId}/assign`, data);
   }
 
   /**
    * Update ticket tags (admin only)
    */
   async updateTags(ticketId: string, data: UpdateTagsData): Promise<SupportTicket> {
-    const response = await apiService.patch(`/support/tickets/${ticketId}/tags`, data);
-    return response.data;
+    return apiCore.patch(`/support/tickets/${ticketId}/tags`, data);
   }
 
   /**
    * Get ticket statistics (admin only)
    */
   async getTicketStats(): Promise<TicketStats> {
-    const response = await apiService.get('/support/tickets/stats');
-    return response.data;
+    return apiCore.get('/support/tickets/stats');
   }
 }
 

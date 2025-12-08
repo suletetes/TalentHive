@@ -15,6 +15,7 @@ export * from './organizations.service';
 export * from './services.service';
 export * from './search.service';
 export * from './upload.service';
+export * from './supportTicket.service';
 
 // Export service instances
 export { authService } from './auth.service';
@@ -30,6 +31,7 @@ export { organizationsService } from './organizations.service';
 export { servicesService } from './services.service';
 export { searchService } from './search.service';
 export { uploadService } from './upload.service';
+export { supportTicketService } from './supportTicket.service';
 
 // Export types
 export type { LoginCredentials, RegisterData, AuthResponse } from './auth.service';
@@ -62,3 +64,13 @@ export type {
 } from './services.service';
 export type { SearchResult, SearchFilters } from './search.service';
 export type { UploadResponse } from './upload.service';
+export type {
+  SupportTicket,
+  TicketMessage,
+  CreateTicketData,
+  AddMessageData,
+  UpdateStatusData,
+  AssignTicketData,
+  UpdateTagsData,
+  TicketStats,
+} from './supportTicket.service';
