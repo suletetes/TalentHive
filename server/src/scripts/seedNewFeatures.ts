@@ -157,7 +157,10 @@ export async function createSupportTickets() {
 
     const createdAt = new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000);
 
+    const ticketId = `TKT-${Date.now().toString(36).toUpperCase()}-${i.toString().padStart(4, '0')}`;
+    
     const ticket = new SupportTicket({
+      ticketId,
       userId: user._id,
       subject,
       status,
@@ -170,6 +173,7 @@ export async function createSupportTickets() {
           isAdminResponse: false,
           isRead: true,
           createdAt,
+          attachments: [],
         },
       ],
       createdAt,
