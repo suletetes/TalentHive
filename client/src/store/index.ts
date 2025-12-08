@@ -7,6 +7,7 @@ import authReducer from './slices/authSlice';
 import uiReducer from './slices/uiSlice';
 import userReducer from './slices/userSlice';
 import supportTicketReducer from './slices/supportTicketSlice';
+import onboardingReducer from './slices/onboardingSlice';
 
 const persistConfig = {
   key: 'root',
@@ -19,6 +20,7 @@ const rootReducer = combineReducers({
   ui: uiReducer,
   user: userReducer,
   supportTicket: supportTicketReducer,
+  onboarding: onboardingReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
