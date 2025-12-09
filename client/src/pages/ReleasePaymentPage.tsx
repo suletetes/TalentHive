@@ -36,7 +36,6 @@ let stripePromise: Promise<Stripe | null> | null = null;
 const getStripe = () => {
   if (!stripePromise) {
     const key = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-    console.log('[STRIPE] Initializing with key:', key ? 'Key present' : 'NO KEY');
     if (!key) {
       console.error('[STRIPE] Missing VITE_STRIPE_PUBLISHABLE_KEY environment variable');
       return Promise.resolve(null);
@@ -102,24 +101,13 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
         console.error('[PAYMENT] Stripe error:', error);
         setErrorMessage(error.message || 'Payment failed');
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        console.log('[PAYMENT] Payment succeeded, confirming with backend...');
-        console.log('[PAYMENT] Payment Intent ID:', paymentIntent.id);
-        console.log('[PAYMENT] Contract ID for navigation:', contractId);
-        
-        // Confirm payment on backend to update milestone status
-        const confirmResult = await paymentsService.confirmPayment({ paymentIntentId: paymentIntent.id });
-        console.log('[PAYMENT] Backend confirm result:', confirmResult);
-        
+        await paymentsService.confirmPayment({ paymentIntentId: paymentIntent.id });
         toast.success('Payment successful! Funds are now in escrow.');
         
-        // Invalidate cache and navigate to contract page
-        console.log('[PAYMENT] Invalidating cache for contract:', contractId);
         await queryClient.invalidateQueries({ queryKey: ['contract', contractId] });
         await queryClient.invalidateQueries({ queryKey: ['contracts'] });
         
-        const targetUrl = `/dashboard/contracts/${contractId}`;
-        console.log('[PAYMENT] Navigating to:', targetUrl);
-        navigate(targetUrl, { replace: true });
+        navigate(`/dashboard/contracts/${contractId}`, { replace: true });
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to process payment');
@@ -192,19 +180,11 @@ export const ReleasePaymentPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const isClient = user?.role === 'client';
 
-  // Debug logging
-  console.log('[RELEASE PAGE] ===== PAGE LOAD =====');
-  console.log('[RELEASE PAGE] User:', user?.email, 'Role:', user?.role, 'isClient:', isClient);
-  console.log('[RELEASE PAGE] URL Params - ContractId:', contractId, 'MilestoneId:', milestoneId);
-  console.log('[RELEASE PAGE] ContractId type:', typeof contractId);
-  console.log('[RELEASE PAGE] Is valid ObjectId:', contractId && /^[a-f\d]{24}$/i.test(contractId));
-
   // Check Stripe availability
   useEffect(() => {
     getStripe().then((stripe) => {
       if (stripe) {
         setStripeLoaded(true);
-        console.log('[STRIPE] Loaded successfully');
       } else {
         setStripeError('Failed to load Stripe. Please check your internet connection.');
         console.error('[STRIPE] Failed to load');
@@ -226,8 +206,6 @@ export const ReleasePaymentPage: React.FC = () => {
     || contractData;
 
   const milestone = contract?.milestones?.find((m: any) => m._id === milestoneId);
-  
-  console.log('[RELEASE PAGE] Raw contractData:', contractData);
   console.log('[RELEASE PAGE] Extracted contract:', contract);
   console.log('[RELEASE PAGE] Contract:', contract?.title);
   console.log('[RELEASE PAGE] Milestone:', milestone?.title, 'Amount:', milestone?.amount, 'Status:', milestone?.status);
