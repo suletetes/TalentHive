@@ -86,4 +86,8 @@ router.use('/hire-now', hireNowRoutes);
 import { getFeaturedFreelancers } from '@/controllers/adminController';
 router.get('/featured-freelancers', getFeaturedFreelancers);
 
+// RBAC routes (admin only)
+import rbacRoutes from './rbac';
+router.use('/rbac', rbacRoutes);
+
 export default router;
