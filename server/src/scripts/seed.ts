@@ -22,6 +22,7 @@ import { PlatformSettings } from '@/models/PlatformSettings';
 import { Settings } from '@/models/Settings';
 import { generateEnhancedUsers, generateAdditionalProjects, generateAdditionalProposals } from './enhancedSeedData';
 import { seedClientProjectsAndReviews } from './seedClientData';
+import { enhanceSeedData } from './seedEnhanced';
 
 // Load environment variables
 dotenv.config();
@@ -2738,6 +2739,10 @@ async function seedDatabase() {
     // Temporarily disabled due to schema validation issues
     // The main seed already creates projects for clients via generateAdditionalProjects
     // await seedClientProjectsAndReviews();
+    
+    // Enhance seed data with slugs, completed contracts, and profile viewers
+    logger.info('🔧 Enhancing seed data...');
+    await enhanceSeedData(true); // Pass true to skip connection/disconnection
     
     logger.info('✅ Database seeding completed successfully');
     logger.info(`📊 Summary:
