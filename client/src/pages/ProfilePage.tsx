@@ -172,18 +172,21 @@ export const ProfilePage: React.FC = () => {
             Manage your profile information
           </Typography>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<OpenInNewIcon />}
-          onClick={() => {
-            const profileUrl = user.role === 'freelancer' 
-              ? `/freelancer/${user._id}` 
-              : `/client/${user._id}`;
-            window.open(profileUrl, '_blank');
-          }}
-        >
-          View Public Profile
-        </Button>
+        {user.role !== 'admin' && (
+          <Button
+            variant="outlined"
+            startIcon={<OpenInNewIcon />}
+            onClick={() => {
+              const identifier = user.profileSlug || user._id;
+              const profileUrl = user.role === 'freelancer' 
+                ? `/freelancer/${identifier}` 
+                : `/client/${identifier}`;
+              window.open(profileUrl, '_blank');
+            }}
+          >
+            View Public Profile
+          </Button>
+        )}
       </Box>
 
       <Grid container spacing={3}>
@@ -199,19 +202,22 @@ export const ProfilePage: React.FC = () => {
                     onEdit={() => setEditDialogOpen(true)}
                   />
                 </Box>
-                <Button
-                  variant="outlined"
-                  startIcon={<OpenInNewIcon />}
-                  onClick={() => {
-                    const profileUrl = user.role === 'freelancer' 
-                      ? `/freelancer/${user._id}` 
-                      : `/client/${user._id}`;
-                    window.open(profileUrl, '_blank');
-                  }}
-                  sx={{ ml: 2 }}
-                >
-                  View Public Profile
-                </Button>
+                {user.role !== 'admin' && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<OpenInNewIcon />}
+                    onClick={() => {
+                      const identifier = user.profileSlug || user._id;
+                      const profileUrl = user.role === 'freelancer' 
+                        ? `/freelancer/${identifier}` 
+                        : `/client/${identifier}`;
+                      window.open(profileUrl, '_blank');
+                    }}
+                    sx={{ ml: 2 }}
+                  >
+                    View Public Profile
+                  </Button>
+                )}
               </Box>
             </CardContent>
           </Card>
@@ -232,19 +238,23 @@ export const ProfilePage: React.FC = () => {
           </Grid>
         )}
 
-        {/* Profile Slug Editor */}
-        <Grid item xs={12}>
-          <ProfileSlugEditor 
-            userId={user._id} 
-            currentSlug={user.profileSlug} 
-            userRole={user.role}
-          />
-        </Grid>
+        {/* Profile Slug Editor (for freelancers and clients only) */}
+        {user.role !== 'admin' && (
+          <Grid item xs={12}>
+            <ProfileSlugEditor 
+              userId={user._id} 
+              currentSlug={user.profileSlug} 
+              userRole={user.role}
+            />
+          </Grid>
+        )}
 
-        {/* Statistics - Full Width */}
-        <Grid item xs={12}>
-          <ProfileStatistics userId={user._id} role={user.role} />
-        </Grid>
+        {/* Statistics - Full Width (for freelancers and clients only) */}
+        {(user.role === 'freelancer' || user.role === 'client') && (
+          <Grid item xs={12}>
+            <ProfileStatistics userId={user._id} role={user.role} />
+          </Grid>
+        )}
 
         {/* Portfolio Section (for freelancers) */}
         {user.role === 'freelancer' && (

@@ -44,7 +44,7 @@ export const ClientDetailPage = () => {
   const [projectsPage, setProjectsPage] = useState(1);
   const [reviewsPage, setReviewsPage] = useState(1);
 
-  // Fetch client profile data (includes user, stats, projects from backend)
+  // Fetch client profile data (includes user, stats, projects with ratings from backend)
   const { data: clientResponse, isLoading, error } = useQuery({
     queryKey: ['client-profile', id],
     queryFn: async () => {
@@ -199,7 +199,7 @@ export const ClientDetailPage = () => {
           </Card>
         </Grid>
 
-        {/* Posted Projects */}
+        {/* Posted Projects with Ratings */}
         <Grid item xs={12} md={8}>
           <Card>
             <CardContent>
@@ -215,14 +215,29 @@ export const ClientDetailPage = () => {
                       .map((project: any, index: number) => (
                         <Box key={project._id}>
                           <ListItem
-                            sx={{ px: 0, cursor: 'pointer' }}
+                            sx={{ px: 0, cursor: 'pointer', alignItems: 'flex-start' }}
                             onClick={() => navigate(`/projects/${project._id}`)}
                           >
                             <ListItemText
                               primary={
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                                  {project.title}
-                                </Typography>
+                                <Box sx={{ mb: 1 }}>
+                                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                                    {project.title}
+                                  </Typography>
+                                  {project.freelancer && (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                      <Avatar
+                                        src={project.freelancer.avatar}
+                                        sx={{ width: 24, height: 24 }}
+                                      >
+                                        {project.freelancer.name?.[0]}
+                                      </Avatar>
+                                      <Typography variant="body2" color="text.secondary">
+                                        Worked with: {project.freelancer.name}
+                                      </Typography>
+                                    </Box>
+                                  )}
+                                </Box>
                               }
                               secondary={
                                 <Box>
@@ -230,10 +245,10 @@ export const ClientDetailPage = () => {
                                     {project.description?.slice(0, 150)}
                                     {project.description?.length > 150 ? '...' : ''}
                                   </Typography>
-                                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
                                     <Chip
                                       size="small"
-                                      label={project.status}
+                                      label={project.status === 'in_progress' ? 'in progress' : project.status}
                                       color={project.status === 'completed' ? 'success' : 'default'}
                                     />
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -242,6 +257,14 @@ export const ClientDetailPage = () => {
                                         ${project.budget?.min} - ${project.budget?.max}
                                       </Typography>
                                     </Box>
+                                    {project.status === 'completed' && project.rating && (
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        <Rating value={project.rating} readOnly size="small" />
+                                        <Typography variant="body2" color="text.secondary">
+                                          {project.rating.toFixed(1)}
+                                        </Typography>
+                                      </Box>
+                                    )}
                                   </Box>
                                 </Box>
                               }
@@ -271,7 +294,7 @@ export const ClientDetailPage = () => {
           </Card>
         </Grid>
 
-        {/* Reviews Given */}
+        {/* Reviews Given by Client */}
         <Grid item xs={12}>
           <Card>
             <CardContent>
@@ -288,35 +311,43 @@ export const ClientDetailPage = () => {
                           <ListItem alignItems="flex-start" sx={{ px: 0 }}>
                             <ListItemText
                               primary={
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                  <Avatar
-                                    src={review.freelancer?.profile?.avatar}
-                                    sx={{ width: 40, height: 40 }}
-                                  >
-                                    {review.freelancer?.profile?.firstName?.[0]}
-                                  </Avatar>
-                                  <Box>
-                                    <Typography variant="subtitle1">
-                                      {review.freelancer?.profile?.firstName}{' '}
-                                      {review.freelancer?.profile?.lastName}
+                                <>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                                    <Avatar
+                                      src={review.freelancer?.profile?.avatar || review.reviewee?.profile?.avatar}
+                                      sx={{ width: 40, height: 40 }}
+                                    >
+                                      {(review.freelancer?.profile?.firstName || review.reviewee?.profile?.firstName)?.[0]}
+                                    </Avatar>
+                                    <Box sx={{ flex: 1 }}>
+                                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                        {review.freelancer?.profile?.firstName || review.reviewee?.profile?.firstName}{' '}
+                                        {review.freelancer?.profile?.lastName || review.reviewee?.profile?.lastName}
+                                      </Typography>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Rating value={review.rating} readOnly size="small" />
+                                        <Typography variant="body2" color="text.secondary">
+                                          {review.rating.toFixed(1)}
+                                        </Typography>
+                                      </Box>
+                                    </Box>
+                                    <Typography variant="caption" color="text.secondary">
+                                      {formatDate(review.createdAt)}
                                     </Typography>
-                                    <Rating value={review.rating} readOnly size="small" />
                                   </Box>
-                                </Box>
+                                  {review.project?.title && (
+                                    <Chip
+                                      label={`Project: ${review.project.title}`}
+                                      size="small"
+                                      sx={{ mb: 1 }}
+                                      onClick={() => navigate(`/projects/${review.project._id}`)}
+                                    />
+                                  )}
+                                </>
                               }
                               secondary={
-                                <Box component="span">
-                                  <Typography variant="body2" component="span" sx={{ display: 'block' }}>
-                                    {review.feedback || review.comment}
-                                  </Typography>
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                    component="span"
-                                    sx={{ display: 'block', mt: 1 }}
-                                  >
-                                    {formatDate(review.createdAt)}
-                                  </Typography>
+                                <Box component="span" sx={{ display: 'block', mt: 1 }}>
+                                  {review.feedback}
                                 </Box>
                               }
                             />
