@@ -53,13 +53,8 @@ export const ProfileAnalyticsPage: React.FC = () => {
 
     switch (user.role) {
       case 'freelancer':
-        return (
-          <FreelancerAnalytics
-            analytics={analytics}
-            viewers={viewers}
-            userId={user.id}
-          />
-        );
+        // FreelancerAnalytics fetches its own data
+        return <FreelancerAnalytics userId={user.id} />;
       case 'client':
         return (
           <ClientAnalytics
