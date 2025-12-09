@@ -93,7 +93,7 @@ export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => 
   let resolvedUserId = userId;
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     // Try to find user by slug
-    const user = await User.findOne({ 'profile.slug': userId });
+    const user = await User.findOne({ profileSlug: userId });
     if (!user) {
       return res.json({
         status: 'success',
@@ -147,7 +147,7 @@ export const getClientReviews = catchAsync(async (req: AuthRequest, res: Respons
   let userId = clientId;
   if (!mongoose.Types.ObjectId.isValid(clientId)) {
     // Try to find user by slug
-    const user = await User.findOne({ 'profile.slug': clientId });
+    const user = await User.findOne({ profileSlug: clientId });
     if (!user) {
       return res.json({
         status: 'success',
