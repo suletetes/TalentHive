@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Card, CardContent, Typography, Grid, Paper, List, ListItem, ListItemText, Avatar } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import {
   Work,
   Star,
@@ -7,14 +8,37 @@ import {
   Visibility,
   Person,
 } from '@mui/icons-material';
+import { usersService } from '@/services/api/users.service';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 interface ClientAnalyticsProps {
-  analytics: any;
-  viewers: any[];
   userId: string;
 }
 
-export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({ analytics, viewers }) => {
+export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({ userId }) => {
+  const { data: statsData, isLoading, error } = useQuery({
+    queryKey: ['clientStats', userId],
+    queryFn: () => usersService.getUserStats(userId),
+    enabled: !!userId,
+  });
+
+  const { data: viewersData } = useQuery({
+    queryKey: ['profileViewers', userId],
+    queryFn: () => usersService.getProfileViewers(userId),
+    enabled: !!userId,
+  });
+
+  if (isLoading) {
+    return <LoadingSpinner message="Loading analytics..." />;
+  }
+
+  if (error) {
+    return <ErrorState message="Failed to load analytics data" />;
+  }
+
+  const analytics = statsData || {};
+  const viewers = Array.isArray(viewersData) ? viewersData : [];
   const metrics = [
     {
       icon: Work,
