@@ -297,6 +297,14 @@ export const AdminUsersPage: React.FC = () => {
                         >
                           Role
                         </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                          onClick={() => window.location.href = `/admin/users/${user._id}/permissions`}
+                        >
+                          Permissions
+                        </Button>
                       </Box>
                     </TableCell>
                   </TableRow>
