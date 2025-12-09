@@ -1,4 +1,4 @@
-import api from './index';
+import { apiCore } from './core';
 
 export interface Role {
   _id: string;
@@ -76,13 +76,11 @@ export const rbacService = {
     isActive?: boolean;
     isSystem?: boolean;
   }) => {
-    const response = await api.get('/rbac/roles', { params });
-    return response.data;
+    return await apiCore.get('/rbac/roles', { params });
   },
 
   getRole: async (roleId: string) => {
-    const response = await api.get(`/rbac/roles/${roleId}`);
-    return response.data;
+    return await apiCore.get(`/rbac/roles/${roleId}`);
   },
 
   createRole: async (data: { 
@@ -92,8 +90,7 @@ export const rbacService = {
     permissions: string[];
     isSystem?: boolean;
   }) => {
-    const response = await api.post('/rbac/roles', data);
-    return response.data;
+    return await apiCore.post('/rbac/roles', data);
   },
 
   updateRole: async (
@@ -105,24 +102,20 @@ export const rbacService = {
       isActive: boolean;
     }>
   ) => {
-    const response = await api.put(`/rbac/roles/${roleId}`, data);
-    return response.data;
+    return await apiCore.put(`/rbac/roles/${roleId}`, data);
   },
 
   deleteRole: async (roleId: string) => {
-    const response = await api.delete(`/rbac/roles/${roleId}`);
-    return response.data;
+    return await apiCore.delete(`/rbac/roles/${roleId}`);
   },
 
   // User Role Assignment
   assignRole: async (userId: string, roleId: string) => {
-    const response = await api.post(`/rbac/users/${userId}/roles`, { roleId });
-    return response.data;
+    return await apiCore.post(`/rbac/users/${userId}/roles`, { roleId });
   },
 
   removeRole: async (userId: string, roleId: string) => {
-    const response = await api.delete(`/rbac/users/${userId}/roles/${roleId}`);
-    return response.data;
+    return await apiCore.delete(`/rbac/users/${userId}/roles/${roleId}`);
   },
 
   // Permission Management
@@ -131,8 +124,7 @@ export const rbacService = {
     limit?: number; 
     resource?: string;
   }) => {
-    const response = await api.get('/rbac/permissions', { params });
-    return response.data;
+    return await apiCore.get('/rbac/permissions', { params });
   },
 
   createPermission: async (data: {
@@ -143,23 +135,19 @@ export const rbacService = {
     scope?: 'own' | 'any' | 'organization';
     conditions?: Record<string, any>;
   }) => {
-    const response = await api.post('/rbac/permissions', data);
-    return response.data;
+    return await apiCore.post('/rbac/permissions', data);
   },
 
   getUserPermissions: async (userId: string): Promise<{ status: string; data: UserPermissionData }> => {
-    const response = await api.get(`/rbac/users/${userId}/permissions`);
-    return response.data;
+    return await apiCore.get(`/rbac/users/${userId}/permissions`);
   },
 
   grantPermission: async (userId: string, permissionId: string) => {
-    const response = await api.post(`/rbac/users/${userId}/permissions`, { permissionId });
-    return response.data;
+    return await apiCore.post(`/rbac/users/${userId}/permissions`, { permissionId });
   },
 
   revokePermission: async (userId: string, permissionId: string) => {
-    const response = await api.delete(`/rbac/users/${userId}/permissions/${permissionId}`);
-    return response.data;
+    return await apiCore.delete(`/rbac/users/${userId}/permissions/${permissionId}`);
   },
 
   // Audit Logs
@@ -172,8 +160,7 @@ export const rbacService = {
     startDate?: string;
     endDate?: string;
   }) => {
-    const response = await api.get('/rbac/audit-logs', { params });
-    return response.data;
+    return await apiCore.get('/rbac/audit-logs', { params });
   },
 };
 
