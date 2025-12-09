@@ -83,7 +83,7 @@ export async function seedRoles() {
         // Update existing role
         existing.name = roleData.name;
         existing.description = roleData.description;
-        existing.permissions = roleData.permissions;
+        existing.permissions = roleData.permissions as any;
         existing.isSystem = roleData.isSystem;
         await existing.save();
         updatedCount++;

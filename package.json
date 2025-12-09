@@ -20,7 +20,8 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "prepare": "husky install",
     "seed": "cd server && npm run seed",
-    "seed:complete-profiles": "cd server && npm run seed:complete-profiles"
+    "seed:complete-profiles": "cd server && npm run seed:complete-profiles",
+    "validate-data": "cd server && npm run validate-data"
   },
   "keywords": [
     "freelancing",
