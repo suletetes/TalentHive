@@ -21,6 +21,7 @@ import { HireNowRequest } from '@/models/HireNowRequest';
 import { PlatformSettings } from '@/models/PlatformSettings';
 import { Settings } from '@/models/Settings';
 import { generateEnhancedUsers, generateAdditionalProjects, generateAdditionalProposals } from './enhancedSeedData';
+import { seedClientProjectsAndReviews } from './seedClientData';
 
 // Load environment variables
 dotenv.config();
@@ -2732,6 +2733,11 @@ async function seedDatabase() {
     const transactions = await seedTransactions(users, contracts);
     const messages = await seedMessages(users);
     const notifications = await seedNotifications(users);
+    
+    // TODO: Seed additional client projects and reviews
+    // Temporarily disabled due to schema validation issues
+    // The main seed already creates projects for clients via generateAdditionalProjects
+    // await seedClientProjectsAndReviews();
     
     logger.info('✅ Database seeding completed successfully');
     logger.info(`📊 Summary:
