@@ -102,7 +102,6 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
   // Add filters
   if (skills) {
     const skillsArray = (skills as string).split(',').map(s => s.trim());
-    console.log('[FREELANCERS] Filtering by skills:', skillsArray);
     query['freelancerProfile.skills'] = { $in: skillsArray };
   }
 
@@ -133,8 +132,6 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
 
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
   
-  console.log('[FREELANCERS] Query:', JSON.stringify(query, null, 2));
-  
   const [freelancers, total] = await Promise.all([
     User.find(query)
       .select('-password -emailVerificationToken -passwordResetToken')
@@ -143,8 +140,6 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
       .limit(parseInt(limit as string)),
     User.countDocuments(query),
   ]);
-  
-  console.log(`[FREELANCERS] Found ${freelancers.length} freelancers out of ${total} total`);
 
   res.json({
     status: 'success',
@@ -163,18 +158,13 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
 export const getFreelancerById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
 
-  console.log(`[FREELANCER DETAIL] Fetching freelancer with ID: ${id}`);
-
   const freelancer = await User.findOne({
     _id: id,
     role: 'freelancer',
     isActive: true,
   }).select('-password -emailVerificationToken -passwordResetToken');
 
-  console.log(`[FREELANCER DETAIL] Found freelancer:`, freelancer ? 'YES' : 'NO');
-
   if (!freelancer) {
-    console.log(`[FREELANCER DETAIL] Freelancer not found for ID: ${id}`);
     return next(new AppError('Freelancer not found', 404));
   }
 
@@ -189,18 +179,13 @@ export const getFreelancerById = catchAsync(async (req: Request, res: Response, 
 export const getClientById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
 
-  console.log(`[CLIENT DETAIL] Fetching client with ID: ${id}`);
-
   const client = await User.findOne({
     _id: id,
     role: 'client',
     isActive: true,
   }).select('-password -emailVerificationToken -passwordResetToken');
 
-  console.log(`[CLIENT DETAIL] Found client:`, client ? 'YES' : 'NO');
-
   if (!client) {
-    console.log(`[CLIENT DETAIL] Client not found for ID: ${id}`);
     return next(new AppError('Client not found', 404));
   }
 
