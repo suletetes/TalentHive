@@ -255,10 +255,51 @@ export const getProfileViewAnalytics = async (req: AuthRequest, res: Response) =
       });
     }
 
+    // Get role-specific stats
+    let roleSpecificStats = {};
+    
+    if (user.role === 'client') {
+      const Project = (await import('@/models/Project')).Project;
+      const Proposal = (await import('@/models/Proposal')).Proposal;
+      const Contract = (await import('@/models/Contract')).Contract;
+      
+      const [projectsPosted, proposalsReceived, contracts] = await Promise.all([
+        Project.countDocuments({ client: userId }),
+        Proposal.countDocuments({ project: { $in: await Project.find({ client: userId }).select('_id') } }),
+        Contract.find({ client: userId, status: 'completed' }).select('totalAmount')
+      ]);
+      
+      const totalSpent = contracts.reduce((sum, contract) => sum + (contract.totalAmount || 0), 0);
+      
+      roleSpecificStats = {
+        projectsPosted,
+        proposalsReceived,
+        totalSpent
+      };
+    } else if (user.role === 'freelancer') {
+      const Proposal = (await import('@/models/Proposal')).Proposal;
+      const Contract = (await import('@/models/Contract')).Contract;
+      
+      const [proposalsSent, activeContracts, contracts] = await Promise.all([
+        Proposal.countDocuments({ freelancer: userId }),
+        Contract.countDocuments({ freelancer: userId, status: 'active' }),
+        Contract.find({ freelancer: userId, status: 'completed' }).select('totalAmount')
+      ]);
+      
+      const totalEarned = contracts.reduce((sum, contract) => sum + (contract.totalAmount || 0), 0);
+      
+      roleSpecificStats = {
+        proposalsSent,
+        activeContracts,
+        totalEarned
+      };
+    }
+
     const analytics = {
       totalViews: user.profileViews || 0,
       uniqueViewers: user.profileViewers?.length || 0,
-      recentViewers: await ProfileStatsService.getProfileViewers(userId, 10)
+      recentViewers: await ProfileStatsService.getProfileViewers(userId, 10),
+      ...roleSpecificStats
     };
 
     res.status(200).json({
