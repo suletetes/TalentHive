@@ -1,12 +1,12 @@
 import React from 'react';
-import { Card, CardContent, Box, Grid, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, Paper } from '@mui/material';
 import {
-  People as PeopleIcon,
-  Work as WorkIcon,
-  Description as ProposalIcon,
-  AttachMoney as MoneyIcon,
-  TrendingUp as TrendingUpIcon,
-  CheckCircle as CheckCircleIcon,
+  People,
+  Work,
+  AttachMoney,
+  TrendingUp,
+  Assessment,
+  CheckCircle,
 } from '@mui/icons-material';
 
 interface AdminAnalyticsProps {
@@ -15,166 +15,181 @@ interface AdminAnalyticsProps {
 }
 
 export const AdminAnalytics: React.FC<AdminAnalyticsProps> = ({ analytics }) => {
+  const platformMetrics = [
+    {
+      icon: People,
+      label: 'Total Users',
+      value: analytics.totalUsers || 0,
+      color: 'primary.main',
+      description: 'Registered users',
+    },
+    {
+      icon: Work,
+      label: 'Total Projects',
+      value: analytics.totalProjects || 0,
+      color: 'info.main',
+      description: 'All projects',
+    },
+    {
+      icon: CheckCircle,
+      label: 'Active Contracts',
+      value: analytics.activeContracts || 0,
+      color: 'success.main',
+      description: 'Currently active',
+    },
+    {
+      icon: AttachMoney,
+      label: 'Platform Revenue',
+      value: `$${analytics.platformRevenue?.toLocaleString() || 0}`,
+      color: 'success.main',
+      description: 'Total commission earned',
+    },
+    {
+      icon: TrendingUp,
+      label: 'Growth Rate',
+      value: `${analytics.growthRate || 0}%`,
+      color: 'warning.main',
+      description: 'Month over month',
+    },
+    {
+      icon: Assessment,
+      label: 'Completion Rate',
+      value: `${analytics.completionRate || 0}%`,
+      color: 'info.main',
+      description: 'Project success rate',
+    },
+  ];
+
   return (
-    <Grid container spacing={3}>
-      {/* Platform-Wide Stats */}
-      <Grid item xs={12} md={4}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <PeopleIcon sx={{ mr: 1, color: 'primary.main' }} />
-              <Typography variant="h6">Total Users</Typography>
-            </Box>
-            <Typography variant="h3" color="primary">
-              {analytics.totalUsers || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Active platform users
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
+    <Box>
+      <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+        Platform Analytics
+      </Typography>
 
-      <Grid item xs={12} md={4}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <WorkIcon sx={{ mr: 1, color: 'success.main' }} />
-              <Typography variant="h6">Total Projects</Typography>
-            </Box>
-            <Typography variant="h3" color="success.main">
-              {analytics.totalProjects || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              All projects on platform
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} md={4}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <CheckCircleIcon sx={{ mr: 1, color: 'info.main' }} />
-              <Typography variant="h6">Active Contracts</Typography>
-            </Box>
-            <Typography variant="h3" color="info.main">
-              {analytics.activeContracts || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Currently in progress
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} md={4}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <ProposalIcon sx={{ mr: 1, color: 'warning.main' }} />
-              <Typography variant="h6">Total Proposals</Typography>
-            </Box>
-            <Typography variant="h3" color="warning.main">
-              {analytics.totalProposals || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Submitted by freelancers
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} md={4}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <MoneyIcon sx={{ mr: 1, color: 'success.main' }} />
-              <Typography variant="h6">Platform Revenue</Typography>
-            </Box>
-            <Typography variant="h3" color="success.main">
-              ${analytics.platformRevenue || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Total transactions
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} md={4}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <TrendingUpIcon sx={{ mr: 1, color: 'secondary.main' }} />
-              <Typography variant="h6">Growth Rate</Typography>
-            </Box>
-            <Typography variant="h3" color="secondary.main">
-              {analytics.growthRate || 0}%
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Last 30 days
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Admin Activity Summary */}
-      <Grid item xs={12}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Platform Overview
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Key metrics and platform health indicators
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={3}>
-                <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                  <Typography variant="h4" color="primary">
-                    {analytics.newUsersThisMonth || 0}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    New Users (30d)
-                  </Typography>
+      <Grid container spacing={3}>
+        {platformMetrics.map((metric, index) => (
+          <Grid item xs={12} sm={6} md={4} key={index}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      bgcolor: `${metric.color}15`,
+                      mr: 2,
+                    }}
+                  >
+                    <metric.icon sx={{ color: metric.color, fontSize: 28 }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      {metric.label}
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                      {metric.value}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                  <Typography variant="h4" color="success.main">
-                    {analytics.completedProjects || 0}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Completed Projects
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                  <Typography variant="h4" color="warning.main">
-                    {analytics.pendingDisputes || 0}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Pending Disputes
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                  <Typography variant="h4" color="info.main">
-                    {analytics.averageRating || '0.0'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Platform Avg Rating
-                  </Typography>
-                </Box>
-              </Grid>
+                <Typography variant="caption" color="text.secondary">
+                  {metric.description}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* User Distribution */}
+      <Card sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            User Distribution
+          </Typography>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Freelancers
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                  {analytics.totalFreelancers || 0}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {((analytics.totalFreelancers / analytics.totalUsers) * 100 || 0).toFixed(1)}% of users
+                </Typography>
+              </Paper>
             </Grid>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Clients
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 600, color: 'success.main' }}>
+                  {analytics.totalClients || 0}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {((analytics.totalClients / analytics.totalUsers) * 100 || 0).toFixed(1)}% of users
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Admins
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 600, color: 'warning.main' }}>
+                  {analytics.totalAdmins || 0}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Platform administrators
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
+      {/* Revenue Breakdown */}
+      <Card sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            Revenue Breakdown
+          </Typography>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Total Transactions
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                  ${analytics.totalTransactions?.toLocaleString() || 0}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  All platform transactions
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Platform Commission
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 600, color: 'success.main' }}>
+                  ${analytics.platformRevenue?.toLocaleString() || 0}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {((analytics.platformRevenue / analytics.totalTransactions) * 100 || 0).toFixed(1)}% commission rate
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+    </Box>
   );
 };

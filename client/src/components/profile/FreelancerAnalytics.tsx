@@ -1,21 +1,14 @@
-import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  Box,
-  Grid,
-  Typography,
-  Paper,
-  LinearProgress,
-  Pagination,
-} from '@mui/material';
-import {
-  Visibility as VisibilityIcon,
-  TrendingUp as TrendingUpIcon,
-  People as PeopleIcon,
-  Star as StarIcon,
-} from '@mui/icons-material';
+import React from 'react';
+import { Box, Card, CardContent, Typography, Grid, Paper } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
+import {
+  TrendingUp,
+  Work,
+  Star,
+  AttachMoney,
+  Visibility,
+  Schedule,
+} from '@mui/icons-material';
 import { usersService } from '@/services/api/users.service';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -24,33 +17,17 @@ interface FreelancerAnalyticsProps {
   userId: string;
 }
 
-const VIEWERS_PER_PAGE = 10;
-
 export const FreelancerAnalytics: React.FC<FreelancerAnalyticsProps> = ({ userId }) => {
-  const [viewersPage, setViewersPage] = useState(1);
-  
-  const { data: analyticsData, isLoading, error } = useQuery({
-    queryKey: ['freelancerAnalytics', userId],
-    queryFn: async () => {
-      const response = await usersService.getProfileViewAnalytics(userId, 30);
-      return response.data || response;
-    },
+  const { data: statsData, isLoading, error } = useQuery({
+    queryKey: ['freelancerStats', userId],
+    queryFn: () => usersService.getUserStats(userId),
+    enabled: !!userId,
   });
 
-  const { data: viewersData } = useQuery({
-    queryKey: ['profileViewers', userId],
-    queryFn: async () => {
-      const response = await usersService.getProfileViewers(userId);
-      return response.data || response;
-    },
-  });
-
-  const { data: statsData } = useQuery({
-    queryKey: ['userStats', userId],
-    queryFn: async () => {
-      const response = await usersService.getUserStats(userId);
-      return response.data || response;
-    },
+  const { data: viewsData } = useQuery({
+    queryKey: ['profileViews', userId],
+    queryFn: () => usersService.getProfileViewAnalytics(userId, 30),
+    enabled: !!userId,
   });
 
   if (isLoading) {
@@ -61,219 +38,165 @@ export const FreelancerAnalytics: React.FC<FreelancerAnalyticsProps> = ({ userId
     return <ErrorState message="Failed to load analytics data" />;
   }
 
-  const analytics = analyticsData || {};
-  const viewers = Array.isArray(viewersData) ? viewersData : [];
-  // getUserStats returns the stats directly (API service extracts .data)
   const stats = statsData || {};
+  const views = viewsData || {};
+
+  const metrics = [
+    {
+      icon: Work,
+      label: 'Total Projects',
+      value: stats.totalProjects || 0,
+      color: 'primary.main',
+      description: 'All projects worked on',
+    },
+    {
+      icon: TrendingUp,
+      label: 'Completion Rate',
+      value: `${stats.completionRate || 0}%`,
+      color: 'success.main',
+      description: 'Successfully completed projects',
+    },
+    {
+      icon: Star,
+      label: 'Average Rating',
+      value: `${stats.averageRating?.toFixed(1) || 0}/5.0`,
+      color: 'warning.main',
+      description: `Based on ${stats.totalReviews || 0} reviews`,
+    },
+    {
+      icon: AttachMoney,
+      label: 'Total Earnings',
+      value: `$${stats.totalEarnings?.toLocaleString() || 0}`,
+      color: 'success.main',
+      description: 'Lifetime earnings',
+    },
+    {
+      icon: Visibility,
+      label: 'Profile Views',
+      value: stats.profileViews || 0,
+      color: 'info.main',
+      description: 'Last 30 days',
+    },
+    {
+      icon: Schedule,
+      label: 'Response Time',
+      value: stats.responseTime || 'N/A',
+      color: 'secondary.main',
+      description: 'Average response time',
+    },
+  ];
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-        Freelancer Analytics
-      </Typography>
-
       <Grid container spacing={3}>
-        {/* Profile Views */}
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <VisibilityIcon sx={{ mr: 1, color: 'primary.main' }} />
-                <Typography variant="h6">Profile Views</Typography>
-              </Box>
-              <Typography variant="h3" color="primary">
-                {analytics.totalViews || 0}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Last 30 days
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Unique Viewers */}
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <PeopleIcon sx={{ mr: 1, color: 'success.main' }} />
-                <Typography variant="h6">Unique Viewers</Typography>
-              </Box>
-              <Typography variant="h3" color="success.main">
-                {analytics.uniqueViewers || 0}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Different people
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Avg Views/Day */}
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingUpIcon sx={{ mr: 1, color: 'info.main' }} />
-                <Typography variant="h6">Avg. Views/Day</Typography>
-              </Box>
-              <Typography variant="h3" color="info.main">
-                {analytics.totalViews ? Math.round(analytics.totalViews / 30) : 0}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Daily average
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Profile Rating */}
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <StarIcon sx={{ mr: 1, color: 'warning.main' }} />
-                <Typography variant="h6">Rating</Typography>
-              </Box>
-              <Typography variant="h3" color="warning.main">
-                {stats.averageRating?.toFixed(1) || '0.0'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {stats.totalProjects || 0} projects
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Profile Completeness */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Profile Completeness
-              </Typography>
-              <Box sx={{ mt: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">Overall Progress</Typography>
-                  <Typography variant="body2" fontWeight="bold">
-                    {stats.profileCompleteness || 0}%
-                  </Typography>
-                </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={stats.profileCompleteness || 0}
-                  sx={{ height: 8, borderRadius: 4 }}
-                />
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                Complete your profile to increase visibility
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Response Rate */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Performance Metrics
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Completion Rate
-                  </Typography>
-                  <Typography variant="h5">
-                    {stats.completionRate || 0}%
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    On-Time Delivery
-                  </Typography>
-                  <Typography variant="h5">
-                    {stats.onTimeDelivery || 0}%
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Recent Viewers */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Recent Profile Viewers ({viewers.length})
-              </Typography>
-              {viewers.length === 0 ? (
-                <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                  No viewers yet
-                </Typography>
-              ) : (
-                <>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                    {viewers
-                      .slice((viewersPage - 1) * VIEWERS_PER_PAGE, viewersPage * VIEWERS_PER_PAGE)
-                      .map((viewer: any, index: number) => (
-                        <Paper
-                          key={index}
-                          sx={{
-                            p: 2,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Box
-                              sx={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: '50%',
-                                bgcolor: 'primary.main',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'white',
-                                fontWeight: 'bold',
-                              }}
-                            >
-                              {viewer.profile?.firstName?.[0] || '?'}
-                            </Box>
-                            <Box>
-                              <Typography variant="body1" fontWeight="medium">
-                                {viewer.profile?.firstName} {viewer.profile?.lastName}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {viewer.role}
-                              </Typography>
-                            </Box>
-                          </Box>
-                          <Typography variant="body2" color="text.secondary">
-                            {new Date(viewer.viewedAt).toLocaleDateString()}
-                          </Typography>
-                        </Paper>
-                      ))}
+        {metrics.map((metric, index) => (
+          <Grid item xs={12} sm={6} md={4} key={index}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      bgcolor: `${metric.color}15`,
+                      mr: 2,
+                    }}
+                  >
+                    <metric.icon sx={{ color: metric.color, fontSize: 28 }} />
                   </Box>
-                  {Math.ceil(viewers.length / VIEWERS_PER_PAGE) > 1 && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                      <Pagination
-                        count={Math.ceil(viewers.length / VIEWERS_PER_PAGE)}
-                        page={viewersPage}
-                        onChange={(e, value) => setViewersPage(value)}
-                        color="primary"
-                      />
-                    </Box>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      {metric.label}
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                      {metric.value}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Typography variant="caption" color="text.secondary">
+                  {metric.description}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
+
+      {/* Performance Overview */}
+      <Card sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            Performance Overview
+          </Typography>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Completed Projects
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 600, color: 'success.main' }}>
+                  {stats.completedProjects || 0}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Out of {stats.totalProjects || 0} total projects
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Active Projects
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                  {stats.activeProjects || 0}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Currently in progress
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
+      {/* Profile Visibility */}
+      <Card sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            Profile Visibility
+          </Typography>
+          <Box sx={{ mt: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Total Profile Views
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {stats.profileViews || 0}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Unique Viewers
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {views.uniqueViewers || 0}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="body2" color="text.secondary">
+                Views This Month
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {views.viewsThisMonth || 0}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
     </Box>
   );
 };

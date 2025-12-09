@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
-import { Card, CardContent, Box, Grid, Typography, Paper, Pagination } from '@mui/material';
+import React from 'react';
+import { Box, Card, CardContent, Typography, Grid, Paper, List, ListItem, ListItemText, Avatar } from '@mui/material';
 import {
-  Visibility as VisibilityIcon,
-  TrendingUp as TrendingUpIcon,
-  People as PeopleIcon,
-  Work as WorkIcon,
-  Description as ProposalIcon,
-  AttachMoney as MoneyIcon,
+  Work,
+  Star,
+  CheckCircle,
+  Visibility,
+  Person,
 } from '@mui/icons-material';
 
 interface ClientAnalyticsProps {
@@ -15,195 +14,142 @@ interface ClientAnalyticsProps {
   userId: string;
 }
 
-const VIEWERS_PER_PAGE = 10;
+export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({ analytics, viewers }) => {
+  const metrics = [
+    {
+      icon: Work,
+      label: 'Projects Posted',
+      value: analytics.totalProjectsPosted || 0,
+      color: 'primary.main',
+      description: 'Total projects created',
+    },
+    {
+      icon: CheckCircle,
+      label: 'Active Contracts',
+      value: analytics.activeContracts || 0,
+      color: 'success.main',
+      description: 'Currently active',
+    },
+    {
+      icon: Star,
+      label: 'Reviews Given',
+      value: analytics.reviewsGiven || 0,
+      color: 'warning.main',
+      description: 'Feedback provided',
+    },
+    {
+      icon: Visibility,
+      label: 'Profile Views',
+      value: analytics.profileViews || 0,
+      color: 'info.main',
+      description: 'Last 30 days',
+    },
+  ];
 
-export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
-  analytics,
-  viewers,
-}) => {
-  const [viewersPage, setViewersPage] = useState(1);
-  
   return (
-    <Grid container spacing={3}>
-      {/* Profile Views Stats */}
-      <Grid item xs={12} md={4}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <VisibilityIcon sx={{ mr: 1, color: 'primary.main' }} />
-              <Typography variant="h6">Total Views</Typography>
-            </Box>
-            <Typography variant="h3" color="primary">
-              {analytics.totalViews || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              All-time profile views
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} md={4}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <PeopleIcon sx={{ mr: 1, color: 'success.main' }} />
-              <Typography variant="h6">Unique Viewers</Typography>
-            </Box>
-            <Typography variant="h3" color="success.main">
-              {analytics.uniqueViewers || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Different people who viewed
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} md={4}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <TrendingUpIcon sx={{ mr: 1, color: 'info.main' }} />
-              <Typography variant="h6">Avg. Views/Day</Typography>
-            </Box>
-            <Typography variant="h3" color="info.main">
-              {analytics.totalViews ? Math.round(analytics.totalViews / 30) : 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Last 30 days
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Client-Specific Stats */}
-      <Grid item xs={12} md={4}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <WorkIcon sx={{ mr: 1, color: 'warning.main' }} />
-              <Typography variant="h6">Projects Posted</Typography>
-            </Box>
-            <Typography variant="h3" color="warning.main">
-              {analytics.projectsPosted || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Total projects created
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} md={4}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <ProposalIcon sx={{ mr: 1, color: 'secondary.main' }} />
-              <Typography variant="h6">Proposals Received</Typography>
-            </Box>
-            <Typography variant="h3" color="secondary.main">
-              {analytics.proposalsReceived || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              From freelancers
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} md={4}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <MoneyIcon sx={{ mr: 1, color: 'success.main' }} />
-              <Typography variant="h6">Total Spent</Typography>
-            </Box>
-            <Typography variant="h3" color="success.main">
-              ${analytics.totalSpent || 0}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              On completed projects
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Recent Viewers */}
-      <Grid item xs={12}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Recent Profile Viewers ({viewers.length})
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Freelancers who viewed your profile
-            </Typography>
-            {viewers.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                No viewers yet
-              </Typography>
-            ) : (
-              <>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                  {viewers
-                    .slice((viewersPage - 1) * VIEWERS_PER_PAGE, viewersPage * VIEWERS_PER_PAGE)
-                    .map((viewer: any, index: number) => (
-                      <Paper
-                        key={index}
-                        sx={{
-                          p: 2,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Box
-                            sx={{
-                              width: 40,
-                              height: 40,
-                              borderRadius: '50%',
-                              bgcolor: 'primary.main',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: 'white',
-                              fontWeight: 'bold',
-                            }}
-                          >
-                            {viewer.profile?.firstName?.[0] || '?'}
-                          </Box>
-                          <Box>
-                            <Typography variant="body1" fontWeight="medium">
-                              {viewer.profile?.firstName} {viewer.profile?.lastName}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {viewer.role}
-                            </Typography>
-                          </Box>
-                        </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {new Date(viewer.viewedAt).toLocaleDateString()}
-                        </Typography>
-                      </Paper>
-                    ))}
-                </Box>
-                {Math.ceil(viewers.length / VIEWERS_PER_PAGE) > 1 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                    <Pagination
-                      count={Math.ceil(viewers.length / VIEWERS_PER_PAGE)}
-                      page={viewersPage}
-                      onChange={(e, value) => setViewersPage(value)}
-                      color="primary"
-                    />
+    <Box>
+      <Grid container spacing={3}>
+        {metrics.map((metric, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      bgcolor: `${metric.color}15`,
+                      mr: 2,
+                    }}
+                  >
+                    <metric.icon sx={{ color: metric.color, fontSize: 28 }} />
                   </Box>
-                )}
-              </>
-            )}
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      {metric.label}
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                      {metric.value}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Typography variant="caption" color="text.secondary">
+                  {metric.description}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Project Overview */}
+      <Card sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            Project Overview
+          </Typography>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Total Posted
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                  {analytics.totalProjectsPosted || 0}
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Active Contracts
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 600, color: 'success.main' }}>
+                  {analytics.activeContracts || 0}
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Completed
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 600, color: 'info.main' }}>
+                  {analytics.completedProjects || 0}
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
+      {/* Recent Profile Viewers */}
+      {viewers && viewers.length > 0 && (
+        <Card sx={{ mt: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+              Recent Profile Viewers
+            </Typography>
+            <List>
+              {viewers.slice(0, 5).map((viewer: any, index: number) => (
+                <ListItem key={index} sx={{ px: 0 }}>
+                  <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
+                    <Person />
+                  </Avatar>
+                  <ListItemText
+                    primary={viewer.viewerName || 'Anonymous'}
+                    secondary={new Date(viewer.viewedAt).toLocaleDateString()}
+                  />
+                </ListItem>
+              ))}
+            </List>
           </CardContent>
         </Card>
-      </Grid>
-    </Grid>
+      )}
+    </Box>
   );
 };
