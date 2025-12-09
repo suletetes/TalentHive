@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Pagination,
 } from '@mui/material';
 import {
   LocationOn,
@@ -49,6 +50,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { usersService } from '@/services/api/users.service';
 
+const REVIEWS_PER_PAGE = 5;
+
 export const FreelancerDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { data: freelancerResponse, isLoading, error } = useFreelancer(id || '');
@@ -57,6 +60,7 @@ export const FreelancerDetailPage = () => {
   const [serviceDetailOpen, setServiceDetailOpen] = useState(false);
   const [requestServiceOpen, setRequestServiceOpen] = useState(false);
   const [requestMessage, setRequestMessage] = useState('');
+  const [reviewsPage, setReviewsPage] = useState(1);
   const { user } = useSelector((state: RootState) => state.auth);
   const isClient = user?.role === 'client';
 

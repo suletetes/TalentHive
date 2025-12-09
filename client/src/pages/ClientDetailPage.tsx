@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import {
   Container,
   Typography,
@@ -14,6 +15,7 @@ import {
   List,
   ListItem,
   ListItemText,
+  Pagination,
 } from '@mui/material';
 import {
   LocationOn,
@@ -30,11 +32,17 @@ import { MessageButton } from '@/components/messaging/MessageButton';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 
+const PROJECTS_PER_PAGE = 5;
+const REVIEWS_PER_PAGE = 5;
+
 export const ClientDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const isFreelancer = user?.role === 'freelancer';
+  
+  const [projectsPage, setProjectsPage] = useState(1);
+  const [reviewsPage, setReviewsPage] = useState(1);
 
   // Fetch client profile data (includes user, stats, projects from backend)
   const { data: clientResponse, isLoading, error } = useQuery({
@@ -115,12 +123,14 @@ export const ClientDetailPage = () => {
                 </Typography>
               </Box>
             )}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Rating value={client.rating?.average || 0} readOnly precision={0.1} />
-              <Typography variant="body2">
-                {(client.rating?.average || 0).toFixed(1)} ({client.rating?.count || 0} reviews)
-              </Typography>
-            </Box>
+            {(client.rating?.count || 0) > 0 && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Rating value={client.rating?.average || 0} readOnly precision={0.1} />
+                <Typography variant="body2">
+                  {(client.rating?.average || 0).toFixed(1)} ({client.rating?.count || 0} reviews from freelancers)
+                </Typography>
+              </Box>
+            )}
             {client.clientProfile?.industry && (
               <Chip
                 icon={<Business />}
@@ -198,46 +208,60 @@ export const ClientDetailPage = () => {
                 <Typography variant="h6">Posted Projects ({projects.length})</Typography>
               </Box>
               {projects.length > 0 ? (
-                <List>
-                  {projects.slice(0, 5).map((project: any, index: number) => (
-                    <Box key={project._id}>
-                      <ListItem
-                        sx={{ px: 0, cursor: 'pointer' }}
-                        onClick={() => navigate(`/projects/${project._id}`)}
-                      >
-                        <ListItemText
-                          primary={
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                              {project.title}
-                            </Typography>
-                          }
-                          secondary={
-                            <Box>
-                              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                {project.description?.slice(0, 150)}
-                                {project.description?.length > 150 ? '...' : ''}
-                              </Typography>
-                              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                                <Chip
-                                  size="small"
-                                  label={project.status}
-                                  color={project.status === 'completed' ? 'success' : 'default'}
-                                />
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                  <AttachMoney fontSize="small" />
-                                  <Typography variant="body2">
-                                    ${project.budget?.min} - ${project.budget?.max}
+                <>
+                  <List>
+                    {projects
+                      .slice((projectsPage - 1) * PROJECTS_PER_PAGE, projectsPage * PROJECTS_PER_PAGE)
+                      .map((project: any, index: number) => (
+                        <Box key={project._id}>
+                          <ListItem
+                            sx={{ px: 0, cursor: 'pointer' }}
+                            onClick={() => navigate(`/projects/${project._id}`)}
+                          >
+                            <ListItemText
+                              primary={
+                                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                  {project.title}
+                                </Typography>
+                              }
+                              secondary={
+                                <Box>
+                                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    {project.description?.slice(0, 150)}
+                                    {project.description?.length > 150 ? '...' : ''}
                                   </Typography>
+                                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                    <Chip
+                                      size="small"
+                                      label={project.status}
+                                      color={project.status === 'completed' ? 'success' : 'default'}
+                                    />
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                      <AttachMoney fontSize="small" />
+                                      <Typography variant="body2">
+                                        ${project.budget?.min} - ${project.budget?.max}
+                                      </Typography>
+                                    </Box>
+                                  </Box>
                                 </Box>
-                              </Box>
-                            </Box>
-                          }
-                        />
-                      </ListItem>
-                      {index < Math.min(5, projects.length) - 1 && <Divider />}
+                              }
+                            />
+                          </ListItem>
+                          {index < Math.min(PROJECTS_PER_PAGE, projects.slice((projectsPage - 1) * PROJECTS_PER_PAGE, projectsPage * PROJECTS_PER_PAGE).length) - 1 && <Divider />}
+                        </Box>
+                      ))}
+                  </List>
+                  {Math.ceil(projects.length / PROJECTS_PER_PAGE) > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                      <Pagination
+                        count={Math.ceil(projects.length / PROJECTS_PER_PAGE)}
+                        page={projectsPage}
+                        onChange={(e, value) => setProjectsPage(value)}
+                        color="primary"
+                      />
                     </Box>
-                  ))}
-                </List>
+                  )}
+                </>
               ) : (
                 <Typography variant="body2" color="text.secondary">
                   No projects posted yet
@@ -255,49 +279,63 @@ export const ClientDetailPage = () => {
                 Reviews Given ({reviews.length})
               </Typography>
               {reviews.length > 0 ? (
-                <List>
-                  {reviews.slice(0, 5).map((review: any, index: number) => (
-                    <Box key={review._id}>
-                      <ListItem alignItems="flex-start" sx={{ px: 0 }}>
-                        <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                              <Avatar
-                                src={review.freelancer?.profile?.avatar}
-                                sx={{ width: 40, height: 40 }}
-                              >
-                                {review.freelancer?.profile?.firstName?.[0]}
-                              </Avatar>
-                              <Box>
-                                <Typography variant="subtitle1">
-                                  {review.freelancer?.profile?.firstName}{' '}
-                                  {review.freelancer?.profile?.lastName}
-                                </Typography>
-                                <Rating value={review.rating} readOnly size="small" />
-                              </Box>
-                            </Box>
-                          }
-                          secondary={
-                            <Box component="span">
-                              <Typography variant="body2" component="span" sx={{ display: 'block' }}>
-                                {review.feedback || review.comment}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                component="span"
-                                sx={{ display: 'block', mt: 1 }}
-                              >
-                                {formatDate(review.createdAt)}
-                              </Typography>
-                            </Box>
-                          }
-                        />
-                      </ListItem>
-                      {index < Math.min(5, reviews.length) - 1 && <Divider />}
+                <>
+                  <List>
+                    {reviews
+                      .slice((reviewsPage - 1) * REVIEWS_PER_PAGE, reviewsPage * REVIEWS_PER_PAGE)
+                      .map((review: any, index: number) => (
+                        <Box key={review._id}>
+                          <ListItem alignItems="flex-start" sx={{ px: 0 }}>
+                            <ListItemText
+                              primary={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                  <Avatar
+                                    src={review.freelancer?.profile?.avatar}
+                                    sx={{ width: 40, height: 40 }}
+                                  >
+                                    {review.freelancer?.profile?.firstName?.[0]}
+                                  </Avatar>
+                                  <Box>
+                                    <Typography variant="subtitle1">
+                                      {review.freelancer?.profile?.firstName}{' '}
+                                      {review.freelancer?.profile?.lastName}
+                                    </Typography>
+                                    <Rating value={review.rating} readOnly size="small" />
+                                  </Box>
+                                </Box>
+                              }
+                              secondary={
+                                <Box component="span">
+                                  <Typography variant="body2" component="span" sx={{ display: 'block' }}>
+                                    {review.feedback || review.comment}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    component="span"
+                                    sx={{ display: 'block', mt: 1 }}
+                                  >
+                                    {formatDate(review.createdAt)}
+                                  </Typography>
+                                </Box>
+                              }
+                            />
+                          </ListItem>
+                          {index < Math.min(REVIEWS_PER_PAGE, reviews.slice((reviewsPage - 1) * REVIEWS_PER_PAGE, reviewsPage * REVIEWS_PER_PAGE).length) - 1 && <Divider />}
+                        </Box>
+                      ))}
+                  </List>
+                  {Math.ceil(reviews.length / REVIEWS_PER_PAGE) > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                      <Pagination
+                        count={Math.ceil(reviews.length / REVIEWS_PER_PAGE)}
+                        page={reviewsPage}
+                        onChange={(e, value) => setReviewsPage(value)}
+                        color="primary"
+                      />
                     </Box>
-                  ))}
-                </List>
+                  )}
+                </>
               ) : (
                 <Typography variant="body2" color="text.secondary">
                   No reviews given yet
