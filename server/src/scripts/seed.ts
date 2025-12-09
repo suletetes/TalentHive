@@ -23,6 +23,8 @@ import { Settings } from '@/models/Settings';
 import { generateEnhancedUsers, generateAdditionalProjects, generateAdditionalProposals } from './enhancedSeedData';
 import { seedClientProjectsAndReviews } from './seedClientData';
 import { enhanceSeedData } from './seedEnhanced';
+import { seedPermissions } from './seedPermissions';
+import { seedRoles } from './seedRoles';
 
 // Load environment variables
 dotenv.config();
@@ -53,6 +55,9 @@ async function clearDatabase() {
   const { Conversation } = await import('@/models/Conversation');
   const { Payment } = await import('@/models/Payment');
   const { Transaction } = await import('@/models/Transaction');
+  const { Permission } = await import('@/models/Permission');
+  const { Role } = await import('@/models/Role');
+  const { AuditLog } = await import('@/models/AuditLog');
   
   await User.deleteMany({});
   await Organization.deleteMany({});
@@ -75,6 +80,9 @@ async function clearDatabase() {
   await PlatformSettings.deleteMany({});
   await Settings.deleteMany({});
   await Transaction.deleteMany({});
+  await Permission.deleteMany({});
+  await Role.deleteMany({});
+  await AuditLog.deleteMany({});
   
   const { Dispute } = await import('@/models/Dispute');
   await Dispute.deleteMany({});
@@ -2716,6 +2724,26 @@ async function seedDatabase() {
     // Seed data in order (due to dependencies)
     const users = await seedUsers();
     const admin = users.find(u => u.role === 'admin');
+    
+    // Seed RBAC system (permissions and roles)
+    logger.info('🔐 Seeding RBAC system...');
+    const permissions = await seedPermissions();
+    const roles = await seedRoles();
+    
+    // Assign Super Admin role to main admin user
+    if (admin && roles.length > 0) {
+      const superAdminRole = roles.find(r => r.slug === 'super-admin');
+      if (superAdminRole) {
+        if (!admin.permissions) {
+          admin.permissions = { roles: [], directPermissions: [], deniedPermissions: [] };
+        }
+        admin.permissions.roles = [superAdminRole._id];
+        admin.lastPermissionUpdate = new Date();
+        await admin.save();
+        logger.info(`✅ Assigned Super Admin role to ${admin.email}`);
+      }
+    }
+    
     const platformSettings = await seedPlatformSettings(admin._id);
     const newSettings = await seedSettings();
     const categories = await seedCategories(admin._id);
@@ -2745,6 +2773,8 @@ async function seedDatabase() {
     
     logger.info('✅ Database seeding completed successfully');
     logger.info(`📊 Summary:
+    - Permissions: ${permissions.length}
+    - Roles: ${roles.length}
     - Platform Settings: Created
     - New Settings Model: Created with ${newSettings.commissionSettings.length} commission tiers
     - Categories: ${categories.length}
