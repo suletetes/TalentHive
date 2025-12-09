@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -7,6 +7,7 @@ import {
   Typography,
   Paper,
   LinearProgress,
+  Pagination,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -23,7 +24,11 @@ interface FreelancerAnalyticsProps {
   userId: string;
 }
 
+const VIEWERS_PER_PAGE = 10;
+
 export const FreelancerAnalytics: React.FC<FreelancerAnalyticsProps> = ({ userId }) => {
+  const [viewersPage, setViewersPage] = useState(1);
+  
   const { data: analyticsData, isLoading, error } = useQuery({
     queryKey: ['freelancerAnalytics', userId],
     queryFn: async () => {
@@ -200,55 +205,69 @@ export const FreelancerAnalytics: React.FC<FreelancerAnalyticsProps> = ({ userId
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Recent Profile Viewers
+                Recent Profile Viewers ({viewers.length})
               </Typography>
               {viewers.length === 0 ? (
                 <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
                   No viewers yet
                 </Typography>
               ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                  {viewers.slice(0, 10).map((viewer: any, index: number) => (
-                    <Paper
-                      key={index}
-                      sx={{
-                        p: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Box
+                <>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                    {viewers
+                      .slice((viewersPage - 1) * VIEWERS_PER_PAGE, viewersPage * VIEWERS_PER_PAGE)
+                      .map((viewer: any, index: number) => (
+                        <Paper
+                          key={index}
                           sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: '50%',
-                            bgcolor: 'primary.main',
+                            p: 2,
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            fontWeight: 'bold',
+                            justifyContent: 'space-between',
                           }}
                         >
-                          {viewer.profile?.firstName?.[0] || '?'}
-                        </Box>
-                        <Box>
-                          <Typography variant="body1" fontWeight="medium">
-                            {viewer.profile?.firstName} {viewer.profile?.lastName}
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Box
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: '50%',
+                                bgcolor: 'primary.main',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontWeight: 'bold',
+                              }}
+                            >
+                              {viewer.profile?.firstName?.[0] || '?'}
+                            </Box>
+                            <Box>
+                              <Typography variant="body1" fontWeight="medium">
+                                {viewer.profile?.firstName} {viewer.profile?.lastName}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {viewer.role}
+                              </Typography>
+                            </Box>
+                          </Box>
                           <Typography variant="body2" color="text.secondary">
-                            {viewer.role}
+                            {new Date(viewer.viewedAt).toLocaleDateString()}
                           </Typography>
-                        </Box>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary">
-                        {new Date(viewer.viewedAt).toLocaleDateString()}
-                      </Typography>
-                    </Paper>
-                  ))}
-                </Box>
+                        </Paper>
+                      ))}
+                  </Box>
+                  {Math.ceil(viewers.length / VIEWERS_PER_PAGE) > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                      <Pagination
+                        count={Math.ceil(viewers.length / VIEWERS_PER_PAGE)}
+                        page={viewersPage}
+                        onChange={(e, value) => setViewersPage(value)}
+                        color="primary"
+                      />
+                    </Box>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
