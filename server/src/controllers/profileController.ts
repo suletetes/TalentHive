@@ -215,7 +215,24 @@ export const trackProfileView = async (req: AuthRequest, res: Response) => {
     const { userId } = req.params;
     const viewerId = req.user?._id;
 
-    await ProfileStatsService.trackProfileView(userId, viewerId);
+    // Find user by slug or ID
+    let user;
+    if (userId.match(/^[0-9a-fA-F]{24}$/)) {
+      // It's an ObjectId
+      user = await User.findById(userId);
+    } else {
+      // It's a slug
+      user = await User.findOne({ profileSlug: userId.toLowerCase() });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    await ProfileStatsService.trackProfileView(user._id, viewerId);
 
     res.status(200).json({
       success: true,

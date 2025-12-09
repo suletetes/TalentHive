@@ -10,10 +10,12 @@ interface FreelancerStats {
   averageRating: number;
   totalProjects: number;
   completedProjects: number;
+  activeProjects: number;
   onTimeDelivery: number;
   responseTime: string;
   totalEarnings: number;
   activeContracts: number;
+  totalReviews: number;
   profileViews: number;
   uniqueViewers: number;
 }
@@ -24,7 +26,7 @@ interface ClientStats {
   completedProjects: number;
   averageProjectBudget: number;
   averageRating: number;
-  totalReviews: number;
+  reviewsGiven: number;
   totalSpent: number;
   profileViews: number;
   uniqueViewers: number;
@@ -100,6 +102,9 @@ export class ProfileStatsService {
       return sum + (contract.totalAmount || 0);
     }, 0);
 
+    // Get total reviews received
+    const totalReviews = await Review.countDocuments({ reviewee: objectId });
+
     // Get profile views
     const profileViews = user.profileViews || 0;
     const uniqueViewers = user.profileViewers?.length || 0;
@@ -109,10 +114,12 @@ export class ProfileStatsService {
       averageRating: user.rating?.average || 0,
       totalProjects,
       completedProjects,
+      activeProjects: activeContracts.length,
       onTimeDelivery,
       responseTime,
       totalEarnings,
       activeContracts: activeContracts.length,
+      totalReviews,
       profileViews,
       uniqueViewers
     };
@@ -167,7 +174,7 @@ export class ProfileStatsService {
       completedProjects: completedContracts.length,
       averageProjectBudget,
       averageRating: user.rating?.average || 0,
-      totalReviews: reviewsGiven,
+      reviewsGiven,
       totalSpent,
       profileViews,
       uniqueViewers
