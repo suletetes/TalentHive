@@ -158,11 +158,23 @@ export const getFreelancers = catchAsync(async (req: Request, res: Response, nex
 export const getFreelancerById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
 
-  const freelancer = await User.findOne({
-    _id: id,
-    role: 'freelancer',
-    isActive: true,
-  }).select('-password -emailVerificationToken -passwordResetToken');
+  // Find freelancer by slug or ID
+  let freelancer;
+  if (id.match(/^[0-9a-fA-F]{24}$/)) {
+    // It's an ObjectId
+    freelancer = await User.findOne({
+      _id: id,
+      role: 'freelancer',
+      isActive: true,
+    }).select('-password -emailVerificationToken -passwordResetToken');
+  } else {
+    // It's a slug
+    freelancer = await User.findOne({
+      profileSlug: id.toLowerCase(),
+      role: 'freelancer',
+      isActive: true,
+    }).select('-password -emailVerificationToken -passwordResetToken');
+  }
 
   if (!freelancer) {
     return next(new AppError('Freelancer not found', 404));
