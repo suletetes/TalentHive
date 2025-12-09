@@ -2733,11 +2733,11 @@ async function seedDatabase() {
     // Assign Super Admin role to main admin user
     if (admin && roles.length > 0) {
       const superAdminRole = roles.find(r => r.slug === 'super-admin');
-      if (superAdminRole) {
+      if (superAdminRole && superAdminRole._id) {
         if (!admin.permissions) {
           admin.permissions = { roles: [], directPermissions: [], deniedPermissions: [] };
         }
-        admin.permissions.roles = [superAdminRole._id];
+        admin.permissions.roles = [superAdminRole._id as any];
         admin.lastPermissionUpdate = new Date();
         await admin.save();
         logger.info(`✅ Assigned Super Admin role to ${admin.email}`);
