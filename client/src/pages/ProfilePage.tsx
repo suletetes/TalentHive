@@ -28,6 +28,7 @@ import {
   Delete as DeleteIcon,
   Work as WorkIcon,
   School as SchoolIcon,
+  OpenInNew as OpenInNewIcon,
   CardMembership as CertificationIcon,
   Language as LanguageIcon,
   OpenInNew,
@@ -162,16 +163,56 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box>
+          <Typography variant="h4" gutterBottom>
+            My Profile
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Manage your profile information
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          startIcon={<OpenInNewIcon />}
+          onClick={() => {
+            const profileUrl = user.role === 'freelancer' 
+              ? `/freelancer/${user._id}` 
+              : `/client/${user._id}`;
+            window.open(profileUrl, '_blank');
+          }}
+        >
+          View Public Profile
+        </Button>
+      </Box>
+
       <Grid container spacing={3}>
         {/* Profile Header */}
         <Grid item xs={12}>
           <Card>
             <CardContent>
-              <ProfileHeader
-                user={user}
-                isOwnProfile={true}
-                onEdit={() => setEditDialogOpen(true)}
-              />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Box sx={{ flex: 1 }}>
+                  <ProfileHeader
+                    user={user}
+                    isOwnProfile={true}
+                    onEdit={() => setEditDialogOpen(true)}
+                  />
+                </Box>
+                <Button
+                  variant="outlined"
+                  startIcon={<OpenInNewIcon />}
+                  onClick={() => {
+                    const profileUrl = user.role === 'freelancer' 
+                      ? `/freelancer/${user._id}` 
+                      : `/client/${user._id}`;
+                    window.open(profileUrl, '_blank');
+                  }}
+                  sx={{ ml: 2 }}
+                >
+                  View Public Profile
+                </Button>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
@@ -200,8 +241,8 @@ export const ProfilePage: React.FC = () => {
           />
         </Grid>
 
-        {/* Statistics */}
-        <Grid item xs={12} md={user.role === 'freelancer' ? 6 : 12}>
+        {/* Statistics - Full Width */}
+        <Grid item xs={12}>
           <ProfileStatistics userId={user._id} role={user.role} />
         </Grid>
 
