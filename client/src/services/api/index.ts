@@ -15,6 +15,7 @@ export * from './organizations.service';
 export * from './services.service';
 export * from './search.service';
 export * from './upload.service';
+export * from './supportTicket.service';
 
 // Export service instances
 export { authService } from './auth.service';
@@ -30,6 +31,7 @@ export { organizationsService } from './organizations.service';
 export { servicesService } from './services.service';
 export { searchService } from './search.service';
 export { uploadService } from './upload.service';
+export { supportTicketService } from './supportTicket.service';
 
 // Export types
 export type { LoginCredentials, RegisterData, AuthResponse } from './auth.service';
@@ -41,14 +43,11 @@ export type {
   PaginatedResponse,
 } from './projects.service';
 export type { Proposal, CreateProposalDto, UpdateProposalDto } from './proposals.service';
-export type { Contract, CreateContractDto, Amendment } from './contracts.service';
+export type { Contract, Milestone } from './contracts.service';
 export type { Transaction, CreatePaymentIntentDto, ConfirmPaymentDto, RefundPaymentDto } from './payments.service';
 export type { Message, Conversation, SendMessageDto } from './messages.service';
 export type { Review, CreateReviewDto } from './reviews.service';
-export type {
-  Notification,
-  NotificationPreferences,
-} from './notifications.service';
+export type { Notification } from './notifications.service';
 export type { TimeEntry, CreateTimeEntryDto, TimeReport } from './timeTracking.service';
 export type {
   Organization,
@@ -62,3 +61,13 @@ export type {
 } from './services.service';
 export type { SearchResult, SearchFilters } from './search.service';
 export type { UploadResponse } from './upload.service';
+export type {
+  SupportTicket,
+  TicketMessage,
+  CreateTicketData,
+  AddMessageData,
+  UpdateStatusData,
+  AssignTicketData,
+  UpdateTagsData,
+  TicketStats,
+} from './supportTicket.service';

@@ -81,6 +81,37 @@ export class UsersService {
     );
     return { data: response.data.freelancer };
   }
+
+  async getFreelancerProfile(slugOrId: string): Promise<any> {
+    const response = await apiCore.get(`/freelancers/${slugOrId}/profile`);
+    return response.data;
+  }
+
+  async getClientProfile(slugOrId: string): Promise<any> {
+    const response = await apiCore.get(`/clients/${slugOrId}/profile`);
+    return response.data;
+  }
+
+  async getUserStats(userId: string): Promise<any> {
+    const response = await apiCore.get(`${this.basePath}/${userId}/stats`);
+    return response.data;
+  }
+
+  async trackProfileView(userId: string): Promise<void> {
+    await apiCore.post(`${this.basePath}/${userId}/profile-view`);
+  }
+
+  async getProfileViewAnalytics(userId: string, days: number = 30): Promise<any> {
+    const response = await apiCore.get(`${this.basePath}/${userId}/profile-views`, {
+      params: { days },
+    });
+    return response.data;
+  }
+
+  async getProfileViewers(userId: string): Promise<any> {
+    const response = await apiCore.get(`${this.basePath}/${userId}/profile-viewers`);
+    return response.data;
+  }
 }
 
 export const usersService = new UsersService();

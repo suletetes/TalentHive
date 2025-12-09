@@ -55,6 +55,15 @@ import { HowItWorksPage } from '@/pages/HowItWorksPage';
 import { FindFreelancersPage } from '@/pages/FindFreelancersPage';
 import { AdminTransactionsPage } from '@/pages/admin/AdminTransactionsPage';
 import { ReleasePaymentPage } from '@/pages/ReleasePaymentPage';
+import { SupportTicketsPage } from '@/pages/SupportTicketsPage';
+import { CreateTicketPage } from '@/pages/CreateTicketPage';
+import { TicketDetailPage } from '@/pages/TicketDetailPage';
+import { AdminSupportDashboard } from '@/pages/admin/AdminSupportDashboard';
+import { FreelancerOnboardingPage } from '@/pages/onboarding/FreelancerOnboardingPage';
+import { ClientOnboardingPage } from '@/pages/onboarding/ClientOnboardingPage';
+import { AdminOnboardingPage } from '@/pages/onboarding/AdminOnboardingPage';
+import { ProfileAnalyticsPage } from '@/pages/ProfileAnalyticsPage';
+import { ClientDetailPage } from '@/pages/ClientDetailPage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { ToastProvider } from '@/components/ui/ToastProvider';
@@ -71,6 +80,11 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
+          
+          {/* Onboarding routes */}
+          <Route path="onboarding/freelancer" element={<FreelancerOnboardingPage />} />
+          <Route path="onboarding/client" element={<ClientOnboardingPage />} />
+          <Route path="onboarding/admin" element={<AdminOnboardingPage />} />
           
           {/* Static pages */}
           <Route path="help" element={<HelpCenterPage />} />
@@ -90,6 +104,10 @@ function App() {
           <Route path="freelancers" element={<FreelancersPage />} />
           <Route path="freelancer/:id" element={<FreelancerDetailPage />} />
           <Route path="freelancer/:id/reviews" element={<FreelancerReviewsPage />} />
+          <Route path="client/:id" element={<ClientDetailPage />} />
+          
+          {/* Profile slug routes */}
+          <Route path="@:slug" element={<FreelancerDetailPage />} />
           
           {/* Payment & Verification pages (public) */}
           <Route path="payment-success" element={<PaymentSuccessPage />} />
@@ -130,6 +148,10 @@ function App() {
           <Route path="time-tracking" element={<TimeTrackingPage />} />
           <Route path="hire-now-requests" element={<HireNowRequestsPage />} />
           <Route path="services" element={<ServicesPage />} />
+          <Route path="support" element={<SupportTicketsPage />} />
+          <Route path="support/new" element={<CreateTicketPage />} />
+          <Route path="support/:ticketId" element={<TicketDetailPage />} />
+          <Route path="profile/analytics" element={<ProfileAnalyticsPage />} />
         </Route>
 
         {/* Admin routes */}
@@ -148,6 +170,7 @@ function App() {
           <Route path="settings" element={<AdminSettingsPage />} />
           <Route path="commission-settings" element={<CommissionSettingsPage />} />
           <Route path="transactions" element={<AdminTransactionsPage />} />
+          <Route path="support" element={<AdminSupportDashboard />} />
         </Route>
 
         {/* 404 route */}

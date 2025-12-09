@@ -7,19 +7,32 @@ Freelancer: alice.dev@example.com / Password123!
 fix cicd issue
 
 
------------------
-features to work on (later)
-1. freelancer and client can talk to admin.
-2. the freelancer profile should have the project and rating. --  
-2.1 freelancer should have url slug (freelancer/alice-dev) and can be edited
-3. the client profile should have the project and rating. so that the client can view the client see his past projects( and rating) and profile.
-3.1 client should have url slug (client/john) and can be edited
-for 2.1 and 3.1 add proper validation to see if other slug are not taken.
-4. i havent tested well the signup for 3 roles
-5. add onboarding after signing up for all the roles (admin, freelancer and client)
-6. favicon only shown at the home.
+==============
+
+
+2.
+update the client seed tobe 100% full.
+    Posted Projects (0)
+    Reviews Given (0)
+
+
+
+http://localhost:3000/dashboard/profile
+make Statistics occupy whole width. 
+
+
+work on 
+http://localhost:3000/dashboard/profile/analytics
+
+
+create new account to test onboarding on all roles
+
+
+find way for client the rating on freelancer profile should be 
 
 -----
-features to work on (later) hard to implement
-1. under /dashboard/projects/new organization field infinitely loads
-2. work on organization.
+project
+comment
+rating
+
+(all rating should be tied to project + rating). and i have to update the seed

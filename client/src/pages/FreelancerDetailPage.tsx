@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Container,
@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Pagination,
 } from '@mui/material';
 import {
   LocationOn,
@@ -47,6 +48,9 @@ import { HireNowModal } from '@/components/hire-now/HireNowModal';
 import { MessageButton } from '@/components/messaging/MessageButton';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { usersService } from '@/services/api/users.service';
+
+const REVIEWS_PER_PAGE = 5;
 
 export const FreelancerDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -56,8 +60,19 @@ export const FreelancerDetailPage = () => {
   const [serviceDetailOpen, setServiceDetailOpen] = useState(false);
   const [requestServiceOpen, setRequestServiceOpen] = useState(false);
   const [requestMessage, setRequestMessage] = useState('');
+  const [reviewsPage, setReviewsPage] = useState(1);
   const { user } = useSelector((state: RootState) => state.auth);
   const isClient = user?.role === 'client';
+
+  // Track profile view when page loads
+  useEffect(() => {
+    if (id && user && user.id !== id) {
+      // Only track if viewing someone else's profile
+      usersService.trackProfileView(id).catch(err => {
+        console.error('Failed to track profile view:', err);
+      });
+    }
+  }, [id, user]);
 
   // Request service mutation
   const requestServiceMutation = useMutation({
@@ -558,20 +573,9 @@ export const FreelancerDetailPage = () => {
         <Grid item xs={12}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">
-                  Reviews ({reviews.length})
-                </Typography>
-                {reviews.length > 5 && (
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => window.location.href = `/freelancer/${id}/reviews`}
-                  >
-                    View All Reviews
-                  </Button>
-                )}
-              </Box>
+              <Typography variant="h6" gutterBottom>
+                Reviews ({reviews.length})
+              </Typography>
               {reviewsLoading ? (
                 <Typography variant="body2" color="text.secondary">
                   Loading reviews...
@@ -579,48 +583,55 @@ export const FreelancerDetailPage = () => {
               ) : reviews.length > 0 ? (
                 <>
                   <List>
-                    {reviews.slice(0, 5).map((review: any, index: number) => (
-                      <Box key={review._id}>
-                        <ListItem alignItems="flex-start" sx={{ px: 0 }}>
-                          <ListItemText
-                            primary={
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                <Avatar src={review.client?.profile?.avatar || review.reviewer?.profile?.avatar} sx={{ width: 40, height: 40 }}>
-                                  {(review.client?.profile?.firstName || review.reviewer?.profile?.firstName)?.[0]}
-                                </Avatar>
-                                <Box>
-                                  <Typography variant="subtitle1">
-                                    {review.client?.profile?.firstName || review.reviewer?.profile?.firstName}{' '}
-                                    {review.client?.profile?.lastName || review.reviewer?.profile?.lastName}
-                                  </Typography>
-                                  <Rating value={review.rating} readOnly size="small" />
+                    {reviews
+                      .slice((reviewsPage - 1) * REVIEWS_PER_PAGE, reviewsPage * REVIEWS_PER_PAGE)
+                      .map((review: any, index: number) => (
+                        <Box key={review._id}>
+                          <ListItem alignItems="flex-start" sx={{ px: 0 }}>
+                            <ListItemText
+                              primary={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                  <Avatar src={review.client?.profile?.avatar || review.reviewer?.profile?.avatar} sx={{ width: 40, height: 40 }}>
+                                    {(review.client?.profile?.firstName || review.reviewer?.profile?.firstName)?.[0]}
+                                  </Avatar>
+                                  <Box>
+                                    <Typography variant="subtitle1">
+                                      {review.client?.profile?.firstName || review.reviewer?.profile?.firstName}{' '}
+                                      {review.client?.profile?.lastName || review.reviewer?.profile?.lastName}
+                                    </Typography>
+                                    <Rating value={review.rating} readOnly size="small" />
+                                  </Box>
                                 </Box>
-                              </Box>
-                            }
-                            secondary={
-                              <Box component="span">
-                                <Typography variant="body2" component="span" sx={{ mt: 1, display: 'block' }}>
-                                  {review.feedback || review.comment}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary" component="span" sx={{ mt: 1, display: 'block' }}>
-                                  {formatDate(review.createdAt)}
-                                </Typography>
-                              </Box>
-                            }
-                          />
-                        </ListItem>
-                        {index < Math.min(5, reviews.length) - 1 && <Divider />}
-                      </Box>
-                    ))}
+                              }
+                              secondary={
+                                <Box component="span">
+                                  {review.project && (
+                                    <Typography variant="body2" color="primary" component="span" sx={{ display: 'block', mb: 0.5, fontWeight: 500 }}>
+                                      Project: {review.project.title || 'Untitled Project'}
+                                    </Typography>
+                                  )}
+                                  <Typography variant="body2" component="span" sx={{ mt: 1, display: 'block' }}>
+                                    {review.feedback || review.comment}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary" component="span" sx={{ mt: 1, display: 'block' }}>
+                                    {formatDate(review.createdAt)}
+                                  </Typography>
+                                </Box>
+                              }
+                            />
+                          </ListItem>
+                          {index < Math.min(REVIEWS_PER_PAGE, reviews.slice((reviewsPage - 1) * REVIEWS_PER_PAGE, reviewsPage * REVIEWS_PER_PAGE).length) - 1 && <Divider />}
+                        </Box>
+                      ))}
                   </List>
-                  {reviews.length > 5 && (
-                    <Box sx={{ textAlign: 'center', mt: 2 }}>
-                      <Button
-                        variant="text"
-                        onClick={() => window.location.href = `/freelancer/${id}/reviews`}
-                      >
-                        Load More Reviews ({reviews.length - 5} more)
-                      </Button>
+                  {Math.ceil(reviews.length / REVIEWS_PER_PAGE) > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                      <Pagination
+                        count={Math.ceil(reviews.length / REVIEWS_PER_PAGE)}
+                        page={reviewsPage}
+                        onChange={(e, value) => setReviewsPage(value)}
+                        color="primary"
+                      />
                     </Box>
                   )}
                 </>

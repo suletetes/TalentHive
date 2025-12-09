@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createReview, getReviews, respondToReview } from '@/controllers/reviewController';
+import { createReview, getReviews, getClientReviews, respondToReview } from '@/controllers/reviewController';
 import { authenticate, authorize } from '@/middleware/auth';
 
 const router = Router();
@@ -7,6 +7,7 @@ const router = Router();
 // Public routes - no authentication required
 router.get('/user/:userId', getReviews);
 router.get('/freelancer/:userId', getReviews); // Alias for backward compatibility
+router.get('/client/:clientId', getClientReviews); // Get reviews given by a client
 
 // Protected routes - authentication required
 router.use(authenticate);

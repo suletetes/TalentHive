@@ -1,7 +1,10 @@
 import sgMail from '@sendgrid/mail';
 import { logger } from './logger';
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
+// Only set API key if it exists
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 interface EmailOptions {
   to: string;
@@ -12,10 +15,17 @@ interface EmailOptions {
 
 export const sendEmail = async (options: EmailOptions): Promise<void> => {
   try {
+    // Check if SendGrid is configured
+    if (!process.env.SENDGRID_API_KEY || !process.env.FROM_EMAIL) {
+      logger.warn('SendGrid not configured, skipping email send');
+      console.log(`[EMAIL SKIPPED] To: ${options.to}, Subject: ${options.subject}`);
+      return;
+    }
+
     const msg = {
       to: options.to,
       from: {
-        email: process.env.FROM_EMAIL!,
+        email: process.env.FROM_EMAIL,
         name: process.env.FROM_NAME || 'TalentHive',
       },
       subject: options.subject,

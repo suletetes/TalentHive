@@ -19,6 +19,8 @@ import workLogRoutes from './workLog';
 import organizationRoutes from './organizations';
 import servicePackageRoutes from './servicePackages';
 import disputeRoutes from './disputes';
+import supportTicketRoutes from './supportTicket';
+import onboardingRoutes from './onboarding';
 
 const router = Router();
 
@@ -55,6 +57,8 @@ router.use('/work-logs', workLogRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/services', servicePackageRoutes);
 router.use('/disputes', disputeRoutes);
+router.use('/support/tickets', supportTicketRoutes);
+router.use('/onboarding', onboardingRoutes);
 
 // Import and use search routes
 import searchRoutes from './search';

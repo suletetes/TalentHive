@@ -10,14 +10,7 @@ export const getActiveSession = async (req: Request, res: Response) => {
     const freelancerId = req.user?._id;
     const userRole = req.user?.role;
     
-    console.log('[TIME TRACKING] getActiveSession called:', {
-      freelancerId: freelancerId?.toString(),
-      userRole,
-      hasUser: !!req.user,
-    });
-    
     if (!freelancerId) {
-      console.log('[TIME TRACKING] getActiveSession: No freelancerId - unauthorized');
       return res.status(401).json({
         status: 'error',
         message: 'Unauthorized',

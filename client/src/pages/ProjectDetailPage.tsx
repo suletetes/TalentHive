@@ -552,7 +552,14 @@ export const ProjectDetailPage = () => {
               <Typography variant="h6" gutterBottom>
                 About the Client
               </Typography>
-              <Box display="flex" alignItems="center" gap={2} mb={2}>
+              <Box 
+                display="flex" 
+                alignItems="center" 
+                gap={2} 
+                mb={2}
+                sx={{ cursor: 'pointer' }}
+                onClick={() => navigate(`/client/${project.client._id}`)}
+              >
                 <Avatar
                   src={project.client?.profile?.avatar}
                   sx={{ width: 56, height: 56 }}
@@ -560,17 +567,30 @@ export const ProjectDetailPage = () => {
                   {project.client?.profile?.firstName?.[0]}
                 </Avatar>
                 <Box flex={1}>
-                  <Typography variant="subtitle1" fontWeight="medium">
+                  <Typography variant="subtitle1" fontWeight="medium" color="primary">
                     {project.client?.profile?.firstName} {project.client?.profile?.lastName}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Click to view profile
                   </Typography>
                 </Box>
               </Box>
               {user?.role === 'freelancer' && project.client?._id && (
-                <MessageButton 
-                  userId={project.client._id} 
-                  fullWidth 
-                  size="small"
-                />
+                <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    onClick={() => navigate(`/client/${project.client._id}`)}
+                  >
+                    View Profile
+                  </Button>
+                  <MessageButton 
+                    userId={project.client._id} 
+                    fullWidth 
+                    size="small"
+                  />
+                </Box>
               )}
             </Paper>
           )}

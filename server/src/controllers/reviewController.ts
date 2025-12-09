@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import mongoose from 'mongoose';
 import { Review } from '@/models/Review';
 import { Contract } from '@/models/Contract';
 import { User } from '@/models/User';
@@ -88,15 +89,29 @@ export const createReview = catchAsync(async (req: AuthRequest, res: Response, n
 export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => {
   const { userId } = req.params;
 
+  // Handle both MongoDB ObjectId and slug
+  let resolvedUserId = userId;
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    // Try to find user by slug
+    const user = await User.findOne({ profileSlug: userId });
+    if (!user) {
+      return res.json({
+        status: 'success',
+        data: [],
+      });
+    }
+    resolvedUserId = user._id.toString();
+  }
+
   // Fetch BOTH reviews received (as reviewee) AND reviews given (as reviewer)
   const [reviewsReceived, reviewsGiven] = await Promise.all([
-    Review.find({ reviewee: userId })
+    Review.find({ reviewee: resolvedUserId })
       .lean()
       .populate('reviewer', 'profile email')
       .populate('reviewee', 'profile email')
       .populate('project', 'title')
       .sort({ createdAt: -1 }),
-    Review.find({ reviewer: userId })
+    Review.find({ reviewer: resolvedUserId })
       .lean()
       .populate('reviewer', 'profile email')
       .populate('reviewee', 'profile email')
@@ -121,6 +136,44 @@ export const getReviews = catchAsync(async (req: AuthRequest, res: Response) => 
   res.json({
     status: 'success',
     data: reviewsWithClient,
+  });
+});
+
+// Get reviews given by a client (reviews where client is the reviewer)
+export const getClientReviews = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { clientId } = req.params;
+
+  // Handle both MongoDB ObjectId and slug
+  let userId = clientId;
+  if (!mongoose.Types.ObjectId.isValid(clientId)) {
+    // Try to find user by slug
+    const user = await User.findOne({ profileSlug: clientId });
+    if (!user) {
+      return res.json({
+        status: 'success',
+        data: [],
+      });
+    }
+    userId = user._id.toString();
+  }
+
+  // Fetch reviews where this client is the reviewer
+  const reviews = await Review.find({ reviewer: userId })
+    .lean()
+    .populate('reviewer', 'profile email')
+    .populate('reviewee', 'profile email role freelancerProfile')
+    .populate('project', 'title')
+    .sort({ createdAt: -1 });
+
+  // Map to include 'freelancer' field for frontend compatibility
+  const reviewsWithFreelancer = reviews.map((review) => ({
+    ...review,
+    freelancer: review.reviewee,
+  }));
+
+  res.json({
+    status: 'success',
+    data: reviewsWithFreelancer,
   });
 });
 
