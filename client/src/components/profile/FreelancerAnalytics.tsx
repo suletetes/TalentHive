@@ -63,6 +63,7 @@ export const FreelancerAnalytics: React.FC<FreelancerAnalyticsProps> = ({ userId
 
   const analytics = analyticsData || {};
   const viewers = Array.isArray(viewersData) ? viewersData : [];
+  // getUserStats returns the stats directly (API service extracts .data)
   const stats = statsData || {};
 
   return (
@@ -135,10 +136,10 @@ export const FreelancerAnalytics: React.FC<FreelancerAnalyticsProps> = ({ userId
                 <Typography variant="h6">Rating</Typography>
               </Box>
               <Typography variant="h3" color="warning.main">
-                {stats.rating?.average?.toFixed(1) || '0.0'}
+                {stats.averageRating?.toFixed(1) || '0.0'}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {stats.rating?.count || 0} reviews
+                {stats.totalProjects || 0} projects
               </Typography>
             </CardContent>
           </Card>
@@ -181,10 +182,10 @@ export const FreelancerAnalytics: React.FC<FreelancerAnalyticsProps> = ({ userId
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
                 <Box>
                   <Typography variant="body2" color="text.secondary">
-                    Response Rate
+                    Completion Rate
                   </Typography>
                   <Typography variant="h5">
-                    {stats.responseRate || 0}%
+                    {stats.completionRate || 0}%
                   </Typography>
                 </Box>
                 <Box>

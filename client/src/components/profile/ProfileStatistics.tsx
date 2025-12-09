@@ -31,7 +31,8 @@ export const ProfileStatistics = ({ userId, role }: ProfileStatisticsProps) => {
     return <LoadingSpinner />;
   }
 
-  const stats = statsData?.data || {};
+  // The API service already extracts .data, so statsData is the actual stats object
+  const stats = statsData || {};
 
   const statItems = role === 'freelancer' 
     ? [
@@ -44,7 +45,7 @@ export const ProfileStatistics = ({ userId, role }: ProfileStatisticsProps) => {
         { icon: Visibility, label: 'Profile Views', value: stats.profileViews || 0, color: 'info.main' },
       ]
     : [
-        { icon: Work, label: 'Projects Posted', value: stats.totalProjects || 0, color: 'primary.main' },
+        { icon: Work, label: 'Projects Posted', value: stats.totalProjectsPosted || 0, color: 'primary.main' },
         { icon: CheckCircle, label: 'Active Contracts', value: stats.activeContracts || 0, color: 'success.main' },
         { icon: Star, label: 'Average Rating', value: `${stats.averageRating?.toFixed(1) || 0}/5.0`, color: 'warning.main' },
         { icon: Visibility, label: 'Profile Views', value: stats.profileViews || 0, color: 'info.main' },
