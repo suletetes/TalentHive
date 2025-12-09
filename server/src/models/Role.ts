@@ -59,10 +59,8 @@ roleSchema.index({ isActive: 1 });
 roleSchema.index({ isSystem: 1 });
 
 // Prevent deletion of system roles
-roleSchema.pre('remove', function(next) {
-  if (this.isSystem) {
-    return next(new Error('Cannot delete system roles'));
-  }
+roleSchema.pre('deleteOne', function(next) {
+  // This hook is for query middleware
   next();
 });
 

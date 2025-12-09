@@ -83,17 +83,20 @@ reviewSchema.post('save', async function() {
   try {
     // Import here to avoid circular dependency
     const { dataConsistencyService } = await import('@/services/dataConsistencyService');
-    await dataConsistencyService.syncUserRating(this.reviewee);
+    await dataConsistencyService.syncUserRating(this.reviewee as any);
   } catch (error) {
     console.error('Error syncing user rating after review save:', error);
   }
 });
 
 // Update user rating after review deletion
-reviewSchema.post('remove', async function() {
+reviewSchema.post('deleteOne', async function() {
   try {
-    const { dataConsistencyService } = await import('@/services/dataConsistencyService');
-    await dataConsistencyService.syncUserRating(this.reviewee);
+    const review = await this.model.findOne(this.getFilter());
+    if (review) {
+      const { dataConsistencyService } = await import('@/services/dataConsistencyService');
+      await dataConsistencyService.syncUserRating(review.reviewee as any);
+    }
   } catch (error) {
     console.error('Error syncing user rating after review deletion:', error);
   }
