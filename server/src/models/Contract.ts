@@ -401,4 +401,21 @@ contractSchema.pre('save', function (next) {
   next();
 });
 
+// Post-save middleware to update project status when contract is completed
+contractSchema.post('save', async function(doc) {
+  if (doc.status === 'completed') {
+    try {
+      const { Project } = await import('@/models/Project');
+      const project = await Project.findById(doc.project);
+      
+      if (project && project.status !== 'completed') {
+        project.status = 'completed';
+        await project.save();
+      }
+    } catch (error) {
+      console.error('Error updating project status after contract completion:', error);
+    }
+  }
+});
+
 export const Contract = mongoose.model<IContract>('Contract', contractSchema);
