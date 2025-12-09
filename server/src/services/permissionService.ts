@@ -203,7 +203,7 @@ export class PermissionService {
       );
 
       if (!hasRole) {
-        user.permissions.roles.push(roleId);
+        user.permissions.roles.push(roleId as any);
         user.lastPermissionUpdate = new Date();
         await user.save();
 
@@ -317,7 +317,7 @@ export class PermissionService {
       );
 
       if (!hasPermission) {
-        user.permissions.directPermissions.push(permissionId);
+        user.permissions.directPermissions.push(permissionId as any);
         user.lastPermissionUpdate = new Date();
         await user.save();
 

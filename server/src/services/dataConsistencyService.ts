@@ -105,7 +105,7 @@ export class DataConsistencyService {
             type: 'rating_mismatch',
             severity: 'warning',
             entity: 'User',
-            entityId: user._id,
+            entityId: user._id as any,
             description: `User rating mismatch: expected ${expectedAverage.toFixed(2)} (${expectedCount} reviews), got ${user.rating.average.toFixed(2)} (${user.rating.count} reviews)`,
             expectedValue: { average: expectedAverage, count: expectedCount },
             actualValue: { average: user.rating.average, count: user.rating.count },
@@ -158,7 +158,7 @@ export class DataConsistencyService {
             type: 'contract_amount',
             severity: 'critical',
             entity: 'Contract',
-            entityId: contract._id,
+            entityId: contract._id as any,
             description: `Contract milestone amounts (${totalMilestoneAmount}) do not sum to total amount (${contract.totalAmount})`,
             expectedValue: contract.totalAmount,
             actualValue: totalMilestoneAmount,
@@ -189,7 +189,7 @@ export class DataConsistencyService {
       
       for (const contract of contracts) {
         totalChecked++;
-        const result = await this.validateContractAmounts(contract._id);
+        const result = await this.validateContractAmounts(contract._id as any);
         issues.push(...result.issues);
       }
 
@@ -233,7 +233,7 @@ export class DataConsistencyService {
           type: 'missing_reference',
           severity: 'critical',
           entity: 'Project',
-          entityId: project._id,
+          entityId: project._id as any,
           description: 'Project client reference is missing',
           canAutoFix: false
         });
@@ -255,7 +255,7 @@ export class DataConsistencyService {
             type: 'missing_reference',
             severity: 'critical',
             entity: 'Contract',
-            entityId: contract._id,
+            entityId: contract._id as any,
             description: 'Contract client reference is invalid',
             canAutoFix: false
           });
@@ -266,7 +266,7 @@ export class DataConsistencyService {
             type: 'missing_reference',
             severity: 'critical',
             entity: 'Contract',
-            entityId: contract._id,
+            entityId: contract._id as any,
             description: 'Contract freelancer reference is invalid',
             canAutoFix: false
           });
@@ -277,7 +277,7 @@ export class DataConsistencyService {
             type: 'missing_reference',
             severity: 'critical',
             entity: 'Contract',
-            entityId: contract._id,
+            entityId: contract._id as any,
             description: 'Contract proposal reference is invalid',
             canAutoFix: false
           });
@@ -288,7 +288,7 @@ export class DataConsistencyService {
               type: 'missing_reference',
               severity: 'critical',
               entity: 'Contract',
-              entityId: contract._id,
+              entityId: contract._id as any,
               description: 'Contract proposal does not belong to this project',
               canAutoFix: false
             });
@@ -300,7 +300,7 @@ export class DataConsistencyService {
               type: 'missing_reference',
               severity: 'critical',
               entity: 'Contract',
-              entityId: contract._id,
+              entityId: contract._id as any,
               description: 'Contract freelancer does not match proposal freelancer',
               canAutoFix: false
             });
@@ -308,12 +308,12 @@ export class DataConsistencyService {
         }
 
         // Verify client owns project
-        if (client && contract.client.toString() !== project.client._id.toString()) {
+        if (client && contract.client.toString() !== (project.client as any)._id.toString()) {
           issues.push({
             type: 'missing_reference',
             severity: 'warning',
             entity: 'Contract',
-            entityId: contract._id,
+            entityId: contract._id as any,
             description: 'Contract client does not match project client',
             canAutoFix: false
           });
@@ -342,7 +342,7 @@ export class DataConsistencyService {
       
       for (const project of projects) {
         totalChecked++;
-        const result = await this.validateProjectReferences(project._id);
+        const result = await this.validateProjectReferences(project._id as any);
         issues.push(...result.issues);
       }
 
