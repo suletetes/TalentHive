@@ -9,9 +9,11 @@ import {
   Paper,
 } from '@mui/material';
 import { Check, Close, Link as LinkIcon } from '@mui/icons-material';
+import { useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import { slugService } from '@/services/api/slug.service';
 import { SlugSuggestions } from './SlugSuggestions';
+import toast from 'react-hot-toast';
 
 interface ProfileSlugEditorProps {
   userId: string;
@@ -26,6 +28,7 @@ export const ProfileSlugEditor: React.FC<ProfileSlugEditorProps> = ({
   userRole,
   onSlugChange,
 }) => {
+  const queryClient = useQueryClient();
   const [slug, setSlug] = useState(currentSlug);
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<{
@@ -84,11 +87,15 @@ export const ProfileSlugEditor: React.FC<ProfileSlugEditorProps> = ({
           // Auto-update the slug
           try {
             await slugService.updateSlug(debouncedSlug);
+            // Invalidate profile cache to refresh with new slug
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+            toast.success('Profile URL updated successfully!');
             if (onSlugChange) {
               onSlugChange(debouncedSlug);
             }
           } catch (updateError: any) {
             console.error('Failed to update slug:', updateError);
+            toast.error('Failed to update profile URL');
             setValidationResult({
               available: false,
               message: updateError.response?.data?.message || 'Failed to update slug',
