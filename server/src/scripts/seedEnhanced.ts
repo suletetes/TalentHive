@@ -53,27 +53,63 @@ async function enhanceSeedData(skipConnection = false) {
 
     // 2. Mark some contracts as completed and add amounts
     logger.info('💰 Updating contracts to completed status...');
-    const contracts = await Contract.find({ status: 'active' }).limit(15);
+    
+    // Get Alice and other freelancers to ensure they have completed contracts
+    const aliceUser = await User.findOne({ email: 'alice.dev@example.com' });
+    const bobUser = await User.findOne({ email: 'bob.designer@example.com' });
+    const carolUser = await User.findOne({ email: 'carol.writer@example.com' });
+    
+    const freelancerIds = [aliceUser?._id, bobUser?._id, carolUser?._id].filter(Boolean);
+    
+    // Find active contracts for these freelancers
+    const contracts = await Contract.find({ 
+      status: 'active',
+      freelancer: { $in: freelancerIds }
+    }).limit(20);
+    
     let completedCount = 0;
     
     for (const contract of contracts) {
       contract.status = 'completed';
       contract.endDate = new Date();
       
-      // Add realistic amounts if not present
-      if (!contract.totalAmount) {
+      // Ensure totalAmount exists
+      if (!contract.totalAmount || contract.totalAmount === 0) {
         contract.totalAmount = Math.floor(Math.random() * 5000) + 1000; // $1000-$6000
       }
       
       await contract.save();
       completedCount++;
+      
+      logger.info(`  Completed contract for freelancer ${contract.freelancer}: $${contract.totalAmount}`);
     }
     logger.info(`✅ Marked ${completedCount} contracts as completed`);
 
     // 3. Add profile viewers
     logger.info('👀 Adding profile viewers...');
-    const freelancers = await User.find({ role: 'freelancer' }).limit(10);
-    const clients = await User.find({ role: 'client' }).limit(10);
+    
+    // Prioritize main users (Alice, Bob, Carol, John, Sarah)
+    const mainFreelancers = await User.find({ 
+      email: { $in: ['alice.dev@example.com', 'bob.designer@example.com', 'carol.writer@example.com'] }
+    });
+    const mainClients = await User.find({ 
+      email: { $in: ['john.client@example.com', 'sarah.manager@example.com'] }
+    });
+    
+    // Get additional users
+    const otherFreelancers = await User.find({ 
+      role: 'freelancer',
+      email: { $nin: ['alice.dev@example.com', 'bob.designer@example.com', 'carol.writer@example.com'] }
+    }).limit(7);
+    
+    const otherClients = await User.find({ 
+      role: 'client',
+      email: { $nin: ['john.client@example.com', 'sarah.manager@example.com'] }
+    }).limit(8);
+    
+    const freelancers = [...mainFreelancers, ...otherFreelancers];
+    const clients = [...mainClients, ...otherClients];
+    
     let viewCount = 0;
     
     // Clients view freelancers

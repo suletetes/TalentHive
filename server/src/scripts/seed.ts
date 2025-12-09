@@ -2735,10 +2735,9 @@ async function seedDatabase() {
     const messages = await seedMessages(users);
     const notifications = await seedNotifications(users);
     
-    // TODO: Seed additional client projects and reviews
-    // Temporarily disabled due to schema validation issues
-    // The main seed already creates projects for clients via generateAdditionalProjects
-    // await seedClientProjectsAndReviews();
+    // Seed additional client projects and reviews
+    logger.info('📊 Seeding additional client data...');
+    await seedClientProjectsAndReviews();
     
     // Enhance seed data with slugs, completed contracts, and profile viewers
     logger.info('🔧 Enhancing seed data...');
