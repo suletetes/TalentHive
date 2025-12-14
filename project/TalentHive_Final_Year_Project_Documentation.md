@@ -10,8 +10,9 @@
 3. [Chapter One: Introduction](#chapter-one-introduction)
 4. [Chapter Two: Literature Review](#chapter-two-literature-review)
 5. [Chapter Three: Methodology](#chapter-three-methodology)
-6. [Chapter Four: Implementation & Testing](#chapter-four-implementation--testing)
-7. [Chapter Five: Summary, Conclusion and Recommendations](#chapter-five-summary-conclusion-and-recommendations)
+6. [Chapter Four: Implementation](#chapter-four-implementation)
+7. [Chapter Five: Testing and Evaluation](#chapter-five-testing-and-evaluation)
+8. [Chapter Six: Summary, Conclusion and Recommendations](#chapter-six-summary-conclusion-and-recommendations)
 
 ---
 
@@ -60,16 +61,16 @@ Through careful analysis of existing solutions, innovative technical implementat
 ---
 
 **Submitted by:**  
-**[Your Full Name]**  
-**Student ID: [Your Student ID]**
+**Suleiman Abdulkadir**  
+**Student ID: CST/20/SWE/00482**
 
 **Program:** Bachelor of Science in Software Engineering  
 **Department:** Computer Science and Engineering  
-**University:** [Your University Name]
+**University:** Bayero University Kano
 
 ---
 
-**Project Supervisor:** [Supervisor Name]  
+**Project Supervisor:** Dr. Rasheed  
 **Academic Year:** 2024/2025  
 **Submission Date:** December 2024
 
@@ -90,7 +91,7 @@ Through careful analysis of existing solutions, innovative technical implementat
 
 </div>
 
-I, **[Your Full Name]**, hereby declare that this project titled **"TalentHive: A Comprehensive Freelancing Platform Built with Modern Web Technologies"** is my original work and has not been submitted for any degree in any other university or institution.
+I, **Suleiman Abdulkadir**, hereby declare that this project titled **"TalentHive: A Comprehensive Freelancing Platform Built with Modern Web Technologies"** is my original work and has not been submitted for any degree in any other university or institution.
 
 I further declare that:
 
@@ -104,8 +105,8 @@ I understand that any false declaration may result in the rejection of this proj
 
 ---
 
-**Student Name:** [Your Full Name]  
-**Student ID:** [Your Student ID]  
+**Student Name:** Suleiman Abdulkadir  
+**Student ID:** CST/20/SWE/00482  
 **Signature:** ________________  
 **Date:** ________________
 
@@ -119,7 +120,7 @@ I understand that any false declaration may result in the rejection of this proj
 
 </div>
 
-This is to certify that the project titled **"TalentHive: A Comprehensive Freelancing Platform Built with Modern Web Technologies"** submitted by **[Your Full Name]** (Student ID: [Your Student ID]) has been carried out under my supervision and guidance.
+This is to certify that the project titled **"TalentHive: A Comprehensive Freelancing Platform Built with Modern Web Technologies"** submitted by **Suleiman Abdulkadir** (Student ID: CST/20/SWE/00482) has been carried out under my supervision and guidance.
 
 I certify that:
 
@@ -134,10 +135,10 @@ The project represents a significant contribution to the student's academic deve
 
 ---
 
-**Supervisor Name:** [Supervisor Name]  
-**Title/Position:** [Supervisor Title]  
+**Supervisor Name:** Dr. Rasheed  
+**Title/Position:** Senior Lecturer  
 **Department:** Computer Science and Engineering  
-**University:** [Your University Name]  
+**University:** Bayero University Kano  
 **Signature:** ________________  
 **Date:** ________________
 
@@ -180,7 +181,7 @@ The completion of this project would not have been possible without the support,
 
 **Academic Supervision and Guidance:**
 
-First and foremost, I extend my deepest appreciation to my project supervisor, **[Supervisor Name]**, for their invaluable guidance, continuous support, and constructive feedback throughout the development of this project. Their expertise in software engineering and web technologies has been instrumental in shaping this work and ensuring its academic rigor. Their patience in reviewing multiple iterations and providing insightful suggestions has significantly enhanced the quality of this project.
+First and foremost, I extend my deepest appreciation to my project supervisor, **Dr. Rasheed**, for their invaluable guidance, continuous support, and constructive feedback throughout the development of this project. Their expertise in software engineering and web technologies has been instrumental in shaping this work and ensuring its academic rigor. Their patience in reviewing multiple iterations and providing insightful suggestions has significantly enhanced the quality of this project.
 
 **Faculty and Academic Support:**
 
@@ -274,18 +275,13 @@ This project stands as a testament to the collaborative nature of learning and d
 | 2.11 | Theoretical Framework | 29 |
 | 2.12 | Summary of Literature Review | 30 |
 | | | |
-| **3** | **System Analysis and Design** | **32** |
-| 3.1 | Introduction to System Analysis and Design | 33 |
-| 3.2 | Requirements Analysis | 34 |
-| 3.3 | System Architecture Design | 37 |
-| 3.4 | Database Schema Design | 40 |
-| 3.5 | User Interface Design | 43 |
-| 3.6 | Security Architecture | 45 |
-| 3.7 | Performance Architecture | 47 |
-| 3.8 | System Integration Design | 48 |
-| 3.9 | Testing Architecture | 49 |
-| 3.10 | Deployment Architecture | 50 |
-| 3.11 | Summary of System Analysis and Design | 51 |
+| **3** | **Methodology** | **32** |
+| 3.1 | Introduction | 33 |
+| 3.2 | Project Workflow | 34 |
+| 3.3 | System Development Model | 35 |
+| 3.4 | Analysis of Existing and Proposed System | 36 |
+| 3.5 | System Design | 40 |
+| 3.6 | Summary | 51 |
 | | | |
 | **4** | **Implementation** | **53** |
 | 4.1 | Introduction to Implementation | 54 |
@@ -313,6 +309,32 @@ This project stands as a testament to the collaborative nature of learning and d
 | 5.10 | Performance Benchmarking | 95 |
 | 5.11 | Error Handling and Recovery Testing | 97 |
 | 5.12 | Summary of Testing and Evaluation | 98 |
+| | | |
+| **6** | **Summary, Conclusion and Recommendations** | **100** |
+| 6.1 | Introduction | 101 |
+| 6.2 | Project Summary | 102 |
+| 6.3 | Achievement of Objectives | 104 |
+| 6.4 | Unit Testing Implementation | 106 |
+| 6.5 | Integration Testing | 108 |
+| 6.6 | System Testing | 110 |
+| 6.7 | Performance Testing | 112 |
+| 6.8 | Security Testing | 114 |
+| 6.9 | User Acceptance Testing | 116 |
+| 6.10 | Compatibility Testing | 118 |
+| 6.11 | Performance Benchmarking | 120 |
+| 6.12 | Error Handling and Recovery Testing | 122 |
+| 6.13 | Summary of Testing and Evaluation | 124 |
+| 6.14 | Key Achievements and Contributions | 126 |
+| 6.15 | Lessons Learned | 128 |
+| 6.16 | Limitations and Constraints | 130 |
+| 6.17 | Recommendations | 132 |
+| 6.18 | Final Conclusion | 134 |
+| 6.19 | Lessons Learned | 136 |
+| 6.20 | Limitations and Constraints | 138 |
+| 6.21 | Future Work and Recommendations | 140 |
+| 6.22 | Research and Development Opportunities | 142 |
+| 6.23 | Impact Assessment | 144 |
+| 6.24 | Final Conclusion | 146 |
 | | | |
 
 
@@ -1705,53 +1727,6 @@ The system design presents a comprehensive solution addressing identified gaps t
 
 This methodology provides a solid foundation for the implementation phase, ensuring that all stakeholder needs are addressed while maintaining alignment with software engineering best practices and academic standards.
 
-
-        S[Access Logging]
-        T[Intrusion Detection]
-    end
-    
-    subgraph "External Security"
-        U[Stripe Security]
-        V[Cloudinary Security]
-        W[Third-party Audits]
-        X[Vulnerability Scanning]
-    end
-    
-    A --> E
-    B --> F
-    C --> G
-    D --> H
-    
-    E --> I
-    F --> J
-    G --> K
-    H --> L
-    
-    I --> M
-    J --> N
-    K --> O
-    L --> P
-    
-    M --> Q
-    N --> R
-    O --> S
-    P --> T
-    
-    Q --> U
-    R --> V
-    S --> W
-    T --> X
-    
-    style A fill:#ffebee
-    style E fill:#e8f5e8
-    style I fill:#e1f5fe
-    style M fill:#f3e5f5
-    style Q fill:#fff3e0
-    style U fill:#fce4ec
-```
-
-**Figure 3.2: Multi-Layer Security Architecture**
-
 **Authentication and Authorization:**
 
 **JWT Implementation:**
@@ -1895,7 +1870,7 @@ The system design presents a robust three-tier architecture with modern technolo
 
 ---
 
-## Chapter Four: Implementation & Testing
+## Chapter Four: Implementation
 
 ### 4.1 Introduction
 
@@ -4056,11 +4031,23 @@ app.use(rateLimit({
 }));
 ```
 
-### 4.3 Testing
+### 4.11 Summary
 
-This section presents the comprehensive testing strategy employed to ensure the TalentHive platform meets all functional and non-functional requirements. The testing approach encompasses unit testing, integration testing, system testing, and usability testing to validate system reliability and user satisfaction.
+Chapter Four has presented the comprehensive implementation of the TalentHive platform, demonstrating how the system design from Chapter Three was successfully translated into a fully functional web application. The implementation showcases modern software engineering practices and technologies, resulting in a scalable, maintainable, and secure freelancing platform.
 
-#### 4.3.1 Unit Testing
+The implementation tools section detailed the carefully selected technology stack including Node.js with TypeScript for the backend, React 18 with Material-UI for the frontend, MongoDB for data storage, and comprehensive development tools for quality assurance. The algorithms of major functionality demonstrated key processes including user authentication with JWT, project matching and recommendation, and milestone-based payment processing.
+
+The system operation description provided comprehensive interface examples showing how users interact with the platform's major features, from registration and project creation to real-time messaging and payment processing. The implementation successfully addresses the identified gaps in existing freelancing platforms through integrated solutions.
+
+---
+
+## Chapter Five: Testing and Evaluation
+
+### 5.1 Introduction
+
+This chapter presents the comprehensive testing and evaluation of the TalentHive platform, demonstrating the systematic approach used to ensure the system meets all functional and non-functional requirements. The testing strategy encompasses unit testing, integration testing, system testing, and usability testing to validate system reliability and user satisfaction.
+
+### 5.2 Unit Testing
 
 Unit testing was implemented for both backend and frontend components to ensure individual functionality works correctly in isolation.
 
@@ -4231,7 +4218,7 @@ The unit testing achieved comprehensive coverage across the codebase:
   - Services: 93% line coverage
   - Utilities: 94% line coverage
 
-#### 4.3.2 Integration Testing
+### 5.3 Integration Testing
 
 Integration tests validate the interaction between different system components and external services:
 
@@ -4276,7 +4263,7 @@ describe('Project Management Integration', () => {
 });
 ```
 
-#### 4.3.3 System Testing
+### 5.4 System Testing
 
 System testing validates the complete system functionality and user workflows:
 
@@ -4326,7 +4313,7 @@ test('Complete user journey: Registration to Project Creation', async ({ page })
 | Peak Load     | 500              | 420ms               | 1.2s                 | 380.5             | 0.3%       |
 | Stress Test   | 1000             | 850ms               | 2.8s                 | 650.8             | 1.2%       |
 
-#### 4.3.4 Usability Testing
+### 5.5 Usability Testing
 
 User Acceptance Testing (UAT) was conducted with 25 participants representing the target user base:
 
@@ -4369,15 +4356,31 @@ Performance testing demonstrated the system's ability to handle 500 concurrent u
 
 ---
 
-## Chapter Five: Summary, Conclusion and Recommendations
+### 5.6 Summary
 
-### 5.1 Introduction
+Chapter Five has presented a comprehensive testing and evaluation of the TalentHive platform, demonstrating that the system meets all functional and non-functional requirements while providing excellent performance, security, and user experience. The multi-layered testing approach ensured thorough validation of all system components and user workflows.
+
+The unit testing achieved 92% backend coverage and 88% frontend coverage, providing confidence in individual component reliability. Integration testing validated the interaction between system components and external services, ensuring seamless operation across the entire platform.
+
+Performance testing demonstrated that the system can handle significant user loads while maintaining responsive performance. The platform successfully supported 500 concurrent users with average response times under 420ms, meeting the performance requirements established in the system design.
+
+Security testing confirmed that the platform implements robust protection against common vulnerabilities, with comprehensive input validation, secure authentication, and proper data encryption. The PCI DSS compliant payment processing ensures financial transaction security.
+
+User Acceptance Testing with 25 participants achieved a 92% average success rate across all test scenarios, with a System Usability Scale score of 78.5 indicating good usability. User feedback was overwhelmingly positive, with minor enhancement suggestions that can be addressed in future iterations.
+
+The testing results validate that the TalentHive platform successfully addresses the problems identified in Chapter One and meets the objectives established for the project. The platform provides a secure, efficient, and user-friendly solution for freelancing collaboration that outperforms existing solutions in key performance metrics.
+
+---
+
+## Chapter Six: Summary, Conclusion and Recommendations
+
+### 6.1 Introduction
 
 This chapter presents the comprehensive summary, conclusion, and recommendations for the TalentHive freelancing platform project. The chapter synthesizes the key findings from the implementation and testing phases, evaluates the achievement of project objectives, discusses the significance of contributions made, and provides recommendations for future development and research directions.
 
 The conclusion reflects on the entire development journey, from initial problem identification through final implementation and evaluation, highlighting the lessons learned and the impact of the completed platform on both academic knowledge and practical applications in the freelancing industry.
 
-### 5.2 Project Summary
+### 6.2 Project Summary
 
 **Problem Addressed:**
 
@@ -4406,7 +4409,7 @@ The platform leverages a modern technology stack including:
 - **Payment Processing:** Stripe integration for secure, PCI DSS compliant transactions
 - **Deployment:** Docker containerization with comprehensive CI/CD pipeline
 
-### 5.3 Achievement of Objectives
+### 6.3 Achievement of Objectives
 
 **Objective 1: Secure Authentication and Authorization System**
 **Fully Achieved:** Implemented comprehensive JWT-based authentication with refresh tokens, role-based access control for three user types, email verification system, and secure password reset functionality. Security testing confirmed robust protection against common authentication vulnerabilities.
@@ -4436,7 +4439,7 @@ The platform leverages a modern technology stack including:
 - **Security Testing:** OWASP ZAP for vulnerability scanning
 - **Code Coverage:** Istanbul/NYC for comprehensive coverage reporting
 
-### 5.3 Unit Testing Implementation
+### 6.4 Unit Testing Implementation
 
 **Backend Unit Testing:**
 
@@ -4544,7 +4547,7 @@ The unit testing achieved comprehensive coverage across the codebase:
   - Services: 93% line coverage
   - Utilities: 94% line coverage
 
-### 5.4 Integration Testing
+### 6.5 Integration Testing
 
 **API Integration Testing:**
 
@@ -4620,7 +4623,7 @@ describe('Payment Transaction Integration', () => {
 });
 ```
 
-### 5.5 System Testing
+### 6.6 System Testing
 
 **End-to-End Testing:**
 
@@ -4680,7 +4683,7 @@ Accessibility compliance was validated using automated tools and manual testing:
 - **Screen Reader Testing:** Compatible with NVDA, JAWS, and VoiceOver
 - **Keyboard Navigation:** Full keyboard accessibility for all interactive elements
 - **Color Contrast:** All text meets WCAG contrast requirements (4.5:1 minimum)
-### 5.6 Performance Testing
+### 6.7 Performance Testing
 
 **Performance Testing Overview:**
 
@@ -4785,7 +4788,7 @@ Redis caching significantly improved system performance:
 - **Database Load Reduction:** 40% fewer database queries
 - **Memory Usage:** 512MB average Redis memory consumption
 
-### 5.7 Security Testing
+### 6.8 Security Testing
 
 **Vulnerability Assessment:**
 
@@ -4824,7 +4827,7 @@ Comprehensive security testing was conducted using OWASP ZAP and manual penetrat
 - **CORS Configuration:** Restrictive CORS policy for production environment
 - **Security Headers:** Comprehensive security headers implemented via Helmet.js
 
-### 5.8 User Acceptance Testing
+### 6.9 User Acceptance Testing
 
 **Testing Methodology:**
 
@@ -4879,7 +4882,7 @@ The platform achieved an average SUS score of 78.5, indicating "Good" usability 
 - **Client Users:** 77.8 average SUS score  
 - **Admin Users:** 78.5 average SUS score
 
-### 5.9 Compatibility Testing
+### 6.10 Compatibility Testing
 
 **Browser Compatibility:**
 
@@ -4910,7 +4913,7 @@ Testing across various devices and screen sizes:
 - **iOS:** Compatible with Safari Mobile, Chrome Mobile
 - **Android:** Compatible with Chrome Mobile, Samsung Internet
 
-### 5.10 Performance Benchmarking
+### 6.11 Performance Benchmarking
 
 **Comparison with Existing Platforms:**
 
@@ -4937,7 +4940,7 @@ MongoDB performance under various conditions:
 - **Index Utilization:** 99.2% of queries use indexes
 - **Storage Efficiency:** 2.1GB for 100,000 documents
 
-### 5.11 Error Handling and Recovery Testing
+### 6.12 Error Handling and Recovery Testing
 
 **Error Scenario Testing:**
 
@@ -4956,7 +4959,7 @@ Comprehensive testing of error conditions and system recovery:
 - **Data Consistency:** 100% data integrity maintained during failures
 - **User Experience:** Graceful error messages and recovery guidance provided
 
-### 5.12 Summary of Testing and Evaluation
+### 6.13 Summary of Testing and Evaluation
 
 Chapter Five has presented a comprehensive testing and evaluation of the TalentHive platform, demonstrating that the system meets all functional and non-functional requirements while providing excellent performance, security, and user experience. The multi-layered testing approach ensured thorough validation of all system components and user workflows.
 
@@ -4970,7 +4973,7 @@ User Acceptance Testing with 25 participants achieved a 92% average success rate
 
 The testing results validate that the TalentHive platform successfully addresses the problems identified in Chapter One and meets the objectives established for the project. The platform provides a secure, efficient, and user-friendly solution for freelancing collaboration that outperforms existing solutions in key performance metrics.
 
-### 5.4 Key Achievements and Contributions
+### 6.14 Key Achievements and Contributions
 
 **Technical Achievements:**
 
@@ -5002,7 +5005,7 @@ The testing results validate that the TalentHive platform successfully addresses
 
 3. **Security Standards:** The implementation demonstrates advanced security practices that could serve as a reference for other platforms handling sensitive user and financial data.
 
-### 6.5 Lessons Learned
+### 6.19 Lessons Learned
 
 **Technical Lessons:**
 
@@ -5030,7 +5033,7 @@ The testing results validate that the TalentHive platform successfully addresses
 
 3. **Accessibility Considerations:** Implementing accessibility features from the beginning was more efficient than retrofitting, and significantly improved the platform's usability for all users.
 
-### 6.6 Limitations and Constraints
+### 6.20 Limitations and Constraints
 
 **Technical Limitations:**
 
@@ -5060,7 +5063,7 @@ The testing results validate that the TalentHive platform successfully addresses
 
 3. **Infrastructure Costs:** The current implementation assumes moderate usage levels; high-scale deployment would require significant infrastructure investment.
 
-### 6.7 Future Work and Recommendations
+### 6.21 Future Work and Recommendations
 
 **Short-term Enhancements (3-6 months):**
 
@@ -5140,7 +5143,7 @@ The testing results validate that the TalentHive platform successfully addresses
    - Add database sharding for improved performance
    - Develop auto-scaling infrastructure for variable loads
 
-### 6.8 Research and Development Opportunities
+### 6.22 Research and Development Opportunities
 
 **Academic Research Areas:**
 
@@ -5162,7 +5165,7 @@ The testing results validate that the TalentHive platform successfully addresses
 
 4. **Educational Institutions:** Partner with universities to create integrated learning and working platforms that combine education with practical experience.
 
-### 6.9 Impact Assessment
+### 6.23 Impact Assessment
 
 **User Impact:**
 
@@ -5190,7 +5193,7 @@ TalentHive contributes to the broader digital economy by:
 - Reducing barriers to entry for new freelancers through comprehensive support systems
 - Promoting fair and transparent business practices through secure payment processing
 
-### 6.10 Final Conclusion
+### 6.24 Final Conclusion
 
 The TalentHive project represents a significant achievement in both academic excellence and practical innovation, successfully demonstrating how modern software engineering principles can be applied to address real-world challenges in the rapidly evolving digital economy. Through the development of a comprehensive freelancing platform that integrates cutting-edge web technologies with user-centered design principles, this project has not only met its academic objectives but has also created a foundation for meaningful impact in the freelancing industry.
 
@@ -5784,7 +5787,7 @@ Security Assessment Summary:
 
 4. **Performance Analysis:** The comprehensive performance testing and optimization strategies provide valuable insights for building scalable web applications.
 
-### 5.5 Lessons Learned
+### 6.15 Lessons Learned
 
 **Technical Lessons:**
 
@@ -5804,7 +5807,7 @@ Security Assessment Summary:
 
 3. **Documentation Importance:** Comprehensive documentation proved essential for maintaining code quality and enabling efficient collaboration and future maintenance.
 
-### 5.6 Limitations and Constraints
+### 6.16 Limitations and Constraints
 
 **Technical Limitations:**
 
@@ -5822,7 +5825,7 @@ Security Assessment Summary:
 
 3. **Multi-language Support:** The platform currently supports English only, limiting its accessibility to non-English speaking markets.
 
-### 5.7 Recommendations
+### 6.17 Recommendations
 
 **Short-term Enhancements (3-6 months):**
 
@@ -5872,7 +5875,7 @@ Security Assessment Summary:
    - Implement certification and skill verification systems
    - Build community features and networking capabilities
 
-### 5.8 Final Conclusion
+### 6.18 Final Conclusion
 
 The TalentHive project has successfully demonstrated the development of a comprehensive freelancing platform that addresses critical gaps in existing solutions while showcasing modern software engineering practices and technologies. The platform integrates secure payment processing, milestone-based project management, real-time communication, and intelligent user matching in a cohesive, user-friendly experience.
 
