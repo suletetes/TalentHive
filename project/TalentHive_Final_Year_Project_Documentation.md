@@ -189,6 +189,75 @@ The current landscape of freelancing platforms suffers from several interconnect
 
 7. **To conduct comprehensive testing and evaluation of the platform** including unit testing, integration testing, user acceptance testing, performance testing, and security assessment to ensure the system meets functional requirements, performs efficiently under load, and provides a satisfactory user experience that meets industry standards.
 
+**Complete User Journey Flow:**
+
+```mermaid
+graph TD
+    subgraph "Client Journey"
+        A1[Register as Client] --> A2[Verify Email]
+        A2 --> A3[Complete Profile]
+        A3 --> A4[Post Project]
+        A4 --> A5[Review Proposals]
+        A5 --> A6[Select Freelancer]
+        A6 --> A7[Create Contract]
+        A7 --> A8[Fund Escrow]
+        A8 --> A9[Monitor Progress]
+        A9 --> A10[Approve Milestones]
+        A10 --> A11[Release Payments]
+        A11 --> A12[Leave Review]
+    end
+    
+    subgraph "Freelancer Journey"
+        B1[Register as Freelancer] --> B2[Verify Email]
+        B2 --> B3[Build Profile]
+        B3 --> B4[Browse Projects]
+        B4 --> B5[Submit Proposal]
+        B5 --> B6[Negotiate Terms]
+        B6 --> B7[Sign Contract]
+        B7 --> B8[Start Work]
+        B8 --> B9[Submit Deliverables]
+        B9 --> B10[Receive Payment]
+        B10 --> B11[Get Review]
+    end
+    
+    subgraph "Platform Features"
+        C1[Real-time Messaging]
+        C2[File Sharing]
+        C3[Milestone Tracking]
+        C4[Secure Payments]
+        C5[Dispute Resolution]
+        C6[Rating System]
+    end
+    
+    A4 --> B4
+    A5 --> B5
+    A6 --> B6
+    A7 --> B7
+    A9 --> B8
+    A10 --> B9
+    A11 --> B10
+    A12 --> B11
+    
+    A9 --> C1
+    B8 --> C1
+    A9 --> C2
+    B8 --> C2
+    A9 --> C3
+    B8 --> C3
+    A8 --> C4
+    B10 --> C4
+    A9 --> C5
+    B8 --> C5
+    A12 --> C6
+    B11 --> C6
+    
+    style A1 fill:#e3f2fd
+    style B1 fill:#e8f5e8
+    style C1 fill:#fff3e0
+```
+
+**Figure 1.1: Complete User Journey and Platform Integration**
+
 ### 1.4 Significance of the Study
 
 This project makes significant contributions to both academic knowledge and practical applications in the field of software engineering and web application development, with implications that extend beyond the immediate scope of freelancing platforms.
@@ -609,6 +678,118 @@ External service integrations are implemented through dedicated service layers:
 
 ### 3.4 Database Schema Design
 
+**Entity Relationship Diagram:**
+
+```mermaid
+erDiagram
+    USERS {
+        ObjectId _id PK
+        string email UK
+        string password
+        enum role
+        object profile
+        object freelancerProfile
+        object clientProfile
+        object rating
+        boolean isVerified
+        enum accountStatus
+        date createdAt
+        date updatedAt
+    }
+    
+    PROJECTS {
+        ObjectId _id PK
+        string title
+        string description
+        ObjectId client FK
+        ObjectId category FK
+        array skills
+        object budget
+        object timeline
+        enum status
+        array proposals
+        array attachments
+        date createdAt
+        date updatedAt
+    }
+    
+    PROPOSALS {
+        ObjectId _id PK
+        ObjectId project FK
+        ObjectId freelancer FK
+        string coverLetter
+        object pricing
+        array milestones
+        enum status
+        date submittedAt
+        date updatedAt
+    }
+    
+    CONTRACTS {
+        ObjectId _id PK
+        ObjectId project FK
+        ObjectId client FK
+        ObjectId freelancer FK
+        ObjectId proposal FK
+        string title
+        number totalAmount
+        string currency
+        enum status
+        array milestones
+        object terms
+        date createdAt
+        date updatedAt
+    }
+    
+    MESSAGES {
+        ObjectId _id PK
+        ObjectId conversation FK
+        ObjectId sender FK
+        string content
+        array attachments
+        boolean isRead
+        date createdAt
+    }
+    
+    CONVERSATIONS {
+        ObjectId _id PK
+        array participants
+        ObjectId project FK
+        ObjectId lastMessage FK
+        date updatedAt
+    }
+    
+    CATEGORIES {
+        ObjectId _id PK
+        string name
+        string slug
+        string description
+        boolean isActive
+    }
+    
+    SKILLS {
+        ObjectId _id PK
+        string name
+        string slug
+        ObjectId category FK
+        boolean isActive
+    }
+    
+    USERS ||--o{ PROJECTS : "client creates"
+    USERS ||--o{ PROPOSALS : "freelancer submits"
+    PROJECTS ||--o{ PROPOSALS : "receives"
+    PROPOSALS ||--o| CONTRACTS : "generates"
+    USERS ||--o{ CONTRACTS : "client signs"
+    USERS ||--o{ CONTRACTS : "freelancer signs"
+    USERS ||--o{ MESSAGES : "sends"
+    CONVERSATIONS ||--o{ MESSAGES : "contains"
+    CATEGORIES ||--o{ PROJECTS : "categorizes"
+    CATEGORIES ||--o{ SKILLS : "contains"
+    SKILLS ||--o{ PROJECTS : "requires"
+```
+
+**Figure 3.1: Database Entity Relationship Diagram**
+
 **Core Entity Design:**
 
 **User Entity:**
@@ -793,6 +974,87 @@ The interface adapts to various screen sizes using Material-UI's breakpoint syst
 
 ### 3.6 Security Architecture
 
+**Security Layers and Protection:**
+
+```mermaid
+graph TB
+    subgraph "Client Security"
+        A[HTTPS/TLS 1.3]
+        B[Content Security Policy]
+        C[Input Validation]
+        D[XSS Protection]
+    end
+    
+    subgraph "Application Security"
+        E[JWT Authentication]
+        F[Role-Based Access]
+        G[Rate Limiting]
+        H[Session Management]
+    end
+    
+    subgraph "API Security"
+        I[Request Validation]
+        J[SQL Injection Prevention]
+        K[CORS Configuration]
+        L[Security Headers]
+    end
+    
+    subgraph "Data Security"
+        M[Encryption at Rest]
+        N[Encryption in Transit]
+        O[Password Hashing]
+        P[PCI DSS Compliance]
+    end
+    
+    subgraph "Infrastructure Security"
+        Q[Firewall Rules]
+        R[VPC Isolation]
+        S[Access Logging]
+        T[Intrusion Detection]
+    end
+    
+    subgraph "External Security"
+        U[Stripe Security]
+        V[Cloudinary Security]
+        W[Third-party Audits]
+        X[Vulnerability Scanning]
+    end
+    
+    A --> E
+    B --> F
+    C --> G
+    D --> H
+    
+    E --> I
+    F --> J
+    G --> K
+    H --> L
+    
+    I --> M
+    J --> N
+    K --> O
+    L --> P
+    
+    M --> Q
+    N --> R
+    O --> S
+    P --> T
+    
+    Q --> U
+    R --> V
+    S --> W
+    T --> X
+    
+    style A fill:#ffebee
+    style E fill:#e8f5e8
+    style I fill:#e1f5fe
+    style M fill:#f3e5f5
+    style Q fill:#fff3e0
+    style U fill:#fce4ec
+```
+
+**Figure 3.2: Multi-Layer Security Architecture**
+
 **Authentication and Authorization:**
 
 **JWT Implementation:**
@@ -946,6 +1208,71 @@ The implementation process followed an agile development methodology with iterat
 
 ### 4.2 Development Environment Setup
 
+**System Architecture Overview:**
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        A[React 18 + TypeScript]
+        B[Material-UI Components]
+        C[Redux Toolkit State]
+        D[TanStack Query]
+    end
+    
+    subgraph "API Gateway"
+        E[Express.js Server]
+        F[JWT Authentication]
+        G[Rate Limiting]
+    end
+    
+    subgraph "Business Logic"
+        H[Controllers]
+        I[Services]
+        J[Middleware]
+    end
+    
+    subgraph "Data Layer"
+        K[MongoDB]
+        L[Redis Cache]
+        M[Mongoose ODM]
+    end
+    
+    subgraph "External Services"
+        N[Stripe Payments]
+        O[Cloudinary Storage]
+        P[Resend Email]
+        Q[Socket.io Real-time]
+    end
+    
+    A --> E
+    B --> E
+    C --> E
+    D --> E
+    
+    E --> F
+    E --> G
+    E --> H
+    
+    H --> I
+    I --> J
+    I --> M
+    
+    M --> K
+    I --> L
+    
+    I --> N
+    I --> O
+    I --> P
+    E --> Q
+    
+    style A fill:#e1f5fe
+    style E fill:#f3e5f5
+    style K fill:#e8f5e8
+    style N fill:#fff3e0
+```
+
+**Figure 4.1: TalentHive System Architecture Diagram**
+
 **Technology Stack Implementation:**
 
 The development environment was configured to support the complete MERN stack with additional tools for enhanced developer experience:
@@ -975,6 +1302,54 @@ The development environment was configured to support the complete MERN stack wi
 **Project Structure Implementation:**
 
 The project follows a monorepo structure with clear separation between client and server applications:
+
+```mermaid
+graph TD
+    A[talenthive-platform/] --> B[client/]
+    A --> C[server/]
+    A --> D[scripts/]
+    A --> E[docker-compose.yml]
+    A --> F[package.json]
+    
+    B --> B1[src/]
+    B --> B2[public/]
+    B --> B3[package.json]
+    
+    B1 --> B11[components/]
+    B1 --> B12[pages/]
+    B1 --> B13[store/]
+    B1 --> B14[services/]
+    B1 --> B15[hooks/]
+    B1 --> B16[types/]
+    B1 --> B17[utils/]
+    B1 --> B18[theme/]
+    
+    B11 --> B111[auth/]
+    B11 --> B112[contracts/]
+    B11 --> B113[layout/]
+    B11 --> B114[projects/]
+    B11 --> B115[ui/]
+    
+    C --> C1[src/]
+    C --> C2[package.json]
+    
+    C1 --> C11[controllers/]
+    C1 --> C12[models/]
+    C1 --> C13[routes/]
+    C1 --> C14[middleware/]
+    C1 --> C15[services/]
+    C1 --> C16[utils/]
+    C1 --> C17[config/]
+    C1 --> C18[test/]
+    
+    style A fill:#f9f9f9
+    style B fill:#e3f2fd
+    style C fill:#e8f5e8
+    style B1 fill:#bbdefb
+    style C1 fill:#c8e6c8
+```
+
+**Figure 4.2: Project Directory Structure**
 
 ```
 talenthive-platform/
@@ -1110,6 +1485,43 @@ export const connectDB = async (): Promise<void> => {
 
 The authentication system implements JWT-based authentication with refresh tokens:
 
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant DB as Database
+    participant R as Redis
+    
+    Note over C,R: User Registration Flow
+    C->>S: POST /auth/register
+    S->>DB: Create user record
+    S->>C: Send verification email
+    C->>S: GET /auth/verify-email?token=xxx
+    S->>DB: Update user.isVerified = true
+    S->>C: Account verified
+    
+    Note over C,R: Login Flow
+    C->>S: POST /auth/login
+    S->>DB: Validate credentials
+    S->>S: Generate JWT tokens
+    S->>R: Store refresh token
+    S->>C: Return access + refresh tokens
+    
+    Note over C,R: Protected Request Flow
+    C->>S: API request with Bearer token
+    S->>S: Validate JWT signature
+    S->>DB: Check user status
+    S->>C: Return protected data
+    
+    Note over C,R: Token Refresh Flow
+    C->>S: POST /auth/refresh
+    S->>R: Validate refresh token
+    S->>S: Generate new access token
+    S->>C: Return new access token
+```
+
+**Figure 4.3: Authentication Flow Diagram**
+
 ```typescript
 // Authentication middleware
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
@@ -1212,6 +1624,67 @@ export const createProject = async (req: Request, res: Response) => {
 
 Socket.io integration provides real-time messaging and notifications:
 
+```mermaid
+graph TB
+    subgraph "Client Side"
+        A[React Components]
+        B[Socket.io Client]
+        C[useSocket Hook]
+    end
+    
+    subgraph "Server Side"
+        D[Express Server]
+        E[Socket.io Server]
+        F[Socket Service]
+        G[Message Controller]
+    end
+    
+    subgraph "Data Storage"
+        H[MongoDB Messages]
+        I[Redis Sessions]
+    end
+    
+    subgraph "Real-time Events"
+        J[User Joins Room]
+        K[Message Send]
+        L[Typing Indicator]
+        M[File Upload]
+        N[Notification]
+    end
+    
+    A --> B
+    B --> C
+    C --> E
+    
+    D --> E
+    E --> F
+    F --> G
+    
+    G --> H
+    F --> I
+    
+    E --> J
+    E --> K
+    E --> L
+    E --> M
+    E --> N
+    
+    J --> I
+    K --> H
+    L --> I
+    M --> H
+    N --> I
+    
+    style A fill:#e1f5fe
+    style E fill:#f3e5f5
+    style H fill:#e8f5e8
+    style J fill:#fff3e0
+```
+
+**Figure 4.4: Real-time Communication Architecture**
+
+Socket.io integration provides real-time messaging and notifications:
+
 ```typescript
 // Socket Service
 class SocketService {
@@ -1259,6 +1732,42 @@ class SocketService {
 ```
 
 **Payment Processing Integration:**
+
+Stripe integration handles secure payment processing with webhook support:
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant F as Frontend
+    participant S as Server
+    participant ST as Stripe
+    participant DB as Database
+    
+    Note over C,DB: Milestone Payment Flow
+    C->>F: Initiate payment
+    F->>S: POST /payments/create-intent
+    S->>ST: Create PaymentIntent
+    ST->>S: Return client_secret
+    S->>F: Return payment intent
+    
+    F->>ST: Confirm payment (Stripe Elements)
+    ST->>F: Payment confirmation
+    F->>S: Payment success callback
+    
+    Note over C,DB: Webhook Processing
+    ST->>S: Webhook: payment_intent.succeeded
+    S->>S: Verify webhook signature
+    S->>DB: Update milestone status
+    S->>DB: Release escrow funds
+    S->>F: Real-time notification
+    
+    Note over C,DB: Escrow Release
+    S->>ST: Transfer to freelancer
+    S->>DB: Update transaction record
+    S->>F: Payment completed notification
+```
+
+**Figure 4.5: Payment Processing Flow**
 
 Stripe integration handles secure payment processing with webhook support:
 
@@ -1316,6 +1825,76 @@ export class PaymentService {
 ```
 
 ### 4.4 Frontend Implementation
+
+**React Application Structure:**
+
+```mermaid
+graph TB
+    subgraph "Application Layer"
+        A[App.tsx - Main Router]
+        B[Layout Components]
+        C[Protected Routes]
+    end
+    
+    subgraph "State Management"
+        D[Redux Store]
+        E[Auth Slice]
+        F[UI Slice]
+        G[User Slice]
+        H[TanStack Query]
+    end
+    
+    subgraph "Component Architecture"
+        I[Pages]
+        J[Feature Components]
+        K[UI Components]
+        L[Layout Components]
+    end
+    
+    subgraph "Services Layer"
+        M[API Services]
+        N[Socket Service]
+        O[Auth Service]
+        P[Upload Service]
+    end
+    
+    subgraph "Utilities"
+        Q[Custom Hooks]
+        R[Utils Functions]
+        S[Type Definitions]
+        T[Theme Config]
+    end
+    
+    A --> B
+    A --> C
+    A --> I
+    
+    D --> E
+    D --> F
+    D --> G
+    D --> H
+    
+    I --> J
+    J --> K
+    J --> L
+    
+    J --> M
+    J --> N
+    J --> O
+    J --> P
+    
+    J --> Q
+    J --> R
+    J --> S
+    J --> T
+    
+    style A fill:#e1f5fe
+    style D fill:#f3e5f5
+    style I fill:#e8f5e8
+    style M fill:#fff3e0
+```
+
+**Figure 4.6: Frontend Component Architecture**
 
 **React Application Structure:**
 
@@ -2012,6 +2591,73 @@ describe('ProjectCard', () => {
 
 ### 4.8 Deployment Implementation
 
+**Deployment Architecture:**
+
+```mermaid
+graph TB
+    subgraph "Load Balancer"
+        LB[Nginx Load Balancer]
+    end
+    
+    subgraph "Application Tier"
+        A1[Frontend Container 1]
+        A2[Frontend Container 2]
+        B1[Backend Container 1]
+        B2[Backend Container 2]
+    end
+    
+    subgraph "Database Tier"
+        C[MongoDB Primary]
+        D[MongoDB Secondary]
+        E[Redis Cache]
+    end
+    
+    subgraph "External Services"
+        F[Stripe API]
+        G[Cloudinary CDN]
+        H[Resend Email]
+    end
+    
+    subgraph "Monitoring"
+        I[Application Logs]
+        J[Performance Metrics]
+        K[Error Tracking]
+    end
+    
+    LB --> A1
+    LB --> A2
+    A1 --> B1
+    A2 --> B2
+    
+    B1 --> C
+    B2 --> C
+    B1 --> E
+    B2 --> E
+    
+    C --> D
+    
+    B1 --> F
+    B2 --> F
+    B1 --> G
+    B2 --> G
+    B1 --> H
+    B2 --> H
+    
+    B1 --> I
+    B2 --> I
+    B1 --> J
+    B2 --> J
+    B1 --> K
+    B2 --> K
+    
+    style LB fill:#e1f5fe
+    style A1 fill:#f3e5f5
+    style B1 fill:#e8f5e8
+    style C fill:#fff3e0
+```
+
+**Figure 4.7: Production Deployment Architecture**
+
 **Docker Configuration:**
 
 The application is containerized for consistent deployment:
@@ -2304,6 +2950,61 @@ The evaluation process follows industry best practices and academic standards, p
 
 ### 5.2 Testing Strategy and Methodology
 
+**Testing Pyramid Architecture:**
+
+```mermaid
+graph TB
+    subgraph "Testing Pyramid"
+        A[End-to-End Tests<br/>Playwright<br/>Critical User Journeys]
+        B[Integration Tests<br/>API + Database<br/>Component Integration]
+        C[Unit Tests<br/>Jest + Vitest<br/>Individual Functions/Components]
+    end
+    
+    subgraph "Testing Types"
+        D[Functional Testing]
+        E[Performance Testing]
+        F[Security Testing]
+        G[Usability Testing]
+    end
+    
+    subgraph "Testing Tools"
+        H[Backend: Jest + Supertest]
+        I[Frontend: Vitest + RTL]
+        J[E2E: Playwright]
+        K[Load: Artillery.io]
+        L[Security: OWASP ZAP]
+    end
+    
+    subgraph "Quality Gates"
+        M[Code Coverage > 90%]
+        N[Performance < 2s]
+        O[Security Scan Pass]
+        P[User Acceptance > 80%]
+    end
+    
+    C --> B
+    B --> A
+    
+    D --> H
+    D --> I
+    E --> K
+    F --> L
+    G --> J
+    
+    H --> M
+    I --> M
+    J --> P
+    K --> N
+    L --> O
+    
+    style A fill:#ffebee
+    style B fill:#e8f5e8
+    style C fill:#e1f5fe
+    style M fill:#fff3e0
+```
+
+**Figure 5.1: Testing Strategy and Quality Assurance Framework**
+
 **Testing Approach:**
 
 The testing strategy follows a multi-layered approach based on the testing pyramid concept, emphasizing comprehensive unit tests as the foundation, supported by integration tests and end-to-end tests for critical user workflows. This approach ensures thorough coverage while maintaining efficient test execution times and reliable feedback loops.
@@ -2571,6 +3272,61 @@ Accessibility compliance was validated using automated tools and manual testing:
 - **Keyboard Navigation:** Full keyboard accessibility for all interactive elements
 - **Color Contrast:** All text meets WCAG contrast requirements (4.5:1 minimum)
 ### 5.6 Performance Testing
+
+**Performance Testing Overview:**
+
+```mermaid
+graph TB
+    subgraph "Load Testing Scenarios"
+        A[Normal Load<br/>100 Users<br/>10 Minutes]
+        B[Peak Load<br/>500 Users<br/>5 Minutes]
+        C[Stress Test<br/>1000 Users<br/>Until Failure]
+        D[Spike Test<br/>100→1000 Users<br/>Sudden Load]
+    end
+    
+    subgraph "Performance Metrics"
+        E[Response Time<br/>Average: 245ms<br/>95th: 580ms]
+        F[Throughput<br/>85.2 req/s<br/>Normal Load]
+        G[Error Rate<br/>0.1% Normal<br/>2.1% Spike]
+        H[Resource Usage<br/>CPU: 65%<br/>Memory: 2.1GB]
+    end
+    
+    subgraph "Database Performance"
+        I[Query Time<br/>Simple: 15ms<br/>Complex: 45ms]
+        J[Index Usage<br/>99.2% Effective]
+        K[Connection Pool<br/>20 Connections<br/>Optimal]
+        L[Cache Hit Rate<br/>87% Redis<br/>65% Improvement]
+    end
+    
+    subgraph "Frontend Performance"
+        M[First Paint<br/>1.2s Average]
+        N[Time to Interactive<br/>2.8s Average]
+        O[Bundle Size<br/>245KB Gzipped]
+        P[Lighthouse Score<br/>92 Performance]
+    end
+    
+    A --> E
+    B --> F
+    C --> G
+    D --> H
+    
+    E --> I
+    F --> J
+    G --> K
+    H --> L
+    
+    I --> M
+    J --> N
+    K --> O
+    L --> P
+    
+    style A fill:#e8f5e8
+    style E fill:#e1f5fe
+    style I fill:#f3e5f5
+    style M fill:#fff3e0
+```
+
+**Figure 5.2: Performance Testing Results and Metrics**
 
 **Load Testing Results:**
 
@@ -3479,6 +4235,82 @@ RESEND_API_KEY=your_resend_api_key
 ```
 
 **F.3 CI/CD Pipeline Configuration**
+
+```mermaid
+graph LR
+    subgraph "Source Control"
+        A[Git Push/PR]
+        B[GitHub Repository]
+    end
+    
+    subgraph "CI Pipeline"
+        C[Checkout Code]
+        D[Install Dependencies]
+        E[Run Linting]
+        F[Run Unit Tests]
+        G[Run Integration Tests]
+        H[Build Application]
+        I[Security Scan]
+    end
+    
+    subgraph "Quality Gates"
+        J[Code Coverage > 90%]
+        K[All Tests Pass]
+        L[Security Scan Pass]
+        M[Build Success]
+    end
+    
+    subgraph "CD Pipeline"
+        N[Build Docker Images]
+        O[Push to Registry]
+        P[Deploy to Staging]
+        Q[Run E2E Tests]
+        R[Deploy to Production]
+    end
+    
+    subgraph "Monitoring"
+        S[Health Checks]
+        T[Performance Monitoring]
+        U[Error Tracking]
+        V[Rollback if Needed]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    
+    F --> J
+    G --> K
+    I --> L
+    H --> M
+    
+    J --> N
+    K --> N
+    L --> N
+    M --> N
+    
+    N --> O
+    O --> P
+    P --> Q
+    Q --> R
+    
+    R --> S
+    S --> T
+    T --> U
+    U --> V
+    
+    style A fill:#e1f5fe
+    style J fill:#e8f5e8
+    style N fill:#f3e5f5
+    style S fill:#fff3e0
+```
+
+**Figure F.1: Automated CI/CD Pipeline Flow**
 
 ```yaml
 # GitHub Actions Workflow
