@@ -16,6 +16,7 @@ export * from './services.service';
 export * from './search.service';
 export * from './upload.service';
 export * from './supportTicket.service';
+export * from './rbac.service';
 
 // Export service instances
 export { authService } from './auth.service';
@@ -32,6 +33,7 @@ export { servicesService } from './services.service';
 export { searchService } from './search.service';
 export { uploadService } from './upload.service';
 export { supportTicketService } from './supportTicket.service';
+export { rbacService } from './rbac.service';
 
 // Export types
 export type { LoginCredentials, RegisterData, AuthResponse } from './auth.service';
@@ -71,3 +73,9 @@ export type {
   UpdateTagsData,
   TicketStats,
 } from './supportTicket.service';
+export type {
+  Role,
+  Permission,
+  AuditLog,
+  UserPermissionData,
+} from './rbac.service';

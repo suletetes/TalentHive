@@ -14,39 +14,6 @@ import { usersService } from '@/services/api/users.service';
 export const ProfileAnalyticsPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
 
-  const { data: analyticsData, isLoading, error } = useQuery({
-    queryKey: ['profileAnalytics', user?.id],
-    queryFn: async () => {
-      const response = await usersService.getProfileViewAnalytics(user!.id, 30);
-      return response.data || response;
-    },
-    enabled: !!user?.id,
-  });
-
-  const { data: viewersData } = useQuery({
-    queryKey: ['profileViewers', user?.id],
-    queryFn: async () => {
-      const response = await usersService.getProfileViewers(user!.id);
-      return response.data || response;
-    },
-    enabled: !!user?.id,
-  });
-
-  if (isLoading) {
-    return <LoadingSpinner message="Loading analytics..." />;
-  }
-
-  if (error) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <ErrorState message="Failed to load analytics data" />
-      </Container>
-    );
-  }
-
-  const analytics = analyticsData || {};
-  const viewers = Array.isArray(viewersData) ? viewersData : [];
-
   // Determine which analytics component to render based on user role
   const renderAnalytics = () => {
     if (!user) return null;
@@ -56,15 +23,10 @@ export const ProfileAnalyticsPage: React.FC = () => {
         // FreelancerAnalytics fetches its own data
         return <FreelancerAnalytics userId={user.id} />;
       case 'client':
-        return (
-          <ClientAnalytics
-            analytics={analytics}
-            viewers={viewers}
-            userId={user.id}
-          />
-        );
+        // ClientAnalytics fetches its own data
+        return <ClientAnalytics userId={user.id} />;
       case 'admin':
-        return <AdminAnalytics analytics={analytics} userId={user.id} />;
+        return <AdminAnalytics analytics={{}} userId={user.id} />;
       default:
         return (
           <ErrorState message="Unknown user role. Unable to display analytics." />

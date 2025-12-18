@@ -78,11 +78,40 @@ reviewSchema.index({ contract: 1, reviewer: 1 }, { unique: true });
 reviewSchema.index({ reviewee: 1, status: 1 });
 reviewSchema.index({ project: 1 });
 
-// Update user rating after review
+// Update user rating after review save
 reviewSchema.post('save', async function() {
-  const reviews = await Review.find({ reviewee: this.reviewee, status: 'published' });
-  const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-  await User.findByIdAndUpdate(this.reviewee, { rating: avgRating });
+  try {
+    // Import here to avoid circular dependency
+    const { dataConsistencyService } = await import('@/services/dataConsistencyService');
+    await dataConsistencyService.syncUserRating(this.reviewee as any);
+  } catch (error) {
+    console.error('Error syncing user rating after review save:', error);
+  }
+});
+
+// Update user rating after review deletion
+reviewSchema.post('deleteOne', async function() {
+  try {
+    const review = await this.model.findOne(this.getFilter());
+    if (review) {
+      const { dataConsistencyService } = await import('@/services/dataConsistencyService');
+      await dataConsistencyService.syncUserRating(review.reviewee as any);
+    }
+  } catch (error) {
+    console.error('Error syncing user rating after review deletion:', error);
+  }
+});
+
+// Update user rating after findOneAndDelete
+reviewSchema.post('findOneAndDelete', async function(doc) {
+  if (doc) {
+    try {
+      const { dataConsistencyService } = await import('@/services/dataConsistencyService');
+      await dataConsistencyService.syncUserRating(doc.reviewee);
+    } catch (error) {
+      console.error('Error syncing user rating after review deletion:', error);
+    }
+  }
 });
 
 export const Review = mongoose.model<IReview>('Review', reviewSchema);

@@ -64,6 +64,9 @@ import { ClientOnboardingPage } from '@/pages/onboarding/ClientOnboardingPage';
 import { AdminOnboardingPage } from '@/pages/onboarding/AdminOnboardingPage';
 import { ProfileAnalyticsPage } from '@/pages/ProfileAnalyticsPage';
 import { ClientDetailPage } from '@/pages/ClientDetailPage';
+import { RoleManagementPage } from '@/pages/admin/RoleManagementPage';
+import { UserPermissionsPage } from '@/pages/admin/UserPermissionsPage';
+import { AuditLogPage } from '@/pages/admin/AuditLogPage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { ToastProvider } from '@/components/ui/ToastProvider';
@@ -165,12 +168,15 @@ function App() {
         >
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="users" element={<AdminUsersPage />} />
+          <Route path="users/:userId/permissions" element={<UserPermissionsPage />} />
           <Route path="projects" element={<AdminProjectsPage />} />
           <Route path="analytics" element={<AnalyticsDashboardPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
           <Route path="commission-settings" element={<CommissionSettingsPage />} />
           <Route path="transactions" element={<AdminTransactionsPage />} />
           <Route path="support" element={<AdminSupportDashboard />} />
+          <Route path="roles" element={<RoleManagementPage />} />
+          <Route path="audit-logs" element={<AuditLogPage />} />
         </Route>
 
         {/* 404 route */}

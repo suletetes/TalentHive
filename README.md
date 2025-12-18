@@ -29,12 +29,14 @@ A comprehensive freelancing platform built with the MERN stack (MongoDB, Express
 
 ### Frontend
 - React 18 with TypeScript
+- Vite for build tooling
 - Redux Toolkit for state management
-- Material-UI (MUI) for components
+- Material-UI (MUI) v5 for components
 - React Router v6
-- React Query for server state
-- Socket.io client
-- Formik + Yup for forms
+- TanStack Query (React Query) for server state
+- Socket.io client for real-time features
+- Formik + Yup for forms and validation
+- Vitest for testing
 
 ## Getting Started
 
@@ -48,15 +50,21 @@ A comprehensive freelancing platform built with the MERN stack (MongoDB, Express
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/yourusername/talenthive-platform.git
 cd talenthive-platform
 ```
 
 2. Install dependencies:
 ```bash
+# Install root dependencies
 npm install
+
+# Install server dependencies
 cd server && npm install
+
+# Install client dependencies
 cd ../client && npm install
+cd ..
 ```
 
 3. Set up environment variables:
@@ -66,6 +74,12 @@ cp server/.env.example server/.env
 cp client/.env.example client/.env
 
 # Edit the .env files with your configuration
+# Make sure to update:
+# - Database connection strings
+# - JWT secrets (use strong, unique keys)
+# - Stripe API keys
+# - SendGrid API key
+# - Cloudinary credentials
 ```
 
 4. Start the development servers:
@@ -99,21 +113,39 @@ This will start:
 - `npm run test` - Run tests for both applications
 - `npm run lint` - Lint both applications
 - `npm run format` - Format code with Prettier
+- `npm run seed` - Seed database with sample data
+- `npm run validate-data` - Validate database data integrity
+- `npm run server:dev` - Start backend only
+- `npm run client:dev` - Start frontend only
+- `npm run server:build` - Build backend only
+- `npm run client:build` - Build frontend only
+- `npm run server:test` - Run backend tests only
+- `npm run client:test` - Run frontend tests only
+- `npm run server:lint` - Lint backend only
+- `npm run client:lint` - Lint frontend only
 
 ### Backend (server/)
 - `npm run dev` - Start development server with hot reload
 - `npm run build` - Build TypeScript to JavaScript
 - `npm run start` - Start production server
 - `npm run test` - Run Jest tests
+- `npm run test:watch` - Run Jest tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
 - `npm run lint` - Run ESLint
+- `npm run lint:fix` - Run ESLint with auto-fix
 - `npm run seed` - Seed database with sample data
+- `npm run validate-data` - Validate database data integrity
 
 ### Frontend (client/)
 - `npm run dev` - Start Vite development server
 - `npm run build` - Build for production
+- `npm run build:check` - Build with TypeScript type checking
 - `npm run preview` - Preview production build
 - `npm run test` - Run Vitest tests
+- `npm run test:ui` - Run Vitest with UI interface
+- `npm run test:coverage` - Run tests with coverage report
 - `npm run lint` - Run ESLint
+- `npm run lint:fix` - Run ESLint with auto-fix
 
 ## Project Structure
 
@@ -122,13 +154,18 @@ talenthive-platform/
 ├── client/                 # React frontend
 │   ├── src/
 │   │   ├── components/     # Reusable UI components
+│   │   │   ├── ui/         # Generic UI components
+│   │   │   ├── auth/       # Authentication components
+│   │   │   ├── layout/     # Layout components
+│   │   │   └── ...         # Feature-specific components
 │   │   ├── pages/          # Page components
 │   │   ├── store/          # Redux store and slices
 │   │   ├── services/       # API services
 │   │   ├── hooks/          # Custom React hooks
 │   │   ├── utils/          # Utility functions
 │   │   ├── types/          # TypeScript type definitions
-│   │   └── theme/          # Material-UI theme
+│   │   ├── theme/          # Material-UI theme
+│   │   └── test/           # Vitest test files
 │   └── package.json
 ├── server/                 # Node.js backend
 │   ├── src/
@@ -136,35 +173,52 @@ talenthive-platform/
 │   │   ├── models/         # Mongoose models
 │   │   ├── routes/         # Express routes
 │   │   ├── middleware/     # Custom middleware
-│   │   ├── services/       # Business logic
 │   │   ├── utils/          # Utility functions
 │   │   ├── config/         # Configuration files
-│   │   └── types/          # TypeScript type definitions
+│   │   ├── types/          # TypeScript type definitions
+│   │   ├── scripts/        # Database seeding and utilities
+│   │   └── test/           # Jest test files
 │   └── package.json
 ├── scripts/                # Database and deployment scripts
 ├── docker-compose.yml      # Docker configuration
 └── package.json           # Root package.json
 ```
 
+## Development Workflow
+
+### Code Quality
+- **Linting**: ESLint with TypeScript rules
+- **Formatting**: Prettier with 2-space indentation, single quotes
+- **Git Hooks**: Husky with lint-staged for pre-commit checks
+- **Type Safety**: Strict TypeScript configuration
+
+### Testing Strategy
+- **Backend**: Jest with Supertest for API testing
+- **Frontend**: Vitest with Testing Library for component testing
+- **Coverage**: Aim for >80% test coverage
+- **E2E**: Manual testing workflow documented in `/test automation`
+
+### Path Aliases
+Both frontend and backend use path aliases for cleaner imports:
+```typescript
+// Instead of: import { User } from '../../../types/user'
+import { User } from '@/types/user'
+```
+
 ## API Documentation
 
 The API follows RESTful conventions and is available at `/api/v1/`. Key endpoints include:
 
-- `/auth` - Authentication (login, register, logout)
+- `/auth` - Authentication (login, register, logout, refresh)
 - `/users` - User management and profiles
 - `/projects` - Project CRUD operations
 - `/proposals` - Proposal management
 - `/contracts` - Contract and milestone management
-- `/payments` - Payment processing
+- `/payments` - Payment processing with Stripe
 - `/messages` - Real-time messaging
 - `/reviews` - Rating and review system
 - `/notifications` - User notifications
 - `/admin` - Administrative functions
+- `/upload` - File upload to Cloudinary
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Complete API documentation is available in `/docs/API-DOCUMENTATION.md`.

@@ -44,7 +44,30 @@ export const getServicePackages = async (req: Request, res: Response) => {
     const query: any = { isActive: true };
 
     if (category) query.category = category;
-    if (freelancerId) query.freelancer = freelancerId;
+    
+    // Handle freelancerId - could be ObjectId or slug
+    if (freelancerId) {
+      // Check if it's a valid ObjectId format (24 hex characters)
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(freelancerId as string);
+      
+      if (isObjectId) {
+        query.freelancer = freelancerId;
+      } else {
+        // It's a slug, find the user first
+        const user = await User.findOne({ profileSlug: freelancerId });
+        if (user) {
+          query.freelancer = user._id;
+        } else {
+          // No user found with this slug, return empty results
+          return res.json({
+            status: 'success',
+            results: 0,
+            data: { packages: [] },
+          });
+        }
+      }
+    }
+    
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },

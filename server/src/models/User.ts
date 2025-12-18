@@ -108,6 +108,13 @@ const adminPermissionSchema = new Schema({
   actions: [String],
 }, { _id: false });
 
+// New RBAC permissions structure
+const userPermissionsSchema = new Schema({
+  roles: [{ type: Schema.Types.ObjectId, ref: 'Role' }],
+  directPermissions: [{ type: Schema.Types.ObjectId, ref: 'Permission' }],
+  deniedPermissions: [{ type: Schema.Types.ObjectId, ref: 'Permission' }],
+}, { _id: false });
+
 const userSchema = new Schema<IUser>({
   email: {
     type: String,
@@ -254,6 +261,12 @@ const userSchema = new Schema<IUser>({
     viewerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     viewedAt: { type: Date, required: true, default: Date.now },
   }],
+  // RBAC permissions structure
+  permissions: {
+    type: userPermissionsSchema,
+    default: () => ({ roles: [], directPermissions: [], deniedPermissions: [] }),
+  },
+  lastPermissionUpdate: { type: Date },
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -271,6 +284,10 @@ userSchema.index({ isFeatured: 1, featuredOrder: 1 });
 userSchema.index({ roles: 1 });
 userSchema.index({ profileSlug: 1 });
 userSchema.index({ onboardingCompleted: 1 });
+// RBAC indexes
+userSchema.index({ 'permissions.roles': 1 });
+userSchema.index({ 'permissions.directPermissions': 1 });
+userSchema.index({ lastPermissionUpdate: 1 });
 
 // Virtual for full name
 userSchema.virtual('fullName').get(function() {

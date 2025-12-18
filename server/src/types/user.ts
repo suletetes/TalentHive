@@ -214,6 +214,14 @@ export interface IUser extends Document {
   onboardingStep?: number;
   onboardingSkippedAt?: Date;
   
+  // RBAC permissions structure
+  permissions?: {
+    roles: ObjectId[];
+    directPermissions: ObjectId[];
+    deniedPermissions: ObjectId[];
+  };
+  lastPermissionUpdate?: Date;
+  
   // Instance methods
   comparePassword(candidatePassword: string): Promise<boolean>;
   updateRating(newRating: number): void;

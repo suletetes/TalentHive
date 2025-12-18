@@ -23,6 +23,9 @@ import { Settings } from '@/models/Settings';
 import { generateEnhancedUsers, generateAdditionalProjects, generateAdditionalProposals } from './enhancedSeedData';
 import { seedClientProjectsAndReviews } from './seedClientData';
 import { enhanceSeedData } from './seedEnhanced';
+import { seedPermissions } from './seedPermissions';
+import { seedRoles } from './seedRoles';
+import WorkLog from '@/models/WorkLog';
 
 // Load environment variables
 dotenv.config();
@@ -53,6 +56,9 @@ async function clearDatabase() {
   const { Conversation } = await import('@/models/Conversation');
   const { Payment } = await import('@/models/Payment');
   const { Transaction } = await import('@/models/Transaction');
+  const { Permission } = await import('@/models/Permission');
+  const { Role } = await import('@/models/Role');
+  const { AuditLog } = await import('@/models/AuditLog');
   
   await User.deleteMany({});
   await Organization.deleteMany({});
@@ -75,6 +81,9 @@ async function clearDatabase() {
   await PlatformSettings.deleteMany({});
   await Settings.deleteMany({});
   await Transaction.deleteMany({});
+  await Permission.deleteMany({});
+  await Role.deleteMany({});
+  await AuditLog.deleteMany({});
   
   const { Dispute } = await import('@/models/Dispute');
   await Dispute.deleteMany({});
@@ -2703,6 +2712,107 @@ async function seedTransactions(users: any[], contracts: any[]) {
   return createdTransactions;
 }
 
+async function seedWorkLogs(contracts: any[]) {
+  logger.info('⏰ Seeding work logs...');
+  
+  function getRandomTime(minHour: number, maxHour: number): string {
+    const hour = Math.floor(Math.random() * (maxHour - minHour + 1)) + minHour;
+    const minute = Math.floor(Math.random() * 4) * 15; // 0, 15, 30, 45
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  }
+
+  function addHours(time: string, hours: number): string {
+    const [h, m] = time.split(':').map(Number);
+    let newHour = h + hours;
+    if (newHour >= 24) newHour -= 24;
+    return `${newHour.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  }
+
+  const workDescriptions = [
+    'Implemented new feature components',
+    'Fixed bugs in the authentication flow',
+    'Code review and refactoring',
+    'Database optimization and indexing',
+    'API endpoint development',
+    'Frontend UI improvements',
+    'Testing and debugging',
+    'Documentation updates',
+    'Performance optimization',
+    'Integration with third-party services',
+    'Security audit and fixes',
+    'Responsive design implementation',
+    'Backend service development',
+    'Data migration scripts',
+    'Unit test coverage improvement',
+    'Client meeting and requirements gathering',
+    'Sprint planning and task breakdown',
+    'Bug fixes and hotfixes',
+    'Code deployment and monitoring',
+    'Database schema updates',
+  ];
+
+  const workLogs: any[] = [];
+  const today = new Date();
+  
+  // Get active contracts
+  const activeContracts = contracts.filter(c => c.status === 'active').slice(0, 15);
+
+  for (const contract of activeContracts) {
+    // Create 8-15 work logs per contract over the last 60 days
+    const numLogs = Math.floor(Math.random() * 8) + 8;
+
+    for (let i = 0; i < numLogs; i++) {
+      const daysAgo = Math.floor(Math.random() * 60);
+      const logDate = new Date(today);
+      logDate.setDate(logDate.getDate() - daysAgo);
+      logDate.setHours(0, 0, 0, 0);
+
+      const startTime = getRandomTime(8, 16); // Start between 8am and 4pm
+      const workHours = Math.floor(Math.random() * 5) + 1; // 1-5 hours
+      const endTime = addHours(startTime, workHours);
+
+      const description = workDescriptions[Math.floor(Math.random() * workDescriptions.length)];
+
+      workLogs.push({
+        freelancer: contract.freelancer,
+        contract: contract._id,
+        startDate: logDate,
+        startTime,
+        endDate: logDate,
+        endTime,
+        duration: workHours * 60, // in minutes
+        description,
+        status: 'completed',
+      });
+    }
+
+    // Add one in-progress log for some contracts (30% chance)
+    if (Math.random() > 0.7) {
+      const startTime = getRandomTime(9, 11);
+      workLogs.push({
+        freelancer: contract.freelancer,
+        contract: contract._id,
+        startDate: today,
+        startTime,
+        description: 'Currently working on assigned tasks',
+        status: 'in_progress',
+      });
+    }
+  }
+
+  // Insert all work logs
+  const createdWorkLogs = await WorkLog.insertMany(workLogs);
+  
+  const completedCount = workLogs.filter((l) => l.status === 'completed').length;
+  const inProgressCount = workLogs.filter((l) => l.status === 'in_progress').length;
+  const totalMinutes = workLogs.reduce((sum, l) => sum + (l.duration || 0), 0);
+  const totalHours = Math.round((totalMinutes / 60) * 100) / 100;
+
+  logger.info(`✅ Created ${createdWorkLogs.length} work logs (${completedCount} completed, ${inProgressCount} in-progress, ${totalHours} total hours)`);
+  
+  return createdWorkLogs;
+}
+
 async function seedDatabase() {
   try {
     logger.info('🌱 Starting database seeding (Full Comprehensive Data)...');
@@ -2716,6 +2826,26 @@ async function seedDatabase() {
     // Seed data in order (due to dependencies)
     const users = await seedUsers();
     const admin = users.find(u => u.role === 'admin');
+    
+    // Seed RBAC system (permissions and roles)
+    logger.info('🔐 Seeding RBAC system...');
+    const permissions = await seedPermissions();
+    const roles = await seedRoles();
+    
+    // Assign Super Admin role to main admin user
+    if (admin && roles.length > 0) {
+      const superAdminRole = roles.find(r => r.slug === 'super-admin');
+      if (superAdminRole && superAdminRole._id) {
+        if (!admin.permissions) {
+          admin.permissions = { roles: [], directPermissions: [], deniedPermissions: [] };
+        }
+        admin.permissions.roles = [superAdminRole._id as any];
+        admin.lastPermissionUpdate = new Date();
+        await admin.save();
+        logger.info(`✅ Assigned Super Admin role to ${admin.email}`);
+      }
+    }
+    
     const platformSettings = await seedPlatformSettings(admin._id);
     const newSettings = await seedSettings();
     const categories = await seedCategories(admin._id);
@@ -2730,6 +2860,7 @@ async function seedDatabase() {
     const contracts = await seedContracts(users, projects, proposals, hireNowRequests);
     const reviews = await seedReviews(users, contracts, projects);
     const timeEntries = await seedTimeEntries(users, contracts);
+    const workLogs = await seedWorkLogs(contracts);
     const payments = await seedPayments(users, contracts);
     const transactions = await seedTransactions(users, contracts);
     const messages = await seedMessages(users);
@@ -2745,11 +2876,13 @@ async function seedDatabase() {
     
     logger.info('✅ Database seeding completed successfully');
     logger.info(`📊 Summary:
+    - Permissions: ${permissions.length}
+    - Roles: ${roles.length}
     - Platform Settings: Created
     - New Settings Model: Created with ${newSettings.commissionSettings.length} commission tiers
     - Categories: ${categories.length}
     - Skills: ${skills.length}
-    - Users: ${users.length}
+    - Users: ${users.length} (with complete profiles, work experience, education, languages)
     - Organizations: ${organizations.length}
     - Projects: ${projects.length}
     - Service Packages: ${servicePackages.length}
@@ -2758,6 +2891,7 @@ async function seedDatabase() {
     - Contracts: ${contracts.length}
     - Reviews: ${reviews.length}
     - Time Entries: ${timeEntries.length}
+    - Work Logs: ${workLogs.length}
     - Payments: ${payments.length}
     - Transactions: ${transactions.length}
     - Messages: ${messages.length}

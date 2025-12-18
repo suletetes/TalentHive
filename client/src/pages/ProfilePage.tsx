@@ -202,22 +202,6 @@ export const ProfilePage: React.FC = () => {
                     onEdit={() => setEditDialogOpen(true)}
                   />
                 </Box>
-                {user.role !== 'admin' && (
-                  <Button
-                    variant="outlined"
-                    startIcon={<OpenInNewIcon />}
-                    onClick={() => {
-                      const identifier = user.profileSlug || user._id;
-                      const profileUrl = user.role === 'freelancer' 
-                        ? `/freelancer/${identifier}` 
-                        : `/client/${identifier}`;
-                      window.open(profileUrl, '_blank');
-                    }}
-                    sx={{ ml: 2 }}
-                  >
-                    View Public Profile
-                  </Button>
-                )}
               </Box>
             </CardContent>
           </Card>

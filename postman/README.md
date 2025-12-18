@@ -1,278 +1,281 @@
-# TalentHive API - Postman Collection
+# TalentHive API Postman Collection
 
 ## Overview
-
-This directory contains the complete Postman collection for testing the TalentHive API. The collection includes all 149 endpoints organized by feature and user role, with comprehensive documentation, examples, and test scripts.
-
-## Files
-
-- `TalentHive-Complete-API.postman_collection.json` - Complete API collection with 149+ endpoints across 23 feature folders
-- `TalentHive-Environment.postman_environment.json` - Environment variables for development
-
-## Setup
-
-### 1. Import Collection
-
-1. Open Postman
-2. Click "Import" button
-3. Select `TalentHive-Complete-API.postman_collection.json`
-4. Click "Import"
-
-### 2. Import Environment
-
-1. Click "Import" button
-2. Select `TalentHive-Environment.postman_environment.json`
-3. Click "Import"
-4. Select "TalentHive Development" from environment dropdown
-
-### 3. Start Server
-
-```bash
-cd server
-npm run dev
-```
-
-Server should be running on `http://localhost:5000`
-
-## Usage
-
-### Authentication Flow
-
-1. **Login** - Use one of the test accounts:
-   - Admin: `admin@talenthive.com` / `Password123!`
-   - Client: `john.client@example.com` / `Password123!`
-   - Freelancer: `alice.dev@example.com` / `Password123!`
-
-2. The login request automatically saves the `accessToken` to environment variables
-
-3. All subsequent requests use the Bearer token authentication
-
-### Test Accounts
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@talenthive.com | Password123! |
-| Client | john.client@example.com | Password123! |
-| Freelancer | alice.dev@example.com | Password123! |
+This directory contains the Postman collection and environment for testing the TalentHive API.
 
 ## Collection Structure
 
-The collection is organized into 23 feature-based folders with 149 total endpoints:
+### 1. Authentication (`/api/auth`)
+- POST `/register` - Register new user
+- POST `/login` - Login user
+- POST `/refresh-token` - Refresh access token
+- POST `/logout` - Logout user
+- POST `/forgot-password` - Request password reset
+- POST `/reset-password` - Reset password with token
 
-### Core Features
-1. **Authentication** (4 endpoints)
-   - Register, Login, Logout, Refresh Token
+### 2. Users (`/api/users`)
+- GET `/profile` - Get current user profile
+- PUT `/profile` - Update profile
+- PUT `/change-password` - Change password
+- GET `/freelancers` - List freelancers
+- GET `/freelancer/:id` - Get freelancer details
+- GET `/client/:id` - Get client details
+- POST `/upload-avatar` - Upload avatar
+- POST `/upload-portfolio` - Upload portfolio images
+- DELETE `/delete-portfolio-image` - Delete portfolio image
 
-2. **Projects** (10 endpoints)
-   - Create, Read, Update, Delete, Search, Toggle Status, Get Stats
+#### Profile Slugs
+- GET `/slug/:slug` - Get user by slug
+- POST `/slug/validate` - Validate slug
+- PATCH `/profile/slug` - Update user slug
+- GET `/slug/suggestions/:baseName` - Get slug suggestions
+- GET `/slug/search?q=query` - Search by slug
+- GET `/:userId/slug-history` - Get slug history
 
-3. **Proposals** (10 endpoints)
-   - Submit, Get, Update, Withdraw, Accept, Reject, Highlight, Get Stats
+#### Profile Analytics
+- GET `/:userId/stats` - Get user statistics
+- POST `/:userId/profile-view` - Track profile view
+- GET `/:userId/profile-views` - Get view analytics
+- GET `/:userId/profile-viewers` - Get viewers list
 
-4. **Contracts** (10 endpoints)
-   - Create from Proposal, Sign, Submit/Approve/Reject Milestones, Amendments, Cancel
+### 3. Projects (`/api/projects`)
+- POST `/` - Create project
+- GET `/` - List projects
+- GET `/:id` - Get project details
+- PUT `/:id` - Update project
+- DELETE `/:id` - Delete project
+- GET `/my` - Get user's projects
+- POST `/:id/close` - Close project
 
-5. **Payments** (6 endpoints)
-   - Create Intent, Confirm, Release, Refund, Get Transactions, Get Balance
+### 4. Proposals (`/api/proposals`)
+- POST `/project/:projectId` - Submit proposal
+- GET `/my` - Get freelancer's proposals
+- GET `/project/:projectId` - Get proposals for project
+- GET `/:id` - Get proposal details
+- PUT `/:id` - Update proposal
+- PATCH `/:id/withdraw` - Withdraw proposal
+- POST `/:id/accept` - Accept proposal (client)
+- POST `/:id/reject` - Reject proposal (client)
 
-6. **Transactions** (7 endpoints)
-   - Payment Intent, Confirm, Release Escrow, Refund, History, Calculate Fees
+### 5. Contracts (`/api/contracts`)
+- POST `/` - Create contract
+- GET `/` - List contracts
+- GET `/:id` - Get contract details
+- PUT `/:id` - Update contract
+- POST `/:id/sign` - Sign contract
+- POST `/:id/milestones/:milestoneId/submit` - Submit milestone
+- POST `/:id/milestones/:milestoneId/approve` - Approve milestone
+- POST `/:id/milestones/:milestoneId/reject` - Reject milestone
 
-### Communication & Notifications
-7. **Messages** (11 endpoints)
-   - Conversations, Send, Edit, Delete, Reactions, Typing Indicator, Admin Support
+### 6. Payments (`/api/payments`)
+- POST `/create-payment-intent` - Create payment intent
+- POST `/confirm-payment` - Confirm payment
+- POST `/release/:milestoneId` - Release payment
+- GET `/history` - Get payment history
+- GET `/:id` - Get payment details
 
-8. **Notifications** (5 endpoints)
-   - Get, Mark as Read, Mark All Read, Delete, Unread Count
+### 7. Transactions (`/api/transactions`)
+- POST `/payment-intent` - Create payment intent
+- POST `/confirm` - Confirm payment
+- POST `/:transactionId/release` - Release escrow
+- POST `/:transactionId/refund` - Refund payment
+- GET `/history` - Get transaction history
+- GET `/:transactionId` - Get transaction details
+- POST `/calculate-fees` - Calculate fees
 
-### User Management
-9. **Users** (11 endpoints)
-   - Profile, Password, Skills, Portfolio, Availability, Freelancer Discovery
+### 8. Messages (`/api/messages`)
+- POST `/` - Send message
+- GET `/conversations` - List conversations
+- GET `/conversation/:userId` - Get conversation
+- PATCH `/:messageId/read` - Mark as read
 
-10. **Reviews** (4 endpoints)
-    - Create, Get, Respond to Reviews
+### 9. Reviews (`/api/reviews`)
+- POST `/` - Create review
+- GET `/user/:userId` - Get user reviews
+- GET `/freelancer/:userId` - Get freelancer reviews
+- GET `/client/:clientId` - Get client reviews
+- POST `/:reviewId/respond` - Respond to review
 
-11. **Verification** (4 endpoints)
-    - Send, Verify, Resend, Check Status
+### 10. Notifications (`/api/notifications`)
+- GET `/` - List notifications
+- PATCH `/:id/read` - Mark as read
+- PATCH `/read-all` - Mark all as read
+- DELETE `/:id` - Delete notification
 
-### Organizations & Teams
-12. **Organizations** (9 endpoints)
-    - Create, Read, Update, Delete, Members, Budget, Projects
+### 11. Time Tracking (`/api/time-tracking`)
+- GET `/sessions/active` - Get active session
+- POST `/sessions/start` - Start work session
+- POST `/sessions/:sessionId/stop` - Stop work session
+- POST `/entries` - Create time entry
+- GET `/entries` - Get time entries
+- PATCH `/entries/:entryId` - Update time entry
+- POST `/entries/submit` - Submit for approval
+- POST `/entries/:entryId/review` - Review time entry
+- GET `/report` - Get time report
 
-### Admin & Analytics
-13. **Admin** (10 endpoints)
-    - Dashboard Stats, User Management, Featured Freelancers, Reports
+### 12. Work Logs (`/api/work-logs`)
+- POST `/` - Create work log
+- GET `/` - Get work logs
+- PATCH `/:id` - Update work log
+- PATCH `/:id/complete` - Complete work log
+- DELETE `/:id` - Delete work log
+- GET `/report` - Get work log report
 
-14. **Analytics** (5 endpoints)
-    - Dashboard Overview, Revenue, User Growth, Projects, Payments
+### 13. Organizations (`/api/organizations`)
+- POST `/` - Create organization
+- GET `/` - List organizations
+- GET `/:id` - Get organization details
+- PUT `/:id` - Update organization
+- DELETE `/:id` - Delete organization
+- POST `/:id/members` - Add member
+- DELETE `/:id/members/:userId` - Remove member
+- PATCH `/:id/members/:userId/role` - Update member role
 
-### Search & Discovery
-15. **Search** (4 endpoints)
-    - Projects, Freelancers, Suggestions, Recommendations
+### 14. Services (`/api/services`)
+- POST `/packages` - Create service package
+- GET `/packages` - List service packages
+- GET `/packages/:packageId` - Get package details
+- PATCH `/packages/:packageId` - Update package
+- POST `/packages/:packageId/order` - Order package
+- POST `/templates` - Create project template
+- GET `/templates` - List templates
+- POST `/templates/:templateId/create-project` - Create from template
 
-### Configuration
-16. **Settings** (4 endpoints)
-    - Get/Update Platform Settings, History, Calculate Commission
+### 15. Support Tickets (`/api/support/tickets`)
+- POST `/` - Create ticket
+- GET `/` - List tickets
+- GET `/stats` - Get ticket stats (admin)
+- GET `/:ticketId` - Get ticket details
+- POST `/:ticketId/messages` - Add message
+- PATCH `/:ticketId/status` - Update status (admin)
+- PATCH `/:ticketId/assign` - Assign ticket (admin)
+- PATCH `/:ticketId/tags` - Update tags (admin)
 
-17. **Categories** (4 endpoints)
-    - Get, Create, Update, Delete
+### 16. Onboarding (`/api/onboarding`)
+- GET `/status` - Get onboarding status
+- PATCH `/step` - Update onboarding step
+- POST `/complete` - Complete onboarding
+- POST `/skip` - Skip onboarding
+- GET `/analytics` - Get analytics (admin)
+- GET `/analytics/:userId` - Get user analytics
 
-18. **Skills** (4 endpoints)
-    - Get, Create, Update, Delete
+### 17. Admin (`/api/admin`)
+- GET `/dashboard/stats` - Dashboard statistics
+- GET `/users` - List all users
+- PUT `/users/:userId/status` - Update user status
+- PUT `/users/:userId/role` - Update user role
+- GET `/reports` - Get reports
+- POST `/users/:userId/roles` - Assign role
+- DELETE `/users/:userId/roles` - Remove role
+- POST `/users/:userId/feature` - Feature freelancer
+- POST `/users/:userId/unfeature` - Unfeature freelancer
+- GET `/featured-freelancers` - List featured
+- PUT `/featured-freelancers/reorder` - Reorder featured
+- GET `/analytics` - Platform analytics
+- GET `/transactions` - All transactions
+- GET `/transactions/stats` - Transaction stats
+- POST `/transactions/auto-release` - Trigger auto-release
+- GET `/settings` - Get settings
+- PUT `/settings` - Update settings
+- GET `/settings/commission` - Get commission settings
+- PUT `/settings/commission` - Update commission
 
-### Services & Packages
-19. **Service Packages** (10 endpoints)
-    - Packages, Project Templates, Preferred Vendors
+### 18. RBAC (To Be Implemented - Task 8)
+#### Roles
+- POST `/api/admin/roles` - Create role
+- GET `/api/admin/roles` - List roles
+- PUT `/api/admin/roles/:roleId` - Update role
+- DELETE `/api/admin/roles/:roleId` - Delete role
 
-20. **Hire Now** (5 endpoints)
-    - Create Request, Get Sent/Received, Accept/Reject
+#### Permissions
+- POST `/api/admin/users/:userId/roles` - Assign role
+- DELETE `/api/admin/users/:userId/roles/:roleId` - Remove role
+- POST `/api/admin/users/:userId/permissions` - Grant permission
+- DELETE `/api/admin/users/:userId/permissions/:permissionId` - Revoke permission
+- GET `/api/admin/users/:userId/permissions` - Get user permissions
 
-### File Management
-21. **Upload** (3 endpoints)
-    - Single File, Multiple Files, Delete
+#### Audit Logs
+- GET `/api/admin/audit-logs` - Query audit logs
 
-### Time Tracking
-22. **Time Tracking** (8 endpoints)
-    - Work Sessions, Time Entries, Submit, Review, Reports
+### 19. Analytics (`/api/analytics`)
+- GET `/revenue` - Revenue analytics
+- GET `/user-growth` - User growth analytics
+- GET `/project-stats` - Project statistics
+- GET `/payment-analytics` - Payment analytics
+- GET `/dashboard-overview` - Dashboard overview
 
-### Webhooks
-23. **Webhooks** (1 endpoint)
-    - Stripe Webhook Handler
+### 20. Search (`/api/search`)
+- GET `/projects` - Search projects
+- GET `/freelancers` - Search freelancers
+- GET `/suggestions` - Get search suggestions
+- GET `/recommendations` - Get recommendations
+
+### 21. Categories & Skills
+- GET `/api/categories` - List categories
+- POST `/api/categories` - Create category (admin)
+- PUT `/api/categories/:id` - Update category (admin)
+- DELETE `/api/categories/:id` - Delete category (admin)
+- GET `/api/skills` - List skills
+- POST `/api/skills` - Create skill
+- PUT `/api/skills/:id` - Update skill (admin)
+- DELETE `/api/skills/:id` - Delete skill (admin)
+
+### 22. Verification (`/api/verification`)
+- POST `/verify-email` - Verify email
+- POST `/send-verification` - Send verification
+- POST `/resend-verification` - Resend verification
+- GET `/status` - Check verification status
+
+### 23. Hire Now (`/api/hire-now`)
+- POST `/:freelancerId` - Send hire request
+- GET `/sent` - Get sent requests
+- GET `/received` - Get received requests
+- PUT `/:requestId/accept` - Accept request
+- PUT `/:requestId/reject` - Reject request
+
+### 24. Disputes (`/api/disputes`)
+- POST `/` - Create dispute
+- GET `/` - List disputes
+- GET `/:id` - Get dispute details
+- POST `/:id/respond` - Respond to dispute
+- PATCH `/:id/resolve` - Resolve dispute (admin)
+
+### 25. Webhooks (`/api/webhooks`)
+- POST `/stripe` - Stripe webhook handler
 
 ## Environment Variables
 
-The collection uses the following variables:
+```json
+{
+  "API_URL": "http://localhost:5000/api",
+  "ACCESS_TOKEN": "",
+  "REFRESH_TOKEN": "",
+  "USER_ID": "",
+  "PROJECT_ID": "",
+  "PROPOSAL_ID": "",
+  "CONTRACT_ID": "",
+  "MILESTONE_ID": "",
+  "TRANSACTION_ID": "",
+  "TICKET_ID": ""
+}
+```
 
-| Variable | Description | Auto-set |
-|----------|-------------|----------|
-| baseUrl | API base URL (http://localhost:5000/api/v1) | No |
-| accessToken | JWT access token | Yes (on login) |
-| userId | Current user ID | Yes (on login) |
-| projectId | Project ID for testing | Manual |
-| proposalId | Proposal ID for testing | Manual |
-| contractId | Contract ID for testing | Manual |
-| conversationId | Conversation ID for testing | Manual |
-| organizationId | Organization ID for testing | Manual |
-| transactionId | Transaction ID for testing | Manual |
-| notificationId | Notification ID for testing | Manual |
-| milestoneId | Milestone ID for testing | Manual |
-| messageId | Message ID for testing | Manual |
-| reviewId | Review ID for testing | Manual |
-| freelancerId | Freelancer ID for testing | Manual |
+## Testing Workflow
 
-## Testing Workflows
+1. **Register/Login** - Get access token
+2. **Create Profile** - Complete user profile
+3. **Create Project** (Client) or **Browse Projects** (Freelancer)
+4. **Submit Proposal** (Freelancer)
+5. **Accept Proposal** (Client)
+6. **Create Contract**
+7. **Submit Milestone** (Freelancer)
+8. **Approve & Release Payment** (Client)
+9. **Leave Review**
 
-### Complete Client Workflow
+## Notes
 
-1. **Authentication**: Register/Login as client
-2. **Project Management**: Create project with details
-3. **Proposal Review**: Get project proposals, review freelancer profiles
-4. **Proposal Selection**: Accept best proposal, reject others
-5. **Contract Management**: View auto-generated contract, sign it
-6. **Milestone Tracking**: Monitor milestone submissions and approvals
-7. **Payment Processing**: Create payment intent, confirm payment
-8. **Review & Feedback**: Leave review for completed work
-9. **Organization**: Create organization, manage team members, track budget
-
-### Complete Freelancer Workflow
-
-1. **Authentication**: Register/Login as freelancer
-2. **Profile Setup**: Update profile, add skills, portfolio items
-3. **Project Discovery**: Browse projects, search by skills/budget
-4. **Proposal Submission**: Submit proposals with custom pricing
-5. **Proposal Management**: Track proposals, update/withdraw as needed
-6. **Contract Acceptance**: Accept contract, sign it
-7. **Work Submission**: Submit milestones with deliverables
-8. **Payment Receipt**: Receive payment after approval
-9. **Review Response**: Respond to client reviews
-
-### Complete Admin Workflow
-
-1. **Authentication**: Login as admin
-2. **Dashboard**: View platform overview and key metrics
-3. **Analytics**: Check revenue, user growth, project stats, payment analytics
-4. **User Management**: View all users, update status/roles
-5. **Platform Settings**: Configure commission rates, payment settings
-6. **Featured Freelancers**: Feature/unfeature top freelancers, reorder
-7. **Reports**: Generate and review platform reports
-8. **Support**: Handle admin conversations with users
-
-### Payment Flow
-
-1. Create payment intent with contract/milestone details
-2. Confirm payment with Stripe payment intent ID
-3. Funds held in escrow
-4. Release payment after milestone approval
-5. Platform commission deducted automatically
-6. Freelancer receives remaining amount
-
-### Messaging & Support
-
-1. Get conversations list
-2. Send messages with optional attachments
-3. Edit/delete messages as needed
-4. Add reactions to messages
-5. Mark conversations as read
-6. Admin can create support conversations
-
-## Tips
-
-### Using Variables
-
-- Use `{{variableName}}` in requests
-- Variables are automatically populated from responses
-- Manually set IDs from responses for testing
-
-### Pre-request Scripts
-
-The collection includes pre-request scripts that:
-- Automatically add Bearer token to requests
-- Set common headers
-
-### Test Scripts
-
-The collection includes test scripts that:
-- Validate response status codes
-- Extract and save tokens
-- Save IDs for subsequent requests
-
-### Testing File Upload
-
-1. Select "Upload Single File" request
-2. Go to Body tab
-3. Select file in the "file" field
-4. Send request
-
-## Troubleshooting
-
-### 401 Unauthorized
-
-- Token expired - Login again
-- Wrong credentials - Check test accounts
-- Token not set - Check environment variables
-
-### 404 Not Found
-
-- Server not running - Start server
-- Wrong URL - Check baseUrl variable
-- Invalid ID - Use valid IDs from seed data
-
-### 500 Server Error
-
-- Check server logs
-- Verify database connection
-- Check request body format
-
-## API Documentation
-
-For detailed API documentation, see:
-- `API-DOCUMENTATION.md` in project root
-- Swagger UI at `http://localhost:5000/api-docs` (if configured)
-
-## Support
-
-For issues or questions:
-- Check server logs
-- Review API documentation
-- Test with seed data first
-- Verify environment variables
+- All protected routes require `Authorization: Bearer <token>` header
+- Admin routes require admin role
+- File uploads use `multipart/form-data`
+- Most endpoints return JSON responses
+- Error responses follow standard format: `{ status: 'error', message: '...' }`
