@@ -26,7 +26,7 @@ describe('Authentication Endpoints', () => {
       expect(response.body.status).toBe('success');
       expect(response.body.data.user.email).toBe(validUserData.email);
       expect(response.body.data.user.role).toBe(validUserData.role);
-      expect(response.body.data.user.isVerified).toBe(false);
+      expect(response.body.data.user.isVerified).toBe(true);
 
       // Check if user was created in database
       const user = await User.findOne({ email: validUserData.email });

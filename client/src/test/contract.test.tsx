@@ -304,7 +304,7 @@ describe('ContractForm', () => {
 
     // Click Next to go to terms
     fireEvent.click(screen.getByText('Next'));
-    expect(screen.getByText('Terms & Conditions')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Terms & Conditions' })).toBeInTheDocument();
 
     // Click Next to go to review
     fireEvent.click(screen.getByText('Next'));
@@ -312,7 +312,7 @@ describe('ContractForm', () => {
 
     // Click Back
     fireEvent.click(screen.getByText('Back'));
-    expect(screen.getByText('Terms & Conditions')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Terms & Conditions' })).toBeInTheDocument();
   });
 
   it('validates form fields', async () => {
@@ -370,7 +370,7 @@ describe('ContractForm', () => {
     fireEvent.click(screen.getByText('Next')); // Review
 
     // Submit contract
-    fireEvent.click(screen.getByText('Create Contract'));
+    fireEvent.click(screen.getByRole('button', { name: 'Create Contract' }));
 
     await waitFor(() => {
       expect(mockApiService.post).toHaveBeenCalledWith(
@@ -448,7 +448,10 @@ describe('MilestoneManager', () => {
     );
 
     expect(screen.getByText('Frontend Development')).toBeInTheDocument();
-    expect(screen.getByText('Backend Development')).toBeInTheDocument();
+    
+    // Check for Backend Development in the milestone list
+    const milestoneCards = screen.getAllByText('Backend Development');
+    expect(milestoneCards.length).toBeGreaterThan(0);
     // Both milestones have $1000, so use getAllByText
     const amounts = screen.getAllByText('$1000');
     expect(amounts.length).toBeGreaterThan(0);
@@ -506,11 +509,14 @@ describe('MilestoneManager', () => {
     );
 
     // Click submit milestone
-    fireEvent.click(screen.getByText('Submit Milestone'));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit Milestone' }));
 
     // Should open dialog
-    expect(screen.getByText('Submit Milestone')).toBeInTheDocument();
-    expect(screen.getByText('Backend Development')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    
+    // Check that the dialog contains the milestone title (within the dialog)
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('Backend Development');
 
     // Add deliverable
     fireEvent.change(screen.getByLabelText('Title'), {
@@ -563,16 +569,16 @@ describe('MilestoneManager', () => {
     );
 
     // Click approve
-    fireEvent.click(screen.getByText('Approve'));
+    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
 
     // Should open dialog
-    expect(screen.getByText('Approve Milestone')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     // Add feedback and approve
     fireEvent.change(screen.getByLabelText('Approval Message (Optional)'), {
       target: { value: 'Excellent work!' },
     });
-    fireEvent.click(screen.getByText('Approve Milestone'));
+    fireEvent.click(screen.getByRole('button', { name: 'Approve Milestone' }));
 
     await waitFor(() => {
       expect(mockApiService.post).toHaveBeenCalledWith(

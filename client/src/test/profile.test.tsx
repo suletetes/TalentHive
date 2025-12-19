@@ -333,7 +333,7 @@ describe('Profile Components', () => {
 
       const viewProfileLink = screen.getByText('View Profile');
       expect(viewProfileLink).toBeInTheDocument();
-      expect(viewProfileLink.closest('a')).toHaveAttribute('href', '/freelancers/1');
+      expect(viewProfileLink.closest('a')).toHaveAttribute('href', '/freelancer/1');
     });
   });
 });

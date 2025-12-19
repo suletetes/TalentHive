@@ -47,24 +47,18 @@ export const getServicePackages = async (req: Request, res: Response) => {
     
     // Handle freelancerId - could be ObjectId or slug
     if (freelancerId) {
-      // Check if it's a valid ObjectId format (24 hex characters)
-      const isObjectId = /^[0-9a-fA-F]{24}$/.test(freelancerId as string);
+      const { resolveUserIdBySlugOrId } = await import('@/utils/userResolver');
+      const resolvedUserId = await resolveUserIdBySlugOrId(freelancerId as string);
       
-      if (isObjectId) {
-        query.freelancer = freelancerId;
+      if (resolvedUserId) {
+        query.freelancer = resolvedUserId;
       } else {
-        // It's a slug, find the user first
-        const user = await User.findOne({ profileSlug: freelancerId });
-        if (user) {
-          query.freelancer = user._id;
-        } else {
-          // No user found with this slug, return empty results
-          return res.json({
-            status: 'success',
-            results: 0,
-            data: { packages: [] },
-          });
-        }
+        // No user found with this slug/ID, return empty results
+        return res.json({
+          status: 'success',
+          results: 0,
+          data: { packages: [] },
+        });
       }
     }
     
@@ -213,14 +207,51 @@ export const createProjectFromTemplate = async (req: Request, res: Response) => 
       });
     }
 
+    // Import Category and Skill models
+    const { Category } = await import('@/models/Category');
+    const { Skill } = await import('@/models/Skill');
+
+    // Find or create category
+    let category = await Category.findOne({ name: template.category });
+    if (!category) {
+      category = await Category.create({
+        name: template.category,
+        slug: template.category.toLowerCase().replace(/\s+/g, '-'),
+        description: `Category for ${template.category}`,
+        createdBy: clientId,
+      });
+    }
+
+    // Find or create skills
+    const skillObjects = [];
+    for (const skillName of template.skills || []) {
+      let skill = await Skill.findOne({ name: skillName });
+      if (!skill) {
+        skill = await Skill.create({
+          name: skillName,
+          slug: skillName.toLowerCase().replace(/\s+/g, '-'),
+          category: category._id,
+          createdBy: clientId,
+        });
+      }
+      skillObjects.push(skill._id);
+    }
+
     // Create project from template
     const project = await Project.create({
       title: template.title,
       description: template.description,
-      category: template.category,
-      budget: template.budget,
-      duration: template.duration,
-      skills: template.skills,
+      category: category._id,
+      budget: {
+        type: 'fixed',
+        min: template.budget.min,
+        max: template.budget.max,
+      },
+      timeline: {
+        duration: template.duration,
+        unit: 'days',
+      },
+      skills: skillObjects,
       requirements: template.requirements,
       client: clientId,
       status: 'open',
@@ -255,9 +286,20 @@ export const addPreferredVendor = async (req: Request, res: Response) => {
     }
     const { freelancerId, category, rating, notes, isPriority } = req.body;
 
+    // Resolve freelancer slug or ID to ObjectId
+    const { resolveUserIdBySlugOrId } = await import('@/utils/userResolver');
+    const resolvedFreelancerId = await resolveUserIdBySlugOrId(freelancerId);
+    
+    if (!resolvedFreelancerId) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Freelancer not found',
+      });
+    }
+
     const vendor = await PreferredVendor.create({
       client: clientId,
-      freelancer: freelancerId,
+      freelancer: resolvedFreelancerId,
       category,
       rating,
       notes,

@@ -254,7 +254,7 @@ const contractSchema = new Schema<IContract>({
   },
   status: {
     type: String,
-    enum: ['draft', 'active', 'completed', 'cancelled', 'disputed'],
+    enum: ['draft', 'active', 'paused', 'completed', 'cancelled', 'disputed'],
     default: 'draft',
   },
   milestones: [milestoneSchema],

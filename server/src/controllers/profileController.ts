@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { User } from '@/models/User';
 import { ProfileStatsService } from '@/services/profileStatsService';
 import { AuthRequest } from '@/types/auth';
+import { resolveUserBySlugOrId } from '@/utils/userResolver';
+import { IUser } from '@/types/user';
 
 /**
  * Get freelancer profile with stats, projects, and ratings
@@ -10,15 +12,8 @@ export const getFreelancerProfile = async (req: Request, res: Response) => {
   try {
     const { slugOrId } = req.params;
 
-    // Find user by slug or ID
-    let user;
-    if (slugOrId.match(/^[0-9a-fA-F]{24}$/)) {
-      // It's an ObjectId
-      user = await User.findById(slugOrId);
-    } else {
-      // It's a slug
-      user = await User.findOne({ profileSlug: slugOrId.toLowerCase() });
-    }
+    // Find user by slug or ID using utility function
+    const user = await resolveUserBySlugOrId(slugOrId) as IUser | null;
 
     if (!user) {
       return res.status(404).json({
@@ -36,21 +31,22 @@ export const getFreelancerProfile = async (req: Request, res: Response) => {
 
     // Track profile view if viewer is authenticated
     const authReq = req as AuthRequest;
-    if (authReq.user && authReq.user.userId !== user._id.toString()) {
-      await ProfileStatsService.trackProfileView(user._id, authReq.user.userId);
+    const userId = user._id.toString();
+    if (authReq.user && authReq.user.userId !== userId) {
+      await ProfileStatsService.trackProfileView(user._id as any, authReq.user.userId);
     } else if (!authReq.user) {
       // Track anonymous view
-      await ProfileStatsService.trackProfileView(user._id);
+      await ProfileStatsService.trackProfileView(user._id as any);
     }
 
     // Get statistics
-    const stats = await ProfileStatsService.getFreelancerStats(user._id);
+    const stats = await ProfileStatsService.getFreelancerStats(user._id as any);
 
     // Get rating distribution
-    const ratingDistribution = await ProfileStatsService.getRatingDistribution(user._id);
+    const ratingDistribution = await ProfileStatsService.getRatingDistribution(user._id as any);
 
     // Get completed projects
-    const projects = await ProfileStatsService.getFreelancerProjects(user._id, 10);
+    const projects = await ProfileStatsService.getFreelancerProjects(user._id as any, 10);
 
     // Prepare user data (exclude sensitive fields)
     const userData = {
@@ -91,15 +87,8 @@ export const getClientProfile = async (req: Request, res: Response) => {
   try {
     const { slugOrId } = req.params;
 
-    // Find user by slug or ID
-    let user;
-    if (slugOrId.match(/^[0-9a-fA-F]{24}$/)) {
-      // It's an ObjectId
-      user = await User.findById(slugOrId);
-    } else {
-      // It's a slug
-      user = await User.findOne({ profileSlug: slugOrId.toLowerCase() });
-    }
+    // Find user by slug or ID using utility function
+    const user = await resolveUserBySlugOrId(slugOrId) as IUser | null;
 
     if (!user) {
       return res.status(404).json({
@@ -117,21 +106,22 @@ export const getClientProfile = async (req: Request, res: Response) => {
 
     // Track profile view if viewer is authenticated
     const authReq = req as AuthRequest;
-    if (authReq.user && authReq.user.userId !== user._id.toString()) {
-      await ProfileStatsService.trackProfileView(user._id, authReq.user.userId);
+    const userId = user._id.toString();
+    if (authReq.user && authReq.user.userId !== userId) {
+      await ProfileStatsService.trackProfileView(user._id as any, authReq.user.userId);
     } else if (!authReq.user) {
       // Track anonymous view
-      await ProfileStatsService.trackProfileView(user._id);
+      await ProfileStatsService.trackProfileView(user._id as any);
     }
 
     // Get statistics
-    const stats = await ProfileStatsService.getClientStats(user._id);
+    const stats = await ProfileStatsService.getClientStats(user._id as any);
 
     // Get rating distribution
-    const ratingDistribution = await ProfileStatsService.getRatingDistribution(user._id);
+    const ratingDistribution = await ProfileStatsService.getRatingDistribution(user._id as any);
 
     // Get posted projects
-    const projects = await ProfileStatsService.getClientProjects(user._id, 10);
+    const projects = await ProfileStatsService.getClientProjects(user._id as any, 10);
 
     // Prepare user data (exclude sensitive fields)
     const userData = {
@@ -215,15 +205,8 @@ export const trackProfileView = async (req: AuthRequest, res: Response) => {
     const { userId } = req.params;
     const viewerId = req.user?._id;
 
-    // Find user by slug or ID
-    let user;
-    if (userId.match(/^[0-9a-fA-F]{24}$/)) {
-      // It's an ObjectId
-      user = await User.findById(userId);
-    } else {
-      // It's a slug
-      user = await User.findOne({ profileSlug: userId.toLowerCase() });
-    }
+    // Find user by slug or ID using utility function
+    const user = await resolveUserBySlugOrId(userId) as IUser | null;
 
     if (!user) {
       return res.status(404).json({
@@ -232,7 +215,7 @@ export const trackProfileView = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    await ProfileStatsService.trackProfileView(user._id, viewerId);
+    await ProfileStatsService.trackProfileView(user._id as any, viewerId);
 
     res.status(200).json({
       success: true,

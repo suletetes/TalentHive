@@ -306,6 +306,11 @@ export const withdrawProposal = catchAsync(async (req: AuthRequest, res: Respons
     return next(new AppError('You can only withdraw your own proposals', 403));
   }
 
+  // Check if proposal can be withdrawn
+  if (proposal.status !== 'submitted') {
+    return next(new AppError('Can only withdraw submitted proposals', 400));
+  }
+
   await proposal.withdraw();
 
   // Clear cache
@@ -336,6 +341,11 @@ export const acceptProposal = catchAsync(async (req: AuthRequest, res: Response,
   // Check if project is still open
   if (project.status !== 'open') {
     return next(new AppError('Project is no longer accepting proposals', 400));
+  }
+
+  // Check if proposal can be accepted
+  if (proposal.status !== 'submitted') {
+    return next(new AppError('Can only accept submitted proposals', 400));
   }
 
   // ISSUE #7 FIX: Check if contract already exists for this project

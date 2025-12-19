@@ -3,29 +3,44 @@ import { app } from '../index';
 import { User } from '../models/User';
 import { Project } from '../models/Project';
 import { Proposal } from '../models/Proposal';
-import { connectDB, disconnectDB } from '../config/database';
-import { generateToken } from '../utils/jwt';
+import { Category } from '../models/Category';
+import { Skill } from '../models/Skill';
+// Database connection managed by global test setup
+import { generateTokens } from '../utils/jwt';
 
 describe('Proposal System', () => {
   let clientUser: any;
   let freelancerUser: any;
+  let adminUser: any;
   let project: any;
   let clientToken: string;
   let freelancerToken: string;
+  let adminToken: string;
+  let category: any;
+  let skills: any[];
 
-  beforeAll(async () => {
-    await connectDB();
-  });
-
-  afterAll(async () => {
-    await disconnectDB();
-  });
+  // Database connection managed by global test setup
 
   beforeEach(async () => {
     // Clean up
     await User.deleteMany({});
     await Project.deleteMany({});
     await Proposal.deleteMany({});
+    await Category.deleteMany({});
+    await Skill.deleteMany({});
+
+    // Create admin user for categories and skills
+    adminUser = await User.create({
+      email: 'admin@test.com',
+      password: 'password123',
+      role: 'admin',
+      profile: {
+        firstName: 'Admin',
+        lastName: 'User',
+      },
+      isVerified: true,
+      isActive: true,
+    });
 
     // Create test users
     clientUser = await User.create({
@@ -36,7 +51,7 @@ describe('Proposal System', () => {
         firstName: 'John',
         lastName: 'Client',
       },
-      isEmailVerified: true,
+      isVerified: true,
       isActive: true,
     });
 
@@ -52,12 +67,40 @@ describe('Proposal System', () => {
         title: 'Full Stack Developer',
         hourlyRate: 50,
         skills: ['JavaScript', 'React', 'Node.js'],
-        completedProjects: 5,
+        experience: 'intermediate',
+        availability: {
+          status: 'available',
+        },
+        portfolio: [],
+        certifications: [],
       },
       rating: 4.5,
-      isEmailVerified: true,
+      isVerified: true,
       isActive: true,
     });
+
+    // Create category and skills
+    category = await Category.create({
+      name: 'Web Development',
+      slug: 'web-development',
+      description: 'Web development projects',
+      createdBy: adminUser._id,
+    });
+
+    const skillsData = [
+      { name: 'JavaScript', slug: 'javascript' },
+      { name: 'React', slug: 'react' }
+    ];
+    skills = await Promise.all(
+      skillsData.map(skillData =>
+        Skill.create({
+          name: skillData.name,
+          slug: skillData.slug,
+          category: category._id,
+          createdBy: adminUser._id,
+        })
+      )
+    );
 
     // Create test project
     project = await Project.create({
@@ -73,14 +116,31 @@ describe('Proposal System', () => {
         duration: 2,
         unit: 'weeks',
       },
-      skills: ['JavaScript', 'React'],
-      category: 'Web Development',
+      skills: skills.map(skill => skill._id),
+      category: category._id,
       status: 'open',
     });
 
     // Generate tokens
-    clientToken = generateToken(clientUser._id);
-    freelancerToken = generateToken(freelancerUser._id);
+    const clientTokens = generateTokens({ 
+      userId: clientUser._id.toString(), 
+      email: clientUser.email, 
+      role: clientUser.role 
+    });
+    const freelancerTokens = generateTokens({ 
+      userId: freelancerUser._id.toString(), 
+      email: freelancerUser.email, 
+      role: freelancerUser.role 
+    });
+    const adminTokens = generateTokens({ 
+      userId: adminUser._id.toString(), 
+      email: adminUser.email, 
+      role: adminUser.role 
+    });
+    
+    clientToken = clientTokens.accessToken;
+    freelancerToken = freelancerTokens.accessToken;
+    adminToken = adminTokens.accessToken;
   });
 
   describe('POST /api/proposals/project/:projectId', () => {
@@ -109,7 +169,7 @@ describe('Proposal System', () => {
       };
 
       const response = await request(app)
-        .post(`/api/proposals/project/${project._id}`)
+        .post(`/api/v1/proposals/project/${project._id}`)
         .set('Authorization', `Bearer ${freelancerToken}`)
         .send(proposalData)
         .expect(201);
@@ -133,7 +193,7 @@ describe('Proposal System', () => {
       };
 
       await request(app)
-        .post(`/api/proposals/project/${project._id}`)
+        .post(`/api/v1/proposals/project/${project._id}`)
         .set('Authorization', `Bearer ${freelancerToken}`)
         .send(proposalData)
         .expect(400);
@@ -150,7 +210,7 @@ describe('Proposal System', () => {
       };
 
       await request(app)
-        .post(`/api/proposals/project/${project._id}`)
+        .post(`/api/v1/proposals/project/${project._id}`)
         .set('Authorization', `Bearer ${clientToken}`)
         .send(proposalData)
         .expect(403);
@@ -168,14 +228,14 @@ describe('Proposal System', () => {
 
       // First submission
       await request(app)
-        .post(`/api/proposals/project/${project._id}`)
+        .post(`/api/v1/proposals/project/${project._id}`)
         .set('Authorization', `Bearer ${freelancerToken}`)
         .send(proposalData)
         .expect(201);
 
       // Second submission should fail
       await request(app)
-        .post(`/api/proposals/project/${project._id}`)
+        .post(`/api/v1/proposals/project/${project._id}`)
         .set('Authorization', `Bearer ${freelancerToken}`)
         .send(proposalData)
         .expect(400);
@@ -198,7 +258,7 @@ describe('Proposal System', () => {
 
     it('should get proposals for project owner', async () => {
       const response = await request(app)
-        .get(`/api/proposals/project/${project._id}`)
+        .get(`/api/v1/proposals/project/${project._id}`)
         .set('Authorization', `Bearer ${clientToken}`)
         .expect(200);
 
@@ -213,13 +273,18 @@ describe('Proposal System', () => {
         password: 'password123',
         role: 'client',
         profile: { firstName: 'Other', lastName: 'User' },
-        isEmailVerified: true,
+        isVerified: true,
       });
 
-      const otherToken = generateToken((otherUser._id as any).toString());
+      const otherTokens = generateTokens({ 
+        userId: otherUser._id.toString(), 
+        email: otherUser.email, 
+        role: otherUser.role 
+      });
+      const otherToken = otherTokens.accessToken;
 
       await request(app)
-        .get(`/api/proposals/project/${project._id}`)
+        .get(`/api/v1/proposals/project/${project._id}`)
         .set('Authorization', `Bearer ${otherToken}`)
         .expect(403);
     });
@@ -240,7 +305,7 @@ describe('Proposal System', () => {
 
     it('should get freelancer proposals', async () => {
       const response = await request(app)
-        .get('/api/proposals/my')
+        .get('/api/v1/proposals/my')
         .set('Authorization', `Bearer ${freelancerToken}`)
         .expect(200);
 
@@ -251,7 +316,7 @@ describe('Proposal System', () => {
 
     it('should fail for client role', async () => {
       await request(app)
-        .get('/api/proposals/my')
+        .get('/api/v1/proposals/my')
         .set('Authorization', `Bearer ${clientToken}`)
         .expect(403);
     });
@@ -274,9 +339,9 @@ describe('Proposal System', () => {
 
     it('should accept proposal successfully', async () => {
       const response = await request(app)
-        .post(`/api/proposals/${proposal._id}/accept`)
+        .post(`/api/v1/proposals/${proposal._id}/accept`)
         .set('Authorization', `Bearer ${clientToken}`)
-        .send({ clientFeedback: 'Great proposal! Looking forward to working with you.' })
+        .send({ feedback: 'Great proposal! Looking forward to working with you.' })
         .expect(200);
 
       expect(response.body.status).toBe('success');
@@ -291,7 +356,7 @@ describe('Proposal System', () => {
 
     it('should fail for non-project owner', async () => {
       await request(app)
-        .post(`/api/proposals/${proposal._id}/accept`)
+        .post(`/api/v1/proposals/${proposal._id}/accept`)
         .set('Authorization', `Bearer ${freelancerToken}`)
         .expect(403);
     });
@@ -301,7 +366,7 @@ describe('Proposal System', () => {
       await proposal.save();
 
       await request(app)
-        .post(`/api/proposals/${proposal._id}/accept`)
+        .post(`/api/v1/proposals/${proposal._id}/accept`)
         .set('Authorization', `Bearer ${clientToken}`)
         .expect(400);
     });
@@ -324,9 +389,9 @@ describe('Proposal System', () => {
 
     it('should reject proposal successfully', async () => {
       const response = await request(app)
-        .post(`/api/proposals/${proposal._id}/reject`)
+        .post(`/api/v1/proposals/${proposal._id}/reject`)
         .set('Authorization', `Bearer ${clientToken}`)
-        .send({ clientFeedback: 'Thank you for your proposal, but we decided to go with another freelancer.' })
+        .send({ feedback: 'Thank you for your proposal, but we decided to go with another freelancer.' })
         .expect(200);
 
       expect(response.body.status).toBe('success');
@@ -352,7 +417,7 @@ describe('Proposal System', () => {
 
     it('should withdraw proposal successfully', async () => {
       const response = await request(app)
-        .delete(`/api/proposals/${proposal._id}`)
+        .patch(`/api/v1/proposals/${proposal._id}/withdraw`)
         .set('Authorization', `Bearer ${freelancerToken}`)
         .expect(200);
 
@@ -364,7 +429,7 @@ describe('Proposal System', () => {
 
     it('should fail for non-proposal owner', async () => {
       await request(app)
-        .delete(`/api/proposals/${proposal._id}`)
+        .patch(`/api/v1/proposals/${proposal._id}/withdraw`)
         .set('Authorization', `Bearer ${clientToken}`)
         .expect(403);
     });
@@ -374,7 +439,7 @@ describe('Proposal System', () => {
       await proposal.save();
 
       await request(app)
-        .delete(`/api/proposals/${proposal._id}`)
+        .patch(`/api/v1/proposals/${proposal._id}/withdraw`)
         .set('Authorization', `Bearer ${freelancerToken}`)
         .expect(400);
     });
@@ -449,12 +514,22 @@ describe('Proposal System', () => {
     });
 
     it('should set submittedAt when status changes to submitted', async () => {
-      expect(proposal.submittedAt).toBeUndefined();
+      // Create a new proposal with draft status
+      const draftProposal = new Proposal({
+        project: project._id,
+        freelancer: freelancerUser._id,
+        coverLetter: 'I am very interested in this project and have the required skills to complete it successfully.',
+        bidAmount: 1500,
+        timeline: { duration: 10, unit: 'days' },
+        status: 'draft',
+      });
       
-      proposal.status = 'submitted';
-      await proposal.save();
+      expect(draftProposal.submittedAt).toBeUndefined();
       
-      expect(proposal.submittedAt).toBeDefined();
+      draftProposal.status = 'submitted';
+      await draftProposal.save();
+      
+      expect(draftProposal.submittedAt).toBeDefined();
     });
 
     it('should set respondedAt when status changes to accepted', async () => {

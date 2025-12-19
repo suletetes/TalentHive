@@ -655,7 +655,7 @@ export const HomePage: React.FC = () => {
                           } 
                         }}
                         component={isStatic ? 'div' : Link}
-                        to={isStatic ? undefined : `/freelancer/${freelancer._id}`}
+                        to={isStatic ? undefined : `/freelancer/${freelancer.profileSlug || freelancer._id}`}
                         style={isStatic ? {} : { textDecoration: 'none' }}
                       >
                       
