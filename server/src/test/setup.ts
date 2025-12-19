@@ -67,21 +67,19 @@ afterEach(async () => {
   try {
     // Get all collections and clear them
     const collections = mongoose.connection.collections;
-    const clearPromises = Object.values(collections).map(async (collection) => {
+    const clearPromises = Object.keys(collections).map(async (collectionName) => {
       try {
-        await collection.deleteMany({});
+        const collection = collections[collectionName];
+        if (collection && typeof collectionName === 'string') {
+          await collection.deleteMany({});
+        }
       } catch (error) {
-        // Ignore errors for collections that don't exist
-        console.warn(`Failed to clear collection ${collection.collectionName}:`, error);
+        // Ignore errors for collections that don't exist or can't be cleared
+        console.warn(`Failed to clear collection ${collectionName}:`, error);
       }
     });
     
     await Promise.all(clearPromises);
-    
-    // Clear any cached data
-    if (mongoose.connection.db) {
-      await mongoose.connection.db.admin().command({ planCacheClear: 1 });
-    }
   } catch (error) {
     console.warn('Error during test cleanup:', error);
   }
