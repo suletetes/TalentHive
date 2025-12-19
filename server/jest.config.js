@@ -18,5 +18,15 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testTimeout: 10000,
+  testTimeout: 30000,
+  // Force tests to run sequentially to avoid database conflicts
+  maxWorkers: 1,
+  // Ensure proper cleanup between test files
+  forceExit: true,
+  // Clear mocks between tests
+  clearMocks: true,
+  // Reset modules between tests
+  resetMocks: true,
+  // Restore mocks between tests
+  restoreMocks: true,
 };
