@@ -210,7 +210,7 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
           <Button
             variant="contained"
             component={Link}
-            to={`/freelancer/${freelancer._id}`}
+            to={`/freelancer/${freelancer.profileSlug || freelancer._id}`}
             size="small"
           >
             View Profile
