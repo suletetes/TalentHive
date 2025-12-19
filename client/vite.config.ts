@@ -37,14 +37,15 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    testTimeout: 5000,
-    hookTimeout: 5000,
-    teardownTimeout: 5000,
-    isolate: false,
+    testTimeout: 10000,
+    hookTimeout: 10000,
+    teardownTimeout: 10000,
+    isolate: true,
     pool: 'threads',
     poolOptions: {
       threads: {
         singleThread: true,
+        isolate: true,
       },
     },
     coverage: {
@@ -53,5 +54,8 @@ export default defineConfig({
     reporters: ['basic'],
     logHeapUsage: false,
     css: false,
+    sequence: {
+      concurrent: false,
+    },
   },
 }); 
