@@ -213,14 +213,51 @@ export const createProjectFromTemplate = async (req: Request, res: Response) => 
       });
     }
 
+    // Import Category and Skill models
+    const { Category } = await import('@/models/Category');
+    const { Skill } = await import('@/models/Skill');
+
+    // Find or create category
+    let category = await Category.findOne({ name: template.category });
+    if (!category) {
+      category = await Category.create({
+        name: template.category,
+        slug: template.category.toLowerCase().replace(/\s+/g, '-'),
+        description: `Category for ${template.category}`,
+        createdBy: clientId,
+      });
+    }
+
+    // Find or create skills
+    const skillObjects = [];
+    for (const skillName of template.skills || []) {
+      let skill = await Skill.findOne({ name: skillName });
+      if (!skill) {
+        skill = await Skill.create({
+          name: skillName,
+          slug: skillName.toLowerCase().replace(/\s+/g, '-'),
+          category: category._id,
+          createdBy: clientId,
+        });
+      }
+      skillObjects.push(skill._id);
+    }
+
     // Create project from template
     const project = await Project.create({
       title: template.title,
       description: template.description,
-      category: template.category,
-      budget: template.budget,
-      duration: template.duration,
-      skills: template.skills,
+      category: category._id,
+      budget: {
+        type: 'fixed',
+        min: template.budget.min,
+        max: template.budget.max,
+      },
+      timeline: {
+        duration: template.duration,
+        unit: 'days',
+      },
+      skills: skillObjects,
       requirements: template.requirements,
       client: clientId,
       status: 'open',
