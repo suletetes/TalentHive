@@ -385,7 +385,7 @@ export const HireNowRequestsPage: React.FC = () => {
                             size="small"
                             onClick={() => {
                               console.log('[VIEW FREELANCER] Navigating to:', `/freelancer/${request.freelancer?._id}`);
-                              navigate(`/freelancer/${request.freelancer?._id}`);
+                              navigate(`/freelancer/${request.freelancer?.profileSlug || request.freelancer?._id}`);
                             }}
                           >
                             View Freelancer

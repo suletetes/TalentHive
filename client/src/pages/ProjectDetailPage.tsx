@@ -558,7 +558,7 @@ export const ProjectDetailPage = () => {
                 gap={2} 
                 mb={2}
                 sx={{ cursor: 'pointer' }}
-                onClick={() => navigate(`/client/${project.client._id}`)}
+                onClick={() => navigate(`/client/${project.client.profileSlug || project.client._id}`)}
               >
                 <Avatar
                   src={project.client?.profile?.avatar}
@@ -581,7 +581,7 @@ export const ProjectDetailPage = () => {
                     variant="outlined"
                     size="small"
                     fullWidth
-                    onClick={() => navigate(`/client/${project.client._id}`)}
+                    onClick={() => navigate(`/client/${project.client.profileSlug || project.client._id}`)}
                   >
                     View Profile
                   </Button>
