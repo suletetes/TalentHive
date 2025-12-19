@@ -230,7 +230,7 @@ paymentSchema.methods.calculatePlatformFee = function(feePercentage = 0.05) {
 
 // Method to check if payment can be processed
 paymentSchema.methods.canBeProcessed = function() {
-  return this.status === 'pending' && this.stripePaymentIntentId;
+  return this.status === 'pending' && !!this.stripePaymentIntentId;
 };
 
 // Method to check if payment can be refunded

@@ -81,7 +81,6 @@ const proposalSchema = new Schema<IProposal>({
   },
   submittedAt: {
     type: Date,
-    default: Date.now,
   },
   respondedAt: Date,
 }, {
@@ -193,6 +192,18 @@ proposalSchema.pre('save', async function(next) {
   if (this.isModified('status')) {
     if (['accepted', 'rejected'].includes(this.status) && !this.respondedAt) {
       this.respondedAt = new Date();
+    }
+  }
+  
+  // Validate milestone amounts equal bid amount (only if milestones exist)
+  if (this.milestones && Array.isArray(this.milestones) && this.milestones.length > 0) {
+    const totalMilestoneAmount = this.milestones.reduce(
+      (total, milestone) => total + (milestone.amount || 0),
+      0
+    );
+    
+    if (Math.abs(totalMilestoneAmount - this.bidAmount) > 0.01) {
+      return next(new Error('Total milestone amount must equal bid amount'));
     }
   }
   
