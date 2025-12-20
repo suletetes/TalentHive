@@ -1,7 +1,43 @@
+// Import all service instances explicitly
+import { authService } from './auth.service';
+import { projectsService } from './projects.service';
+import { proposalsService } from './proposals.service';
+import { contractsService } from './contracts.service';
+import { paymentsService } from './payments.service';
+import { messagesService } from './messages.service';
+import { reviewsService } from './reviews.service';
+import { notificationsService } from './notifications.service';
+import { timeTrackingService } from './timeTracking.service';
+import { organizationsService } from './organizations.service';
+import { servicesService } from './services.service';
+import { searchService } from './search.service';
+import { uploadService } from './upload.service';
+import { supportTicketService } from './supportTicket.service';
+import { rbacService } from './rbac.service';
+
 // Export API core
 export { apiCore } from './core';
 
-// Export all services
+// Export service instances explicitly
+export {
+  authService,
+  projectsService,
+  proposalsService,
+  contractsService,
+  paymentsService,
+  messagesService,
+  reviewsService,
+  notificationsService,
+  timeTrackingService,
+  organizationsService,
+  servicesService,
+  searchService,
+  uploadService,
+  supportTicketService,
+  rbacService,
+};
+
+// Export all types and additional exports from service modules
 export * from './auth.service';
 export * from './projects.service';
 export * from './proposals.service';
@@ -17,65 +53,3 @@ export * from './search.service';
 export * from './upload.service';
 export * from './supportTicket.service';
 export * from './rbac.service';
-
-// Export service instances
-export { authService } from './auth.service';
-export { projectsService } from './projects.service';
-export { proposalsService } from './proposals.service';
-export { contractsService } from './contracts.service';
-export { paymentsService } from './payments.service';
-export { messagesService } from './messages.service';
-export { reviewsService } from './reviews.service';
-export { notificationsService } from './notifications.service';
-export { timeTrackingService } from './timeTracking.service';
-export { organizationsService } from './organizations.service';
-export { servicesService } from './services.service';
-export { searchService } from './search.service';
-export { uploadService } from './upload.service';
-export { supportTicketService } from './supportTicket.service';
-export { rbacService } from './rbac.service';
-
-// Export types
-export type { LoginCredentials, RegisterData, AuthResponse } from './auth.service';
-export type {
-  Project,
-  CreateProjectDto,
-  UpdateProjectDto,
-  ProjectFilters,
-  PaginatedResponse,
-} from './projects.service';
-export type { Proposal, CreateProposalDto, UpdateProposalDto } from './proposals.service';
-export type { Contract, Milestone } from './contracts.service';
-export type { Transaction, CreatePaymentIntentDto, ConfirmPaymentDto, RefundPaymentDto } from './payments.service';
-export type { Message, Conversation, SendMessageDto } from './messages.service';
-export type { Review, CreateReviewDto } from './reviews.service';
-export type { Notification } from './notifications.service';
-export type { TimeEntry, CreateTimeEntryDto, TimeReport } from './timeTracking.service';
-export type {
-  Organization,
-  CreateOrganizationDto,
-  BudgetApproval,
-} from './organizations.service';
-export type {
-  ServicePackage,
-  CreateServicePackageDto,
-  ProjectTemplate,
-} from './services.service';
-export type { SearchResult, SearchFilters } from './search.service';
-export type { UploadResponse } from './upload.service';
-export type {
-  SupportTicket,
-  TicketMessage,
-  CreateTicketData,
-  AddMessageData,
-  UpdateStatusData,
-  AssignTicketData,
-  UpdateTagsData,
-  TicketStats,
-} from './supportTicket.service';
-export type {
-  Role,
-  Permission,
-  AuditLog,
-  UserPermissionData,
-} from './rbac.service';
