@@ -27,6 +27,7 @@ interface ClientStats {
   averageProjectBudget: number;
   averageRating: number;
   reviewsGiven: number;
+  totalReviews: number;
   totalSpent: number;
   profileViews: number;
   uniqueViewers: number;
@@ -151,6 +152,9 @@ export class ProfileStatsService {
     // Get reviews given by this client (use 'reviewer' field to match Review model)
     const reviewsGiven = await Review.countDocuments({ reviewer: objectId });
 
+    // Get reviews received by this client (use 'reviewee' field to match Review model)
+    const totalReviews = await Review.countDocuments({ reviewee: objectId });
+
     // Calculate average project budget
     const totalBudget = projects.reduce((sum, project) => {
       return sum + (project.budget?.max || 0);
@@ -175,6 +179,7 @@ export class ProfileStatsService {
       averageProjectBudget,
       averageRating: user.rating?.average || 0,
       reviewsGiven,
+      totalReviews,
       totalSpent,
       profileViews,
       uniqueViewers

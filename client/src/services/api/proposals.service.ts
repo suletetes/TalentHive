@@ -12,10 +12,7 @@ export interface Proposal {
     };
   };
   coverLetter: string;
-  proposedBudget: {
-    amount: number;
-    type: 'fixed' | 'hourly';
-  };
+  bidAmount: number; // Fixed: Changed from proposedBudget to bidAmount
   timeline: {
     duration: number;
     unit: 'days' | 'weeks' | 'months';
@@ -34,10 +31,7 @@ export interface Proposal {
 
 export interface CreateProposalDto {
   coverLetter: string;
-  proposedBudget: {
-    amount: number;
-    type: 'fixed' | 'hourly';
-  };
+  bidAmount: number; // Fixed: Changed from proposedBudget to bidAmount
   timeline: {
     duration: number;
     unit: 'days' | 'weeks' | 'months';
@@ -54,6 +48,20 @@ export interface UpdateProposalDto extends Partial<CreateProposalDto> {}
 
 export class ProposalsService {
   private basePath = '/proposals';
+
+  async getProposals(filters?: any): Promise<{ data: Proposal[] }> {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, String(value));
+        }
+      });
+    }
+    const queryString = params.toString();
+    const url = queryString ? `${this.basePath}?${queryString}` : this.basePath;
+    return apiCore.get<{ data: Proposal[] }>(url);
+  }
 
   async createProposal(
     projectId: string,
