@@ -84,10 +84,14 @@ jobs:
           });
         "
         
-        # Create the test database
-        mongosh "mongodb://admin:password@localhost:27017/talenthive_test" --eval "
+        # Create the test database using admin credentials, then switch to test user
+        mongosh "mongodb://admin:password@localhost:27017/admin" --eval "
+          use talenthive_test;
           db.createCollection('test');
         "
+        
+        # Verify test user can connect
+        mongosh "mongodb://testuser:testpass@localhost:27017/talenthive_test?authSource=admin" --eval "db.adminCommand('ping')"
 
     - name: Seed test database
       run: |
