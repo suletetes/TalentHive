@@ -177,10 +177,10 @@ export const ProposalsPage: React.FC = () => {
                     </Box>
                     <Box>
                       <Typography variant="h6" color="primary">
-                        ${proposal.proposedBudget?.amount || 0}
+                        ${proposal.bidAmount || 0}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {proposal.proposedBudget?.type === 'hourly' ? '/hour' : 'fixed'}
+                        fixed
                       </Typography>
                     </Box>
                   </Box>
@@ -275,8 +275,7 @@ export const ProposalsPage: React.FC = () => {
                   Proposed Budget
                 </Typography>
                 <Typography variant="h6" color="primary">
-                  ${selectedProposal.proposedBudget?.amount || 0}
-                  {selectedProposal.proposedBudget?.type === 'hourly' ? '/hour' : ' (fixed)'}
+                  ${selectedProposal.bidAmount || 0} (fixed)
                 </Typography>
               </Box>
 

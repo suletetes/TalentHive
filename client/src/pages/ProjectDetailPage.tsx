@@ -180,9 +180,8 @@ export const ProjectDetailPage = () => {
   const openEditDialog = () => {
     if (userProposal) {
       setCoverLetter(userProposal.coverLetter || '');
-      // Support both bidAmount (backend) and proposedBudget.amount (frontend interface)
-      const amount = userProposal.bidAmount || userProposal.proposedBudget?.amount;
-      setBidAmount(amount?.toString() || '');
+      // Use bidAmount from backend
+      setBidAmount(userProposal.bidAmount?.toString() || '');
       setDuration(userProposal.timeline?.duration?.toString() || '');
       setMilestones(userProposal.milestones || []);
       setIsEditMode(true);
@@ -286,10 +285,7 @@ export const ProjectDetailPage = () => {
 
     submitProposalMutation.mutate({
       coverLetter,
-      proposedBudget: {
-        amount: parseFloat(bidAmount),
-        type: 'fixed',
-      },
+      bidAmount: parseFloat(bidAmount),
       timeline: {
         duration: parseInt(duration),
         unit: 'days',
