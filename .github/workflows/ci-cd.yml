@@ -56,15 +56,21 @@ jobs:
 
     - name: Install MongoDB Shell (mongosh)
       run: |
-        wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
-        echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
-        sudo apt-get update
-        sudo apt-get install -y mongodb-mongosh
+        # Download and install mongosh directly from MongoDB
+        wget https://downloads.mongodb.com/compass/mongosh-2.1.1-linux-x64.tgz
+        tar -xzf mongosh-2.1.1-linux-x64.tgz
+        sudo mv mongosh-2.1.1-linux-x64/bin/* /usr/local/bin/
+        sudo chmod +x /usr/local/bin/mongosh
+        # Verify installation
+        mongosh --version
 
     - name: Setup MongoDB test database
       run: |
         # Wait for MongoDB to be ready
-        sleep 10
+        sleep 15
+        
+        # Verify MongoDB is running
+        mongosh "mongodb://admin:password@localhost:27017/admin" --eval "db.adminCommand('ping')"
         
         # Create test database and user
         mongosh "mongodb://admin:password@localhost:27017/admin" --eval "
