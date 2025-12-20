@@ -76,7 +76,7 @@ export const EditProposalForm: React.FC<EditProposalFormProps> = ({
   const formik = useFormik({
     initialValues: {
       coverLetter: proposal.coverLetter || '',
-      bidAmount: proposal.bidAmount || proposal.proposedBudget?.amount || 0,
+      bidAmount: proposal.bidAmount || 0,
       timeline: {
         duration: proposal.timeline?.duration || 1,
         unit: proposal.timeline?.unit || 'weeks',
