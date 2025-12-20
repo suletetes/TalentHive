@@ -288,7 +288,7 @@ describe('Project Components', () => {
         </TestWrapper>
       );
 
-      const featuredButton = screen.getByText('Featured');
+      const featuredButton = screen.getByRole('button', { name: /featured/i });
       fireEvent.click(featuredButton);
 
       expect(mockOnFiltersChange).toHaveBeenCalledWith({
@@ -308,7 +308,7 @@ describe('Project Components', () => {
         </TestWrapper>
       );
 
-      const advancedFiltersButton = screen.getByText('Advanced Filters');
+      const advancedFiltersButton = screen.getByRole('button', { name: /advanced filters/i });
       fireEvent.click(advancedFiltersButton);
 
       await waitFor(() => {
@@ -333,7 +333,7 @@ describe('Project Components', () => {
         </TestWrapper>
       );
 
-      expect(screen.getByText('Clear All')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /clear all/i })).toBeInTheDocument();
     });
 
     it('calls onClearFilters when clear all button clicked', () => {
@@ -349,7 +349,7 @@ describe('Project Components', () => {
         </TestWrapper>
       );
 
-      const clearAllButton = screen.getByText('Clear All');
+      const clearAllButton = screen.getByRole('button', { name: /clear all/i });
       fireEvent.click(clearAllButton);
 
       expect(mockOnClearFilters).toHaveBeenCalled();
@@ -378,7 +378,7 @@ describe('Project Components', () => {
       );
 
       // The Next button might not be disabled initially, let's check after trying to proceed
-      const nextButton = screen.getByText('Next');
+      const nextButton = screen.getByRole('button', { name: /next/i });
       
       // Try to click next without filling required fields
       fireEvent.click(nextButton);
@@ -422,7 +422,7 @@ describe('Project Components', () => {
 
       // The next button should become enabled after filling required fields
       await waitFor(() => {
-        const nextButton = screen.getByText('Next');
+        const nextButton = screen.getByRole('button', { name: /next/i });
         expect(nextButton).not.toBeDisabled();
       }, { timeout: 3000 });
     });
@@ -444,7 +444,7 @@ describe('Project Components', () => {
       });
 
       // Navigate to budget step
-      const nextButton = screen.getByText('Next');
+      const nextButton = screen.getByRole('button', { name: /next/i });
       fireEvent.click(nextButton);
 
       await waitFor(() => {

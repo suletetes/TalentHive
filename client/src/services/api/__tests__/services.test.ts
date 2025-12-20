@@ -52,9 +52,8 @@ describe('API Services', () => {
 
   it('should export contractsService', () => {
     expect(contractsService).toBeDefined();
-    expect(contractsService.createContract).toBeDefined();
-    expect(contractsService.getContract).toBeDefined();
     expect(contractsService.getMyContracts).toBeDefined();
+    expect(contractsService.getContractById).toBeDefined();
     expect(contractsService.signContract).toBeDefined();
     expect(contractsService.submitMilestone).toBeDefined();
     expect(contractsService.approveMilestone).toBeDefined();
@@ -63,10 +62,12 @@ describe('API Services', () => {
 
   it('should export paymentsService', () => {
     expect(paymentsService).toBeDefined();
-    expect(paymentsService.processPayment).toBeDefined();
-    expect(paymentsService.getPaymentHistory).toBeDefined();
-    expect(paymentsService.getEscrowBalance).toBeDefined();
-    expect(paymentsService.requestPayout).toBeDefined();
+    expect(paymentsService.createPaymentIntent).toBeDefined();
+    expect(paymentsService.confirmPayment).toBeDefined();
+    expect(paymentsService.releaseEscrow).toBeDefined();
+    expect(paymentsService.refundPayment).toBeDefined();
+    expect(paymentsService.getTransactionHistory).toBeDefined();
+    expect(paymentsService.getBalance).toBeDefined();
   });
 
   it('should export messagesService', () => {
@@ -75,6 +76,8 @@ describe('API Services', () => {
     expect(messagesService.getMessages).toBeDefined();
     expect(messagesService.getConversations).toBeDefined();
     expect(messagesService.markAsRead).toBeDefined();
+    expect(messagesService.createConversation).toBeDefined();
+    expect(messagesService.uploadAttachments).toBeDefined();
   });
 
   it('should export reviewsService', () => {
@@ -88,9 +91,9 @@ describe('API Services', () => {
     expect(notificationsService).toBeDefined();
     expect(notificationsService.getNotifications).toBeDefined();
     expect(notificationsService.markAsRead).toBeDefined();
+    expect(notificationsService.markAllAsRead).toBeDefined();
     expect(notificationsService.getUnreadCount).toBeDefined();
-    expect(notificationsService.getPreferences).toBeDefined();
-    expect(notificationsService.updatePreferences).toBeDefined();
+    expect(notificationsService.deleteNotification).toBeDefined();
   });
 
   it('should export timeTrackingService', () => {
@@ -99,12 +102,15 @@ describe('API Services', () => {
     expect(timeTrackingService.stopTimeEntry).toBeDefined();
     expect(timeTrackingService.getTimeEntries).toBeDefined();
     expect(timeTrackingService.getTimeReports).toBeDefined();
+    expect(timeTrackingService.getActiveTimer).toBeDefined();
+    expect(timeTrackingService.createManualEntry).toBeDefined();
   });
 
   it('should export organizationsService', () => {
     expect(organizationsService).toBeDefined();
     expect(organizationsService.createOrganization).toBeDefined();
     expect(organizationsService.getOrganization).toBeDefined();
+    expect(organizationsService.getMyOrganizations).toBeDefined();
     expect(organizationsService.inviteMember).toBeDefined();
     expect(organizationsService.getMembers).toBeDefined();
     expect(organizationsService.updateBudget).toBeDefined();
@@ -114,7 +120,9 @@ describe('API Services', () => {
     expect(servicesService).toBeDefined();
     expect(servicesService.createPackage).toBeDefined();
     expect(servicesService.getPackages).toBeDefined();
+    expect(servicesService.getPackage).toBeDefined();
     expect(servicesService.updatePackage).toBeDefined();
+    expect(servicesService.deletePackage).toBeDefined();
     expect(servicesService.purchasePackage).toBeDefined();
   });
 

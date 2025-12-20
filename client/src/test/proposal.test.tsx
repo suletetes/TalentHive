@@ -160,7 +160,7 @@ describe('ProposalForm', () => {
     );
 
     expect(screen.getByRole('heading', { name: /Submit Proposal/i })).toBeInTheDocument();
-    expect(screen.getByText('Test Project')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Test Project/i }) || screen.getByText('Test Project')).toBeInTheDocument();
     expect(screen.getByLabelText(/Cover Letter/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Your Bid/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Duration/i)).toBeInTheDocument();
@@ -246,9 +246,9 @@ describe('ProposalForm', () => {
       target: { value: 'Test milestone description' },
     });
 
-    const addButton = screen.getByRole('button', { name: /add/i }) || 
-                     screen.getByText(/add milestone/i) ||
-                     screen.getByText(/add/i);
+    const addButton = screen.getByRole('button', { name: /add milestone/i }) || 
+                     screen.getByRole('button', { name: /add/i }) ||
+                     screen.getByText(/add milestone/i);
     fireEvent.click(addButton);
 
     await waitFor(() => {
