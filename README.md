@@ -1,4 +1,5 @@
 # TalentHive - Freelancing Platform
+[![CI/CD Pipeline](https://github.com/suletetes/TalentHive/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/suletetes/TalentHive/actions/workflows/ci-cd.yml)
 
 A comprehensive freelancing platform built with the MERN stack (MongoDB, Express.js, React.js, Node.js) and TypeScript.
 
