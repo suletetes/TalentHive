@@ -54,6 +54,50 @@ jobs:
         cd server
         npm ci
 
+    - name: Setup MongoDB test database
+      run: |
+        # Wait for MongoDB to be ready
+        sleep 10
+        
+        # Create test database and user
+        mongosh "mongodb://admin:password@localhost:27017/admin" --eval "
+          db.createUser({
+            user: 'testuser',
+            pwd: 'testpass',
+            roles: [
+              { role: 'readWrite', db: 'talenthive_test' },
+              { role: 'dbAdmin', db: 'talenthive_test' }
+            ]
+          });
+        "
+        
+        # Create the test database
+        mongosh "mongodb://admin:password@localhost:27017/talenthive_test" --eval "
+          db.createCollection('test');
+        "
+
+    - name: Seed test database
+      run: |
+        cd server
+        npm run seed
+      env:
+        NODE_ENV: test
+        MONGODB_URI: mongodb://admin:password@localhost:27017/talenthive_test?authSource=admin
+        REDIS_URL: redis://localhost:6379
+        JWT_SECRET: test_jwt_secret_very_long_for_security_purposes
+        JWT_REFRESH_SECRET: test_refresh_secret_very_long_for_security_purposes
+        JWT_EXPIRES_IN: 24h
+        JWT_REFRESH_EXPIRES_IN: 7d
+        SENDGRID_API_KEY: SG.test-api-key-for-testing
+        FROM_EMAIL: test@talenthive.com
+        FROM_NAME: TalentHive Test
+        STRIPE_SECRET_KEY: sk_test_mock_key
+        STRIPE_PUBLISHABLE_KEY: pk_test_mock_key
+        STRIPE_WEBHOOK_SECRET: whsec_test_mock_secret
+        CLOUDINARY_CLOUD_NAME: test-cloud
+        CLOUDINARY_API_KEY: test-api-key
+        CLOUDINARY_API_SECRET: test-api-secret
+
     - name: Run backend linting
       run: |
         cd server
@@ -66,9 +110,21 @@ jobs:
       env:
         NODE_ENV: test
         MONGODB_URI: mongodb://admin:password@localhost:27017/talenthive_test?authSource=admin
+        MONGODB_TEST_URI: mongodb://admin:password@localhost:27017/talenthive_test?authSource=admin
         REDIS_URL: redis://localhost:6379
-        JWT_SECRET: test_jwt_secret
-        JWT_REFRESH_SECRET: test_refresh_secret
+        JWT_SECRET: test_jwt_secret_very_long_for_security_purposes
+        JWT_REFRESH_SECRET: test_refresh_secret_very_long_for_security_purposes
+        JWT_EXPIRES_IN: 24h
+        JWT_REFRESH_EXPIRES_IN: 7d
+        SENDGRID_API_KEY: SG.test-api-key-for-testing
+        FROM_EMAIL: test@talenthive.com
+        FROM_NAME: TalentHive Test
+        STRIPE_SECRET_KEY: sk_test_mock_key
+        STRIPE_PUBLISHABLE_KEY: pk_test_mock_key
+        STRIPE_WEBHOOK_SECRET: whsec_test_mock_secret
+        CLOUDINARY_CLOUD_NAME: test-cloud
+        CLOUDINARY_API_KEY: test-api-key
+        CLOUDINARY_API_SECRET: test-api-secret
 
   # Frontend Tests
   frontend-test:
