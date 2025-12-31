@@ -223,7 +223,10 @@ interface AuthRequest extends Request {
 }
 
 export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { page = 1, limit = 10, status, role } = req.query;
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const requestedLimit = parseInt(req.query.limit as string) || 10;
+  const limit = Math.min(50, Math.max(1, requestedLimit)); // Max 50, min 1
+  const { status, role } = req.query;
 
   console.log('[GET MY CONTRACTS] ========== START ==========');
   console.log('[GET MY CONTRACTS] User ID:', req.user?._id);
@@ -261,21 +264,70 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
 
   console.log('[GET MY CONTRACTS] Final query:', JSON.stringify(query, null, 2));
 
-  const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+  const skip = (page - 1) * limit;
 
   let contracts, total;
   try {
-    [contracts, total] = await Promise.all([
-      Contract.find(query)
-        .populate('client', 'profile rating')
-        .populate('freelancer', 'profile freelancerProfile rating')
-        .populate('project', 'title description')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(parseInt(limit as string))
-        .lean(),
-      Contract.countDocuments(query),
-    ]);
+    // Use aggregation pipeline for better performance
+    const aggregationPipeline = [
+      { $match: query },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'client',
+          foreignField: '_id',
+          as: 'client',
+          pipeline: [
+            { $project: { profile: 1, rating: 1 } }
+          ]
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'freelancer',
+          foreignField: '_id',
+          as: 'freelancer',
+          pipeline: [
+            { $project: { profile: 1, freelancerProfile: 1, rating: 1 } }
+          ]
+        }
+      },
+      {
+        $lookup: {
+          from: 'projects',
+          localField: 'project',
+          foreignField: '_id',
+          as: 'project',
+          pipeline: [
+            { $project: { title: 1, description: 1 } }
+          ]
+        }
+      },
+      {
+        $addFields: {
+          client: { $arrayElemAt: ['$client', 0] },
+          freelancer: { $arrayElemAt: ['$freelancer', 0] },
+          project: { $arrayElemAt: ['$project', 0] }
+        }
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $facet: {
+          contracts: [
+            { $skip: skip },
+            { $limit: limit }
+          ],
+          totalCount: [
+            { $count: 'count' }
+          ]
+        }
+      }
+    ];
+
+    const [result] = await Contract.aggregate(aggregationPipeline);
+    contracts = result.contracts;
+    total = result.totalCount[0]?.count || 0;
   } catch (error) {
     console.error('[GET MY CONTRACTS] Database query failed:', error);
     return next(new AppError('Failed to fetch contracts', 500));
@@ -313,10 +365,10 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
     data: {
       contracts: contracts || [],
       pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
+        page: page,
+        limit: limit,
         total,
-        pages: Math.ceil(total / parseInt(limit as string)),
+        pages: Math.ceil(total / limit),
       },
     },
   });
