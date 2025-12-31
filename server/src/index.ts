@@ -2,6 +2,10 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Validate environment variables before starting the application
+import { validateEnvironmentVariables } from '@/utils/validateEnv';
+validateEnvironmentVariables();
+
 import 'module-alias/register';
 import express from 'express';
 import cors from 'cors';

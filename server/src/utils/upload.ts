@@ -9,7 +9,7 @@ const hasCloudinaryConfig = process.env.CLOUDINARY_CLOUD_NAME &&
                            process.env.CLOUDINARY_API_SECRET;
 
 if (!hasCloudinaryConfig) {
-  console.warn('⚠️ Cloudinary not configured - file upload features will be disabled');
+  console.warn('Cloudinary not configured - file upload features will be disabled');
   console.warn('To enable file uploads, set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables');
 } else {
   cloudinary.config({

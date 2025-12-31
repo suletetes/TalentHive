@@ -50,9 +50,9 @@ export const connectDB = async (): Promise<void> => {
       // Heartbeat settings
       heartbeatFrequencyMS: parseInt(process.env.MONGODB_HEARTBEAT_FREQUENCY || '10000'), // How often to check server status
       
-      // Buffer settings
-      bufferMaxEntries: 0, // Disable mongoose buffering
-      bufferCommands: false, // Disable mongoose buffering
+      // Buffer settings (these are mongoose-specific, not MongoDB driver options)
+      // bufferMaxEntries: 0, // Disable mongoose buffering - removed as not valid in ConnectOptions
+      // bufferCommands: false, // Disable mongoose buffering - removed as not valid in ConnectOptions
       
       // Retry settings
       retryWrites: true, // Enable retryable writes

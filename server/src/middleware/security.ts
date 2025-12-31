@@ -4,9 +4,12 @@ import mongoSanitize from 'express-mongo-sanitize';
 import helmet from 'helmet';
 
 /**
- * Rate limiting configuration
+ * Rate limiting configuration with environment variable support
  */
-export const createRateLimiter = (windowMs: number = 15 * 60 * 1000, max: number = 100) => {
+export const createRateLimiter = (
+  windowMs: number = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes default
+  max: number = parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100')
+) => {
   return rateLimit({
     windowMs,
     max,
@@ -19,22 +22,34 @@ export const createRateLimiter = (windowMs: number = 15 * 60 * 1000, max: number
 /**
  * Password reset rate limiter - very strict
  */
-export const passwordResetRateLimiter = createRateLimiter(60 * 60 * 1000, 3); // 3 requests per hour
+export const passwordResetRateLimiter = createRateLimiter(
+  parseInt(process.env.PASSWORD_RESET_WINDOW_MS || '3600000'), // 1 hour default
+  parseInt(process.env.PASSWORD_RESET_MAX_ATTEMPTS || '3') // 3 attempts default
+);
 
 /**
  * Strict rate limiter for sensitive endpoints
  */
-export const strictRateLimiter = createRateLimiter(15 * 60 * 1000, 5); // 5 requests per 15 minutes
+export const strictRateLimiter = createRateLimiter(
+  parseInt(process.env.STRICT_RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes default
+  parseInt(process.env.STRICT_RATE_LIMIT_MAX_REQUESTS || '5') // 5 requests default
+);
 
 /**
  * Auth rate limiter
  */
-export const authRateLimiter = createRateLimiter(15 * 60 * 1000, 10); // 10 requests per 15 minutes
+export const authRateLimiter = createRateLimiter(
+  parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes default
+  parseInt(process.env.AUTH_RATE_LIMIT_MAX_REQUESTS || '10') // 10 requests default
+);
 
 /**
  * API rate limiter
  */
-export const apiRateLimiter = createRateLimiter(15 * 60 * 1000, 100); // 100 requests per 15 minutes
+export const apiRateLimiter = createRateLimiter(
+  parseInt(process.env.API_RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes default
+  parseInt(process.env.API_RATE_LIMIT_MAX_REQUESTS || '100') // 100 requests default
+);
 
 /**
  * Input sanitization middleware
