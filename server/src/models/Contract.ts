@@ -276,10 +276,17 @@ contractSchema.index({ project: 1 });
 contractSchema.index({ client: 1 });
 contractSchema.index({ freelancer: 1 });
 contractSchema.index({ status: 1 });
+contractSchema.index({ sourceType: 1 }); // Added missing index for sourceType queries
 contractSchema.index({ startDate: 1 });
 contractSchema.index({ endDate: 1 });
 contractSchema.index({ 'milestones.status': 1 });
 contractSchema.index({ 'milestones.dueDate': 1 });
+
+// Compound indexes for common query patterns
+contractSchema.index({ client: 1, status: 1 }); // Client filtering by status
+contractSchema.index({ freelancer: 1, status: 1 }); // Freelancer filtering by status
+contractSchema.index({ status: 1, createdAt: -1 }); // Status with sorting by date
+contractSchema.index({ sourceType: 1, status: 1 }); // Source type with status filtering
 
 // Virtual for progress calculation
 contractSchema.virtual('progress').get(function () {
@@ -405,7 +412,8 @@ contractSchema.pre('save', function (next) {
 contractSchema.post('save', async function(doc) {
   if (doc.status === 'completed') {
     try {
-      const { Project } = await import('@/models/Project');
+      // Use mongoose.model to avoid circular import issues
+      const Project = mongoose.model('Project');
       const project = await Project.findById(doc.project);
       
       if (project && project.status !== 'completed') {
@@ -414,6 +422,7 @@ contractSchema.post('save', async function(doc) {
       }
     } catch (error) {
       console.error('Error updating project status after contract completion:', error);
+      // Don't throw error to avoid breaking the contract save operation
     }
   }
 });

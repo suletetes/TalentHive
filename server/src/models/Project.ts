@@ -10,14 +10,36 @@ const budgetSchema = new Schema({
   min: {
     type: Number,
     required: true,
-    min: 0,
+    min: [0, 'Minimum budget must be at least 0'],
+    validate: {
+      validator: function(value: number) {
+        return value >= 0 && value <= 1000000; // Max 1M
+      },
+      message: 'Minimum budget must be between 0 and 1,000,000'
+    }
   },
   max: {
     type: Number,
     required: true,
-    min: 0,
+    min: [0, 'Maximum budget must be at least 0'],
+    validate: {
+      validator: function(value: number) {
+        return value >= 0 && value <= 1000000; // Max 1M
+      },
+      message: 'Maximum budget must be between 0 and 1,000,000'
+    }
   },
 }, { _id: false });
+
+// Add validation to ensure max >= min
+budgetSchema.pre('validate', function() {
+  if (this.min > this.max) {
+    this.invalidate('max', 'Maximum budget must be greater than or equal to minimum budget');
+  }
+  if (this.min === this.max && this.min === 0) {
+    this.invalidate('min', 'Budget cannot be zero for both minimum and maximum');
+  }
+});
 
 const timelineSchema = new Schema({
   duration: {
@@ -245,6 +267,36 @@ projectSchema.pre('save', function(next) {
     }
   }
   next();
+});
+
+// Indexes for better performance
+projectSchema.index({ client: 1 }); // Client's projects
+projectSchema.index({ status: 1 }); // Filter by status
+projectSchema.index({ category: 1 }); // Filter by category
+projectSchema.index({ skills: 1 }); // Filter by skills
+projectSchema.index({ 'budget.type': 1 }); // Filter by budget type
+projectSchema.index({ 'budget.min': 1, 'budget.max': 1 }); // Budget range queries
+projectSchema.index({ createdAt: -1 }); // Sort by creation date
+projectSchema.index({ updatedAt: -1 }); // Sort by update date
+projectSchema.index({ deadline: 1 }); // Filter by deadline
+projectSchema.index({ selectedFreelancer: 1 }); // Freelancer's projects
+
+// Compound indexes for common query patterns
+projectSchema.index({ status: 1, createdAt: -1 }); // Status with date sorting
+projectSchema.index({ client: 1, status: 1 }); // Client filtering by status
+projectSchema.index({ category: 1, status: 1 }); // Category filtering by status
+projectSchema.index({ skills: 1, status: 1 }); // Skills filtering by status
+projectSchema.index({ 'budget.min': 1, 'budget.max': 1, status: 1 }); // Budget range with status
+
+// Text search index for title and description
+projectSchema.index({ 
+  title: 'text', 
+  description: 'text' 
+}, {
+  weights: {
+    title: 10,
+    description: 5
+  }
 });
 
 export const Project = mongoose.model<IProject>('Project', projectSchema) as mongoose.Model<IProject> & IProjectModel;
