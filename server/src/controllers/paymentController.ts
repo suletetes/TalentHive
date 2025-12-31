@@ -8,7 +8,7 @@ import { sendEmail } from '@/utils/email.resend';
 import { ResponseFormatter } from '@/utils/standardResponse';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia', // Latest API version for stripe@17.3.0
+  apiVersion: '2023-10-16' as const, // Use supported API version for stripe@17.3.0
 });
 
 // Sanitize error messages to prevent sensitive data exposure

@@ -311,7 +311,7 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
           project: { $arrayElemAt: ['$project', 0] }
         }
       },
-      { $sort: { createdAt: -1 } },
+      { $sort: { createdAt: -1 as const } },
       {
         $facet: {
           contracts: [
