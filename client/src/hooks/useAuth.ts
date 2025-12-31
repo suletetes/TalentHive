@@ -5,7 +5,8 @@ import toast from 'react-hot-toast';
 
 import { RootState } from '@/store';
 import { loginStart, loginSuccess, loginFailure, logout } from '@/store/slices/authSlice';
-import { authService, LoginCredentials, RegisterData } from '@/services/api/auth.service';
+import { authService } from '@/services/api/auth.service';
+import { LoginCredentials, RegisterData, AuthUser, UserRole } from '@/types/auth';
 
 export const useAuth = () => {
   const dispatch = useDispatch();
@@ -19,14 +20,16 @@ export const useAuth = () => {
       dispatch(loginStart());
     },
     onSuccess: (response) => {
-      const { user, tokens } = response.data;
+      const { user, tokens } = response;
+      const authUser: AuthUser = {
+        ...user,
+        _id: user.id, // Add _id alias for backward compatibility
+        role: user.role as UserRole,
+      };
+      
       dispatch(
         loginSuccess({
-          user: {
-            ...user,
-            _id: user.id, // Add _id alias for components that use it
-            role: user.role as 'admin' | 'freelancer' | 'client',
-          },
+          user: authUser,
           token: tokens.accessToken,
           refreshToken: tokens.refreshToken,
         })
