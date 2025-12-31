@@ -15,6 +15,7 @@ export interface ITransaction extends Document {
   paymentMethod: 'stripe' | 'paypal' | 'bank_transfer' | 'other';
   stripePaymentIntentId?: string;
   stripeChargeId?: string;
+  stripeTransferId?: string;
   stripeRefundId?: string;
   escrowReleaseDate?: Date;
   releasedAt?: Date;
@@ -100,6 +101,10 @@ const transactionSchema = new Schema<ITransaction>(
       type: String,
     },
     stripeChargeId: {
+      type: String,
+      sparse: true,
+    },
+    stripeTransferId: {
       type: String,
       sparse: true,
     },

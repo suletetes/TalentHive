@@ -35,7 +35,7 @@ router.get('/', (req, res) => {
 });
 
 // Health check routes (no /api prefix needed)
-router.use('/', healthRoutes);
+router.use('/health', healthRoutes);
 
 // Route handlers
 router.use('/auth', authRoutes);
