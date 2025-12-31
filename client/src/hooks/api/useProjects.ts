@@ -110,7 +110,7 @@ export function useCreateProject(options?: any) {
 
   return useMutation({
     mutationFn: (data: CreateProjectDto) => projectsService.createProject(data),
-    onSuccess: (response, variables, context) => {
+    onSuccess: (project, variables, context) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
       queryClient.invalidateQueries({ queryKey: projectKeys.my() });
@@ -119,7 +119,7 @@ export function useCreateProject(options?: any) {
       if (!options?.onSuccess) {
         toast.success('Project created successfully!');
       } else {
-        options.onSuccess(response, variables, context);
+        options.onSuccess(project, variables, context);
       }
     },
     onError: options?.onError || ((error: any) => {
@@ -155,7 +155,7 @@ export function useUpdateProject(options?: any) {
       // Optimistically update
       queryClient.setQueryData(projectKeys.detail(id), (old: any) => ({
         ...old,
-        data: { ...old?.data, ...data },
+        ...data,
       }));
 
       return { previousProject };
@@ -173,14 +173,14 @@ export function useUpdateProject(options?: any) {
         toast.error(message);
       }
     },
-    onSuccess: (response, variables, context) => {
+    onSuccess: (project, variables, context) => {
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
       queryClient.invalidateQueries({ queryKey: projectKeys.my() });
       
       if (!options?.onSuccess) {
         toast.success('Project updated successfully!');
       } else {
-        options.onSuccess(response, variables, context);
+        options.onSuccess(project, variables, context);
       }
     },
   });

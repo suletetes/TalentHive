@@ -1,86 +1,52 @@
 import { apiCore } from './core';
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface RegisterData {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  role: 'freelancer' | 'client' | 'admin';
-  companyName?: string;
-  title?: string;
-}
-
-export interface AuthResponse {
-  status: string;
-  message: string;
-  data: {
-    user: {
-      id: string;
-      email: string;
-      role: string;
-      profile: {
-        firstName: string;
-        lastName: string;
-        avatar?: string;
-      };
-      isVerified: boolean;
-    };
-    tokens: {
-      accessToken: string;
-      refreshToken: string;
-    };
-  };
-}
-
-export interface RefreshTokenResponse {
-  status: string;
-  data: {
-    tokens: {
-      accessToken: string;
-      refreshToken: string;
-    };
-  };
-}
-
-export interface VerifyEmailResponse {
-  status: string;
-  message: string;
-}
+import { 
+  LoginCredentials, 
+  RegisterData, 
+  AuthResponse, 
+  RefreshTokenResponse, 
+  VerifyEmailResponse,
+  ChangePasswordData,
+  AuthUser,
+  AuthTokens
+} from '@/types/auth';
 
 export class AuthService {
   private basePath = '/auth';
 
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    return apiCore.post<AuthResponse>(`${this.basePath}/login`, credentials);
+  async login(credentials: LoginCredentials): Promise<{ user: AuthUser; tokens: AuthTokens }> {
+    return apiCore.post<{ user: AuthUser; tokens: AuthTokens }>(`${this.basePath}/login`, credentials);
   }
 
-  async register(data: RegisterData): Promise<AuthResponse> {
-    return apiCore.post<AuthResponse>(`${this.basePath}/register`, data);
+  async register(data: RegisterData): Promise<{ user: AuthUser; tokens: AuthTokens }> {
+    return apiCore.post<{ user: AuthUser; tokens: AuthTokens }>(`${this.basePath}/register`, data);
   }
 
-  async logout(): Promise<{ status: string; message: string }> {
-    return apiCore.post<{ status: string; message: string }>(`${this.basePath}/logout`, {});
+  async logout(): Promise<{ message: string }> {
+    return apiCore.post<{ message: string }>(`${this.basePath}/logout`, {});
   }
 
-  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
-    return apiCore.post<RefreshTokenResponse>(`${this.basePath}/refresh-token`, {
+  async refreshToken(refreshToken: string): Promise<{ tokens: AuthTokens }> {
+    return apiCore.post<{ tokens: AuthTokens }>(`${this.basePath}/refresh-token`, {
       refreshToken,
     });
   }
 
-  async verifyEmail(token: string): Promise<VerifyEmailResponse> {
-    return apiCore.get<VerifyEmailResponse>(`${this.basePath}/verify-email/${token}`);
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    return apiCore.get<{ message: string }>(`${this.basePath}/verify-email/${token}`);
   }
 
-  async changePassword(currentPassword: string, newPassword: string, confirmPassword: string): Promise<{ status: string; message: string }> {
-    return apiCore.post<{ status: string; message: string }>(`${this.basePath}/change-password`, {
-      currentPassword,
-      newPassword,
+  async changePassword(data: ChangePasswordData): Promise<{ message: string }> {
+    return apiCore.post<{ message: string }>(`${this.basePath}/change-password`, data);
+  }
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    return apiCore.post<{ message: string }>(`${this.basePath}/forgot-password`, { email });
+  }
+
+  async resetPassword(token: string, password: string, confirmPassword: string): Promise<{ message: string }> {
+    return apiCore.post<{ message: string }>(`${this.basePath}/reset-password`, {
+      token,
+      password,
       confirmPassword,
     });
   }
