@@ -17,6 +17,11 @@ export const createRateLimiter = (windowMs: number = 15 * 60 * 1000, max: number
 };
 
 /**
+ * Password reset rate limiter - very strict
+ */
+export const passwordResetRateLimiter = createRateLimiter(60 * 60 * 1000, 3); // 3 requests per hour
+
+/**
  * Strict rate limiter for sensitive endpoints
  */
 export const strictRateLimiter = createRateLimiter(15 * 60 * 1000, 5); // 5 requests per 15 minutes

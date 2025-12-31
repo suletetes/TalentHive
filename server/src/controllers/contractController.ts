@@ -12,23 +12,64 @@ import crypto from 'crypto';
 
 // Helper function to extract user ID from populated or unpopulated field
 const extractUserId = (userField: any): string => {
-  if (!userField) return '';
-  // If it's a string, return as-is
-  if (typeof userField === 'string') return userField;
-  // If it's an ObjectId, convert to string
-  if (userField instanceof mongoose.Types.ObjectId) return userField.toString();
-  // If it's a populated object with _id
-  if (typeof userField === 'object' && userField._id) {
-    return userField._id.toString();
+  if (!userField) {
+    console.warn('[EXTRACT_USER_ID] Received null/undefined userField');
+    return '';
   }
-  // If it has an id property (virtual)
-  if (typeof userField === 'object' && userField.id) {
-    return userField.id.toString();
+  
+  try {
+    // If it's a string, validate and return
+    if (typeof userField === 'string') {
+      if (/^[a-f\d]{24}$/i.test(userField)) {
+        return userField;
+      } else {
+        console.warn('[EXTRACT_USER_ID] Invalid ObjectId string format:', userField);
+        return '';
+      }
+    }
+    
+    // If it's an ObjectId, convert to string
+    if (userField instanceof mongoose.Types.ObjectId) {
+      return userField.toString();
+    }
+    
+    // If it's a populated object with _id
+    if (typeof userField === 'object' && userField._id) {
+      const id = userField._id instanceof mongoose.Types.ObjectId 
+        ? userField._id.toString() 
+        : String(userField._id);
+      
+      if (/^[a-f\d]{24}$/i.test(id)) {
+        return id;
+      } else {
+        console.warn('[EXTRACT_USER_ID] Invalid ObjectId in _id field:', id);
+        return '';
+      }
+    }
+    
+    // If it has an id property (virtual)
+    if (typeof userField === 'object' && userField.id) {
+      const id = String(userField.id);
+      if (/^[a-f\d]{24}$/i.test(id)) {
+        return id;
+      } else {
+        console.warn('[EXTRACT_USER_ID] Invalid ObjectId in id field:', id);
+        return '';
+      }
+    }
+    
+    // Last resort - try to convert to string but check if it looks like an ObjectId
+    const str = String(userField);
+    if (/^[a-f\d]{24}$/i.test(str)) {
+      return str;
+    }
+    
+    console.warn('[EXTRACT_USER_ID] Could not extract valid ObjectId from:', typeof userField, userField);
+    return '';
+  } catch (error) {
+    console.error('[EXTRACT_USER_ID] Error extracting user ID:', error);
+    return '';
   }
-  // Last resort - try to convert to string but check if it looks like an ObjectId
-  const str = String(userField);
-  if (/^[a-f\d]{24}$/i.test(str)) return str;
-  return '';
 };
 
 export const createContractValidation = [
@@ -222,17 +263,23 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
 
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-  const [contracts, total] = await Promise.all([
-    Contract.find(query)
-      .populate('client', 'profile rating')
-      .populate('freelancer', 'profile freelancerProfile rating')
-      .populate('project', 'title description')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit as string))
-      .lean(),
-    Contract.countDocuments(query),
-  ]);
+  let contracts, total;
+  try {
+    [contracts, total] = await Promise.all([
+      Contract.find(query)
+        .populate('client', 'profile rating')
+        .populate('freelancer', 'profile freelancerProfile rating')
+        .populate('project', 'title description')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit as string))
+        .lean(),
+      Contract.countDocuments(query),
+    ]);
+  } catch (error) {
+    console.error('[GET MY CONTRACTS] Database query failed:', error);
+    return next(new AppError('Failed to fetch contracts', 500));
+  }
 
   console.log('[GET MY CONTRACTS] Found contracts:', contracts.length);
   console.log('[GET MY CONTRACTS] Total in DB:', total);
@@ -388,8 +435,8 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
     if (!ms) {
       return next(new AppError(`Milestone not found. The milestone ID "${milestoneId}" does not exist in this contract. Please refresh the page and try again.`, 404));
     }
-    if (!['pending', 'in_progress', 'rejected'].includes(ms.status)) {
-      return next(new AppError(`Cannot submit milestone with status "${ms.status}". Only pending, in_progress, or rejected milestones can be submitted.`, 400));
+    if (!['pending', 'in_progress', 'rejected'].includes(ms?.status || '')) {
+      return next(new AppError(`Cannot submit milestone with status "${ms?.status}". Only pending, in_progress, or rejected milestones can be submitted.`, 400));
     }
     return next(new AppError('You cannot submit this milestone', 403));
   }
@@ -437,7 +484,8 @@ export const submitMilestone = catchAsync(async (req: AuthRequest, res: Response
     // Extract client ID using helper function
     const clientId = extractUserId(contract.client);
     if (!clientId) {
-      throw new Error('Could not extract client ID');
+      console.error('[SUBMIT_MILESTONE] Failed to extract client ID from contract:', contract._id);
+      throw new Error('Could not extract client ID - notification not sent');
     }
     await notificationService.notifyMilestoneSubmitted(
       clientId,

@@ -22,13 +22,32 @@ export const setupAutoReleaseSchedule = () => {
   // Using setInterval for simplicity - in production, use node-cron or similar
   const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
   
+  // Enhanced error handling with retry logic
+  const runJobWithRetry = async (attempt = 1, maxAttempts = 3) => {
+    try {
+      await runAutoReleaseJob();
+    } catch (error) {
+      console.error(`[CRON] Auto-release job failed (attempt ${attempt}/${maxAttempts}):`, error);
+      
+      if (attempt < maxAttempts) {
+        const retryDelay = Math.min(1000 * Math.pow(2, attempt), 30000); // Exponential backoff, max 30s
+        console.log(`[CRON] Retrying in ${retryDelay}ms...`);
+        setTimeout(() => runJobWithRetry(attempt + 1, maxAttempts), retryDelay);
+      } else {
+        console.error('[CRON] Auto-release job failed after all retry attempts. Manual intervention may be required.');
+        // In production, you might want to send an alert here (email, Slack, etc.)
+        // await sendAlert('Auto-release job failed after all retries', error);
+      }
+    }
+  };
+  
   // Run immediately on startup
-  runAutoReleaseJob().catch(console.error);
+  runJobWithRetry();
   
   // Then run every 24 hours
   setInterval(() => {
-    runAutoReleaseJob().catch(console.error);
+    runJobWithRetry();
   }, TWENTY_FOUR_HOURS);
   
-  console.log('[CRON] Auto-release job scheduled to run every 24 hours');
+  console.log('[CRON] Auto-release job scheduled to run every 24 hours with retry logic');
 };

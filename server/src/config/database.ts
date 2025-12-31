@@ -12,9 +12,26 @@ export const connectDB = async (): Promise<void> => {
     // Skip if connecting (readyState === 2)
     if (mongoose.connection.readyState === 2) {
       logger.info('MongoDB connection in progress, waiting...');
-      // Wait for connection to complete
-      await new Promise((resolve) => {
-        mongoose.connection.once('connected', resolve);
+      // Wait for connection to complete with timeout
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('MongoDB connection timeout after 30 seconds'));
+        }, 30000); // 30 second timeout
+
+        const onConnected = () => {
+          clearTimeout(timeout);
+          mongoose.connection.off('error', onError);
+          resolve(void 0);
+        };
+
+        const onError = (error: Error) => {
+          clearTimeout(timeout);
+          mongoose.connection.off('connected', onConnected);
+          reject(error);
+        };
+
+        mongoose.connection.once('connected', onConnected);
+        mongoose.connection.once('error', onError);
       });
       return;
     }
