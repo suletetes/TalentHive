@@ -1,37 +1,42 @@
 import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 import { ErrorHandler } from '@/utils/errorHandler';
 
-// Cache time configurations for different data types
+// Optimized cache time configurations for different data types
 export const CACHE_TIMES = {
-  // Static/rarely changing data
+  // Static/rarely changing data (categories, skills, etc.)
   STATIC: {
     staleTime: 60 * 60 * 1000, // 1 hour
-    cacheTime: 24 * 60 * 60 * 1000, // 24 hours
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours
   },
-  // User profile, settings
+  // User profile, settings (moderate frequency updates)
   USER_DATA: {
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes (reduced from 10)
+    gcTime: 20 * 60 * 1000, // 20 minutes (reduced from 30)
   },
-  // Projects, proposals, contracts
+  // Projects, proposals, contracts (frequently updated)
   MAIN_CONTENT: {
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes (reduced from 5)
+    gcTime: 10 * 60 * 1000, // 10 minutes (reduced from 15)
   },
-  // Messages, notifications
+  // Messages, notifications (real-time data)
   REAL_TIME: {
-    staleTime: 30 * 1000, // 30 seconds
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 15 * 1000, // 15 seconds (reduced from 30)
+    gcTime: 2 * 60 * 1000, // 2 minutes (reduced from 5)
   },
-  // Search results
+  // Search results (temporary data)
   SEARCH: {
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 1 * 60 * 1000, // 1 minute (reduced from 2)
+    gcTime: 5 * 60 * 1000, // 5 minutes (reduced from 10)
   },
-  // Analytics, reports
+  // Analytics, reports (less frequently updated)
   ANALYTICS: {
-    staleTime: 15 * 60 * 1000, // 15 minutes
-    cacheTime: 60 * 60 * 1000, // 1 hour
+    staleTime: 10 * 60 * 1000, // 10 minutes (reduced from 15)
+    gcTime: 30 * 60 * 1000, // 30 minutes (reduced from 60)
+  },
+  // Dashboard stats (frequently viewed but not critical)
+  DASHBOARD: {
+    staleTime: 3 * 60 * 1000, // 3 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
   },
 };
 
@@ -82,9 +87,9 @@ export const createQueryClient = () => {
     }),
     defaultOptions: {
       queries: {
-        // Default cache times
+        // Default cache times (optimized for performance)
         staleTime: CACHE_TIMES.MAIN_CONTENT.staleTime,
-        gcTime: CACHE_TIMES.MAIN_CONTENT.cacheTime, // Previously cacheTime in v4
+        gcTime: CACHE_TIMES.MAIN_CONTENT.gcTime, // Previously cacheTime in v4
         
         // Retry configuration
         retry: shouldRetry,
@@ -141,6 +146,7 @@ export const queryKeys = {
     details: () => [...queryKeys.projects.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.projects.details(), id] as const,
     my: () => [...queryKeys.projects.all, 'my'] as const,
+    stats: () => [...queryKeys.projects.all, 'stats'] as const,
   },
   
   // Proposals
@@ -250,25 +256,54 @@ export const invalidateQueries = {
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     if (projectId) {
       queryClient.invalidateQueries({ queryKey: queryKeys.proposals.byProject(projectId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(projectId) });
     }
+    queryClient.invalidateQueries({ queryKey: queryKeys.projects.stats() });
   },
   
-  proposal: (queryClient: QueryClient, proposalId?: string) => {
+  proposal: (queryClient: QueryClient, proposalId?: string, projectId?: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.proposals.all });
-    queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+    if (proposalId) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.proposals.detail(proposalId) });
+    }
+    if (projectId) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.proposals.byProject(projectId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(projectId) });
+    }
+    queryClient.invalidateQueries({ queryKey: queryKeys.projects.stats() });
   },
   
-  contract: (queryClient: QueryClient) => {
+  contract: (queryClient: QueryClient, contractId?: string, projectId?: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.contracts.all });
     queryClient.invalidateQueries({ queryKey: queryKeys.payments.all });
+    if (contractId) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.contracts.detail(contractId) });
+    }
+    if (projectId) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(projectId) });
+    }
+    queryClient.invalidateQueries({ queryKey: queryKeys.projects.stats() });
   },
   
-  message: (queryClient: QueryClient) => {
+  message: (queryClient: QueryClient, conversationId?: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.messages.all });
+    if (conversationId) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.messages.conversation(conversationId) });
+    }
+    queryClient.invalidateQueries({ queryKey: queryKeys.messages.unread() });
     queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unread() });
   },
   
   notification: (queryClient: QueryClient) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unread() });
+  },
+
+  user: (queryClient: QueryClient, userId?: string) => {
+    if (userId) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.profile(userId) });
+    }
+    queryClient.invalidateQueries({ queryKey: queryKeys.auth.user() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all });
   },
 };

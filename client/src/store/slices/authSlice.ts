@@ -1,25 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-export interface User {
-  id: string;
-  _id: string; // Alias for id - some components use _id
-  email: string;
-  role: 'admin' | 'freelancer' | 'client';
-  profile: {
-    firstName: string;
-    lastName: string;
-    avatar?: string;
-  };
-  isVerified: boolean;
-}
-
-interface AuthState {
-  user: User | null;
-  token: string | null;
-  refreshToken: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-}
+import { AuthUser, AuthState } from '@/types/auth';
 
 const initialState: AuthState = {
   user: null,
@@ -36,7 +16,7 @@ const authSlice = createSlice({
     loginStart: (state) => {
       state.isLoading = true;
     },
-    loginSuccess: (state, action: PayloadAction<{ user: User; token: string; refreshToken: string }>) => {
+    loginSuccess: (state, action: PayloadAction<{ user: AuthUser; token: string; refreshToken: string }>) => {
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.refreshToken = action.payload.refreshToken;
@@ -57,7 +37,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.isLoading = false;
     },
-    updateUser: (state, action: PayloadAction<Partial<User>>) => {
+    updateUser: (state, action: PayloadAction<Partial<AuthUser>>) => {
       if (state.user) {
         state.user = { ...state.user, ...action.payload };
       }
