@@ -18,7 +18,7 @@ import { useSelector } from 'react-redux';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { ProjectFilters } from '@/components/projects/ProjectFilters';
 import { ProjectForm } from '@/components/projects/ProjectForm';
-import { PageLoading, GridSkeleton } from '@/components/ui/LoadingStates';
+import { PageLoading, GridSkeleton, ErrorState, EmptyState, LoadingOverlay } from '@/components/ui/LoadingStates';
 import { RootState } from '@/store';
 import { useMyProjects } from '@/hooks/api/useProjects';
 import { ErrorHandler } from '@/utils/errorHandler';
@@ -67,7 +67,7 @@ export const ProjectsPage: React.FC = () => {
     isFetching,
   } = useMyProjects();
 
-  const projects = projectsData?.data || [];
+  const projects = projectsData || [];
   const pagination = null; // My projects doesn't have pagination
 
   const handleFiltersChange = (newFilters: any) => {
@@ -112,24 +112,10 @@ export const ProjectsPage: React.FC = () => {
     const apiError = ErrorHandler.handle(error);
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert
-          severity="error"
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              startIcon={<Refresh />}
-              onClick={handleRetry}
-            >
-              Retry
-            </Button>
-          }
-        >
-          <Typography variant="subtitle2" gutterBottom>
-            Failed to load projects
-          </Typography>
-          <Typography variant="body2">{apiError.message}</Typography>
-        </Alert>
+        <ErrorState
+          message={`Failed to load projects: ${apiError.message}`}
+          onRetry={handleRetry}
+        />
       </Container>
     );
   }
@@ -175,57 +161,45 @@ export const ProjectsPage: React.FC = () => {
       )}
 
       {/* Projects Grid */}
-      {isFetching && !isLoading ? (
-        <Box sx={{ position: 'relative', minHeight: 400 }}>
-          <GridSkeleton items={6} columns={3} height={250} />
-        </Box>
-      ) : projects.length === 0 ? (
-        <Box
-          sx={{
-            textAlign: 'center',
-            py: 8,
-            bgcolor: 'grey.50',
-            borderRadius: 2,
-          }}
-        >
-          <Typography variant="h6" gutterBottom>
-            No projects found
-          </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
-            Try adjusting your filters or search terms to find more projects.
-          </Typography>
-          <Button variant="outlined" onClick={handleClearFilters}>
-            Clear All Filters
-          </Button>
-        </Box>
-      ) : (
-        <>
-          <Grid container spacing={3}>
-            {projects.map((project: any) => (
-              <Grid item xs={12} sm={6} lg={4} key={project._id}>
-                <ProjectCard
-                  project={project}
-                  showBookmark={!isClient}
-                />
-              </Grid>
-            ))}
-          </Grid>
+      <LoadingOverlay loading={isFetching && !isLoading}>
+        {projects.length === 0 ? (
+          <EmptyState
+            message="No projects found. Try adjusting your filters or search terms to find more projects."
+            action={
+              <Button variant="outlined" onClick={handleClearFilters}>
+                Clear All Filters
+              </Button>
+            }
+          />
+        ) : (
+          <>
+            <Grid container spacing={3}>
+              {projects.map((project: any) => (
+                <Grid item xs={12} sm={6} lg={4} key={project._id}>
+                  <ProjectCard
+                    project={project}
+                    showBookmark={!isClient}
+                  />
+                </Grid>
+              ))}
+            </Grid>
 
-          {/* Pagination */}
-          {pagination && pagination.pages > 1 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-              <Pagination
-                count={pagination.pages}
-                page={pagination.page}
-                onChange={handlePageChange}
-                color="primary"
-                size="large"
-                disabled={isFetching}
-              />
-            </Box>
-          )}
-        </>
-      )}
+            {/* Pagination */}
+            {pagination && pagination.pages > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <Pagination
+                  count={pagination.pages}
+                  page={pagination.page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  size="large"
+                  disabled={isFetching}
+                />
+              </Box>
+            )}
+          </>
+        )}
+      </LoadingOverlay>
 
       {/* Create Project Dialog */}
       <Dialog

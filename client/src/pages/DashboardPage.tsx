@@ -7,7 +7,6 @@ import {
   CardContent,
   Box,
   Button,
-  Alert,
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { Work, Person, Payment, Star, Assignment } from '@mui/icons-material';
@@ -17,27 +16,44 @@ import { RootState } from '@/store';
 import { apiService } from '@/services/api';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { adminService } from '@/services/api/admin.service';
+import { ProjectStats } from '@/types/project';
+import { ApiResponse } from '@/types/common';
+
+interface AdminStats {
+  totalUsers: number;
+  totalProjects: number;
+  activeProjects: number;
+  totalRevenue: number;
+  totalContracts: number;
+}
+
+interface UserProjectStats extends ProjectStats {
+  totalProposals?: number;
+  receivedProposals?: number;
+  ongoingContracts?: number;
+  totalSpent?: number;
+}
 
 export const DashboardPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
 
   // Fetch stats based on role
-  const { data: statsData, isLoading } = useQuery({
+  const { data: statsData, isLoading } = useQuery<AdminStats | UserProjectStats>({
     queryKey: ['dashboard-stats', user?.role],
-    queryFn: async () => {
+    queryFn: async (): Promise<AdminStats | UserProjectStats> => {
       console.log(`[DASHBOARD] ========== START FETCH STATS ==========`);
       console.log(`[DASHBOARD] Fetching stats for ${user?.role}, user: ${user?._id}`);
       try {
         if (user?.role === 'admin') {
           const response = await adminService.getDashboardStats();
           console.log(`[DASHBOARD] Admin response:`, response);
-          const stats = response?.data?.stats || response?.stats || response || {};
+          const stats = response?.data?.stats || response?.data || response || {};
           console.log(`[DASHBOARD] Admin stats:`, stats);
-          return stats;
+          return stats as AdminStats;
         } else if (user?.role === 'client' || user?.role === 'freelancer') {
           // apiService.get returns response.data directly
-          const response: any = await apiService.get('/projects/my/stats');
+          const response: ApiResponse<UserProjectStats> = await apiService.get('/projects/my/stats');
           console.log(`[DASHBOARD] Stats raw response:`, response);
           console.log(`[DASHBOARD] Response type:`, typeof response);
           
@@ -48,9 +64,9 @@ export const DashboardPage: React.FC = () => {
           console.log(`[DASHBOARD] totalProposals:`, stats.totalProposals);
           console.log(`[DASHBOARD] activeProjects:`, stats.activeProjects);
           console.log(`[DASHBOARD] ========== END FETCH STATS ==========`);
-          return stats;
+          return stats as UserProjectStats;
         }
-        return {};
+        return {} as AdminStats | UserProjectStats;
       } catch (error) {
         console.error(`[DASHBOARD ERROR]`, error);
         throw error;
@@ -66,7 +82,7 @@ export const DashboardPage: React.FC = () => {
   });
 
   const profile = (profileData as any)?.data?.data?.user;
-  const stats = statsData || {};
+  const stats = (statsData || {}) as AdminStats & UserProjectStats;
 
   // Log stats rendering - MUST be before any conditional returns to avoid hooks error
   React.useEffect(() => {
@@ -258,10 +274,10 @@ export const DashboardPage: React.FC = () => {
                   <Typography variant="h6">Rating</Typography>
                 </Box>
                 <Typography variant="h4" color="warning.main">
-                  {stats.rating?.average > 0 ? stats.rating.average.toFixed(1) : 'N/A'}
+                  {stats.rating?.average && stats.rating.average > 0 ? stats.rating.average.toFixed(1) : 'N/A'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {stats.rating?.count > 0 
+                  {stats.rating?.count && stats.rating.count > 0 
                     ? `${stats.rating.count} reviews`
                     : 'No reviews yet'
                   }
