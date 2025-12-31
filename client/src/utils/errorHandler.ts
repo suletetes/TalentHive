@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios';
+import toast from 'react-hot-toast';
 
 /**
  * API Error interface
@@ -11,13 +12,27 @@ export interface ApiError {
 }
 
 /**
- * ErrorHandler class for backward compatibility
+ * Type guard to check if error is an AxiosError
+ */
+export const isAxiosError = (error: unknown): error is AxiosError => {
+  return error instanceof AxiosError;
+};
+
+/**
+ * Type guard to check if error is a standard Error
+ */
+export const isError = (error: unknown): error is Error => {
+  return error instanceof Error;
+};
+
+/**
+ * ErrorHandler class for centralized error handling
  */
 export class ErrorHandler {
   static handle(error: unknown): ApiError {
     const message = getErrorMessage(error);
-    const status = error instanceof AxiosError ? error.response?.status : undefined;
-    const code = error instanceof AxiosError ? error.code : undefined;
+    const status = isAxiosError(error) ? error.response?.status : undefined;
+    const code = isAxiosError(error) ? error.code : undefined;
     
     return {
       message,
@@ -34,9 +49,12 @@ export class ErrorHandler {
     return isServerError(error);
   }
 
-  static showToast(error: ApiError) {
-    // This would be handled by the component using the error
-    console.error('API Error:', error.message);
+  static showToast(error: ApiError): void {
+    toast.error(error.message);
+  }
+
+  static logError(error: unknown, context?: string): void {
+    logError(error, context);
   }
 }
 
@@ -56,7 +74,7 @@ export class ValidationErrorHandler {
  * Extract user-friendly error message from API error
  */
 export const getErrorMessage = (error: unknown): string => {
-  if (error instanceof AxiosError) {
+  if (isAxiosError(error)) {
     // API error response
     if (error.response?.data?.message) {
       return error.response.data.message;
@@ -90,7 +108,7 @@ export const getErrorMessage = (error: unknown): string => {
     return error.message || 'An unexpected error occurred';
   }
 
-  if (error instanceof Error) {
+  if (isError(error)) {
     return error.message;
   }
 
@@ -180,23 +198,23 @@ export const validateFormData = (
  * Check if error is a specific type
  */
 export const isNetworkError = (error: unknown): boolean => {
-  return error instanceof AxiosError && error.code === 'ERR_NETWORK';
+  return isAxiosError(error) && error.code === 'ERR_NETWORK';
 };
 
 export const isAuthError = (error: unknown): boolean => {
-  return error instanceof AxiosError && error.response?.status === 401;
+  return isAxiosError(error) && error.response?.status === 401;
 };
 
 export const isForbiddenError = (error: unknown): boolean => {
-  return error instanceof AxiosError && error.response?.status === 403;
+  return isAxiosError(error) && error.response?.status === 403;
 };
 
 export const isNotFoundError = (error: unknown): boolean => {
-  return error instanceof AxiosError && error.response?.status === 404;
+  return isAxiosError(error) && error.response?.status === 404;
 };
 
 export const isServerError = (error: unknown): boolean => {
-  return error instanceof AxiosError && 
+  return isAxiosError(error) && 
     error.response?.status !== undefined && 
     error.response.status >= 500;
 };
