@@ -116,7 +116,21 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
   }
 
   const user = new User(userData);
-  await user.save();
+  
+  try {
+    await user.save();
+  } catch (error: any) {
+    // Handle duplicate email error
+    if (error.code === 11000 && error.keyPattern?.email) {
+      return next(new AppError('An account with this email already exists', 409));
+    }
+    // Handle other validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map((err: any) => err.message);
+      return next(new AppError(`Validation failed: ${messages.join(', ')}`, 400));
+    }
+    throw error; // Re-throw other errors
+  }
 
   // TODO: Re-enable email verification when email service is fixed
   // await sendVerificationEmail(email, emailVerificationToken);
