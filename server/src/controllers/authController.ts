@@ -8,6 +8,7 @@ import { AppError, catchAsync } from '@/middleware/errorHandler';
 import { deleteCache } from '@/config/redis';
 import { logger } from '@/utils/logger';
 import { AuthRequest } from '@/middleware/auth';
+import { ResponseFormatter } from '@/utils/standardResponse';
 
 export const registerValidation = [
   body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
@@ -126,20 +127,16 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
   user.emailVerificationExpires = undefined;
   await user.save();
 
-  res.status(201).json({
-    status: 'success',
-    message: 'User registered successfully. You can now login.',
-    data: {
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        firstName: user.profile?.firstName,
-        lastName: user.profile?.lastName,
-        isVerified: user.isVerified,
-      },
+  return ResponseFormatter.success(res, 'User registered successfully. You can now login.', {
+    user: {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      firstName: user.profile?.firstName,
+      lastName: user.profile?.lastName,
+      isVerified: user.isVerified,
     },
-  });
+  }, 201);
 });
 
 export const loginValidation = [

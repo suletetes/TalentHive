@@ -5,9 +5,10 @@ import { Contract } from '@/models/Contract';
 import { PlatformSettings } from '@/models/PlatformSettings';
 import { notificationService } from '@/services/notification.service';
 import { sendEmail } from '@/utils/email.resend';
+import { ResponseFormatter } from '@/utils/standardResponse';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16', // Latest supported by stripe@14.25.0 - upgrade to stripe@17+ for newer versions
+  apiVersion: '2024-12-18.acacia', // Latest API version for stripe@17.3.0
 });
 
 // Sanitize error messages to prevent sensitive data exposure
@@ -255,7 +256,17 @@ export const confirmPayment = async (req: Request, res: Response) => {
     const { paymentIntentId } = req.body;
 
     // Retrieve payment intent from Stripe
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    } catch (stripeError: any) {
+      console.error('❌ [CONFIRM_PAYMENT] Failed to retrieve payment intent:', stripeError.message);
+      return res.status(500).json({
+        status: 'error',
+        message: 'Failed to verify payment with Stripe',
+        error: sanitizeErrorMessage(stripeError),
+      });
+    }
 
     if (paymentIntent.status !== 'succeeded') {
       return res.status(400).json({
@@ -337,11 +348,7 @@ export const confirmPayment = async (req: Request, res: Response) => {
       });
     }
 
-    res.status(200).json({
-      status: 'success',
-      message: 'Payment confirmed successfully',
-      data: transaction,
-    });
+    return ResponseFormatter.success(res, 'Payment confirmed successfully', transaction);
   } catch (error: any) {
     console.error('Payment confirmation error:', error);
     res.status(500).json({
@@ -494,11 +501,7 @@ export const releasePayment = async (req: Request, res: Response) => {
       `,
     });
 
-    res.status(200).json({
-      status: 'success',
-      message: 'Payment released successfully',
-      data: transaction,
-    });
+    return ResponseFormatter.success(res, 'Payment released successfully', transaction);
   } catch (error: any) {
     console.error('Payment release error:', error);
     res.status(500).json({
@@ -644,14 +647,30 @@ export const refundPayment = async (req: Request, res: Response) => {
     }
 
     // Create refund in Stripe
-    await stripe.refunds.create({
-      payment_intent: transaction.stripePaymentIntentId,
-      reason: 'requested_by_customer',
-    });
+    let stripeRefundId = null;
+    try {
+      const refund = await stripe.refunds.create({
+        payment_intent: transaction.stripePaymentIntentId,
+        reason: 'requested_by_customer',
+      });
+      stripeRefundId = refund.id;
+      console.log('✅ [REFUND_PAYMENT] Stripe refund successful:', refund.id);
+    } catch (stripeError: any) {
+      console.error('❌ [REFUND_PAYMENT] Stripe refund failed:', stripeError.message);
+      return res.status(500).json({
+        status: 'error',
+        message: 'Refund failed: Stripe refund error',
+        error: sanitizeErrorMessage(stripeError),
+      });
+    }
 
+    // Only update transaction status after successful Stripe refund
     transaction.status = 'refunded';
     transaction.refundedAt = new Date();
     transaction.failureReason = reason || 'Refund requested';
+    if (stripeRefundId) {
+      transaction.stripeRefundId = stripeRefundId;
+    }
     await transaction.save();
 
     // Create notifications
