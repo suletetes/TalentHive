@@ -1,142 +1,377 @@
+// Enhanced error boundary components for better error handling
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Box, Button, Container, Typography, Paper } from '@mui/material';
-import { Error as ErrorIcon, Refresh as RefreshIcon } from '@mui/icons-material';
+import {
+  Box,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  Alert,
+  Collapse,
+  IconButton,
+} from '@mui/material';
+import {
+  Refresh as RefreshIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  BugReport as BugIcon,
+} from '@mui/icons-material';
+import { ErrorDisplayManager, ErrorSeverity } from '@/utils/errorDisplay';
 
-interface Props {
-  children: ReactNode;
-}
-
-interface State {
+interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  errorId: string | null;
+  showDetails: boolean;
+  retryCount: number;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  showErrorDetails?: boolean;
+  maxRetries?: number;
+  resetOnPropsChange?: boolean;
+  level?: 'page' | 'component' | 'section';
+}
+
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  private resetTimeoutId: number | null = null;
+
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
       hasError: false,
       error: null,
       errorInfo: null,
+      errorId: null,
+      showDetails: false,
+      retryCount: 0,
     };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return {
       hasError: true,
       error,
-      errorInfo: null,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console in development
-    console.error('Error caught by boundary:', error, errorInfo);
-
-    // In production, you would send this to an error tracking service
-    // Example: Sentry.captureException(error, { extra: errorInfo });
+    // Log error to error display system
+    const errorId = ErrorDisplayManager.displayError(error, {
+      severity: ErrorSeverity.HIGH,
+      context: `error-boundary-${this.props.level || 'component'}`,
+    });
 
     this.setState({
-      error,
       errorInfo,
+      errorId,
     });
+
+    // Call custom error handler
+    this.props.onError?.(error, errorInfo);
+
+    // Log to console for debugging
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
-  handleReset = () => {
+  componentDidUpdate(prevProps: ErrorBoundaryProps) {
+    const { resetOnPropsChange, children } = this.props;
+    const { hasError } = this.state;
+
+    // Reset error boundary when props change (if enabled)
+    if (hasError && resetOnPropsChange && prevProps.children !== children) {
+      this.resetErrorBoundary();
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.resetTimeoutId) {
+      clearTimeout(this.resetTimeoutId);
+    }
+  }
+
+  resetErrorBoundary = () => {
     this.setState({
       hasError: false,
       error: null,
       errorInfo: null,
+      errorId: null,
+      showDetails: false,
+      retryCount: this.state.retryCount + 1,
     });
   };
 
-  handleReload = () => {
+  handleRetry = () => {
+    const { maxRetries = 3 } = this.props;
+    const { retryCount } = this.state;
+
+    if (retryCount < maxRetries) {
+      this.resetErrorBoundary();
+    } else {
+      // Show message about max retries reached
+      ErrorDisplayManager.displayError(
+        'Maximum retry attempts reached. Please refresh the page.',
+        {
+          severity: ErrorSeverity.HIGH,
+          context: 'error-boundary-max-retries',
+        }
+      );
+    }
+  };
+
+  handleRefreshPage = () => {
     window.location.reload();
   };
 
-  render() {
-    if (this.state.hasError) {
-      return (
-        <Container maxWidth="md">
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: '100vh',
-              py: 4,
-            }}
-          >
-            <Paper
-              elevation={3}
-              sx={{
-                p: 4,
-                textAlign: 'center',
-                maxWidth: 600,
-              }}
-            >
-              <ErrorIcon
-                sx={{
-                  fontSize: 80,
-                  color: 'error.main',
-                  mb: 2,
-                }}
-              />
-              
-              <Typography variant="h4" gutterBottom>
-                Oops! Something went wrong
-              </Typography>
-              
-              <Typography variant="body1" color="text.secondary" paragraph>
-                We're sorry for the inconvenience. An unexpected error has occurred.
-              </Typography>
+  toggleDetails = () => {
+    this.setState(prevState => ({
+      showDetails: !prevState.showDetails,
+    }));
+  };
 
-              {process.env.NODE_ENV === 'development' && this.state.error && (
-                <Box
-                  sx={{
-                    mt: 3,
-                    p: 2,
-                    bgcolor: 'grey.100',
-                    borderRadius: 1,
-                    textAlign: 'left',
-                    overflow: 'auto',
-                    maxHeight: 200,
-                  }}
-                >
-                  <Typography variant="caption" component="pre" sx={{ fontSize: '0.75rem' }}>
-                    {this.state.error.toString()}
-                    {this.state.errorInfo && this.state.errorInfo.componentStack}
+  renderErrorFallback() {
+    const { error, errorInfo, showDetails, retryCount } = this.state;
+    const { maxRetries = 3, level = 'component', showErrorDetails = true } = this.props;
+
+    const canRetry = retryCount < maxRetries;
+    const isPageLevel = level === 'page';
+
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: isPageLevel ? '100vh' : '200px',
+          padding: 3,
+        }}
+      >
+        <Card sx={{ maxWidth: 600, width: '100%' }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <BugIcon color="error" sx={{ mr: 1, fontSize: 32 }} />
+              <Typography variant="h5" color="error">
+                {isPageLevel ? 'Application Error' : 'Component Error'}
+              </Typography>
+            </Box>
+
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              {isPageLevel
+                ? 'Something went wrong with the application. We apologize for the inconvenience.'
+                : 'This component encountered an error and could not be displayed.'}
+            </Typography>
+
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  <strong>Error:</strong> {error.message}
+                </Typography>
+              </Alert>
+            )}
+
+            {showErrorDetails && error && (
+              <>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <IconButton
+                    onClick={this.toggleDetails}
+                    size="small"
+                    sx={{ mr: 1 }}
+                  >
+                    {showDetails ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  </IconButton>
+                  <Typography variant="body2" color="text.secondary">
+                    {showDetails ? 'Hide' : 'Show'} Error Details
                   </Typography>
                 </Box>
-              )}
 
-              <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'center' }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<RefreshIcon />}
-                  onClick={this.handleReset}
-                >
-                  Try Again
-                </Button>
+                <Collapse in={showDetails}>
+                  <Card variant="outlined" sx={{ mb: 2 }}>
+                    <CardContent>
+                      <Typography variant="caption" component="div" sx={{ mb: 1 }}>
+                        <strong>Stack Trace:</strong>
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        component="pre"
+                        sx={{
+                          fontSize: '0.75rem',
+                          fontFamily: 'monospace',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          maxHeight: 200,
+                          overflow: 'auto',
+                          backgroundColor: 'grey.100',
+                          padding: 1,
+                          borderRadius: 1,
+                        }}
+                      >
+                        {error.stack}
+                      </Typography>
+
+                      {errorInfo && (
+                        <>
+                          <Typography variant="caption" component="div" sx={{ mt: 2, mb: 1 }}>
+                            <strong>Component Stack:</strong>
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            component="pre"
+                            sx={{
+                              fontSize: '0.75rem',
+                              fontFamily: 'monospace',
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              maxHeight: 200,
+                              overflow: 'auto',
+                              backgroundColor: 'grey.100',
+                              padding: 1,
+                              borderRadius: 1,
+                            }}
+                          >
+                            {errorInfo.componentStack}
+                          </Typography>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Collapse>
+              </>
+            )}
+
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+              {canRetry && (
                 <Button
                   variant="contained"
-                  onClick={this.handleReload}
+                  color="primary"
+                  startIcon={<RefreshIcon />}
+                  onClick={this.handleRetry}
                 >
-                  Reload Page
+                  Try Again ({maxRetries - retryCount} attempts left)
                 </Button>
-              </Box>
+              )}
 
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 3, display: 'block' }}>
-                If this problem persists, please contact support.
-              </Typography>
-            </Paper>
-          </Box>
-        </Container>
-      );
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<RefreshIcon />}
+                onClick={this.handleRefreshPage}
+              >
+                Refresh Page
+              </Button>
+            </Box>
+
+            {!canRetry && (
+              <Alert severity="warning" sx={{ mt: 2 }}>
+                Maximum retry attempts reached. Please refresh the page or contact support if the problem persists.
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
+
+  render() {
+    const { hasError } = this.state;
+    const { children, fallback } = this.props;
+
+    if (hasError) {
+      return fallback || this.renderErrorFallback();
     }
 
-    return this.props.children;
+    return children;
   }
 }
+
+// Specialized error boundaries for different contexts
+export const PageErrorBoundary: React.FC<{
+  children: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+}> = ({ children, onError }) => (
+  <ErrorBoundary
+    level="page"
+    showErrorDetails={true}
+    maxRetries={2}
+    resetOnPropsChange={true}
+    onError={onError}
+  >
+    {children}
+  </ErrorBoundary>
+);
+
+export const ComponentErrorBoundary: React.FC<{
+  children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+}> = ({ children, fallback, onError }) => (
+  <ErrorBoundary
+    level="component"
+    showErrorDetails={false}
+    maxRetries={3}
+    resetOnPropsChange={true}
+    fallback={fallback}
+    onError={onError}
+  >
+    {children}
+  </ErrorBoundary>
+);
+
+export const SectionErrorBoundary: React.FC<{
+  children: ReactNode;
+  sectionName?: string;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+}> = ({ children, sectionName, onError }) => (
+  <ErrorBoundary
+    level="section"
+    showErrorDetails={false}
+    maxRetries={2}
+    resetOnPropsChange={false}
+    onError={(error, errorInfo) => {
+      console.error(`Error in section ${sectionName}:`, error);
+      onError?.(error, errorInfo);
+    }}
+  >
+    {children}
+  </ErrorBoundary>
+);
+
+// HOC for wrapping components with error boundaries
+export const withErrorBoundary = <P extends object>(
+  Component: React.ComponentType<P>,
+  errorBoundaryProps?: Partial<ErrorBoundaryProps>
+) => {
+  const WrappedComponent = (props: P) => (
+    <ErrorBoundary {...errorBoundaryProps}>
+      <Component {...props} />
+    </ErrorBoundary>
+  );
+
+  WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
+  return WrappedComponent;
+};
+
+// Hook for programmatic error boundary reset
+export const useErrorBoundary = () => {
+  const [error, setError] = React.useState<Error | null>(null);
+
+  const resetError = React.useCallback(() => {
+    setError(null);
+  }, []);
+
+  const captureError = React.useCallback((error: Error) => {
+    setError(error);
+  }, []);
+
+  React.useEffect(() => {
+    if (error) {
+      throw error;
+    }
+  }, [error]);
+
+  return { captureError, resetError };
+};

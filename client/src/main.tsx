@@ -14,9 +14,13 @@ import { store, persistor, RootState } from '@/store';
 import { createAppTheme } from '@/theme';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { createQueryClient } from '@/config/queryClient';
+import { getStateSynchronizer } from '@/utils/stateSynchronizer';
 
 // Create a client for React Query with optimized configuration
 const queryClient = createQueryClient();
+
+// Initialize state synchronizer
+const stateSynchronizer = getStateSynchronizer(queryClient, store);
 
 // Theme wrapper component to access Redux state
 const ThemedApp = () => {
