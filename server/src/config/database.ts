@@ -39,7 +39,28 @@ export const connectDB = async (): Promise<void> => {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive_dev';
     
     await mongoose.connect(mongoUri, {
-      // Remove deprecated options
+      // Connection pool settings
+      maxPoolSize: parseInt(process.env.MONGODB_MAX_POOL_SIZE || '10'), // Maximum number of connections
+      minPoolSize: parseInt(process.env.MONGODB_MIN_POOL_SIZE || '2'),  // Minimum number of connections
+      maxIdleTimeMS: parseInt(process.env.MONGODB_MAX_IDLE_TIME || '30000'), // Close connections after 30 seconds of inactivity
+      serverSelectionTimeoutMS: parseInt(process.env.MONGODB_SERVER_SELECTION_TIMEOUT || '5000'), // How long to try selecting a server
+      socketTimeoutMS: parseInt(process.env.MONGODB_SOCKET_TIMEOUT || '45000'), // How long a send or receive on a socket can take before timing out
+      connectTimeoutMS: parseInt(process.env.MONGODB_CONNECT_TIMEOUT || '10000'), // How long to wait for a connection to be established
+      
+      // Heartbeat settings
+      heartbeatFrequencyMS: parseInt(process.env.MONGODB_HEARTBEAT_FREQUENCY || '10000'), // How often to check server status
+      
+      // Buffer settings
+      bufferMaxEntries: 0, // Disable mongoose buffering
+      bufferCommands: false, // Disable mongoose buffering
+      
+      // Retry settings
+      retryWrites: true, // Enable retryable writes
+      retryReads: true,  // Enable retryable reads
+      
+      // Compression
+      compressors: ['zlib'], // Enable compression
+      zlibCompressionLevel: 6, // Compression level (1-9)
     });
     
     logger.info(`✅ MongoDB connected: ${mongoose.connection.host}`);
