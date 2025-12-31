@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key_for_development';
 
 export const stripe = new Stripe(stripeKey, {
-  apiVersion: '2023-10-16', // Latest supported by stripe@14.25.0 - upgrade to stripe@17+ for newer versions
+  apiVersion: '2025-02-24.acacia', // Latest API version for stripe@17.3.0
   typescript: true,
 });
 
