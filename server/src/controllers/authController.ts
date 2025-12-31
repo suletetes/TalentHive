@@ -411,10 +411,10 @@ export const forgotPassword = catchAsync(async (req: Request, res: Response, nex
     });
   }
 
-  // Generate reset token
+  // Generate reset token with longer expiry
   const resetToken = crypto.randomBytes(32).toString('hex');
   const passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-  const passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  const passwordResetExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours instead of 1 hour
 
   // Save reset token to user
   user.passwordResetToken = passwordResetToken;

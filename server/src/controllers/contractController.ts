@@ -237,15 +237,15 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
   console.log('[GET MY CONTRACTS] Found contracts:', contracts.length);
   console.log('[GET MY CONTRACTS] Total in DB:', total);
   
-  // Debug each contract
+  // Debug each contract (removed sensitive data)
   contracts.forEach((contract: any, index: number) => {
     console.log(`[GET MY CONTRACTS] Contract ${index + 1}:`, {
-      id: contract._id,
-      title: contract.title,
+      id: contract._id ? 'present' : 'missing',
+      title: contract.title ? 'present' : 'missing',
       status: contract.status,
       sourceType: contract.sourceType || 'NOT SET',
-      client: contract.client?._id || contract.client,
-      freelancer: contract.freelancer?._id || contract.freelancer,
+      hasClient: !!contract.client,
+      hasFreelancer: !!contract.freelancer,
       hasServicePackage: !!contract.servicePackage,
       hasHireNowRequest: !!contract.hireNowRequest,
     });

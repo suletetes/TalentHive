@@ -10,6 +10,38 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16', // Latest supported by stripe@14.25.0 - upgrade to stripe@17+ for newer versions
 });
 
+// Sanitize error messages to prevent sensitive data exposure
+const sanitizeErrorMessage = (error: any): string => {
+  if (!error) return 'An unknown error occurred';
+  
+  const message = error.message || error.toString();
+  
+  // Remove potential API keys, tokens, or sensitive data
+  const sensitivePatterns = [
+    /sk_[a-zA-Z0-9_]+/g, // Stripe secret keys
+    /pk_[a-zA-Z0-9_]+/g, // Stripe publishable keys
+    /rk_[a-zA-Z0-9_]+/g, // Stripe restricted keys
+    /acct_[a-zA-Z0-9_]+/g, // Stripe account IDs
+    /pi_[a-zA-Z0-9_]+/g, // Payment intent IDs
+    /cs_[a-zA-Z0-9_]+/g, // Checkout session IDs
+    /Bearer\s+[a-zA-Z0-9_\-\.]+/g, // Bearer tokens
+    /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, // Email addresses
+    /mongodb:\/\/[^\s]+/g, // MongoDB connection strings
+  ];
+  
+  let sanitizedMessage = message;
+  sensitivePatterns.forEach(pattern => {
+    sanitizedMessage = sanitizedMessage.replace(pattern, '[REDACTED]');
+  });
+  
+  // If the message contains sensitive patterns, return a generic message
+  if (sanitizedMessage !== message) {
+    return 'A service error occurred. Please try again later.';
+  }
+  
+  return sanitizedMessage;
+};
+
 // Create checkout session (RECOMMENDED)
 export const createCheckoutSession = async (req: Request, res: Response) => {
   try {
@@ -108,7 +140,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to create checkout session',
-      error: error.message,
+      error: sanitizeErrorMessage(error),
     });
   }
 };
@@ -212,7 +244,7 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to create payment intent',
-      error: error.message,
+      error: sanitizeErrorMessage(error),
     });
   }
 };
@@ -315,7 +347,7 @@ export const confirmPayment = async (req: Request, res: Response) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to confirm payment',
-      error: error.message,
+      error: sanitizeErrorMessage(error),
     });
   }
 };
@@ -360,12 +392,24 @@ export const releasePayment = async (req: Request, res: Response) => {
 
     // Transfer to freelancer's Stripe account
     const freelancerObj = transaction.freelancer as any;
+    
+    // Add null checks to prevent crashes
+    if (!freelancerObj) {
+      console.error('❌ [RELEASE_PAYMENT] Freelancer not found or not populated');
+      return res.status(500).json({
+        status: 'error',
+        message: 'Payment release failed: Freelancer information not available',
+      });
+    }
+
     console.log('💳 [RELEASE_PAYMENT] Freelancer info:', {
-      id: freelancerObj._id,
-      email: freelancerObj.email,
+      id: freelancerObj._id || 'N/A',
+      email: freelancerObj.email || 'N/A',
       hasStripeAccount: !!freelancerObj.stripeConnectedAccountId,
-      stripeAccountId: freelancerObj.stripeConnectedAccountId,
+      stripeAccountId: freelancerObj.stripeConnectedAccountId || 'N/A',
     });
+
+    let stripeTransferId = null;
 
     if (freelancerObj.stripeConnectedAccountId) {
       console.log('💸 [RELEASE_PAYMENT] Creating Stripe transfer:', {
@@ -385,18 +429,28 @@ export const releasePayment = async (req: Request, res: Response) => {
             contractId: transaction.contract.toString(),
           },
         });
+        stripeTransferId = transfer.id;
         console.log('✅ [RELEASE_PAYMENT] Stripe transfer successful:', transfer.id);
       } catch (stripeError: any) {
         console.error('❌ [RELEASE_PAYMENT] Stripe transfer failed:', stripeError.message);
-        throw stripeError;
+        // Don't update transaction status if Stripe transfer fails
+        return res.status(500).json({
+          status: 'error',
+          message: 'Payment release failed: Stripe transfer error',
+          error: sanitizeErrorMessage(stripeError),
+        });
       }
     } else {
       console.log('⚠️ [RELEASE_PAYMENT] No Stripe account connected, skipping transfer');
     }
 
+    // Only update transaction status after successful Stripe transfer (or if no Stripe account)
     console.log('💾 [RELEASE_PAYMENT] Updating transaction status to released');
     transaction.status = 'released';
     transaction.releasedAt = new Date();
+    if (stripeTransferId) {
+      transaction.stripeTransferId = stripeTransferId;
+    }
     await transaction.save();
     console.log('✅ [RELEASE_PAYMENT] Transaction updated successfully');
 
@@ -450,7 +504,7 @@ export const releasePayment = async (req: Request, res: Response) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to release payment',
-      error: error.message,
+      error: sanitizeErrorMessage(error),
     });
   }
 };
@@ -502,7 +556,7 @@ export const getTransactions = async (req: Request, res: Response) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch transactions',
-      error: error.message,
+      error: sanitizeErrorMessage(error),
     });
   }
 };
@@ -560,7 +614,7 @@ export const getBalance = async (req: Request, res: Response) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch balance',
-      error: error.message,
+      error: sanitizeErrorMessage(error),
     });
   }
 };
@@ -637,7 +691,7 @@ export const refundPayment = async (req: Request, res: Response) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to process refund',
-      error: error.message,
+      error: sanitizeErrorMessage(error),
     });
   }
 };
