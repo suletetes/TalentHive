@@ -31,6 +31,56 @@ export async function isSlugAvailable(slug: string, excludeUserId?: string): Pro
 }
 
 /**
+ * Atomically reserve a slug for a user (handles race conditions)
+ * @param userId - The user ID to assign the slug to
+ * @param slug - The slug to reserve
+ * @param excludeUserId - Optional user ID to exclude from check (for updates)
+ * @returns True if slug was successfully reserved
+ */
+export async function reserveSlugForUser(userId: string, slug: string, excludeUserId?: string): Promise<boolean> {
+  try {
+    const query: any = { profileSlug: slug };
+    if (excludeUserId) {
+      query._id = { $ne: excludeUserId };
+    }
+
+    // Use findOneAndUpdate with upsert to atomically check and reserve
+    const result = await User.findOneAndUpdate(
+      { _id: userId },
+      { $set: { profileSlug: slug } },
+      { 
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!result) {
+      return false; // User not found
+    }
+
+    // Double-check that no other user has this slug (in case of race condition)
+    const conflictingUser = await User.findOne({
+      profileSlug: slug,
+      _id: { $ne: userId }
+    });
+
+    if (conflictingUser) {
+      // Rollback - remove the slug from this user
+      await User.findByIdAndUpdate(userId, { $unset: { profileSlug: 1 } });
+      return false;
+    }
+
+    return true;
+  } catch (error: any) {
+    // Handle duplicate key error (E11000)
+    if (error.code === 11000 && error.keyPattern?.profileSlug) {
+      return false; // Slug already taken
+    }
+    throw error; // Re-throw other errors
+  }
+}
+
+/**
  * Validate slug format
  * @param slug - The slug to validate
  * @returns Object with isValid flag and error message if invalid
@@ -109,10 +159,59 @@ export async function generateSlugSuggestions(baseSlug: string, count: number = 
 }
 
 /**
- * Generate a unique slug from a user's name
+ * Generate a unique slug from a user's name and atomically assign it
+ * @param userId - The user ID to assign the slug to
  * @param firstName - User's first name
  * @param lastName - User's last name
- * @returns A unique slug
+ * @returns A unique slug that has been atomically assigned
+ */
+export async function generateAndReserveUniqueSlug(userId: string, firstName: string, lastName: string): Promise<string> {
+  const fullName = `${firstName} ${lastName}`;
+  const baseSlug = generateSlug(fullName);
+
+  // Try base slug first
+  if (await reserveSlugForUser(userId, baseSlug)) {
+    return baseSlug;
+  }
+
+  // Try with just first name
+  const firstNameSlug = generateSlug(firstName);
+  if (await reserveSlugForUser(userId, firstNameSlug)) {
+    return firstNameSlug;
+  }
+
+  // Generate numbered version
+  for (let i = 1; i <= 999; i++) {
+    const numberedSlug = `${baseSlug}-${i}`;
+    if (await reserveSlugForUser(userId, numberedSlug)) {
+      return numberedSlug;
+    }
+  }
+
+  // Fallback to random suffix (try multiple times)
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    const randomSlug = `${baseSlug}-${randomSuffix}`;
+    if (await reserveSlugForUser(userId, randomSlug)) {
+      return randomSlug;
+    }
+  }
+
+  // Final fallback with timestamp
+  const timestampSlug = `${baseSlug}-${Date.now()}`;
+  if (await reserveSlugForUser(userId, timestampSlug)) {
+    return timestampSlug;
+  }
+
+  throw new Error('Unable to generate unique slug after multiple attempts');
+}
+
+/**
+ * Generate a unique slug from a user's name (legacy function - use generateAndReserveUniqueSlug for new code)
+ * @param firstName - User's first name
+ * @param lastName - User's last name
+ * @returns A unique slug (but not atomically reserved)
+ * @deprecated Use generateAndReserveUniqueSlug instead to avoid race conditions
  */
 export async function generateUniqueSlugFromName(firstName: string, lastName: string): Promise<string> {
   const fullName = `${firstName} ${lastName}`;
