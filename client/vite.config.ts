@@ -19,13 +19,6 @@ export default defineConfig(({ command, mode }) => {
         fastRefresh: isDevelopment,
         // Optimize React imports
         jsxImportSource: '@emotion/react',
-        // Production optimizations
-        babel: isProduction ? {
-          plugins: [
-            // Remove console.log in production
-            ['transform-remove-console', { exclude: ['error', 'warn'] }],
-          ],
-        } : undefined,
       }),
       // Split vendor chunks automatically
       splitVendorChunkPlugin(),
@@ -79,6 +72,14 @@ export default defineConfig(({ command, mode }) => {
       chunkSizeWarningLimit: isProduction ? 500 : 1000,
       // Report compressed size only in production
       reportCompressedSize: isProduction,
+      
+      // ESBuild options for production
+      ...(isProduction && {
+        esbuild: {
+          drop: ['console', 'debugger'],
+          legalComments: 'none',
+        },
+      }),
       
       rollupOptions: {
         output: {
@@ -211,12 +212,7 @@ export default defineConfig(({ command, mode }) => {
     define: {
       __DEV__: isDevelopment,
       __PROD__: isProduction,
-      // Remove console.log in production
-      ...(isProduction && {
-        'console.log': '(() => {})',
-        'console.debug': '(() => {})',
-        'console.info': '(() => {})',
-      }),
+      // Note: console.log removal is handled by minification in production
     },
     
     // Test configuration

@@ -55,32 +55,83 @@ export const preloadComponent = (
 
 // Lazy load pages with route-based splitting
 export const createLazyPage = (pageName: string) => {
-  return createLazyComponent(
-    () => import(`@/pages/${pageName}`),
-    {
-      retries: 3,
-      retryDelay: 1000,
-    }
-  );
+  // Static imports for better Vite compatibility
+  const pageImports: Record<string, () => Promise<{ default: ComponentType<any> }>> = {
+    'DashboardPage': () => import('@/pages/DashboardPage.tsx'),
+    'ProjectsPage': () => import('@/pages/ProjectsPage.tsx'),
+    'ProfilePage': () => import('@/pages/ProfilePage.tsx'),
+    'ProposalsPage': () => import('@/pages/ProposalsPage.tsx'),
+    'ContractsPage': () => import('@/pages/ContractsPage.tsx'),
+    'TimeTrackingPage': () => import('@/pages/TimeTrackingPage.tsx'),
+    'PaymentsPage': () => import('@/pages/PaymentsPage.tsx'),
+    'EarningsPage': () => import('@/pages/EarningsPage.tsx'),
+    'MessagesPage': () => import('@/pages/MessagesPage.tsx'),
+    'NotificationsPage': () => import('@/pages/NotificationsPage.tsx'),
+    'LoginPage': () => import('@/pages/auth/LoginPage.tsx'),
+    'RegisterPage': () => import('@/pages/auth/RegisterPage.tsx'),
+    'ForgotPasswordPage': () => import('@/pages/auth/ForgotPasswordPage.tsx'),
+    'ResetPasswordPage': () => import('@/pages/auth/ResetPasswordPage.tsx'),
+    'HomePage': () => import('@/pages/HomePage.tsx'),
+    'AboutPage': () => import('@/pages/AboutPage.tsx'),
+    'ContactPage': () => import('@/pages/ContactPage.tsx'),
+    'NotFoundPage': () => import('@/pages/NotFoundPage.tsx'),
+    'BrowseProjectsPage': () => import('@/pages/BrowseProjectsPage.tsx'),
+    'FindFreelancersPage': () => import('@/pages/FindFreelancersPage.tsx'),
+    'NewProjectPage': () => import('@/pages/NewProjectPage.tsx'),
+    'ProjectDetailPage': () => import('@/pages/ProjectDetailPage.tsx'),
+    'FreelancerDetailPage': () => import('@/pages/FreelancerDetailPage.tsx'),
+    'ContractDetailPage': () => import('@/pages/ContractDetailPage.tsx'),
+  };
+
+  const importFn = pageImports[pageName];
+  if (!importFn) {
+    throw new Error(`Page "${pageName}" not found in lazy loading registry`);
+  }
+
+  return createLazyComponent(importFn, {
+    retries: 3,
+    retryDelay: 1000,
+  });
 };
 
 // Lazy load components with component-based splitting
 export const createLazyComponentFromPath = (componentPath: string) => {
-  return createLazyComponent(
-    () => import(`@/components/${componentPath}`),
-    {
-      retries: 2,
-      retryDelay: 500,
-    }
-  );
+  // Static imports for better Vite compatibility
+  const componentImports: Record<string, () => Promise<{ default: ComponentType<any> }>> = {
+    'ui/LoadingSpinner': () => import('@/components/ui/LoadingSpinner.tsx'),
+    'ui/ErrorBoundary': () => import('@/components/ui/ErrorBoundary.tsx'),
+    'ui/LoadingStates': () => import('@/components/ui/LoadingStates.tsx'),
+    'ui/OptimizedComponents': () => import('@/components/ui/OptimizedComponents.tsx'),
+    'ui/LazyImage': () => import('@/components/ui/LazyImage.tsx'),
+    'projects/ProjectForm': () => import('@/components/projects/ProjectForm.tsx'),
+    'proposals/ProposalForm': () => import('@/components/proposals/ProposalForm.tsx'),
+    'forms/FormValidation': () => import('@/components/forms/FormValidation.tsx'),
+    'layout/Header': () => import('@/components/layout/Header.tsx'),
+    'layout/Footer': () => import('@/components/layout/Footer.tsx'),
+    'layout/Layout': () => import('@/components/layout/Layout.tsx'),
+    'error/ErrorBoundary': () => import('@/components/error/ErrorBoundary.tsx'),
+    'auth/ProtectedRoute': () => import('@/components/auth/ProtectedRoute.tsx'),
+    'payments/PaymentForm': () => import('@/components/payments/PaymentForm.tsx'),
+    'contracts/ContractForm': () => import('@/components/contracts/ContractForm.tsx'),
+  };
+
+  const importFn = componentImports[componentPath];
+  if (!importFn) {
+    throw new Error(`Component "${componentPath}" not found in lazy loading registry`);
+  }
+
+  return createLazyComponent(importFn, {
+    retries: 2,
+    retryDelay: 500,
+  });
 };
 
 // Preload critical routes
 export const preloadCriticalRoutes = () => {
   const criticalRoutes = [
-    () => import('@/pages/DashboardPage'),
-    () => import('@/pages/ProjectsPage'),
-    () => import('@/pages/ProfilePage'),
+    () => import('@/pages/DashboardPage.tsx'),
+    () => import('@/pages/ProjectsPage.tsx'),
+    () => import('@/pages/ProfilePage.tsx'),
   ];
 
   return Promise.allSettled(
@@ -92,19 +143,22 @@ export const preloadCriticalRoutes = () => {
 export const preloadRoleBasedRoutes = (userRole: string) => {
   const roleRoutes: Record<string, Array<() => Promise<any>>> = {
     admin: [
-      () => import('@/pages/admin/AdminDashboardPage'),
-      () => import('@/pages/admin/AdminUsersPage'),
-      () => import('@/pages/admin/AdminProjectsPage'),
+      () => import('@/pages/admin/AdminDashboardPage.tsx'),
+      () => import('@/pages/admin/AdminUsersPage.tsx'),
+      () => import('@/pages/admin/AdminProjectsPage.tsx'),
+      () => import('@/pages/admin/AdminSettingsPage.tsx'),
     ],
     freelancer: [
-      () => import('@/pages/ProposalsPage'),
-      () => import('@/pages/ContractsPage'),
-      () => import('@/pages/TimeTrackingPage'),
+      () => import('@/pages/ProposalsPage.tsx'),
+      () => import('@/pages/ContractsPage.tsx'),
+      () => import('@/pages/TimeTrackingPage.tsx'),
+      () => import('@/pages/EarningsPage.tsx'),
     ],
     client: [
-      () => import('@/pages/ProjectsPage'),
-      () => import('@/pages/ContractsPage'),
-      () => import('@/pages/PaymentsPage'),
+      () => import('@/pages/ProjectsPage.tsx'),
+      () => import('@/pages/ContractsPage.tsx'),
+      () => import('@/pages/PaymentsPage.tsx'),
+      () => import('@/pages/NewProjectPage.tsx'),
     ],
   };
 

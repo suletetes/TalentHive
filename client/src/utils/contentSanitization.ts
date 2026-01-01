@@ -342,26 +342,14 @@ export class ContentSanitizer {
   }
 }
 
-// React component wrapper for safe content rendering
-export const SafeContent: React.FC<{
-  content: string;
-  type?: 'text' | 'rich';
-  className?: string;
-}> = ({ content, type = 'text', className }) => {
-  const sanitizedContent = type === 'rich' 
+// Safe content rendering utilities
+export const renderSafeContent = (
+  content: string, 
+  type: 'text' | 'rich' = 'text'
+): string => {
+  return type === 'rich' 
     ? ContentSanitizer.sanitizeRichText(content)
     : ContentSanitizer.sanitizeText(content);
-  
-  if (type === 'rich') {
-    return (
-      <div 
-        className={className}
-        dangerouslySetInnerHTML={{ __html: sanitizedContent }}
-      />
-    );
-  }
-  
-  return <span className={className}>{sanitizedContent}</span>;
 };
 
 // Hook for sanitizing form data

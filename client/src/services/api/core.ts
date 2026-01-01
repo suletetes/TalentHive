@@ -152,11 +152,6 @@ export class ApiCore {
 
     return sanitized;
   }
-    this.api.interceptors.response.use(
-      (response) => response,
-      async (error: AxiosError) => {
-        const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
-        const requestUrl = originalRequest.url || '';
 
   private setupResponseInterceptor() {
     this.api.interceptors.response.use(
