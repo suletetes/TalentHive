@@ -1,4 +1,5 @@
 
+import 'dotenv/config';
 import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
