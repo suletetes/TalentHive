@@ -1,6 +1,6 @@
 ﻿import { logger } from '@/utils/logger';
 import { ValidationResult, UserData, ProjectData } from './types';
-import { ProposalData } from './RelationshipGenerator';
+import { ProposalData } from './types';
 import { ContractData } from './ContractGenerator';
 import { ReviewData } from './ReviewGenerator';
 

@@ -105,7 +105,7 @@ export class DatabaseOperations {
 
       let totalDeleted = 0;
       for (const { name, model } of collections) {
-        const result = await model.deleteMany({});
+        const result = await (model as any).deleteMany({});
         totalDeleted += result.deletedCount || 0;
         logger.info(`   Cleared ${result.deletedCount || 0} ${name}`);
       }
@@ -129,7 +129,7 @@ export class DatabaseOperations {
         ];
 
         for (const { name, model } of additionalCollections) {
-          const result = await model.deleteMany({});
+          const result = await (model as any).deleteMany({});
           totalDeleted += result.deletedCount || 0;
           logger.info(`   Cleared ${result.deletedCount || 0} ${name}`);
         }
@@ -189,11 +189,11 @@ export class DatabaseOperations {
 
       for (const collection of collections) {
         try {
-          const collStats = await db.collection(collection.name).stats();
+          const count = await db.collection(collection.name).countDocuments();
           const collectionInfo = {
             name: collection.name,
-            count: collStats.count || 0,
-            size: collStats.size || 0,
+            count: count || 0,
+            size: 0, // Size not available without stats
           };
           stats.push(collectionInfo);
           totalDocuments += collectionInfo.count;

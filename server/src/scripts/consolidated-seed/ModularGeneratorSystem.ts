@@ -566,8 +566,8 @@ export class ModularGeneratorSystem {
     for (const [name, moduleConfig] of Object.entries(config.modules as any)) {
       const existingModule = this.modules.get(name);
       if (existingModule) {
-        existingModule.enabled = moduleConfig.enabled;
-        existingModule.priority = moduleConfig.priority;
+        (existingModule as any).enabled = (moduleConfig as any).enabled;
+        (existingModule as any).priority = (moduleConfig as any).priority;
         // Note: dependencies and category are not updated to prevent breaking changes
       }
     }

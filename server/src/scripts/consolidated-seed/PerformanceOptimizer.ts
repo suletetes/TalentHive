@@ -277,8 +277,12 @@ export class PerformanceOptimizer {
     // Set process priority (if supported)
     try {
       if (process.platform !== 'win32') {
-        process.setpriority(process.pid, -10); // Higher priority
-        logger.info(' Process priority increased for better performance');
+        // Use os.setPriority instead of process.setpriority
+        const os = require('os');
+        if (os.setPriority) {
+          os.setPriority(process.pid, -10); // Higher priority
+          logger.info(' Process priority increased for better performance');
+        }
       }
     } catch (error) {
       // Ignore priority setting errors

@@ -6,6 +6,19 @@ export type ProjectStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'ca
 export type ProjectComplexity = 'simple' | 'moderate' | 'complex' | 'enterprise';
 export type ProposalStatus = 'submitted' | 'accepted' | 'rejected' | 'withdrawn';
 
+// Logger interface
+export interface Logger {
+  info(message: string, ...args: any[]): void;
+  warn(message: string, ...args: any[]): void;
+  error(message: string, ...args: any[]): void;
+  debug(message: string, ...args: any[]): void;
+}
+
+// Seeding configuration
+export interface SeedingConfig extends SeedConfiguration {
+  // Additional properties for seeding configuration
+}
+
 // Configuration interfaces
 export interface SeedConfiguration {
   environment: Environment;
