@@ -20,9 +20,6 @@ import { Skill } from '@/models/Skill';
 import { HireNowRequest } from '@/models/HireNowRequest';
 import { PlatformSettings } from '@/models/PlatformSettings';
 import { Settings } from '@/models/Settings';
-import { generateEnhancedUsers, generateAdditionalProjects, generateAdditionalProposals } from './enhancedSeedData';
-import { seedClientProjectsAndReviews } from './seedClientData';
-import { enhanceSeedData } from './seedEnhanced';
 import { seedPermissions } from './seedPermissions';
 import { seedRoles } from './seedRoles';
 import WorkLog from '@/models/WorkLog';
@@ -481,8 +478,8 @@ async function seedUsers() {
   ];
   
   // Add enhanced users (50+ total)
-  const enhancedUsers = await generateEnhancedUsers();
-  users.push(...enhancedUsers);
+  // const enhancedUsers = await generateEnhancedUsers();
+  // users.push(...enhancedUsers);
   
   const createdUsers = await User.insertMany(users);
   
@@ -1194,8 +1191,8 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
   ];
   
   // Add enhanced projects (100+ total)
-  const additionalProjects = generateAdditionalProjects(users, categories, skillNameToId);
-  projects.push(...additionalProjects);
+  // const additionalProjects = generateAdditionalProjects(users, categories, skillNameToId);
+  // projects.push(...additionalProjects);
   
   const createdProjects = await Project.insertMany(projects);
   logger.info(` Created ${createdProjects.length} projects (${projects.filter(p => p.isDraft).length} drafts)`);
@@ -1468,16 +1465,16 @@ async function seedProposals(users: any[], projects: any[]) {
   // Add enhanced proposals (200+ total)
   // Note: We generate proposals carefully to avoid duplicate project-freelancer combinations
   const freelancers = users.filter(u => u.role === 'freelancer');
-  const additionalProposals = generateAdditionalProposals(freelancers, projects);
+  // const additionalProposals = generateAdditionalProposals(freelancers, projects);
   
   // Filter out any proposals that would create duplicates with hardcoded proposals
   const hardcodedCombinations = new Set(proposals.map(p => `${p.project}-${p.freelancer}`));
-  const filteredAdditionalProposals = additionalProposals.filter(p => {
-    const key = `${p.project}-${p.freelancer}`;
-    return !hardcodedCombinations.has(key);
-  });
+  // const filteredAdditionalProposals = additionalProposals.filter(p => {
+  //   const key = `${p.project}-${p.freelancer}`;
+  //   return !hardcodedCombinations.has(key);
+  // });
   
-  proposals.push(...filteredAdditionalProposals);
+  // proposals.push(...filteredAdditionalProposals);
   
   const createdProposals = await Proposal.insertMany(proposals);
   logger.info(` Created ${createdProposals.length} proposals`);
@@ -2868,11 +2865,11 @@ async function seedDatabase() {
     
     // Seed additional client projects and reviews
     logger.info(' Seeding additional client data...');
-    await seedClientProjectsAndReviews();
+    // await seedClientProjectsAndReviews();
     
     // Enhance seed data with slugs, completed contracts, and profile viewers
     logger.info(' Enhancing seed data...');
-    await enhanceSeedData(true); // Pass true to skip connection/disconnection
+    // await enhanceSeedData(true); // Pass true to skip connection/disconnection
     
     logger.info(' Database seeding completed successfully');
     logger.info(` Summary:
