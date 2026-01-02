@@ -23,8 +23,8 @@ import { Settings } from '@/models/Settings';
 import { generateEnhancedUsers, generateAdditionalProjects, generateAdditionalProposals } from './enhancedSeedData';
 import { seedClientProjectsAndReviews } from './seedClientData';
 import { enhanceSeedData } from './seedEnhanced';
-import { seedPermissions } from './seedPermissions';
-import { seedRoles } from './seedRoles';
+import { seedPermissions } from '../seedPermissions';
+import { seedRoles } from '../seedRoles';
 import WorkLog from '@/models/WorkLog';
 
 // Load environment variables

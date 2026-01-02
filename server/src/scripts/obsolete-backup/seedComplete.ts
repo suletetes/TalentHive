@@ -23,8 +23,8 @@ import { Settings } from '@/models/Settings';
 import WorkLog from '@/models/WorkLog';
 import { generateEnhancedUsers, generateAdditionalProjects, generateAdditionalProposals } from './enhancedSeedData';
 import { seedClientProjectsAndReviews } from './seedClientData';
-import { seedPermissions } from './seedPermissions';
-import { seedRoles } from './seedRoles';
+import { seedPermissions } from '../seedPermissions';
+import { seedRoles } from '../seedRoles';
 
 // Load environment variables
 dotenv.config();
