@@ -20,7 +20,16 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "prepare": "husky install",
     "seed": "cd server && npm run seed",
-    "validate-data": "cd server && npm run validate-data"
+    "seed:dev": "cd server && npm run seed:dev",
+    "seed:demo": "cd server && npm run seed:demo",
+    "seed:testing": "cd server && npm run seed:testing",
+    "seed:status": "cd server && npm run seed:status",
+    "seed:clean": "cd server && npm run seed:clean",
+    "seed:quality": "cd server && npm run seed:quality",
+    "validate-data": "cd server && npm run validate-data",
+    "validate-data:check": "cd server && npm run validate-data:check",
+    "validate-data:fix": "cd server && npm run validate-data:fix",
+    "validate-data:stats": "cd server && npm run validate-data:stats"
   },
   "keywords": [
     "freelancing",
