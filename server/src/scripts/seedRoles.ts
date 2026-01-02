@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { Role } from '@/models/Role';
 import { Permission } from '@/models/Permission';
@@ -10,7 +10,7 @@ dotenv.config();
 
 export async function seedRoles() {
   try {
-    logger.info('👑 Seeding system roles...');
+    logger.info(' Seeding system roles...');
     
     // Ensure permissions exist first
     let permissions = await Permission.find({});
@@ -99,11 +99,11 @@ export async function seedRoles() {
       }
     }
     
-    logger.info(`✅ Roles seeded: ${createdCount} created, ${updatedCount} updated`);
+    logger.info(` Roles seeded: ${createdCount} created, ${updatedCount} updated`);
     
     return await Role.find({ isSystem: true });
   } catch (error) {
-    logger.error('❌ Error seeding roles:', error);
+    logger.error(' Error seeding roles:', error);
     throw error;
   }
 }
@@ -112,14 +112,14 @@ export async function seedRoles() {
 if (require.main === module) {
   mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive_dev')
     .then(async () => {
-      logger.info('✅ Connected to MongoDB');
+      logger.info(' Connected to MongoDB');
       await seedRoles();
       await mongoose.disconnect();
-      logger.info('✅ Disconnected from MongoDB');
+      logger.info(' Disconnected from MongoDB');
       process.exit(0);
     })
     .catch((error) => {
-      logger.error('❌ Error:', error);
+      logger.error(' Error:', error);
       process.exit(1);
     });
 }

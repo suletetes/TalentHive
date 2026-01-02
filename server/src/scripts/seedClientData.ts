@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import { User } from '@/models/User';
 import { Project } from '@/models/Project';
 import { Review } from '@/models/Review';
@@ -14,7 +14,7 @@ import { logger } from '@/utils/logger';
  * - Reviews given to freelancers (tied to completed projects)
  */
 export async function seedClientProjectsAndReviews() {
-  logger.info('📊 Seeding client-specific data (projects & reviews)...');
+  logger.info(' Seeding client-specific data (projects & reviews)...');
 
   // Get all clients
   const clients = await User.find({ role: 'client' });
@@ -22,7 +22,7 @@ export async function seedClientProjectsAndReviews() {
   const categories = await Category.find();
   
   if (clients.length === 0 || freelancers.length === 0) {
-    logger.warn('⚠️ No clients or freelancers found. Skipping client data seeding.');
+    logger.warn(' No clients or freelancers found. Skipping client data seeding.');
     return;
   }
 
@@ -156,6 +156,6 @@ export async function seedClientProjectsAndReviews() {
     }
   }
 
-  logger.info(`✅ Created ${projectsCreated} completed projects for clients`);
-  logger.info(`✅ Created ${reviewsCreated} reviews given by clients`);
+  logger.info(` Created ${projectsCreated} completed projects for clients`);
+  logger.info(` Created ${reviewsCreated} reviews given by clients`);
 }

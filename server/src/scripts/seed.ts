@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+﻿import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { logger } from '@/utils/logger';
@@ -34,9 +34,9 @@ async function connectDB() {
   try {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive_dev';
     await mongoose.connect(mongoUri);
-    logger.info('✅ Connected to MongoDB');
+    logger.info(' Connected to MongoDB');
   } catch (error) {
-    logger.error('❌ MongoDB connection failed:', error);
+    logger.error(' MongoDB connection failed:', error);
     throw error;
   }
 }
@@ -44,14 +44,14 @@ async function connectDB() {
 async function disconnectDB() {
   try {
     await mongoose.disconnect();
-    logger.info('✅ Disconnected from MongoDB');
+    logger.info(' Disconnected from MongoDB');
   } catch (error) {
-    logger.error('❌ MongoDB disconnection failed:', error);
+    logger.error(' MongoDB disconnection failed:', error);
   }
 }
 
 async function clearDatabase() {
-  logger.info('🧹 Clearing existing data...');
+  logger.info(' Clearing existing data...');
   
   const { Conversation } = await import('@/models/Conversation');
   const { Payment } = await import('@/models/Payment');
@@ -88,35 +88,35 @@ async function clearDatabase() {
   const { Dispute } = await import('@/models/Dispute');
   await Dispute.deleteMany({});
   
-  logger.info('✅ Database cleared');
+  logger.info(' Database cleared');
 }
 
 async function seedCategories(adminId: any) {
-  logger.info('📁 Seeding categories...');
+  logger.info(' Seeding categories...');
   
   const categories = [
-    { name: 'Web Development', slug: 'web-development', description: 'Full-stack, frontend, and backend web development', icon: '💻', createdBy: adminId },
-    { name: 'Mobile Development', slug: 'mobile-development', description: 'iOS, Android, and cross-platform mobile apps', icon: '📱', createdBy: adminId },
-    { name: 'UI/UX Design', slug: 'ui-ux-design', description: 'User interface and user experience design', icon: '🎨', createdBy: adminId },
-    { name: 'Graphic Design', slug: 'graphic-design', description: 'Logo design, branding, and visual identity', icon: '🖼️', createdBy: adminId },
-    { name: 'Data Science', slug: 'data-science', description: 'Data analysis, machine learning, and AI', icon: '📊', createdBy: adminId },
-    { name: 'DevOps', slug: 'devops', description: 'CI/CD, cloud infrastructure, and automation', icon: '⚙️', createdBy: adminId },
-    { name: 'Content Writing', slug: 'content-writing', description: 'Blog posts, articles, and copywriting', icon: '✍️', createdBy: adminId },
-    { name: 'Digital Marketing', slug: 'digital-marketing', description: 'SEO, social media, and online advertising', icon: '📈', createdBy: adminId },
-    { name: 'Video & Animation', slug: 'video-animation', description: 'Video editing, motion graphics, and 3D animation', icon: '🎬', createdBy: adminId },
-    { name: 'Game Development', slug: 'game-development', description: 'Game design, programming, and asset creation', icon: '🎮', createdBy: adminId },
-    { name: 'Blockchain', slug: 'blockchain', description: 'Smart contracts, DApps, and cryptocurrency', icon: '⛓️', createdBy: adminId },
-    { name: 'Cybersecurity', slug: 'cybersecurity', description: 'Security audits, penetration testing, and compliance', icon: '🔒', createdBy: adminId },
+    { name: 'Web Development', slug: 'web-development', description: 'Full-stack, frontend, and backend web development', icon: '', createdBy: adminId },
+    { name: 'Mobile Development', slug: 'mobile-development', description: 'iOS, Android, and cross-platform mobile apps', icon: '', createdBy: adminId },
+    { name: 'UI/UX Design', slug: 'ui-ux-design', description: 'User interface and user experience design', icon: '', createdBy: adminId },
+    { name: 'Graphic Design', slug: 'graphic-design', description: 'Logo design, branding, and visual identity', icon: '', createdBy: adminId },
+    { name: 'Data Science', slug: 'data-science', description: 'Data analysis, machine learning, and AI', icon: '', createdBy: adminId },
+    { name: 'DevOps', slug: 'devops', description: 'CI/CD, cloud infrastructure, and automation', icon: '', createdBy: adminId },
+    { name: 'Content Writing', slug: 'content-writing', description: 'Blog posts, articles, and copywriting', icon: '', createdBy: adminId },
+    { name: 'Digital Marketing', slug: 'digital-marketing', description: 'SEO, social media, and online advertising', icon: '', createdBy: adminId },
+    { name: 'Video & Animation', slug: 'video-animation', description: 'Video editing, motion graphics, and 3D animation', icon: '', createdBy: adminId },
+    { name: 'Game Development', slug: 'game-development', description: 'Game design, programming, and asset creation', icon: '', createdBy: adminId },
+    { name: 'Blockchain', slug: 'blockchain', description: 'Smart contracts, DApps, and cryptocurrency', icon: '', createdBy: adminId },
+    { name: 'Cybersecurity', slug: 'cybersecurity', description: 'Security audits, penetration testing, and compliance', icon: '', createdBy: adminId },
   ];
   
   const createdCategories = await Category.insertMany(categories);
-  logger.info(`✅ Created ${createdCategories.length} categories`);
+  logger.info(` Created ${createdCategories.length} categories`);
   
   return createdCategories;
 }
 
 async function seedSkills(categories: any[], adminId: any) {
-  logger.info('🛠️ Seeding skills...');
+  logger.info(' Seeding skills...');
   
   const webDev = categories.find(c => c.slug === 'web-development');
   const mobileDev = categories.find(c => c.slug === 'mobile-development');
@@ -237,13 +237,13 @@ async function seedSkills(categories: any[], adminId: any) {
   const skillsWithCreator = skills.map(skill => ({ ...skill, createdBy: adminId }));
   
   const createdSkills = await Skill.insertMany(skillsWithCreator);
-  logger.info(`✅ Created ${createdSkills.length} skills`);
+  logger.info(` Created ${createdSkills.length} skills`);
   
   return createdSkills;
 }
 
 async function seedUsers() {
-  logger.info('👥 Seeding users...');
+  logger.info(' Seeding users...');
   
   const hashedPassword = await bcrypt.hash('Password123!', 10);
   
@@ -486,7 +486,7 @@ async function seedUsers() {
   
   const createdUsers = await User.insertMany(users);
   
-  logger.info(`✅ Created ${createdUsers.length} users`);
+  logger.info(` Created ${createdUsers.length} users`);
   
   // Mark some freelancers as featured
   const alice = createdUsers.find(u => u.email === 'alice.dev@example.com');
@@ -618,13 +618,13 @@ async function seedUsers() {
     await david.save();
   }
   
-  logger.info(`✅ Created ${createdUsers.length} users (${alice && bob && david ? '3' : '0'} featured)`);
+  logger.info(` Created ${createdUsers.length} users (${alice && bob && david ? '3' : '0'} featured)`);
   
   return createdUsers;
 }
 
 async function seedOrganizations(users: any[]) {
-  logger.info('🏢 Seeding organizations...');
+  logger.info(' Seeding organizations...');
   
   const client1 = users.find(u => u.email === 'john.client@example.com');
   const client2 = users.find(u => u.email === 'sarah.manager@example.com');
@@ -784,13 +784,13 @@ async function seedOrganizations(users: any[]) {
   ];
   
   const createdOrgs = await Organization.insertMany(organizations);
-  logger.info(`✅ Created ${createdOrgs.length} organizations`);
+  logger.info(` Created ${createdOrgs.length} organizations`);
   
   return createdOrgs;
 }
 
 async function seedProjects(users: any[], organizations: any[], categories: any[]) {
-  logger.info('📋 Seeding projects...');
+  logger.info(' Seeding projects...');
   
   const client1 = users.find(u => u.email === 'john.client@example.com');
   const client2 = users.find(u => u.email === 'sarah.manager@example.com');
@@ -1198,13 +1198,13 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
   projects.push(...additionalProjects);
   
   const createdProjects = await Project.insertMany(projects);
-  logger.info(`✅ Created ${createdProjects.length} projects (${projects.filter(p => p.isDraft).length} drafts)`);
+  logger.info(` Created ${createdProjects.length} projects (${projects.filter(p => p.isDraft).length} drafts)`);
   
   return createdProjects;
 }
 
 async function seedServicePackages(users: any[]) {
-  logger.info('📦 Seeding service packages...');
+  logger.info(' Seeding service packages...');
   
   const alice = users.find(u => u.email === 'alice.dev@example.com');
   const bob = users.find(u => u.email === 'bob.designer@example.com');
@@ -1279,13 +1279,13 @@ async function seedServicePackages(users: any[]) {
   ];
   
   const createdPackages = await ServicePackage.insertMany(packages);
-  logger.info(`✅ Created ${createdPackages.length} service packages`);
+  logger.info(` Created ${createdPackages.length} service packages`);
   
   return createdPackages;
 }
 
 async function seedProposals(users: any[], projects: any[]) {
-  logger.info('💼 Seeding proposals...');
+  logger.info(' Seeding proposals...');
   
   const alice = users.find(u => u.email === 'alice.dev@example.com');
   const bob = users.find(u => u.email === 'bob.designer@example.com');
@@ -1480,13 +1480,13 @@ async function seedProposals(users: any[], projects: any[]) {
   proposals.push(...filteredAdditionalProposals);
   
   const createdProposals = await Proposal.insertMany(proposals);
-  logger.info(`✅ Created ${createdProposals.length} proposals`);
+  logger.info(` Created ${createdProposals.length} proposals`);
   
   return createdProposals;
 }
 
 async function seedHireNowRequests(users: any[]) {
-  logger.info('🤝 Seeding hire now requests...');
+  logger.info(' Seeding hire now requests...');
   
   const client1 = users.find(u => u.email === 'john.client@example.com');
   const client2 = users.find(u => u.email === 'sarah.manager@example.com');
@@ -1602,13 +1602,13 @@ async function seedHireNowRequests(users: any[]) {
   ];
   
   const createdRequests = await HireNowRequest.insertMany(hireNowRequests);
-  logger.info(`✅ Created ${createdRequests.length} hire now requests`);
+  logger.info(` Created ${createdRequests.length} hire now requests`);
   
   return createdRequests;
 }
 
 async function seedContracts(users: any[], projects: any[], proposals: any[], hireNowRequests: any[]) {
-  logger.info('📄 Seeding contracts...');
+  logger.info(' Seeding contracts...');
   
   const acceptedProposals = proposals.filter(p => p.status === 'accepted');
   const acceptedHireNowRequests = hireNowRequests.filter((r: any) => r.status === 'accepted');
@@ -1750,7 +1750,7 @@ async function seedContracts(users: any[], projects: any[], proposals: any[], hi
   }
   
   // Create contracts for accepted hire now requests
-  logger.info(`📄 Creating contracts for ${acceptedHireNowRequests.length} accepted hire now requests...`);
+  logger.info(` Creating contracts for ${acceptedHireNowRequests.length} accepted hire now requests...`);
   
   // Get default category for hire now projects
   const defaultCategory = await Category.findOne({});
@@ -1858,11 +1858,11 @@ async function seedContracts(users: any[], projects: any[], proposals: any[], hi
       },
     });
     
-    logger.info(`✅ Created hire_now contract for: ${hireNowRequest.projectTitle}`);
+    logger.info(` Created hire_now contract for: ${hireNowRequest.projectTitle}`);
   }
   
   // Create contracts for service packages (simulate some orders)
-  logger.info('📄 Creating sample service package contracts...');
+  logger.info(' Creating sample service package contracts...');
   
   const servicePackages = await ServicePackage.find({ isActive: true }).limit(2);
   const clients = users.filter(u => u.role === 'client');
@@ -1973,17 +1973,17 @@ async function seedContracts(users: any[], projects: any[], proposals: any[], hi
     servicePackage.orders = (servicePackage.orders || 0) + 1;
     await servicePackage.save();
     
-    logger.info(`✅ Created service contract for: ${servicePackage.title}`);
+    logger.info(` Created service contract for: ${servicePackage.title}`);
   }
   
   const createdContracts = await Contract.insertMany(contracts);
-  logger.info(`✅ Created ${createdContracts.length} contracts (proposal: ${acceptedProposals.length}, hire_now: ${acceptedHireNowRequests.length}, service: ${servicePackages.length})`);
+  logger.info(` Created ${createdContracts.length} contracts (proposal: ${acceptedProposals.length}, hire_now: ${acceptedHireNowRequests.length}, service: ${servicePackages.length})`);
   
   return createdContracts;
 }
 
 async function seedReviews(users: any[], contracts: any[], projects: any[]) {
-  logger.info('⭐ Seeding reviews...');
+  logger.info(' Seeding reviews...');
   
   const alice = users.find(u => u.email === 'alice.dev@example.com');
   const bob = users.find(u => u.email === 'bob.designer@example.com');
@@ -2332,11 +2332,11 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
   );
   
   const createdReviews = await Review.insertMany(reviews);
-  logger.info(`✅ Created ${createdReviews.length} reviews`);
+  logger.info(` Created ${createdReviews.length} reviews`);
   console.log(`[SEED REVIEWS] Total reviews created: ${createdReviews.length}`);
   
   // ROOT CAUSE FIX: Update user ratings based on created reviews
-  logger.info('📊 Updating user ratings from reviews...');
+  logger.info(' Updating user ratings from reviews...');
   const revieweeIds = [...new Set(reviews.map(r => r.reviewee.toString()))];
   
   for (const revieweeId of revieweeIds) {
@@ -2351,7 +2351,7 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
       });
       
       const user = await User.findById(revieweeId);
-      logger.info(`✅ Updated ${user?.profile.firstName} ${user?.profile.lastName}: ${averageRating.toFixed(2)} (${userReviews.length} reviews)`);
+      logger.info(` Updated ${user?.profile.firstName} ${user?.profile.lastName}: ${averageRating.toFixed(2)} (${userReviews.length} reviews)`);
     }
   }
   
@@ -2359,7 +2359,7 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
 }
 
 async function seedTimeEntries(users: any[], contracts: any[]) {
-  logger.info('⏰ Seeding time entries...');
+  logger.info(' Seeding time entries...');
   
   const timeEntries = [
     {
@@ -2387,13 +2387,13 @@ async function seedTimeEntries(users: any[], contracts: any[]) {
   ];
   
   const createdTimeEntries = await TimeEntry.insertMany(timeEntries);
-  logger.info(`✅ Created ${createdTimeEntries.length} time entries`);
+  logger.info(` Created ${createdTimeEntries.length} time entries`);
   
   return createdTimeEntries;
 }
 
 async function seedMessages(users: any[]) {
-  logger.info('💬 Seeding messages...');
+  logger.info(' Seeding messages...');
   
   const { Conversation } = await import('@/models/Conversation');
   
@@ -2415,7 +2415,7 @@ async function seedMessages(users: any[]) {
   ];
   
   const createdConversations = await Conversation.insertMany(conversations);
-  logger.info(`✅ Created ${createdConversations.length} conversations`);
+  logger.info(` Created ${createdConversations.length} conversations`);
   
   // Create messages for conversations
   const messages = [
@@ -2462,7 +2462,7 @@ async function seedMessages(users: any[]) {
   ];
   
   const createdMessages = await Message.insertMany(messages);
-  logger.info(`✅ Created ${createdMessages.length} messages`);
+  logger.info(` Created ${createdMessages.length} messages`);
   
   // Update conversations with last message
   await Conversation.findByIdAndUpdate(createdConversations[0]._id, {
@@ -2476,7 +2476,7 @@ async function seedMessages(users: any[]) {
 }
 
 async function seedNotifications(users: any[]) {
-  logger.info('🔔 Seeding notifications...');
+  logger.info(' Seeding notifications...');
   
   const alice = users.find(u => u.email === 'alice.dev@example.com');
   const bob = users.find(u => u.email === 'bob.designer@example.com');
@@ -2556,13 +2556,13 @@ async function seedNotifications(users: any[]) {
   ];
   
   const createdNotifications = await Notification.insertMany(notifications);
-  logger.info(`✅ Created ${createdNotifications.length} notifications`);
+  logger.info(` Created ${createdNotifications.length} notifications`);
   
   return createdNotifications;
 }
 
 async function seedPlatformSettings(adminId: any) {
-  logger.info('⚙️ Seeding platform settings...');
+  logger.info(' Seeding platform settings...');
   
   const settings = await PlatformSettings.create({
     commissionRate: 10, // 10%
@@ -2581,12 +2581,12 @@ async function seedPlatformSettings(adminId: any) {
     updatedBy: adminId,
   });
   
-  logger.info(`✅ Created platform settings`);
+  logger.info(` Created platform settings`);
   return settings;
 }
 
 async function seedSettings() {
-  logger.info('⚙️ Seeding new settings model...');
+  logger.info(' Seeding new settings model...');
   
   const settings = await Settings.create({
     platformFee: 5, // 5%
@@ -2617,12 +2617,12 @@ async function seedSettings() {
     ],
   });
   
-  logger.info(`✅ Created settings with ${settings.commissionSettings.length} commission tiers`);
+  logger.info(` Created settings with ${settings.commissionSettings.length} commission tiers`);
   return settings;
 }
 
 async function seedPayments(users: any[], contracts: any[]) {
-  logger.info('💰 Seeding payments...');
+  logger.info(' Seeding payments...');
   
   const { Payment } = await import('@/models/Payment');
   
@@ -2665,13 +2665,13 @@ async function seedPayments(users: any[], contracts: any[]) {
   }
   
   const createdPayments = await Payment.insertMany(payments);
-  logger.info(`✅ Created ${createdPayments.length} payments`);
+  logger.info(` Created ${createdPayments.length} payments`);
   
   return createdPayments;
 }
 
 async function seedTransactions(users: any[], contracts: any[]) {
-  logger.info('💳 Seeding transactions...');
+  logger.info(' Seeding transactions...');
   
   const { Transaction } = await import('@/models/Transaction');
   
@@ -2707,13 +2707,13 @@ async function seedTransactions(users: any[], contracts: any[]) {
   }
   
   const createdTransactions = await Transaction.insertMany(transactions);
-  logger.info(`✅ Created ${createdTransactions.length} transactions`);
+  logger.info(` Created ${createdTransactions.length} transactions`);
   
   return createdTransactions;
 }
 
 async function seedWorkLogs(contracts: any[]) {
-  logger.info('⏰ Seeding work logs...');
+  logger.info(' Seeding work logs...');
   
   function getRandomTime(minHour: number, maxHour: number): string {
     const hour = Math.floor(Math.random() * (maxHour - minHour + 1)) + minHour;
@@ -2808,14 +2808,14 @@ async function seedWorkLogs(contracts: any[]) {
   const totalMinutes = workLogs.reduce((sum, l) => sum + (l.duration || 0), 0);
   const totalHours = Math.round((totalMinutes / 60) * 100) / 100;
 
-  logger.info(`✅ Created ${createdWorkLogs.length} work logs (${completedCount} completed, ${inProgressCount} in-progress, ${totalHours} total hours)`);
+  logger.info(` Created ${createdWorkLogs.length} work logs (${completedCount} completed, ${inProgressCount} in-progress, ${totalHours} total hours)`);
   
   return createdWorkLogs;
 }
 
 async function seedDatabase() {
   try {
-    logger.info('🌱 Starting database seeding (Full Comprehensive Data)...');
+    logger.info(' Starting database seeding (Full Comprehensive Data)...');
     
     // Connect to database
     await connectDB();
@@ -2828,7 +2828,7 @@ async function seedDatabase() {
     const admin = users.find(u => u.role === 'admin');
     
     // Seed RBAC system (permissions and roles)
-    logger.info('🔐 Seeding RBAC system...');
+    logger.info(' Seeding RBAC system...');
     const permissions = await seedPermissions();
     const roles = await seedRoles();
     
@@ -2842,7 +2842,7 @@ async function seedDatabase() {
         admin.permissions.roles = [superAdminRole._id as any];
         admin.lastPermissionUpdate = new Date();
         await admin.save();
-        logger.info(`✅ Assigned Super Admin role to ${admin.email}`);
+        logger.info(` Assigned Super Admin role to ${admin.email}`);
       }
     }
     
@@ -2867,15 +2867,15 @@ async function seedDatabase() {
     const notifications = await seedNotifications(users);
     
     // Seed additional client projects and reviews
-    logger.info('📊 Seeding additional client data...');
+    logger.info(' Seeding additional client data...');
     await seedClientProjectsAndReviews();
     
     // Enhance seed data with slugs, completed contracts, and profile viewers
-    logger.info('🔧 Enhancing seed data...');
+    logger.info(' Enhancing seed data...');
     await enhanceSeedData(true); // Pass true to skip connection/disconnection
     
-    logger.info('✅ Database seeding completed successfully');
-    logger.info(`📊 Summary:
+    logger.info(' Database seeding completed successfully');
+    logger.info(` Summary:
     - Permissions: ${permissions.length}
     - Roles: ${roles.length}
     - Platform Settings: Created
@@ -2898,7 +2898,7 @@ async function seedDatabase() {
     - Notifications: ${notifications.length}`);
     
   } catch (error) {
-    logger.error('❌ Database seeding failed:', error);
+    logger.error(' Database seeding failed:', error);
     process.exit(1);
   } finally {
     await disconnectDB();

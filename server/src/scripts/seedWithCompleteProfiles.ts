@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+﻿import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { logger } from '@/utils/logger';
@@ -12,9 +12,9 @@ async function connectDB() {
   try {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive_dev';
     await mongoose.connect(mongoUri);
-    logger.info('✅ Connected to MongoDB');
+    logger.info(' Connected to MongoDB');
   } catch (error) {
-    logger.error('❌ MongoDB connection failed:', error);
+    logger.error(' MongoDB connection failed:', error);
     throw error;
   }
 }
@@ -22,9 +22,9 @@ async function connectDB() {
 async function disconnectDB() {
   try {
     await mongoose.disconnect();
-    logger.info('✅ Disconnected from MongoDB');
+    logger.info(' Disconnected from MongoDB');
   } catch (error) {
-    logger.error('❌ MongoDB disconnection failed:', error);
+    logger.error(' MongoDB disconnection failed:', error);
   }
 }
 
@@ -32,7 +32,7 @@ async function seedCompleteProfiles() {
   try {
     await connectDB();
 
-    logger.info('🔄 Updating freelancer profiles with complete data...');
+    logger.info(' Updating freelancer profiles with complete data...');
 
     // Get complete freelancer profiles
     const completeProfiles = await generateCompleteFreelancerProfiles();
@@ -54,23 +54,23 @@ async function seedCompleteProfiles() {
             },
           }
         );
-        logger.info(`✅ Updated freelancer: ${profile.profile.firstName} ${profile.profile.lastName}`);
+        logger.info(` Updated freelancer: ${profile.profile.firstName} ${profile.profile.lastName}`);
         createdFreelancers.push(existingUser._id);
       } else {
         // Create new freelancer
         const newUser = await User.create(profile);
-        logger.info(`✅ Created freelancer: ${profile.profile.firstName} ${profile.profile.lastName}`);
+        logger.info(` Created freelancer: ${profile.profile.firstName} ${profile.profile.lastName}`);
         createdFreelancers.push(newUser._id);
       }
     }
 
     // Reviews are already created by main seed script
-    logger.info('✅ Reviews already seeded by main seed script');
-    logger.info('🎉 Complete profile seeding finished successfully!');
+    logger.info(' Reviews already seeded by main seed script');
+    logger.info(' Complete profile seeding finished successfully!');
 
     await disconnectDB();
   } catch (error) {
-    logger.error('❌ Error during seeding:', error);
+    logger.error(' Error during seeding:', error);
     await disconnectDB();
     process.exit(1);
   }

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { Permission } from '@/models/Permission';
 import { logger } from '@/utils/logger';
@@ -81,7 +81,7 @@ const systemPermissions = [
 
 export async function seedPermissions() {
   try {
-    logger.info('🔐 Seeding system permissions...');
+    logger.info(' Seeding system permissions...');
     
     let createdCount = 0;
     let updatedCount = 0;
@@ -104,11 +104,11 @@ export async function seedPermissions() {
       }
     }
     
-    logger.info(`✅ Permissions seeded: ${createdCount} created, ${updatedCount} updated`);
+    logger.info(` Permissions seeded: ${createdCount} created, ${updatedCount} updated`);
     
     return await Permission.find({});
   } catch (error) {
-    logger.error('❌ Error seeding permissions:', error);
+    logger.error(' Error seeding permissions:', error);
     throw error;
   }
 }
@@ -117,14 +117,14 @@ export async function seedPermissions() {
 if (require.main === module) {
   mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive_dev')
     .then(async () => {
-      logger.info('✅ Connected to MongoDB');
+      logger.info(' Connected to MongoDB');
       await seedPermissions();
       await mongoose.disconnect();
-      logger.info('✅ Disconnected from MongoDB');
+      logger.info(' Disconnected from MongoDB');
       process.exit(0);
     })
     .catch((error) => {
-      logger.error('❌ Error:', error);
+      logger.error(' Error:', error);
       process.exit(1);
     });
 }

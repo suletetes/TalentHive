@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { Command } from 'commander';
@@ -24,31 +24,31 @@ program
   .action(async (options) => {
     try {
       await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive_dev');
-      logger.info('✅ Connected to MongoDB');
+      logger.info(' Connected to MongoDB');
 
       let report;
 
       if (options.ratings) {
-        logger.info('🔍 Checking user ratings...');
+        logger.info(' Checking user ratings...');
         report = await dataConsistencyService.syncAllRatings();
       } else if (options.contracts) {
-        logger.info('🔍 Checking contract amounts...');
+        logger.info(' Checking contract amounts...');
         report = await dataConsistencyService.validateAllContracts();
       } else if (options.references) {
-        logger.info('🔍 Checking referential integrity...');
+        logger.info(' Checking referential integrity...');
         report = await dataConsistencyService.validateAllReferences();
       } else {
-        logger.info('🔍 Running full consistency check...');
+        logger.info(' Running full consistency check...');
         report = await dataConsistencyService.runFullConsistencyCheck();
       }
 
       // Display results
-      logger.info('\n📊 Consistency Check Results:');
+      logger.info('\n Consistency Check Results:');
       logger.info(`  Total Checked: ${report.totalChecked}`);
       logger.info(`  Issues Found: ${report.issuesFound}`);
 
       if (report.issuesFound > 0) {
-        logger.info('\n⚠️  Issues:');
+        logger.info('\n  Issues:');
         report.issues.forEach((issue, index) => {
           logger.info(`\n  ${index + 1}. [${issue.severity.toUpperCase()}] ${issue.type}`);
           logger.info(`     Entity: ${issue.entity} (${issue.entityId})`);
@@ -60,20 +60,20 @@ program
           logger.info(`     Can Auto-Fix: ${issue.canAutoFix ? 'Yes' : 'No'}`);
         });
       } else {
-        logger.info('\n✅ No issues found! Data is consistent.');
+        logger.info('\n No issues found! Data is consistent.');
       }
 
       // Save report if requested
       if (options.report) {
         const fs = require('fs');
         fs.writeFileSync(options.report, JSON.stringify(report, null, 2));
-        logger.info(`\n📄 Report saved to: ${options.report}`);
+        logger.info(`\n Report saved to: ${options.report}`);
       }
 
       await mongoose.disconnect();
       process.exit(report.issuesFound > 0 ? 1 : 0);
     } catch (error) {
-      logger.error('❌ Error during validation:', error);
+      logger.error(' Error during validation:', error);
       process.exit(1);
     }
   });
@@ -86,21 +86,21 @@ program
   .action(async (options) => {
     try {
       await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive_dev');
-      logger.info('✅ Connected to MongoDB');
+      logger.info(' Connected to MongoDB');
 
-      logger.info('🔍 Running full consistency check...');
+      logger.info(' Running full consistency check...');
       const report = await dataConsistencyService.runFullConsistencyCheck();
 
-      logger.info(`\n📊 Found ${report.issuesFound} issues`);
+      logger.info(`\n Found ${report.issuesFound} issues`);
 
       if (report.issuesFound === 0) {
-        logger.info('✅ No issues found! Data is consistent.');
+        logger.info(' No issues found! Data is consistent.');
         await mongoose.disconnect();
         process.exit(0);
       }
 
       if (options.dryRun) {
-        logger.info('\n🔍 DRY RUN - No changes will be made\n');
+        logger.info('\n DRY RUN - No changes will be made\n');
         logger.info('Issues that can be auto-fixed:');
         report.issues.filter(i => i.canAutoFix).forEach((issue, index) => {
           logger.info(`  ${index + 1}. ${issue.type} - ${issue.description}`);
@@ -110,22 +110,22 @@ program
           logger.info(`  ${index + 1}. ${issue.type} - ${issue.description}`);
         });
       } else {
-        logger.info('\n🔧 Attempting to fix issues...');
+        logger.info('\n Attempting to fix issues...');
         const fixReport = await dataConsistencyService.fixInconsistencies(report, true);
 
-        logger.info('\n📊 Fix Results:');
+        logger.info('\n Fix Results:');
         logger.info(`  Issues Fixed: ${fixReport.issuesFixed}`);
         logger.info(`  Issues Failed: ${fixReport.issuesFailed}`);
 
         if (fixReport.issuesFixed > 0) {
-          logger.info('\n✅ Successfully Fixed:');
+          logger.info('\n Successfully Fixed:');
           fixReport.details.filter(d => d.fixed).forEach((detail, index) => {
             logger.info(`  ${index + 1}. ${detail.issue.type} - ${detail.issue.description}`);
           });
         }
 
         if (fixReport.issuesFailed > 0) {
-          logger.info('\n❌ Failed to Fix:');
+          logger.info('\n Failed to Fix:');
           fixReport.details.filter(d => !d.fixed).forEach((detail, index) => {
             logger.info(`  ${index + 1}. ${detail.issue.type} - ${detail.issue.description}`);
             logger.info(`     Reason: ${detail.error}`);
@@ -136,14 +136,14 @@ program
         if (options.report) {
           const fs = require('fs');
           fs.writeFileSync(options.report, JSON.stringify(fixReport, null, 2));
-          logger.info(`\n📄 Fix report saved to: ${options.report}`);
+          logger.info(`\n Fix report saved to: ${options.report}`);
         }
       }
 
       await mongoose.disconnect();
       process.exit(0);
     } catch (error) {
-      logger.error('❌ Error during fix:', error);
+      logger.error(' Error during fix:', error);
       process.exit(1);
     }
   });
@@ -154,7 +154,7 @@ program
   .action(async () => {
     try {
       await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive_dev');
-      logger.info('✅ Connected to MongoDB');
+      logger.info(' Connected to MongoDB');
 
       const { User } = await import('@/models/User');
       const { Project } = await import('@/models/Project');
@@ -183,7 +183,7 @@ program
         Contract.countDocuments({ 'milestones.0': { $exists: true } }),
       ]);
 
-      logger.info('\n📊 Database Statistics:');
+      logger.info('\n Database Statistics:');
       logger.info(`  Total Users: ${totalUsers}`);
       logger.info(`  Total Projects: ${totalProjects}`);
       logger.info(`  Total Contracts: ${totalContracts}`);
@@ -196,7 +196,7 @@ program
       await mongoose.disconnect();
       process.exit(0);
     } catch (error) {
-      logger.error('❌ Error getting stats:', error);
+      logger.error(' Error getting stats:', error);
       process.exit(1);
     }
   });
