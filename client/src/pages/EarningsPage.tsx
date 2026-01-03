@@ -373,3 +373,5 @@ export const EarningsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default EarningsPage;

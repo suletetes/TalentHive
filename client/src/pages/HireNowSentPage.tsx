@@ -304,3 +304,5 @@ export const HireNowSentPage: React.FC = () => {
     </Container>
   );
 };
+
+export default HireNowSentPage;
