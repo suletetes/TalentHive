@@ -767,3 +767,5 @@ export const ContractsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default ContractsPage;

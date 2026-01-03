@@ -341,3 +341,5 @@ export const UserPermissionsPage = () => {
     </Box>
   );
 };
+
+export default UserPermissionsPage;

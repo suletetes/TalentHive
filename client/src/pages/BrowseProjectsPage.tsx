@@ -274,3 +274,5 @@ export const BrowseProjectsPage = () => {
     </Container>
   );
 };
+
+export default BrowseProjectsPage;

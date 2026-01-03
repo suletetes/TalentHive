@@ -829,3 +829,5 @@ export const ProjectDetailPage = () => {
     </Container>
   );
 };
+
+export default ProjectDetailPage;

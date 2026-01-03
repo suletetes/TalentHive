@@ -240,3 +240,5 @@ export const CommissionSettingsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default CommissionSettingsPage;

@@ -504,3 +504,5 @@ export const ProjectProposalsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default ProjectProposalsPage;

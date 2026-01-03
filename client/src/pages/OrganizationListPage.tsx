@@ -186,3 +186,5 @@ export const OrganizationListPage: React.FC = () => {
     </Container>
   );
 };
+
+export default OrganizationListPage;

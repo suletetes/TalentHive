@@ -166,3 +166,5 @@ export const PrivacyPolicyPage: React.FC = () => {
     </Container>
   );
 };
+
+export default PrivacyPolicyPage;

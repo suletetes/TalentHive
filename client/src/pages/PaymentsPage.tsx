@@ -229,3 +229,5 @@ export const PaymentsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default PaymentsPage;

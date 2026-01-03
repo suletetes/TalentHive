@@ -27,3 +27,5 @@ export const MessagesPage: React.FC = () => {
     </Container>
   );
 };
+
+export default MessagesPage;

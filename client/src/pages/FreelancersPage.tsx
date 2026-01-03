@@ -313,3 +313,5 @@ export const FreelancersPage = () => {
     </Container>
   );
 };
+
+export default FreelancersPage;

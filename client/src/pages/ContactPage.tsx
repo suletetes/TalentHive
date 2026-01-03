@@ -203,3 +203,5 @@ export const ContactPage: React.FC = () => {
     </Container>
   );
 };
+
+export default ContactPage;

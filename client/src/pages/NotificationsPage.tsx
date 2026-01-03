@@ -126,3 +126,5 @@ export const NotificationsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default NotificationsPage;

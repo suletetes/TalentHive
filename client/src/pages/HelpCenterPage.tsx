@@ -190,3 +190,5 @@ export const HelpCenterPage: React.FC = () => {
     </Container>
   );
 };
+
+export default HelpCenterPage;
