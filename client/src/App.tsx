@@ -8,7 +8,6 @@ import { Layout } from '@/components/layout/Layout';
 import { SuspenseFallback } from '@/components/ui/LoadingStates';
 import { createLazyComponent } from '@/utils/lazyLoading';
 import { initializeSecurity } from '@/config/security';
-import { envConfig } from '@/utils/envValidation';
 
 // Lazy load pages for better performance
 const HomePage = createLazyComponent(() => import('@/pages/HomePage'), {
