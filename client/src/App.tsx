@@ -11,33 +11,104 @@ import { initializeSecurity } from '@/config/security';
 import { envConfig } from '@/utils/envValidation';
 
 // Lazy load pages for better performance
-const HomePage = createLazyComponent(() => import('@/pages/HomePage'));
-const LoginPage = createLazyComponent(() => import('@/pages/auth/LoginPage'));
-const RegisterPage = createLazyComponent(() => import('@/pages/auth/RegisterPage'));
-const DashboardPage = createLazyComponent(() => import('@/pages/DashboardPage'));
-const ProfilePage = createLazyComponent(() => import('@/pages/ProfilePage'));
-const ProjectsPage = createLazyComponent(() => import('@/pages/ProjectsPage'));
-const ProjectDetailPage = createLazyComponent(() => import('@/pages/ProjectDetailPage'));
-const NewProjectPage = createLazyComponent(() => import('@/pages/NewProjectPage'));
-const EditProjectPage = createLazyComponent(() => import('@/pages/EditProjectPage'));
-const MessagesPage = createLazyComponent(() => import('@/pages/MessagesPage'));
-const ProposalsPage = createLazyComponent(() => import('@/pages/ProposalsPage'));
-const ProjectProposalsPage = createLazyComponent(() => import('@/pages/ProjectProposalsPage'));
-const ContractsPage = createLazyComponent(() => import('@/pages/ContractsPage'));
-const PaymentsPage = createLazyComponent(() => import('@/pages/PaymentsPage'));
-const ReviewsPage = createLazyComponent(() => import('@/pages/ReviewsPage'));
+const HomePage = createLazyComponent(() => import('@/pages/HomePage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+
+// Keep other pages lazy loaded
+const LoginPage = createLazyComponent(() => import('@/pages/auth/LoginPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const RegisterPage = createLazyComponent(() => import('@/pages/auth/RegisterPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const DashboardPage = createLazyComponent(() => import('@/pages/DashboardPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const ProfilePage = createLazyComponent(() => import('@/pages/ProfilePage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const ProjectsPage = createLazyComponent(() => import('@/pages/ProjectsPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const ProjectDetailPage = createLazyComponent(() => import('@/pages/ProjectDetailPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const NewProjectPage = createLazyComponent(() => import('@/pages/NewProjectPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const EditProjectPage = createLazyComponent(() => import('@/pages/EditProjectPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const MessagesPage = createLazyComponent(() => import('@/pages/MessagesPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const ProposalsPage = createLazyComponent(() => import('@/pages/ProposalsPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const ProjectProposalsPage = createLazyComponent(() => import('@/pages/ProjectProposalsPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const ContractsPage = createLazyComponent(() => import('@/pages/ContractsPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const PaymentsPage = createLazyComponent(() => import('@/pages/PaymentsPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const ReviewsPage = createLazyComponent(() => import('@/pages/ReviewsPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
 
 // Admin pages (lazy loaded)
-const AdminDashboardPage = createLazyComponent(() => import('@/pages/admin/AdminDashboardPage'));
-const AdminUsersPage = createLazyComponent(() => import('@/pages/admin/AdminUsersPage'));
-const AdminProjectsPage = createLazyComponent(() => import('@/pages/admin/AdminProjectsPage'));
-const AnalyticsDashboardPage = createLazyComponent(() => import('@/pages/admin/AnalyticsDashboardPage'));
-const AdminSettingsPage = createLazyComponent(() => import('@/pages/admin/AdminSettingsPage'));
-const CommissionSettingsPage = createLazyComponent(() => import('@/pages/admin/CommissionSettingsPage'));
+const AdminDashboardPage = createLazyComponent(() => import('@/pages/admin/AdminDashboardPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const AdminUsersPage = createLazyComponent(() => import('@/pages/admin/AdminUsersPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const AdminProjectsPage = createLazyComponent(() => import('@/pages/admin/AdminProjectsPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const AnalyticsDashboardPage = createLazyComponent(() => import('@/pages/admin/AnalyticsDashboardPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const AdminSettingsPage = createLazyComponent(() => import('@/pages/admin/AdminSettingsPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const CommissionSettingsPage = createLazyComponent(() => import('@/pages/admin/CommissionSettingsPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
 
 // Other pages (lazy loaded)
-const BrowseProjectsPage = createLazyComponent(() => import('@/pages/BrowseProjectsPage'));
-const FreelancersPage = createLazyComponent(() => import('@/pages/FreelancersPage'));
+const BrowseProjectsPage = createLazyComponent(() => import('@/pages/BrowseProjectsPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
+const FreelancersPage = createLazyComponent(() => import('@/pages/FreelancersPage'), {
+  retries: 2,
+  retryDelay: 1000
+});
 const FreelancerDetailPage = createLazyComponent(() => import('@/pages/FreelancerDetailPage'));
 const FreelancerReviewsPage = createLazyComponent(() => import('@/pages/FreelancerReviewsPage'));
 const NotFoundPage = createLazyComponent(() => import('@/pages/NotFoundPage'));
@@ -89,7 +160,6 @@ function App() {
   useEffect(() => {
     try {
       initializeSecurity();
-      console.log('Security configuration initialized successfully');
     } catch (error) {
       console.error('Failed to initialize security configuration:', error);
     }
