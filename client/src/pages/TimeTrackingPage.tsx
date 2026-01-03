@@ -145,3 +145,5 @@ export const TimeTrackingPage: React.FC = () => {
     </Container>
   );
 };
+
+export default TimeTrackingPage;

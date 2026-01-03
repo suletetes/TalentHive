@@ -543,3 +543,5 @@ export const ContractDetailPage: React.FC = () => {
     </Container>
   );
 };
+
+export default ContractDetailPage;

@@ -428,3 +428,5 @@ export const ProposalsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default ProposalsPage;

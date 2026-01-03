@@ -546,3 +546,5 @@ export const AdminTransactionsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default AdminTransactionsPage;

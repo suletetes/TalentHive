@@ -83,3 +83,5 @@ export const VerificationSuccessPage: React.FC = () => {
     </Container>
   );
 };
+
+export default VerificationSuccessPage;

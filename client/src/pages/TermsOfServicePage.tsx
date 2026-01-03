@@ -191,3 +191,5 @@ export const TermsOfServicePage: React.FC = () => {
     </Container>
   );
 };
+
+export default TermsOfServicePage;

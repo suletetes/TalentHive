@@ -199,3 +199,5 @@ export const AdminProjectsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default AdminProjectsPage;

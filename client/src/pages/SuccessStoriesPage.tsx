@@ -166,3 +166,5 @@ export const SuccessStoriesPage: React.FC = () => {
     </Container>
   );
 };
+
+export default SuccessStoriesPage;

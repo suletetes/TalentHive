@@ -142,3 +142,5 @@ export const PaymentSuccessPage: React.FC = () => {
     </Container>
   );
 };
+
+export default PaymentSuccessPage;

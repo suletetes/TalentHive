@@ -274,3 +274,5 @@ export const OrganizationDashboardPage: React.FC = () => {
     </Container>
   );
 };
+
+export default OrganizationDashboardPage;

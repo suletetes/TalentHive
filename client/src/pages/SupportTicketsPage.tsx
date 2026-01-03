@@ -31,3 +31,5 @@ export const SupportTicketsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default SupportTicketsPage;

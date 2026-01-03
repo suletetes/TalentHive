@@ -226,3 +226,5 @@ export const ProjectsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default ProjectsPage;

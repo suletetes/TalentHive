@@ -373,3 +373,5 @@ export const ReviewsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default ReviewsPage;

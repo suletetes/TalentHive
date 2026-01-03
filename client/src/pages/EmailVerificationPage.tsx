@@ -122,3 +122,5 @@ export const EmailVerificationPage: React.FC = () => {
     </Container>
   );
 };
+
+export default EmailVerificationPage;

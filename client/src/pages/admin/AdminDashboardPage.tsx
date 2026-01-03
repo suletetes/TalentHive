@@ -521,3 +521,5 @@ export const AdminDashboardPage: React.FC = () => {
     </Container>
   );
 };
+
+export default AdminDashboardPage;

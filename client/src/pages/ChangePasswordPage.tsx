@@ -179,3 +179,5 @@ export const ChangePasswordPage: React.FC = () => {
     </Container>
   );
 };
+
+export default ChangePasswordPage;

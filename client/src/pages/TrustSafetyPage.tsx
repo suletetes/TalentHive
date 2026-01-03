@@ -251,3 +251,5 @@ export const TrustSafetyPage: React.FC = () => {
     </Container>
   );
 };
+
+export default TrustSafetyPage;

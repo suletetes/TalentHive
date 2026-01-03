@@ -272,3 +272,5 @@ export const ServicesPage: React.FC = () => {
     </Container>
   );
 };
+
+export default ServicesPage;

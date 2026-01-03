@@ -46,3 +46,5 @@ export const CreateTicketPage: React.FC = () => {
     </Container>
   );
 };
+
+export default CreateTicketPage;

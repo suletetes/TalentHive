@@ -81,3 +81,5 @@ export const PaymentErrorPage: React.FC = () => {
     </Container>
   );
 };
+
+export default PaymentErrorPage;

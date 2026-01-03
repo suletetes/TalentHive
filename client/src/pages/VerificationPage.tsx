@@ -223,3 +223,5 @@ export const VerificationPage: React.FC = () => {
     </Container>
   );
 };
+
+export default VerificationPage;

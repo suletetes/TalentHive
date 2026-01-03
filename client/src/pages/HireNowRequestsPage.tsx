@@ -564,4 +564,6 @@ export const HireNowRequestsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default HireNowRequestsPage;
  

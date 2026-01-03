@@ -495,3 +495,5 @@ export const ReleasePaymentPage: React.FC = () => {
     </Container>
   );
 };
+
+export default ReleasePaymentPage;

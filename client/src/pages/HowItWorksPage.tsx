@@ -59,3 +59,5 @@ export const HowItWorksPage: React.FC = () => {
     </Container>
   );
 };
+
+export default HowItWorksPage;

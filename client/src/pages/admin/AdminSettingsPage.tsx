@@ -205,3 +205,5 @@ export const AdminSettingsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default AdminSettingsPage;
