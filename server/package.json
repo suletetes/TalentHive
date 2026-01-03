@@ -16,6 +16,7 @@
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "seed": "ts-node -r tsconfig-paths/register src/scripts/consolidated-seed/cli.ts seed",
+    "seed:old": "ts-node -r tsconfig-paths/register src/scripts/obsolete-backup/seed.ts",
     "seed:dev": "ts-node -r tsconfig-paths/register src/scripts/consolidated-seed/cli.ts seed --environment development",
     "seed:demo": "ts-node -r tsconfig-paths/register src/scripts/consolidated-seed/cli.ts seed --environment demo",
     "seed:testing": "ts-node -r tsconfig-paths/register src/scripts/consolidated-seed/cli.ts seed --environment testing",
