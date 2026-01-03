@@ -66,14 +66,25 @@ export class UserGenerator implements IUserGenerator {
     
     const admins: UserData[] = [];
     const password = await this.getHashedPassword();
+    
+    // Check if admin@talenthive.com already exists
+    const { User } = await import('@/models/User');
+    const existingAdmin = await User.findOne({ email: 'admin@talenthive.com' });
+    
+    let startIndex = 0;
+    if (existingAdmin) {
+      logger.info(' Admin user already exists, skipping creation');
+      startIndex = 1; // Skip the first admin creation
+      count = count - 1; // Reduce count by 1
+    }
 
-    for (let i = 0; i < count; i++) {
+    for (let i = startIndex; i < count + startIndex; i++) {
       const firstName = this.getRandomFirstName();
       const lastName = this.getRandomLastName();
       const slug = await this.slugGenerator.generateUserSlug(firstName, lastName);
 
       const admin: UserData = {
-        email: i === 0 ? 'admin@talenthive.com' : `admin${i + 1}@talenthive.com`,
+        email: i === 0 && !existingAdmin ? 'admin@talenthive.com' : `admin${i + 1}@talenthive.com`,
         password,
         role: 'admin',
         profile: {
