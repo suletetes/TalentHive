@@ -47,7 +47,6 @@ export const CSP_CONFIG = {
     'object-src': ["'none'"],
     'base-uri': ["'self'"],
     'form-action': ["'self'"],
-    'frame-ancestors': ["'none'"],
     'upgrade-insecure-requests': SecurityUtils.isProduction() ? [] : null,
   },
 };
@@ -276,10 +275,7 @@ export const initializeSecurity = () => {
   }
 
   // Log security initialization
-  SecurityLogger.logEvent(SecurityEventType.UNAUTHORIZED_ACCESS, {
-    message: 'Security configuration initialized',
-    environment: SecurityUtils.isDevelopment() ? 'development' : 'production',
-  });
+  console.log('Security configuration initialized successfully');
 };
 
 // Export security utilities

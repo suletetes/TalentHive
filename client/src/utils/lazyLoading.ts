@@ -23,12 +23,17 @@ export const createLazyComponent = <T extends ComponentType<any>>(
         } catch (error) {
           attempt++;
           
+          // Create a serializable error message
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          
           if (attempt < retries) {
-            console.warn(`[LazyLoading] Import failed, retrying (${attempt}/${retries})...`);
+            console.warn(`[LazyLoading] Import failed, retrying (${attempt}/${retries}):`, errorMessage);
             setTimeout(tryImport, retryDelay * attempt);
           } else {
-            console.error('[LazyLoading] Import failed after all retries:', error);
-            reject(error);
+            console.error('[LazyLoading] Import failed after all retries:', errorMessage);
+            // Create a clean error object that can be serialized
+            const cleanError = new Error(`Failed to load component after ${retries} attempts: ${errorMessage}`);
+            reject(cleanError);
           }
         }
       };

@@ -38,7 +38,9 @@ const DEFAULT_OPTIONS: NetworkErrorHandlerOptions = {
 };
 
 export function useOnlineStatus(options: Partial<NetworkErrorHandlerOptions> = {}) {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const optsRef = useRef({ ...DEFAULT_OPTIONS, ...options });
+  optsRef.current = { ...DEFAULT_OPTIONS, ...options };
+
   const [networkStatus, setNetworkStatus] = useState<NetworkStatus>(() => ({
     isOnline: navigator.onLine,
     isOffline: !navigator.onLine,
@@ -55,8 +57,8 @@ export function useOnlineStatus(options: Partial<NetworkErrorHandlerOptions> = {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
   const toastShownRef = useRef(false);
 
-  // Get connection info if available
-  const getConnectionInfo = useCallback((): Partial<NetworkStatus> => {
+  // Get connection info if available - stable reference
+  const getConnectionInfo = useRef((): Partial<NetworkStatus> => {
     const connection = (navigator as any).connection || 
                       (navigator as any).mozConnection || 
                       (navigator as any).webkitConnection;
@@ -76,10 +78,10 @@ export function useOnlineStatus(options: Partial<NetworkErrorHandlerOptions> = {
       downlink: null,
       rtt: null,
     };
-  }, []);
+  }).current;
 
-  // Update network status
-  const updateNetworkStatus = useCallback((isOnline: boolean) => {
+  // Update network status - stable reference
+  const updateNetworkStatus = useRef((isOnline: boolean) => {
     const connectionInfo = getConnectionInfo();
     const newStatus: NetworkStatus = {
       isOnline,
@@ -88,11 +90,11 @@ export function useOnlineStatus(options: Partial<NetworkErrorHandlerOptions> = {
     };
 
     setNetworkStatus(newStatus);
-    opts.onConnectionChange?.(newStatus);
-  }, [getConnectionInfo, opts]);
+    optsRef.current.onConnectionChange?.(newStatus);
+  }).current;
 
-  // Handle going online
-  const handleOnline = useCallback(() => {
+  // Handle going online - stable reference
+  const handleOnline = useRef(() => {
     updateNetworkStatus(true);
     
     if (wasOffline) {
@@ -113,7 +115,7 @@ export function useOnlineStatus(options: Partial<NetworkErrorHandlerOptions> = {
       }
 
       // Only show success toast if we were actually offline for a meaningful time
-      if (opts.showToasts && lastOfflineTime && Date.now() - lastOfflineTime > 2000) {
+      if (optsRef.current.showToasts && lastOfflineTime && Date.now() - lastOfflineTime > 2000) {
         toast.success('Connection restored', {
           duration: 3000,
           position: 'bottom-center',
@@ -121,12 +123,12 @@ export function useOnlineStatus(options: Partial<NetworkErrorHandlerOptions> = {
         });
       }
 
-      opts.onOnline?.();
+      optsRef.current.onOnline?.();
     }
-  }, [wasOffline, offlineToastId, lastOfflineTime, opts, updateNetworkStatus]);
+  }).current;
 
-  // Handle going offline
-  const handleOffline = useCallback(() => {
+  // Handle going offline - stable reference
+  const handleOffline = useRef(() => {
     updateNetworkStatus(false);
     
     if (!wasOffline) {
@@ -138,7 +140,7 @@ export function useOnlineStatus(options: Partial<NetworkErrorHandlerOptions> = {
         if (!navigator.onLine && !toastShownRef.current) {
           toastShownRef.current = true;
           
-          if (opts.showToasts) {
+          if (optsRef.current.showToasts) {
             const toastId = toast.error('No internet connection', {
               duration: Infinity,
               position: 'bottom-center',
@@ -150,12 +152,12 @@ export function useOnlineStatus(options: Partial<NetworkErrorHandlerOptions> = {
       }, 1000); // Wait 1 second before showing offline toast
     }
 
-    opts.onOffline?.();
-  }, [wasOffline, opts, updateNetworkStatus]);
+    optsRef.current.onOffline?.();
+  }).current;
 
   // Attempt to reconnect
   const attemptReconnect = useCallback(async () => {
-    if (reconnectAttempts >= opts.retryConfig.maxRetries) {
+    if (reconnectAttempts >= optsRef.current.retryConfig.maxRetries) {
       return false;
     }
 
@@ -184,13 +186,13 @@ export function useOnlineStatus(options: Partial<NetworkErrorHandlerOptions> = {
     
     // Schedule next retry with exponential backoff
     const delay = Math.min(
-      opts.retryConfig.baseDelay * Math.pow(opts.retryConfig.backoffFactor, reconnectAttempts),
-      opts.retryConfig.maxDelay
+      optsRef.current.retryConfig.baseDelay * Math.pow(optsRef.current.retryConfig.backoffFactor, reconnectAttempts),
+      optsRef.current.retryConfig.maxDelay
     );
 
     reconnectTimeoutRef.current = setTimeout(attemptReconnect, delay);
     return false;
-  }, [reconnectAttempts, opts.retryConfig, handleOnline]);
+  }, [reconnectAttempts, handleOnline]);
 
   // Manual retry function
   const retry = useCallback(() => {
@@ -213,31 +215,22 @@ export function useOnlineStatus(options: Partial<NetworkErrorHandlerOptions> = {
                       (navigator as any).mozConnection || 
                       (navigator as any).webkitConnection;
 
+    let connectionChangeHandler: (() => void) | undefined;
+
     if (connection) {
-      const handleConnectionChange = () => {
+      connectionChangeHandler = () => {
         updateNetworkStatus(navigator.onLine);
       };
-      connection.addEventListener('change', handleConnectionChange);
-      
-      return () => {
-        window.removeEventListener('online', handleOnline);
-        window.removeEventListener('offline', handleOffline);
-        connection.removeEventListener('change', handleConnectionChange);
-        
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
-        }
-        
-        // Clean up toast on unmount
-        if (offlineToastId) {
-          toast.dismiss(offlineToastId);
-        }
-      };
+      connection.addEventListener('change', connectionChangeHandler);
     }
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      
+      if (connection && connectionChangeHandler) {
+        connection.removeEventListener('change', connectionChangeHandler);
+      }
       
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
@@ -248,15 +241,15 @@ export function useOnlineStatus(options: Partial<NetworkErrorHandlerOptions> = {
         toast.dismiss(offlineToastId);
       }
     };
-  }, [handleOnline, handleOffline, updateNetworkStatus, offlineToastId]);
+  }, []); // Empty dependency array - handlers are stable refs
 
   // Start reconnection attempts when going offline
   useEffect(() => {
     if (!networkStatus.isOnline && wasOffline && reconnectAttempts === 0) {
-      const delay = opts.retryConfig.baseDelay;
+      const delay = optsRef.current.retryConfig.baseDelay;
       reconnectTimeoutRef.current = setTimeout(attemptReconnect, delay);
     }
-  }, [networkStatus.isOnline, wasOffline, reconnectAttempts, attemptReconnect, opts.retryConfig.baseDelay]);
+  }, [networkStatus.isOnline, wasOffline, reconnectAttempts, attemptReconnect]);
 
   return {
     ...networkStatus,
