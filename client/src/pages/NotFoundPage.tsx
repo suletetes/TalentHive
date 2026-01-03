@@ -34,3 +34,5 @@ export const NotFoundPage: React.FC = () => {
     </Container>
   );
 };
+
+export default NotFoundPage;

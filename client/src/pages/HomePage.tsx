@@ -773,3 +773,5 @@ export const HomePage: React.FC = () => {
     </Box>
   );
 };
+
+export default HomePage;

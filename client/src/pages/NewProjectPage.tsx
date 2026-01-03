@@ -85,3 +85,5 @@ export const NewProjectPage = () => {
     </Container>
   );
 };
+
+export default NewProjectPage;

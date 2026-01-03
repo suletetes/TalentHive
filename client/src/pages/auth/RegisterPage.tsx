@@ -264,3 +264,5 @@ export const RegisterPage: React.FC = () => {
     </Container>
   );
 };
+
+export default RegisterPage;

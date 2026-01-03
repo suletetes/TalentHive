@@ -477,3 +477,5 @@ export const ProfilePage: React.FC = () => {
     </Container>
   );
 };
+
+export default ProfilePage;
