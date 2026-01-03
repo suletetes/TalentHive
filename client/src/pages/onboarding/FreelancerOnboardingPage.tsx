@@ -87,3 +87,5 @@ export const FreelancerOnboardingPage = () => {
     </OnboardingWizard>
   );
 };
+
+export default FreelancerOnboardingPage;

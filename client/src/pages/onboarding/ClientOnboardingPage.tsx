@@ -75,3 +75,5 @@ export const ClientOnboardingPage = () => {
     </OnboardingWizard>
   );
 };
+
+export default ClientOnboardingPage;
