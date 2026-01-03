@@ -65,21 +65,21 @@ export class UsersService {
     }
 
     const response = await apiCore.get<{
-      status: string;
-      data: { freelancers: Freelancer[]; pagination: any };
+      freelancers: Freelancer[];
+      pagination: any;
     }>(`${this.basePath}/freelancers?${params.toString()}`);
 
     return {
-      data: response.data.freelancers,
-      pagination: response.data.pagination,
+      data: response.freelancers,
+      pagination: response.pagination,
     };
   }
 
   async getFreelancerById(id: string): Promise<{ data: Freelancer }> {
-    const response = await apiCore.get<{ status: string; data: { freelancer: Freelancer } }>(
+    const response = await apiCore.get<{ freelancer: Freelancer }>(
       `${this.basePath}/freelancer/${id}`
     );
-    return { data: response.data.freelancer };
+    return { data: response.freelancer };
   }
 
   async getFreelancerProfile(slugOrId: string): Promise<any> {
