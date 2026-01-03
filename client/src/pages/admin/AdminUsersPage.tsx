@@ -418,3 +418,5 @@ export const AdminUsersPage: React.FC = () => {
     </Container>
   );
 };
+
+export default AdminUsersPage;

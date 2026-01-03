@@ -195,3 +195,5 @@ export const TicketDetailPage: React.FC = () => {
     </Container>
   );
 };
+
+export default TicketDetailPage;

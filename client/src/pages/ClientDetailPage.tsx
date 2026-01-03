@@ -379,3 +379,5 @@ export const ClientDetailPage = () => {
     </Container>
   );
 };
+
+export default ClientDetailPage;

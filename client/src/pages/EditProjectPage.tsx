@@ -124,3 +124,5 @@ export const EditProjectPage: React.FC = () => {
     </Container>
   );
 };
+
+export default EditProjectPage;

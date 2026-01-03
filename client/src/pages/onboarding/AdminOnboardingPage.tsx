@@ -62,3 +62,5 @@ export const AdminOnboardingPage = () => {
     </OnboardingWizard>
   );
 };
+
+export default AdminOnboardingPage;

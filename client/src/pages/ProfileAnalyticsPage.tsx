@@ -49,3 +49,5 @@ export const ProfileAnalyticsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default ProfileAnalyticsPage;

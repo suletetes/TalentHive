@@ -230,3 +230,5 @@ export const AuditLogPage = () => {
     </Box>
   );
 };
+
+export default AuditLogPage;

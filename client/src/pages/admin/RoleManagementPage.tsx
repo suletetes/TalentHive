@@ -407,3 +407,5 @@ export const RoleManagementPage = () => {
     </Box>
   );
 };
+
+export default RoleManagementPage;

@@ -20,3 +20,5 @@ export const FindFreelancersPage: React.FC = () => {
     </Container>
   );
 };
+
+export default FindFreelancersPage;

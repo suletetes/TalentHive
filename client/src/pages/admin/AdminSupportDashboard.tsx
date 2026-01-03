@@ -249,3 +249,5 @@ export const AdminSupportDashboard: React.FC = () => {
     </Container>
   );
 };
+
+export default AdminSupportDashboard;

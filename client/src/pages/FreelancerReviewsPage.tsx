@@ -272,3 +272,5 @@ export const FreelancerReviewsPage: React.FC = () => {
     </Container>
   );
 };
+
+export default FreelancerReviewsPage;

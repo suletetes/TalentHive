@@ -256,3 +256,5 @@ export const AnalyticsDashboardPage: React.FC = () => {
     </Container>
   );
 };
+
+export default AnalyticsDashboardPage;

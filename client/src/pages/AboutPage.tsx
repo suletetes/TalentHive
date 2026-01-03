@@ -159,3 +159,5 @@ export const AboutPage: React.FC = () => {
     </Container>
   );
 };
+
+export default AboutPage;
