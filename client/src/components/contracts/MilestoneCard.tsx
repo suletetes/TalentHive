@@ -6,7 +6,6 @@ import {
   Box,
   Chip,
   Button,
-  LinearProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -22,8 +21,6 @@ import {
 import { format } from 'date-fns';
 import { Milestone } from '@/services/api/contracts.service';
 import { useSubmitMilestone, useApproveMilestone, useRejectMilestone } from '@/hooks/api/useContracts';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 
 interface MilestoneCardProps {
   milestone: Milestone;
@@ -82,7 +79,7 @@ export const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, contrac
       setSubmitDialogOpen(false);
       setNotes('');
     } catch (error) {
-      console.error('Failed to submit milestone:', error);
+      // Failed to submit milestone
     }
   };
 
@@ -96,7 +93,7 @@ export const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, contrac
       setReviewDialogOpen(false);
       setFeedback('');
     } catch (error) {
-      console.error('Failed to approve milestone:', error);
+      // Failed to approve milestone
     }
   };
 
@@ -110,7 +107,7 @@ export const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, contrac
       setReviewDialogOpen(false);
       setFeedback('');
     } catch (error) {
-      console.error('Failed to reject milestone:', error);
+      // Failed to reject milestone
     }
   };
 

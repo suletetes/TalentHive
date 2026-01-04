@@ -24,7 +24,7 @@ module.exports = {
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-    '@typescript-eslint/prefer-const': 'error',
+    'prefer-const': 'error',
     'no-console': 'warn',
     'no-debugger': 'error',
   },

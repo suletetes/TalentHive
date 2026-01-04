@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Box,
   Card,
-  CardContent,
   Table,
   TableBody,
   TableCell,

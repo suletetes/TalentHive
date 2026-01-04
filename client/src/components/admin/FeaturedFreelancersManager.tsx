@@ -17,13 +17,25 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
-  Chip,
   Avatar,
 } from '@mui/material';
 import { Star as StarIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { adminService, AdminUser } from '@/services/api/admin.service';
+
+interface User {
+  _id: string;
+  email: string;
+  profile: {
+    firstName: string;
+    lastName: string;
+    avatar?: string;
+  };
+  isFeatured?: boolean;
+  featuredSince?: string;
+  createdAt: string;
+}
 
 export const FeaturedFreelancersManager: React.FC = () => {
   const queryClient = useQueryClient();
@@ -53,8 +65,8 @@ export const FeaturedFreelancersManager: React.FC = () => {
       setDialogOpen(false);
       setSelectedUser(null);
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to feature freelancer');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to feature freelancer');
     },
   });
 
@@ -66,8 +78,8 @@ export const FeaturedFreelancersManager: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['featured-freelancers'] });
       toast.success('Freelancer unfeatured successfully');
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to unfeature freelancer');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to unfeature freelancer');
     },
   });
 
@@ -75,8 +87,8 @@ export const FeaturedFreelancersManager: React.FC = () => {
     f.email.toLowerCase().includes(searchEmail.toLowerCase())
   ) || [];
 
-  const featuredFreelancers = filteredFreelancers.filter((f: any) => f.isFeatured);
-  const availableFreelancers = filteredFreelancers.filter((f: any) => !f.isFeatured);
+  const featuredFreelancers = filteredFreelancers.filter((f: User) => f.isFeatured);
+  const availableFreelancers = filteredFreelancers.filter((f: User) => !f.isFeatured);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -104,7 +116,7 @@ export const FeaturedFreelancersManager: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  featuredFreelancers.map((freelancer: any) => (
+                  featuredFreelancers.map((freelancer: User) => (
                     <TableRow key={freelancer._id}>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -177,7 +189,7 @@ export const FeaturedFreelancersManager: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    availableFreelancers.map((freelancer: any) => (
+                    availableFreelancers.map((freelancer: User) => (
                       <TableRow key={freelancer._id}>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

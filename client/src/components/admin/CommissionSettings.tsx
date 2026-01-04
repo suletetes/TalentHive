@@ -128,7 +128,7 @@ export const CommissionSettings: React.FC<CommissionSettingsProps> = ({
       await onSave(localSettings);
       setSuccessMessage('Commission settings saved successfully');
       setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (error) {
+    } catch {
       // Error handled by parent
     } finally {
       setIsSaving(false);

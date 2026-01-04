@@ -92,7 +92,7 @@ export const ContractTimeline: React.FC<ContractTimelineProps> = ({
         </Box>
 
         <Stepper orientation="vertical">
-          {milestones.map((milestone, index) => (
+          {milestones.map((milestone, _index) => (
             <Step key={milestone._id} active={true}>
               <StepLabel
                 icon={getStatusIcon(milestone.status)}
