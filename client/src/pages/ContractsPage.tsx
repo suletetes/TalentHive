@@ -83,21 +83,21 @@ export const ContractsPage: React.FC = () => {
       let contracts = [];
       if (response?.data?.data?.contracts && Array.isArray(response.data.data.contracts)) {
         contracts = response.data.data.contracts;
-        console.log(`[CONTRACTS PAGE] ✅ Extracted from response.data.data.contracts`);
+        console.log(`[CONTRACTS PAGE]   Extracted from response.data.data.contracts`);
       } else if (response?.data?.contracts && Array.isArray(response.data.contracts)) {
         contracts = response.data.contracts;
-        console.log(`[CONTRACTS PAGE] ✅ Extracted from response.data.contracts`);
+        console.log(`[CONTRACTS PAGE]   Extracted from response.data.contracts`);
       } else if (response?.contracts && Array.isArray(response.contracts)) {
         contracts = response.contracts;
-        console.log(`[CONTRACTS PAGE] ✅ Extracted from response.contracts`);
+        console.log(`[CONTRACTS PAGE]   Extracted from response.contracts`);
       } else if (Array.isArray(response?.data)) {
         contracts = response.data;
-        console.log(`[CONTRACTS PAGE] ✅ Extracted from response.data (array)`);
+        console.log(`[CONTRACTS PAGE]   Extracted from response.data (array)`);
       } else if (Array.isArray(response)) {
         contracts = response;
-        console.log(`[CONTRACTS PAGE] ✅ Extracted from response (array)`);
+        console.log(`[CONTRACTS PAGE]   Extracted from response (array)`);
       } else {
-        console.log(`[CONTRACTS PAGE] ❌ Could not extract contracts array`);
+        console.log(`[CONTRACTS PAGE]  Could not extract contracts array`);
       }
       
       console.log(`[CONTRACTS PAGE] Total contracts found: ${contracts.length}`);
@@ -292,7 +292,7 @@ export const ContractsPage: React.FC = () => {
       const passes = matchesStatus && matchesSource;
       
       if (!passes) {
-        console.log(`[CONTRACTS FILTER] ❌ Filtered out:`, {
+        console.log(`[CONTRACTS FILTER]  Filtered out:`, {
           id: c._id,
           title: c.title,
           status: c.status,

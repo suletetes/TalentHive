@@ -129,7 +129,7 @@ export const sendPasswordResetEmail = async (
             <p>Or copy and paste this link into your browser:</p>
             <p style="word-break: break-all; color: #1976d2;">${resetUrl}</p>
             <div class="warning">
-              <strong>⚠️ Security Notice:</strong>
+              <strong>  Security Notice:</strong>
               <p>This link will expire in 1 hour. If you didn't request a password reset, please ignore this email and your password will remain unchanged.</p>
             </div>
           </div>

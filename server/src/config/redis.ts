@@ -10,7 +10,7 @@ export const connectRedis = async (): Promise<void> => {
   const redisHost = process.env.REDIS_HOST;
   
   if (!redisUrl && !redisHost) {
-    logger.warn('⚠️  Redis not configured - running without cache');
+    logger.warn('   Redis not configured - running without cache');
     redisEnabled = false;
     return;
   }
@@ -59,7 +59,7 @@ export const connectRedis = async (): Promise<void> => {
     await redisClient.connect();
     redisEnabled = true;
   } catch (error) {
-    logger.warn('⚠️  Redis connection failed - continuing without cache');
+    logger.warn('   Redis connection failed - continuing without cache');
     redisEnabled = false;
     if (redisClient) {
       try {

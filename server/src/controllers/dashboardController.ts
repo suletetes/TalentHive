@@ -15,7 +15,7 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
   const userId = req.user?._id;
   const userRole = req.user?.role;
   
-  console.log('📊 [MY_STATS] Getting stats for user:', userId, 'Role:', userRole);
+  console.log(' [MY_STATS] Getting stats for user:', userId, 'Role:', userRole);
 
   if (userRole === 'freelancer') {
     // Freelancer stats
@@ -37,7 +37,7 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
     const totalEarnings = earnings[0]?.total || 0;
     const rating = user?.rating || { average: 0, count: 0 };
     
-    console.log('📊 [MY_STATS] Freelancer stats:', {
+    console.log(' [MY_STATS] Freelancer stats:', {
       totalProposals,
       activeProjects: activeContracts,
       totalEarnings,
@@ -76,7 +76,7 @@ export const getMyProjectStats = catchAsync(async (req: AuthRequest, res: Respon
 
     const totalSpent = spent[0]?.total || 0;
     
-    console.log('📊 [MY_STATS] Client stats:', {
+    console.log(' [MY_STATS] Client stats:', {
       totalProjects,
       activeProjects,
       receivedProposals,

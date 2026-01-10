@@ -354,7 +354,7 @@ export const ContractForm: React.FC<ContractFormProps> = ({
               </Typography>
               {Math.abs(getTotalMilestoneAmount() - proposal.bidAmount) > 0.01 && (
                 <Typography variant="body2" color="error">
-                  ⚠️ Milestone total must equal proposal bid amount
+                    Milestone total must equal proposal bid amount
                 </Typography>
               )}
             </Box>
