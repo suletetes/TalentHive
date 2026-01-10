@@ -1,8 +1,8 @@
-﻿import mongoose from 'mongoose';
-import { User } from '../../models/User';
-import { SupportTicket } from '../../models/SupportTicket';
-import { OnboardingAnalytics } from '../../models/OnboardingAnalytics';
-import { generateSlug } from '../../utils/slugUtils';
+import mongoose from 'mongoose';
+import { User } from '../models/User';
+import { SupportTicket } from '../models/SupportTicket';
+import { OnboardingAnalytics } from '../models/OnboardingAnalytics';
+import { generateSlug } from '../utils/slugUtils';
 
 /**
  * Add profile slugs to existing users
@@ -124,7 +124,7 @@ export async function createSupportTickets() {
   const admins = await User.find({ role: 'admin' });
   
   if (admins.length === 0) {
-    console.log(' No admins found, skipping support tickets');
+    console.log('No admins found, skipping support tickets');
     return;
   }
 
@@ -275,10 +275,10 @@ if (require.main === module) {
   mongoose
     .connect(mongoUri)
     .then(async () => {
-      console.log(' Connected to MongoDB');
+      console.log('Connected to MongoDB');
       await seedNewFeatures();
       await mongoose.disconnect();
-      console.log(' Disconnected from MongoDB');
+      console.log('Disconnected from MongoDB');
       process.exit(0);
     })
     .catch((error) => {
