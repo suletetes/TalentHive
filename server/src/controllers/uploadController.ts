@@ -137,7 +137,7 @@ export const uploadAvatar = async (
       { new: true }
     ).select('profile.avatar');
 
-    console.log('✅ [UPLOAD] Avatar updated in database for user:', userId);
+    console.log('  [UPLOAD] Avatar updated in database for user:', userId);
 
     res.status(200).json({
       success: true,

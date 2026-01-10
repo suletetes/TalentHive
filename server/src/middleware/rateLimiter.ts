@@ -5,7 +5,7 @@ import { logger } from '@/utils/logger';
 const shouldBypassRateLimit = process.env.DISABLE_RATE_LIMIT_FOR_TESTING === 'true';
 
 if (shouldBypassRateLimit) {
-  console.log('⚠️  Rate limiting is DISABLED for testing');
+  console.log('   Rate limiting is DISABLED for testing');
 }
 
 // General rate limiter
