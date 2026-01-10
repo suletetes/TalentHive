@@ -12,12 +12,12 @@ dotenv.config();
  */
 async function migrateUserSlugs() {
   try {
-    console.log('🔄 Starting user slug migration...');
+    console.log(' Starting user slug migration...');
 
     // Connect to MongoDB
     const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive';
     await mongoose.connect(mongoUri);
-    console.log('✅ Connected to MongoDB');
+    console.log('  Connected to MongoDB');
 
     // Find all users without a profile slug
     const usersWithoutSlug = await User.find({
@@ -28,10 +28,10 @@ async function migrateUserSlugs() {
       ],
     });
 
-    console.log(`📊 Found ${usersWithoutSlug.length} users without profile slugs`);
+    console.log(`  Found ${usersWithoutSlug.length} users without profile slugs`);
 
     if (usersWithoutSlug.length === 0) {
-      console.log('✅ All users already have profile slugs!');
+      console.log('  All users already have profile slugs!');
       await mongoose.disconnect();
       return;
     }
@@ -53,17 +53,17 @@ async function migrateUserSlugs() {
         await user.save();
 
         successCount++;
-        console.log(`✅ Generated slug for ${firstName} ${lastName}: ${slug}`);
+        console.log(`  Generated slug for ${firstName} ${lastName}: ${slug}`);
       } catch (error: any) {
         errorCount++;
-        console.error(`❌ Failed to generate slug for user ${user._id}:`, error.message);
+        console.error(`  Failed to generate slug for user ${user._id}:`, error.message);
       }
     }
 
-    console.log('\n📊 Migration Summary:');
-    console.log(`   ✅ Success: ${successCount}`);
-    console.log(`   ❌ Errors: ${errorCount}`);
-    console.log(`   📝 Total: ${usersWithoutSlug.length}`);
+    console.log('\n  Migration Summary:');
+    console.log(`     Success: ${successCount}`);
+    console.log(`     Errors: ${errorCount}`);
+    console.log(`    Total: ${usersWithoutSlug.length}`);
 
     // Verify migration
     const remainingWithoutSlug = await User.countDocuments({
@@ -75,15 +75,15 @@ async function migrateUserSlugs() {
     });
 
     if (remainingWithoutSlug === 0) {
-      console.log('\n🎉 Migration completed successfully! All users now have profile slugs.');
+      console.log('\n Migration completed successfully! All users now have profile slugs.');
     } else {
-      console.log(`\n⚠️  Warning: ${remainingWithoutSlug} users still without slugs`);
+      console.log(`\n   Warning: ${remainingWithoutSlug} users still without slugs`);
     }
 
     await mongoose.disconnect();
-    console.log('✅ Disconnected from MongoDB');
+    console.log('  Disconnected from MongoDB');
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    console.error('  Migration failed:', error);
     process.exit(1);
   }
 }
@@ -92,11 +92,11 @@ async function migrateUserSlugs() {
 if (require.main === module) {
   migrateUserSlugs()
     .then(() => {
-      console.log('✅ Migration script completed');
+      console.log('  Migration script completed');
       process.exit(0);
     })
     .catch((error) => {
-      console.error('❌ Migration script failed:', error);
+      console.error('  Migration script failed:', error);
       process.exit(1);
     });
 }

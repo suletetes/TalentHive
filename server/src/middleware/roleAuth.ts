@@ -7,7 +7,7 @@ interface AuthRequest extends Request {
 
 export const authorizeRoles = (...roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
-    console.log('🔐 Role Authorization Check:');
+    console.log('  Role Authorization Check:');
     console.log('  User:', req.user?.email);
     console.log('  User Role:', req.user?.role);
     console.log('  User Roles Array:', req.user?.roles);
