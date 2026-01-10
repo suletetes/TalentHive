@@ -49,14 +49,14 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       }
     },
     onSuccess: (response) => {
-      console.log('📸 [UPLOAD] Full response:', JSON.stringify(response, null, 2));
+      console.log(' [UPLOAD] Full response:', JSON.stringify(response, null, 2));
       
       // Handle different response structures
       const urls = folder === 'avatar' 
         ? [response?.data?.url || response?.url || response?.data?.data?.avatar]
         : response?.data?.images || response?.images || response?.data?.data?.images || [];
       
-      console.log('📸 [UPLOAD] Extracted URLs:', urls);
+      console.log(' [UPLOAD] Extracted URLs:', urls);
       
       setPreviews(prev => [...prev, ...urls]);
       onUpload(urls);

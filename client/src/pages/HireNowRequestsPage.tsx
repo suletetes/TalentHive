@@ -413,7 +413,7 @@ export const HireNowRequestsPage: React.FC = () => {
                               console.log('[VIEW CLIENT] Full client object:', request.client);
                               // Navigate to client's public profile (clients don't have freelancer profiles)
                               // For now, show a message since clients don't have public profiles
-                              toast('Client profiles are not publicly viewable', { icon: 'ℹ️' });
+                              toast('Client profiles are not publicly viewable', { icon: ' ' });
                             }}
                           >
                             View Client

@@ -183,7 +183,7 @@ export const CreateDisputeDialog: React.FC<CreateDisputeDialogProps> = ({
 
           <Box sx={{ mt: 2, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
             <Typography variant="caption" color="warning.contrastText">
-              ⚠️ Note: Filing false disputes may result in account suspension. Please provide accurate information.
+                Note: Filing false disputes may result in account suspension. Please provide accurate information.
             </Typography>
           </Box>
         </Box>

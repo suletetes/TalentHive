@@ -72,7 +72,7 @@ export class ApiCore {
 
         // Handle 401 errors
         if (error.response?.status === 401) {
-          console.log('🔐 [API] 401 Error on:', requestUrl);
+          console.log('  [API] 401 Error on:', requestUrl);
           
           // For silent fail endpoints, just reject without logout or refresh
           if (this.isSilentFailEndpoint(requestUrl)) {
@@ -82,14 +82,14 @@ export class ApiCore {
 
           // Don't retry if already retried
           if (originalRequest._retry) {
-            console.log('🔐 [API] Already retried, giving up');
+            console.log('  [API] Already retried, giving up');
             return Promise.reject(error);
           }
 
           originalRequest._retry = true;
 
           try {
-            console.log('🔐 [API] Attempting token refresh...');
+            console.log('  [API] Attempting token refresh...');
             
             // Prevent multiple simultaneous refresh requests
             if (!this.refreshPromise) {
@@ -97,7 +97,7 @@ export class ApiCore {
               const refreshToken = state.auth.refreshToken;
 
               if (!refreshToken) {
-                console.log('🔐 [API] No refresh token available');
+                console.log('  [API] No refresh token available');
                 throw new Error('No refresh token available');
               }
 
@@ -109,7 +109,7 @@ export class ApiCore {
 
             const { accessToken, refreshToken: newRefreshToken } = response.data.data.tokens;
             
-            console.log('🔐 [API] Token refresh successful');
+            console.log('  [API] Token refresh successful');
 
             store.dispatch(
               setTokens({
@@ -125,14 +125,14 @@ export class ApiCore {
             return this.api(originalRequest);
           } catch (refreshError: any) {
             this.refreshPromise = null;
-            console.log('🔐 [API] Token refresh failed:', refreshError.message);
+            console.log('  [API] Token refresh failed:', refreshError.message);
             
             // Only logout and redirect if not on a public page
             const currentPath = window.location.pathname;
             const isPublicPage = currentPath === '/' || currentPath === '/login' || currentPath === '/register';
             
             if (!isPublicPage) {
-              console.log('🔐 [API] Logging out user');
+              console.log('  [API] Logging out user');
               store.dispatch(logout());
               window.location.href = '/login';
             }

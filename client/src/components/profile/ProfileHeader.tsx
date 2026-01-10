@@ -117,14 +117,14 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const handleAvatarUpload = (urls: string[]) => {
-    console.log('🖼️ [AVATAR] Upload callback received, URLs:', urls);
+    console.log(' [AVATAR] Upload callback received, URLs:', urls);
     if (urls.length > 0) {
-      console.log('🖼️ [AVATAR] Invalidating profile cache...');
+      console.log(' [AVATAR] Invalidating profile cache...');
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['user'] });
       setAvatarDialogOpen(false);
       toast.success('Avatar updated successfully!');
-      console.log('🖼️ [AVATAR] Profile cache invalidated, should refetch now');
+      console.log(' [AVATAR] Profile cache invalidated, should refetch now');
     }
   };
 

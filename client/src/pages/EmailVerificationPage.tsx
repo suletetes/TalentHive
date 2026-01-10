@@ -38,8 +38,8 @@ export const EmailVerificationPage: React.FC = () => {
         // Decode the token in case it's URL-encoded
         token = decodeURIComponent(token);
 
-        console.log('🔍 [EMAIL_VERIFY_PAGE] Token extracted:', token);
-        console.log('🔍 [EMAIL_VERIFY_PAGE] Token length:', token.length);
+        console.log(' [EMAIL_VERIFY_PAGE] Token extracted:', token);
+        console.log(' [EMAIL_VERIFY_PAGE] Token length:', token.length);
 
         // Call verification API
         await authService.verifyEmail(token);
@@ -58,7 +58,7 @@ export const EmailVerificationPage: React.FC = () => {
         }
       } catch (error: any) {
         if (isMounted) {
-          console.error('❌ [EMAIL_VERIFY_PAGE] Verification error:', error);
+          console.error('  [EMAIL_VERIFY_PAGE] Verification error:', error);
           console.error('📋 [EMAIL_VERIFY_PAGE] Error response:', error.response?.data);
           console.error('📋 [EMAIL_VERIFY_PAGE] Error status:', error.response?.status);
           setStatus('error');
