@@ -21,11 +21,11 @@ async function enhanceSeedData(skipConnection = false) {
     if (!skipConnection) {
       const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive_dev';
       await mongoose.connect(mongoUri);
-      logger.info('✅ Connected to MongoDB');
+      logger.info('Connected to MongoDB');
     }
 
     // 1. Add slugs to users
-    logger.info('📝 Adding slugs to users...');
+    logger.info('Adding slugs to users...');
     const users = await User.find({});
     let slugCount = 0;
     
@@ -49,10 +49,10 @@ async function enhanceSeedData(skipConnection = false) {
         logger.info(`  Added slug "${slug}" to ${user.email}`);
       }
     }
-    logger.info(`✅ Added ${slugCount} slugs`);
+    logger.info(` Added ${slugCount} slugs`);
 
     // 2. Mark some contracts as completed and add amounts
-    logger.info('💰 Updating contracts to completed status...');
+    logger.info('Updating contracts to completed status...');
     
     // Get Alice and other freelancers to ensure they have completed contracts
     const aliceUser = await User.findOne({ email: 'alice.dev@example.com' });
@@ -83,10 +83,10 @@ async function enhanceSeedData(skipConnection = false) {
       
       logger.info(`  Completed contract for freelancer ${contract.freelancer}: $${contract.totalAmount}`);
     }
-    logger.info(`✅ Marked ${completedCount} contracts as completed`);
+    logger.info(` Marked ${completedCount} contracts as completed`);
 
     // 3. Add profile viewers
-    logger.info('👀 Adding profile viewers...');
+    logger.info('Adding profile viewers...');
     
     // Prioritize main users (Alice, Bob, Carol, John, Sarah)
     const mainFreelancers = await User.find({ 
@@ -164,15 +164,15 @@ async function enhanceSeedData(skipConnection = false) {
         }
       }
     }
-    logger.info(`✅ Added ${viewCount} profile views`);
+    logger.info(` Added ${viewCount} profile views`);
 
     // 4. Verify reviews exist
-    logger.info('⭐ Checking reviews...');
+    logger.info('Checking reviews...');
     const reviewCount = await Review.countDocuments();
-    logger.info(`✅ Found ${reviewCount} reviews in database`);
+    logger.info(` Found ${reviewCount} reviews in database`);
 
     // Summary
-    logger.info('\n📊 Enhancement Summary:');
+    logger.info('\n Enhancement Summary:');
     logger.info(`  - Slugs added: ${slugCount}`);
     logger.info(`  - Contracts completed: ${completedCount}`);
     logger.info(`  - Profile views added: ${viewCount}`);
@@ -180,11 +180,11 @@ async function enhanceSeedData(skipConnection = false) {
 
     if (!skipConnection) {
       await mongoose.disconnect();
-      logger.info('\n✅ Database enhancement completed successfully!');
+      logger.info('\n Database enhancement completed successfully!');
     }
     
   } catch (error) {
-    logger.error('❌ Enhancement failed:', error);
+    logger.error('Enhancement failed:', error);
     throw error;
   }
 }

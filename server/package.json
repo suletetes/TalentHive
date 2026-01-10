@@ -13,6 +13,11 @@
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "seed": "ts-node -r tsconfig-paths/register src/scripts/seed.ts",
+    "seed:all": "ts-node -r tsconfig-paths/register src/scripts/seedAll.ts",
+    "seed:new": "ts-node -r tsconfig-paths/register src/scripts/seedAll.ts new",
+    "seed:worklogs": "ts-node -r tsconfig-paths/register src/scripts/seedAll.ts worklogs",
+    "seed:roles": "ts-node -r tsconfig-paths/register src/scripts/seedAll.ts roles",
+    "seed:profiles": "ts-node -r tsconfig-paths/register src/scripts/seedAll.ts profiles",
     "validate-data": "ts-node -r tsconfig-paths/register src/scripts/validateData.ts"
   },
   "dependencies": {

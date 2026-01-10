@@ -29,7 +29,7 @@ export async function addProfileSlugs() {
     updated++;
   }
 
-  console.log(`✓ Added profile slugs to ${updated} users`);
+  console.log(` Added profile slugs to ${updated} users`);
 }
 
 /**
@@ -57,7 +57,7 @@ export async function addOnboardingStatus() {
     updated++;
   }
 
-  console.log(`✓ Added onboarding status to ${updated} users`);
+  console.log(` Added onboarding status to ${updated} users`);
 }
 
 /**
@@ -111,7 +111,7 @@ export async function createOnboardingAnalytics() {
     created++;
   }
 
-  console.log(`✓ Created onboarding analytics for ${created} users`);
+  console.log(` Created onboarding analytics for ${created} users`);
 }
 
 /**
@@ -124,7 +124,7 @@ export async function createSupportTickets() {
   const admins = await User.find({ role: 'admin' });
   
   if (admins.length === 0) {
-    console.log('⚠ No admins found, skipping support tickets');
+    console.log('No admins found, skipping support tickets');
     return;
   }
 
@@ -212,7 +212,7 @@ export async function createSupportTickets() {
     created++;
   }
 
-  console.log(`✓ Created ${created} support tickets`);
+  console.log(` Created ${created} support tickets`);
 }
 
 /**
@@ -245,7 +245,7 @@ export async function addProfileViews() {
     updated++;
   }
 
-  console.log(`✓ Added profile views to ${updated} freelancers`);
+  console.log(` Added profile views to ${updated} freelancers`);
 }
 
 /**
@@ -253,7 +253,7 @@ export async function addProfileViews() {
  */
 export async function seedNewFeatures() {
   try {
-    console.log('\n🌱 Starting new features seed data...\n');
+    console.log('\n Starting new features seed data...\n');
 
     await addProfileSlugs();
     await addOnboardingStatus();
@@ -261,9 +261,9 @@ export async function seedNewFeatures() {
     await createSupportTickets();
     await addProfileViews();
 
-    console.log('\n✅ New features seed data completed successfully!\n');
+    console.log('\n New features seed data completed successfully!\n');
   } catch (error) {
-    console.error('❌ Error seeding new features:', error);
+    console.error(' Error seeding new features:', error);
     throw error;
   }
 }
@@ -275,10 +275,10 @@ if (require.main === module) {
   mongoose
     .connect(mongoUri)
     .then(async () => {
-      console.log('📦 Connected to MongoDB');
+      console.log('Connected to MongoDB');
       await seedNewFeatures();
       await mongoose.disconnect();
-      console.log('👋 Disconnected from MongoDB');
+      console.log('Disconnected from MongoDB');
       process.exit(0);
     })
     .catch((error) => {

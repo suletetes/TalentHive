@@ -13,9 +13,9 @@ async function connectDB() {
   try {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive_dev';
     await mongoose.connect(mongoUri);
-    logger.info('✅ Connected to MongoDB');
+    logger.info('Connected to MongoDB');
   } catch (error) {
-    logger.error('❌ MongoDB connection failed:', error);
+    logger.error('MongoDB connection failed:', error);
     throw error;
   }
 }
@@ -23,9 +23,9 @@ async function connectDB() {
 async function disconnectDB() {
   try {
     await mongoose.disconnect();
-    logger.info('✅ Disconnected from MongoDB');
+    logger.info('Disconnected from MongoDB');
   } catch (error) {
-    logger.error('❌ MongoDB disconnection failed:', error);
+    logger.error('MongoDB disconnection failed:', error);
   }
 }
 
@@ -69,11 +69,11 @@ async function seedWorkLogs() {
   try {
     await connectDB();
 
-    logger.info('🔄 Seeding work logs...');
+    logger.info('Seeding work logs...');
 
     // Clear existing work logs
     await WorkLog.deleteMany({});
-    logger.info('✅ Cleared existing work logs');
+    logger.info('Cleared existing work logs');
 
     // Get active contracts with populated data
     const activeContracts = await Contract.find({ status: 'active' })
@@ -82,12 +82,12 @@ async function seedWorkLogs() {
       .limit(15);
 
     if (activeContracts.length === 0) {
-      logger.warn('⚠️ No active contracts found. Please seed contracts first.');
+      logger.warn('️ No active contracts found. Please seed contracts first.');
       await disconnectDB();
       return;
     }
 
-    logger.info(`📋 Found ${activeContracts.length} active contracts`);
+    logger.info(` Found ${activeContracts.length} active contracts`);
 
     const workLogs: any[] = [];
     const today = new Date();
@@ -137,7 +137,7 @@ async function seedWorkLogs() {
 
     // Insert all work logs
     await WorkLog.insertMany(workLogs);
-    logger.info(`✅ Created ${workLogs.length} work logs`);
+    logger.info(` Created ${workLogs.length} work logs`);
 
     // Calculate totals for summary
     const completedCount = workLogs.filter((l) => l.status === 'completed').length;
@@ -145,20 +145,24 @@ async function seedWorkLogs() {
     const totalMinutes = workLogs.reduce((sum, l) => sum + (l.duration || 0), 0);
     const totalHours = Math.round((totalMinutes / 60) * 100) / 100;
 
-    logger.info(`📊 Summary:`);
+    logger.info(` Summary:`);
     logger.info(`   - ${completedCount} completed logs`);
     logger.info(`   - ${inProgressCount} in-progress logs`);
     logger.info(`   - ${totalHours} total hours logged`);
     logger.info(`   - ${activeContracts.length} contracts with work logs`);
 
-    logger.info('🎉 Work log seeding finished successfully!');
+    logger.info('Work log seeding finished successfully!');
     await disconnectDB();
   } catch (error) {
-    logger.error('❌ Error during seeding:', error);
+    logger.error('Error during seeding:', error);
     await disconnectDB();
     process.exit(1);
   }
 }
 
 // Run the seed
-seedWorkLogs();
+if (require.main === module) {
+  seedWorkLogs();
+}
+
+export { seedWorkLogs };
