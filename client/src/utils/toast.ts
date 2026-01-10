@@ -30,7 +30,7 @@ export const toastHelper = {
     return toast(message, {
       ...defaultOptions,
       ...options,
-      icon: 'ℹ️',
+      icon: ' ',
     });
   },
 
@@ -41,7 +41,7 @@ export const toastHelper = {
     return toast(message, {
       ...defaultOptions,
       ...options,
-      icon: '⚠️',
+      icon: ' ',
       style: {
         ...defaultOptions.style,
         borderLeft: '4px solid #ff9800',

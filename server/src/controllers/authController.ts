@@ -30,28 +30,28 @@ export const registerValidation = [
 
 
 export const register = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  console.log('📝 Register request body:', JSON.stringify(req.body, null, 2));
+  console.log(' Register request body:', JSON.stringify(req.body, null, 2));
   
   const errors = validationResult(req);
-  console.log('🔍 Validation errors:', errors.array());
+  console.log('  Validation errors:', errors.array());
 
   if (!errors.isEmpty()) {
-    console.log('❌ Validation failed with errors:', errors.array());
+    console.log('  Validation failed with errors:', errors.array());
     return next(new AppError('Validation failed', 400));
   }
 
   const { email, password, firstName, lastName, role, companyName, title, profile } = req.body;
 
-  console.log('📋 Extracted fields:', { email, firstName, lastName, role, profile });
+  console.log(' Extracted fields:', { email, firstName, lastName, role, profile });
 
   // Support both root-level and nested profile format
   const finalFirstName = firstName || profile?.firstName;
   const finalLastName = lastName || profile?.lastName;
 
-  console.log('✅ Final names:', { finalFirstName, finalLastName });
+  console.log('  Final names:', { finalFirstName, finalLastName });
 
   if (!finalFirstName || !finalLastName) {
-    console.log('❌ Missing names - finalFirstName:', finalFirstName, 'finalLastName:', finalLastName);
+    console.log('  Missing names - finalFirstName:', finalFirstName, 'finalLastName:', finalLastName);
     return next(new AppError('First name and last name are required', 400));
   }
 
@@ -314,22 +314,22 @@ export const changePassword = catchAsync(async (req: AuthRequest, res: Response,
 export const verifyEmail = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { token } = req.params;
 
-  console.log('🔍 [VERIFY_EMAIL] Starting verification');
-  console.log('📝 [VERIFY_EMAIL] Token:', token);
-  console.log('⏰ [VERIFY_EMAIL] Current time:', new Date().toISOString());
+  console.log(' [VERIFY_EMAIL] Starting verification');
+  console.log(' [VERIFY_EMAIL] Token:', token);
+  console.log(' [VERIFY_EMAIL] Current time:', new Date().toISOString());
 
   if (!token) {
-    console.log('❌ [VERIFY_EMAIL] No token provided');
+    console.log(' [VERIFY_EMAIL] No token provided');
     return next(new AppError('No verification token provided', 400));
   }
 
   // Hash the token to compare with stored hash
   const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-  console.log('🔐 [VERIFY_EMAIL] Plain token:', token);
-  console.log('🔐 [VERIFY_EMAIL] Hashed token:', hashedToken);
+  console.log('  [VERIFY_EMAIL] Plain token:', token);
+  console.log('  [VERIFY_EMAIL] Hashed token:', hashedToken);
 
   // Search for user with this token hash (new format) OR plain token (old format for backward compatibility)
-  console.log('🔎 [VERIFY_EMAIL] Searching for user with this token in database...');
+  console.log(' [VERIFY_EMAIL] Searching for user with this token in database...');
   
   // First try to find with hashed token
   let userWithToken = await User.findOne({
@@ -338,15 +338,15 @@ export const verifyEmail = catchAsync(async (req: Request, res: Response, next: 
 
   // If not found, try with plain token (backward compatibility)
   if (!userWithToken) {
-    console.log('🔎 [VERIFY_EMAIL] Hashed token not found, trying plain token...');
+    console.log(' [VERIFY_EMAIL] Hashed token not found, trying plain token...');
     userWithToken = await User.findOne({
       emailVerificationToken: token,
     });
   }
 
   if (!userWithToken) {
-    console.log('❌ [VERIFY_EMAIL] Token does not exist in database');
-    console.log('💡 [VERIFY_EMAIL] Searched for:');
+    console.log(' [VERIFY_EMAIL] Token does not exist in database');
+    console.log(' [VERIFY_EMAIL] Searched for:');
     console.log('   - Hashed:', hashedToken);
     console.log('   - Plain:', token);
     
@@ -354,22 +354,22 @@ export const verifyEmail = catchAsync(async (req: Request, res: Response, next: 
     const usersWithTokens = await User.find({
       emailVerificationToken: { $exists: true, $ne: null }
     }).select('email emailVerificationToken');
-    console.log('📊 [VERIFY_EMAIL] Users with tokens in DB:', usersWithTokens.length);
+    console.log(' [VERIFY_EMAIL] Users with tokens in DB:', usersWithTokens.length);
     if (usersWithTokens.length > 0) {
-      console.log('📊 [VERIFY_EMAIL] Sample tokens:', usersWithTokens.slice(0, 3).map(u => ({ email: u.email, tokenLength: u.emailVerificationToken?.length })));
+      console.log(' [VERIFY_EMAIL] Sample tokens:', usersWithTokens.slice(0, 3).map(u => ({ email: u.email, tokenLength: u.emailVerificationToken?.length })));
     }
     
     return next(new AppError('Invalid or already used verification token', 400));
   }
 
-  console.log('✅ [VERIFY_EMAIL] User found with token:', userWithToken.email);
-  console.log('📋 [VERIFY_EMAIL] User ID:', userWithToken._id);
-  console.log('📋 [VERIFY_EMAIL] Current isVerified status:', userWithToken.isVerified);
-  console.log('📋 [VERIFY_EMAIL] Token expires at:', userWithToken.emailVerificationExpires);
+  console.log('  [VERIFY_EMAIL] User found with token:', userWithToken.email);
+  console.log(' [VERIFY_EMAIL] User ID:', userWithToken._id);
+  console.log(' [VERIFY_EMAIL] Current isVerified status:', userWithToken.isVerified);
+  console.log(' [VERIFY_EMAIL] Token expires at:', userWithToken.emailVerificationExpires);
 
   // Check if already verified
   if (userWithToken.isVerified) {
-    console.log('⚠️ [VERIFY_EMAIL] User already verified, returning success');
+    console.log(' [VERIFY_EMAIL] User already verified, returning success');
     return res.status(200).json({
       status: 'success',
       message: 'Email already verified',
@@ -378,19 +378,19 @@ export const verifyEmail = catchAsync(async (req: Request, res: Response, next: 
 
   // Check if token is expired
   if (userWithToken.emailVerificationExpires && userWithToken.emailVerificationExpires < new Date()) {
-    console.log('⚠️ [VERIFY_EMAIL] Token has expired');
+    console.log(' [VERIFY_EMAIL] Token has expired');
     return next(new AppError('Verification token has expired. Please request a new verification email.', 400));
   }
 
   // Token is valid and not expired - verify the user
-  console.log('🔄 [VERIFY_EMAIL] Verifying user...');
+  console.log(' [VERIFY_EMAIL] Verifying user...');
   userWithToken.isVerified = true;
   userWithToken.emailVerificationToken = undefined;
   userWithToken.emailVerificationExpires = undefined;
 
   await userWithToken.save();
 
-  console.log('✅ [VERIFY_EMAIL] User verified successfully');
+  console.log('  [VERIFY_EMAIL] User verified successfully');
   res.status(200).json({
     status: 'success',
     message: 'Email verified successfully',

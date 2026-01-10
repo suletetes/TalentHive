@@ -148,7 +148,7 @@ async function startServer() {
     
     server.listen(PORT, () => {
       logger.info(`🚀 Server running on port ${PORT} in ${NODE_ENV} mode`);
-      logger.info(`📊 Health check available at http://localhost:${PORT}/health`);
+      logger.info(`  Health check available at http://localhost:${PORT}/health`);
       logger.info(`🔗 API available at http://localhost:${PORT}/api`);
       logger.info(`🔒 Security middleware active`);
       logger.info(`⚡ Performance monitoring enabled`);
