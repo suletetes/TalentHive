@@ -84,7 +84,7 @@ echo "" | tee -a "$SUMMARY_LOG"
 
 # Check if there are failures
 if grep -q "failed" "$MAIN_LOG"; then
-    echo -e "${RED}❌ TESTS FAILED${NC}" | tee -a "$SUMMARY_LOG"
+    echo -e "${RED}  TESTS FAILED${NC}" | tee -a "$SUMMARY_LOG"
     echo "" | tee -a "$SUMMARY_LOG"
     
     # Extract failed test information
@@ -110,7 +110,7 @@ if grep -q "failed" "$MAIN_LOG"; then
     echo -e "${CYAN}Full error details in: $ERROR_LOG${NC}"
     
 else
-    echo -e "${GREEN}✅ ALL TESTS PASSED${NC}" | tee -a "$SUMMARY_LOG"
+    echo -e "${GREEN}  ALL TESTS PASSED${NC}" | tee -a "$SUMMARY_LOG"
 fi
 
 echo "" | tee -a "$SUMMARY_LOG"
