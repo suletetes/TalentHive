@@ -333,7 +333,7 @@ export const acceptHireNowRequest = async (
       console.error('Failed to send acceptance notification email:', emailError);
     }
 
-    console.log(`[HIRE NOW ACCEPT] ✅ Success - Project and contract created`);
+    console.log(`[HIRE NOW ACCEPT]   Success - Project and contract created`);
     console.log(`[HIRE NOW ACCEPT] Project ID: ${project._id}`);
     console.log(`[HIRE NOW ACCEPT] Contract ID: ${contract._id}`);
     console.log(`[HIRE NOW ACCEPT] ========== END ACCEPT ==========`);
@@ -347,7 +347,7 @@ export const acceptHireNowRequest = async (
       },
     });
   } catch (error: any) {
-    console.error(`[HIRE NOW ACCEPT ERROR] ❌ Error:`, error.message);
+    console.error(`[HIRE NOW ACCEPT ERROR]   Error:`, error.message);
     console.error(`[HIRE NOW ACCEPT ERROR] Stack:`, error.stack);
     next(new AppError(error.message || 'Failed to accept hire now request', 500));
   }

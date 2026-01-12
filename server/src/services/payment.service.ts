@@ -5,7 +5,7 @@ import { Contract } from '../models/Contract';
 import mongoose from 'mongoose';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-02-24.acacia', // Latest API version for stripe@17.3.0
+  apiVersion: '2025-02-24.acacia', // Updated to latest API version
 });
 
 export class PaymentService {

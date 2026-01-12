@@ -238,7 +238,7 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
   // Filter by user role
   const userId = req.user?._id;
   if (!userId) {
-    console.log('[GET MY CONTRACTS] ❌ No user ID - unauthorized');
+    console.log('[GET MY CONTRACTS]  No user ID - unauthorized');
     return next(new AppError('Unauthorized', 401));
   }
 

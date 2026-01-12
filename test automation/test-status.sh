@@ -32,13 +32,13 @@ echo ""
 
 # Check if there are errors
 if [ -f "$LOG_DIR/latest-errors.log" ] && [ -s "$LOG_DIR/latest-errors.log" ]; then
-    echo -e "${RED}❌ Tests have failures${NC}"
+    echo -e "${RED}  Tests have failures${NC}"
     echo ""
     echo "View errors:"
     echo "  ./view-test-errors.sh"
     echo "  cat $LOG_DIR/latest-errors.log"
 else
-    echo -e "${GREEN}✅ All tests passing${NC}"
+    echo -e "${GREEN}  All tests passing${NC}"
 fi
 
 echo ""

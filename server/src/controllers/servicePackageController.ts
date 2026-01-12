@@ -606,7 +606,7 @@ export const orderServicePackage = async (req: Request, res: Response) => {
       console.error('Failed to send service order email:', emailError);
     }
 
-    console.log(`[SERVICE ORDER] ✅ Success - Contract ${contract._id} created with sourceType: service`);
+    console.log(`[SERVICE ORDER]   Success - Contract ${contract._id} created with sourceType: service`);
 
     res.status(201).json({
       status: 'success',

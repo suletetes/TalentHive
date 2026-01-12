@@ -63,9 +63,9 @@ export const connectDB = async (): Promise<void> => {
       zlibCompressionLevel: 6, // Compression level (1-9)
     });
     
-    logger.info(`✅ MongoDB connected: ${mongoose.connection.host}`);
+    logger.info(`  MongoDB connected: ${mongoose.connection.host}`);
   } catch (error) {
-    logger.error('❌ MongoDB connection error:', error);
+    logger.error('  MongoDB connection error:', error);
     // Don't exit in test environment
     if (process.env.NODE_ENV !== 'test') {
       process.exit(1);
@@ -77,9 +77,9 @@ export const connectDB = async (): Promise<void> => {
 export const disconnectDB = async (): Promise<void> => {
   try {
     await mongoose.disconnect();
-    logger.info('✅ MongoDB disconnected');
+    logger.info('  MongoDB disconnected');
   } catch (error) {
-    logger.error('❌ MongoDB disconnection error:', error);
+    logger.error('  MongoDB disconnection error:', error);
   }
 };
 

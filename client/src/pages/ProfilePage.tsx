@@ -52,6 +52,7 @@ import { ProfileSlugEditor } from '@/components/profile/ProfileSlugEditor';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { RootState } from '@/store';
 import { apiService } from '@/services/api';
+import { usersService } from '@/services/api/users.service';
 import { useNavigate } from 'react-router-dom';
 
 const profileSchema = yup.object({
@@ -89,6 +90,12 @@ export const ProfilePage: React.FC = () => {
     queryKey: ['profile'],
     queryFn: () => apiService.get('/users/profile'),
     enabled: !!currentUser,
+  });
+
+  const { data: statsData } = useQuery({
+    queryKey: ['userStats', profileData?.data?.user?._id],
+    queryFn: () => usersService.getUserStats(profileData?.data?.user?._id),
+    enabled: !!profileData?.data?.user?._id,
   });
 
   const updateProfileMutation = useMutation({
@@ -198,6 +205,7 @@ export const ProfilePage: React.FC = () => {
                 <Box sx={{ flex: 1 }}>
                   <ProfileHeader
                     user={user}
+                    stats={statsData?.data}
                     isOwnProfile={true}
                     onEdit={() => setEditDialogOpen(true)}
                   />

@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { paymentService } from '../services/payment.service';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-02-24.acacia', // Latest API version for stripe@17.3.0
+  apiVersion: '2025-02-24.acacia', // Updated to latest API version
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';

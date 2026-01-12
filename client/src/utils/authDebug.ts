@@ -10,7 +10,7 @@ export const debugAuth = () => {
       const parsed = JSON.parse(persistRoot);
       const authState = parsed.auth ? JSON.parse(parsed.auth) : null;
       
-      console.group('🔐 Auth Debug Info');
+      console.group('  Auth Debug Info');
       console.log('Auth State:', authState);
       console.log('Has Token:', !!authState?.token);
       console.log('Has Refresh Token:', !!authState?.refreshToken);
@@ -44,7 +44,7 @@ export const debugAuth = () => {
       console.error('Failed to parse auth state:', e);
     }
   } else {
-    console.warn('🔐 No persisted auth state found');
+    console.warn('  No persisted auth state found');
   }
   
   return null;

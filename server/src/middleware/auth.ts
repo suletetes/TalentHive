@@ -54,10 +54,10 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
                               req.originalUrl.includes('/conversations');
     
     if (!isPollingEndpoint) {
-      console.log('🔐 [AUTH] Token verification failed');
-      console.log('🔐 [AUTH] Token preview:', token?.substring(0, 20) + '...');
-      console.log('🔐 [AUTH] Error:', error.message);
-      console.log('🔐 [AUTH] URL:', req.originalUrl);
+      console.log('  [AUTH] Token verification failed');
+      console.log('  [AUTH] Token preview:', token?.substring(0, 20) + '...');
+      console.log('  [AUTH] Error:', error.message);
+      console.log('  [AUTH] URL:', req.originalUrl);
     }
     
     // Provide more specific error messages

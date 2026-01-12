@@ -1,4 +1,4 @@
-﻿import dotenv from 'dotenv';
+import dotenv from 'dotenv';
 dotenv.config();
 
 import mongoose from 'mongoose';
@@ -13,9 +13,9 @@ async function connectDB() {
   try {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive_dev';
     await mongoose.connect(mongoUri);
-    logger.info(' Connected to MongoDB');
+    logger.info('Connected to MongoDB');
   } catch (error) {
-    logger.error(' MongoDB connection failed:', error);
+    logger.error('MongoDB connection failed:', error);
     throw error;
   }
 }
@@ -23,9 +23,9 @@ async function connectDB() {
 async function disconnectDB() {
   try {
     await mongoose.disconnect();
-    logger.info(' Disconnected from MongoDB');
+    logger.info('Disconnected from MongoDB');
   } catch (error) {
-    logger.error(' MongoDB disconnection failed:', error);
+    logger.error('MongoDB disconnection failed:', error);
   }
 }
 
@@ -69,11 +69,11 @@ async function seedWorkLogs() {
   try {
     await connectDB();
 
-    logger.info(' Seeding work logs...');
+    logger.info('Seeding work logs...');
 
     // Clear existing work logs
     await WorkLog.deleteMany({});
-    logger.info(' Cleared existing work logs');
+    logger.info('Cleared existing work logs');
 
     // Get active contracts with populated data
     const activeContracts = await Contract.find({ status: 'active' })
@@ -82,7 +82,7 @@ async function seedWorkLogs() {
       .limit(15);
 
     if (activeContracts.length === 0) {
-      logger.warn(' No active contracts found. Please seed contracts first.');
+      logger.warn('️ No active contracts found. Please seed contracts first.');
       await disconnectDB();
       return;
     }
@@ -151,14 +151,18 @@ async function seedWorkLogs() {
     logger.info(`   - ${totalHours} total hours logged`);
     logger.info(`   - ${activeContracts.length} contracts with work logs`);
 
-    logger.info(' Work log seeding finished successfully!');
+    logger.info('Work log seeding finished successfully!');
     await disconnectDB();
   } catch (error) {
-    logger.error(' Error during seeding:', error);
+    logger.error('Error during seeding:', error);
     await disconnectDB();
     process.exit(1);
   }
 }
 
 // Run the seed
-seedWorkLogs();
+if (require.main === module) {
+  seedWorkLogs();
+}
+
+export { seedWorkLogs };

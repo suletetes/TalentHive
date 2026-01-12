@@ -56,12 +56,17 @@ interface ProfileHeaderProps {
     isVerified: boolean;
     role: 'freelancer' | 'client' | 'admin';
   };
+  stats?: {
+    totalProjectsPosted?: number;
+    [key: string]: any;
+  };
   isOwnProfile?: boolean;
   onEdit?: () => void;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   user,
+  stats,
   isOwnProfile = false,
   onEdit,
 }) => {
@@ -117,14 +122,14 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const handleAvatarUpload = (urls: string[]) => {
-    console.log('🖼️ [AVATAR] Upload callback received, URLs:', urls);
+    console.log(' [AVATAR] Upload callback received, URLs:', urls);
     if (urls.length > 0) {
-      console.log('🖼️ [AVATAR] Invalidating profile cache...');
+      console.log(' [AVATAR] Invalidating profile cache...');
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['user'] });
       setAvatarDialogOpen(false);
       toast.success('Avatar updated successfully!');
-      console.log('🖼️ [AVATAR] Profile cache invalidated, should refetch now');
+      console.log(' [AVATAR] Profile cache invalidated, should refetch now');
     }
   };
 
@@ -302,7 +307,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           {user.role === 'client' && user.clientProfile && (
             <Box mt={2}>
               <Typography variant="h6" color="primary">
-                {user.clientProfile.projectsPosted} Projects Posted
+                {stats?.totalProjectsPosted ?? user.clientProfile.projectsPosted ?? 0} Projects Posted
               </Typography>
               {user.clientProfile.industry && (
                 <Typography variant="body2" color="text.secondary">

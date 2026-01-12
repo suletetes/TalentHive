@@ -70,34 +70,21 @@ export const ContractsPage: React.FC = () => {
       
       const response = await contractsService.getMyContracts();
       console.log(`[CONTRACTS PAGE] Raw API response:`, response);
-      console.log(`[CONTRACTS PAGE] Response structure:`, {
-        hasData: !!response?.data,
-        hasDataData: !!response?.data?.data,
-        hasDataContracts: !!response?.data?.contracts,
-        hasDataDataContracts: !!response?.data?.data?.contracts,
-        isArray: Array.isArray(response),
-        isDataArray: Array.isArray(response?.data),
-      });
       
-      // API returns { status: 'success', data: { contracts: [...] } }
+      // Simplified response extraction - API should return { status: 'success', data: [...] }
       let contracts = [];
-      if (response?.data?.data?.contracts && Array.isArray(response.data.data.contracts)) {
-        contracts = response.data.data.contracts;
-        console.log(`[CONTRACTS PAGE] ✅ Extracted from response.data.data.contracts`);
+      if (response?.data && Array.isArray(response.data)) {
+        contracts = response.data;
+        console.log(`[CONTRACTS PAGE] Extracted from response.data (array)`);
+      } else if (response?.data?.data && Array.isArray(response.data.data)) {
+        contracts = response.data.data;
+        console.log(`[CONTRACTS PAGE] Extracted from response.data.data (array)`);
       } else if (response?.data?.contracts && Array.isArray(response.data.contracts)) {
         contracts = response.data.contracts;
-        console.log(`[CONTRACTS PAGE] ✅ Extracted from response.data.contracts`);
-      } else if (response?.contracts && Array.isArray(response.contracts)) {
-        contracts = response.contracts;
-        console.log(`[CONTRACTS PAGE] ✅ Extracted from response.contracts`);
-      } else if (Array.isArray(response?.data)) {
-        contracts = response.data;
-        console.log(`[CONTRACTS PAGE] ✅ Extracted from response.data (array)`);
-      } else if (Array.isArray(response)) {
-        contracts = response;
-        console.log(`[CONTRACTS PAGE] ✅ Extracted from response (array)`);
+        console.log(`[CONTRACTS PAGE] Extracted from response.data.contracts (array)`);
       } else {
-        console.log(`[CONTRACTS PAGE] ❌ Could not extract contracts array`);
+        console.log(`[CONTRACTS PAGE] Could not extract contracts array, using empty array`);
+        contracts = [];
       }
       
       console.log(`[CONTRACTS PAGE] Total contracts found: ${contracts.length}`);
@@ -114,21 +101,6 @@ export const ContractsPage: React.FC = () => {
           createdAt: contract.createdAt,
         });
       });
-      
-      // Count by source type
-      const bySource = contracts.reduce((acc: any, c: Contract) => {
-        const source = (c as any).sourceType || 'unknown';
-        acc[source] = (acc[source] || 0) + 1;
-        return acc;
-      }, {});
-      console.log(`[CONTRACTS PAGE] Contracts by source type:`, bySource);
-      
-      // Count by status
-      const byStatus = contracts.reduce((acc: any, c: Contract) => {
-        acc[c.status] = (acc[c.status] || 0) + 1;
-        return acc;
-      }, {});
-      console.log(`[CONTRACTS PAGE] Contracts by status:`, byStatus);
       
       console.log(`[CONTRACTS PAGE] ========== END FETCH ==========`);
       return contracts;
@@ -292,7 +264,7 @@ export const ContractsPage: React.FC = () => {
       const passes = matchesStatus && matchesSource;
       
       if (!passes) {
-        console.log(`[CONTRACTS FILTER] ❌ Filtered out:`, {
+        console.log(`[CONTRACTS FILTER]  Filtered out:`, {
           id: c._id,
           title: c.title,
           status: c.status,

@@ -223,7 +223,7 @@ export const EscrowStatus: React.FC<EscrowStatusProps> = ({
 
             <Box>
               <Typography variant="subtitle2" gutterBottom>
-                ✅ Milestone Completion
+                  Milestone Completion
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 As you complete project milestones, funds are released according to the contract terms.

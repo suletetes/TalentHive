@@ -1,13 +1,102 @@
 import { apiCore } from './core';
-import { 
-  Project, 
-  CreateProjectDto, 
-  UpdateProjectDto, 
-  ProjectFilters,
-  ProjectStats 
-} from '@/types/project';
-import { PaginatedResponse, ApiResponse } from '@/types/common';
-import { ApiResponseHandler } from '@/utils/apiResponseHandler';
+
+export interface Project {
+  _id: string;
+  title: string;
+  description: string;
+  category: string;
+  skills: string[];
+  budget: {
+    type: 'fixed' | 'hourly';
+    min: number;
+    max: number;
+    currency: string;
+  };
+  timeline: {
+    duration: number;
+    unit: 'days' | 'weeks' | 'months';
+    startDate?: Date;
+    endDate?: Date;
+  };
+  status: 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled';
+  client: {
+    _id: string;
+    profile: {
+      firstName: string;
+      lastName: string;
+      avatar?: string;
+    };
+  };
+  organization?: {
+    _id: string;
+    name: string;
+    logo?: string;
+    budget?: {
+      total: number;
+      spent: number;
+      remaining: number;
+    };
+  };
+  requirements: string[];
+  attachments: string[];
+  proposalCount: number;
+  proposals?: Array<{
+    _id: string;
+    status: string;
+    freelancer: any;
+    [key: string]: any;
+  }>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateProjectDto {
+  title: string;
+  description: string;
+  category: string;
+  skills: string[];
+  budget: {
+    type: 'fixed' | 'hourly';
+    min: number;
+    max: number;
+  };
+  timeline: {
+    duration: number;
+    unit: 'days' | 'weeks' | 'months';
+  };
+  requirements: string[];
+  attachments?: string[];
+  organization?: string;
+}
+
+export interface UpdateProjectDto extends Partial<CreateProjectDto> {
+  status?: 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled';
+}
+
+export interface ProjectFilters {
+  category?: string;
+  skills?: string[];
+  budgetMin?: number;
+  budgetMax?: number;
+  budgetType?: 'fixed' | 'hourly';
+  status?: string;
+  page?: number;
+  limit?: number;
+  sort?: string;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
 
 export class ProjectsService {
   private basePath = '/projects';
@@ -26,30 +115,39 @@ export class ProjectsService {
       });
     }
 
-    const response = await apiCore.getRaw<any>(`${this.basePath}?${params.toString()}`);
-    return ApiResponseHandler.extractPaginatedData<Project>(response.data);
+    const response = await apiCore.get<{ status: string; data: { projects: Project[]; pagination: any } }>(
+      `${this.basePath}?${params.toString()}`
+    );
+    
+    // Transform API response to expected format
+    return {
+      data: response.data.projects,
+      pagination: response.data.pagination,
+    };
   }
 
-  async getProjectById(id: string): Promise<Project> {
-    return apiCore.get<Project>(`${this.basePath}/${id}`);
+  async getProjectById(id: string): Promise<{ data: Project }> {
+    const response = await apiCore.get<{ status: string; data: { project: Project } }>(`${this.basePath}/${id}`);
+    return { data: response.data.project };
   }
 
-  async createProject(data: CreateProjectDto): Promise<Project> {
-    return apiCore.post<Project>(this.basePath, data);
+  async createProject(data: CreateProjectDto): Promise<{ data: Project }> {
+    const response = await apiCore.post<{ status: string; data: { project: Project } }>(this.basePath, data);
+    return { data: response.data.project };
   }
 
-  async updateProject(id: string, data: UpdateProjectDto): Promise<Project> {
-    return apiCore.put<Project>(`${this.basePath}/${id}`, data);
+  async updateProject(id: string, data: UpdateProjectDto): Promise<{ data: Project }> {
+    const response = await apiCore.put<{ status: string; data: { project: Project } }>(`${this.basePath}/${id}`, data);
+    return { data: response.data.project };
   }
 
   async deleteProject(id: string): Promise<{ message: string }> {
     return apiCore.delete<{ message: string }>(`${this.basePath}/${id}`);
   }
 
-  async getMyProjects(): Promise<Project[]> {
-    const response = await apiCore.getRaw<any>(`${this.basePath}/my/projects`);
-    const paginatedData = ApiResponseHandler.extractPaginatedData<Project>(response.data);
-    return paginatedData.data;
+  async getMyProjects(): Promise<{ data: Project[] }> {
+    const response = await apiCore.get<{ status: string; data: { projects: Project[]; pagination: any } }>(`${this.basePath}/my/projects`);
+    return { data: response.data.projects };
   }
 
   async searchProjects(
@@ -69,24 +167,27 @@ export class ProjectsService {
       });
     }
 
-    const response = await apiCore.getRaw<any>(`${this.basePath}/search?${params.toString()}`);
-    return ApiResponseHandler.extractPaginatedData<Project>(response.data);
+    return apiCore.get<PaginatedResponse<Project>>(
+      `${this.basePath}/search?${params.toString()}`
+    );
   }
 
-  async toggleProjectStatus(id: string): Promise<Project> {
-    return apiCore.patch<Project>(`${this.basePath}/${id}/status`, {});
+  async toggleProjectStatus(id: string): Promise<{ data: Project }> {
+    const response = await apiCore.patch<{ status: string; data: { project: Project } }>(`${this.basePath}/${id}/status`);
+    return { data: response.data.project };
   }
 
-  async getProjectStats(): Promise<ProjectStats> {
-    return apiCore.get<ProjectStats>(`${this.basePath}/my/stats`);
+  async getProjectStats(): Promise<{ data: any }> {
+    return apiCore.get<{ data: any }>(`${this.basePath}/my/stats`);
   }
 
-  async getProjectCategories(): Promise<string[]> {
-    return apiCore.get<string[]>(`${this.basePath}/categories`);
+  async getProjectCategories(): Promise<{ data: string[] }> {
+    return apiCore.get<{ data: string[] }>(`${this.basePath}/categories`);
   }
 
-  async toggleProposalAcceptance(id: string): Promise<Project> {
-    return apiCore.post<Project>(`${this.basePath}/${id}/toggle-proposals`, {});
+  async toggleProposalAcceptance(id: string): Promise<{ data: Project }> {
+    const response = await apiCore.post<{ status: string; data: { project: Project } }>(`${this.basePath}/${id}/toggle-proposals`);
+    return { data: response.data.project };
   }
 }
 

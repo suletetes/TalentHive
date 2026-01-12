@@ -3,19 +3,6 @@ import { logger } from '@/utils/logger';
 
 let redisClient: RedisClientType | null = null;
 let redisEnabled = false;
-let redisConnectionAttempts = 0;
-let lastRedisError: Date | null = null;
-
-// Redis health monitoring
-export const getRedisHealth = () => {
-  return {
-    enabled: redisEnabled,
-    connected: redisClient !== null && redisEnabled,
-    connectionAttempts: redisConnectionAttempts,
-    lastError: lastRedisError,
-    status: redisEnabled ? 'healthy' : 'disabled'
-  };
-};
 
 export const connectRedis = async (): Promise<void> => {
   // Check if Redis is configured
@@ -23,12 +10,10 @@ export const connectRedis = async (): Promise<void> => {
   const redisHost = process.env.REDIS_HOST;
   
   if (!redisUrl && !redisHost) {
-    logger.warn('⚠️  Redis not configured - running without cache');
+    logger.warn('   Redis not configured - running without cache');
     redisEnabled = false;
     return;
   }
-
-  redisConnectionAttempts++;
 
   try {
     if (redisUrl) {
@@ -37,7 +22,6 @@ export const connectRedis = async (): Promise<void> => {
         url: redisUrl,
         socket: {
           reconnectStrategy: false as false, // Disable auto-reconnect
-          connectTimeout: 10000, // 10 second timeout
         },
       });
     } else {
@@ -47,7 +31,6 @@ export const connectRedis = async (): Promise<void> => {
           host: redisHost || 'localhost',
           port: parseInt(process.env.REDIS_PORT || '6379'),
           reconnectStrategy: false as false, // Disable auto-reconnect
-          connectTimeout: 10000, // 10 second timeout
         },
         password: process.env.REDIS_PASSWORD || undefined,
         database: parseInt(process.env.REDIS_DB || '0'),
@@ -56,24 +39,16 @@ export const connectRedis = async (): Promise<void> => {
 
     redisClient.on('error', (error) => {
       logger.error('Redis connection error - disabling cache:', error);
-      lastRedisError = new Date();
       redisEnabled = false;
-      
-      // In production, you might want to send alerts here
-      if (process.env.NODE_ENV === 'production') {
-        // TODO: Send alert to monitoring system
-        logger.error('🚨 PRODUCTION ALERT: Redis cache is down - performance may be degraded');
-      }
     });
 
     redisClient.on('connect', () => {
-      logger.info('🔴 Redis connecting...');
+      logger.info('   Redis connecting...');
     });
 
     redisClient.on('ready', () => {
-      logger.info('🔴 Redis connected and ready');
+      logger.info('   Redis connected and ready');
       redisEnabled = true;
-      lastRedisError = null; // Clear error state
     });
 
     redisClient.on('end', () => {
@@ -84,10 +59,8 @@ export const connectRedis = async (): Promise<void> => {
     await redisClient.connect();
     redisEnabled = true;
   } catch (error) {
-    logger.warn(`⚠️  Redis connection failed (attempt ${redisConnectionAttempts}) - continuing without cache`);
-    lastRedisError = new Date();
+    logger.warn('   Redis connection failed - continuing without cache');
     redisEnabled = false;
-    
     if (redisClient) {
       try {
         await redisClient.disconnect();
@@ -96,11 +69,6 @@ export const connectRedis = async (): Promise<void> => {
       }
     }
     redisClient = null;
-    
-    // In production, alert after multiple failures
-    if (process.env.NODE_ENV === 'production' && redisConnectionAttempts >= 3) {
-      logger.error('🚨 PRODUCTION ALERT: Redis has failed multiple connection attempts - manual intervention may be required');
-    }
   }
 };
 

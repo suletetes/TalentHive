@@ -56,7 +56,7 @@ export const createTicket = async (req: Request, res: Response) => {
         type: 'system',
         title: 'New Support Ticket',
         message: `New support ticket: ${subject}`,
-        link: `/admin/support/${ticket.ticketId}`,
+        link: `/admin/support/${ticket.ticketId}`, // Admin gets admin link
       });
 
       // Send email notification (wrapped in try-catch to not block ticket creation)
@@ -253,7 +253,7 @@ export const addMessage = async (req: Request, res: Response) => {
         type: 'system',
         title: 'Support Ticket Response',
         message: `Admin responded to your ticket: ${ticket.subject}`,
-        link: `/dashboard/support/${ticket.ticketId}`,
+        link: `/dashboard/support/${ticket.ticketId}`, // User gets dashboard link
       });
 
       // Send email (wrapped in try-catch)
@@ -287,7 +287,7 @@ export const addMessage = async (req: Request, res: Response) => {
           type: 'system',
           title: 'Support Ticket Update',
           message: `User replied to ticket: ${ticket.subject}`,
-          link: `/admin/support/${ticket.ticketId}`,
+          link: `/admin/support/${ticket.ticketId}`, // Admin gets admin link
         });
       }
     }
@@ -346,7 +346,7 @@ export const updateTicketStatus = async (req: Request, res: Response) => {
       type: 'system',
       title: 'Ticket Status Updated',
       message: `Your ticket "${ticket.subject}" status changed to: ${status}`,
-      link: `/dashboard/support/${ticket.ticketId}`,
+      link: `/dashboard/support/${ticket.ticketId}`, // User gets dashboard link
     });
 
     // Send email (wrapped in try-catch)
@@ -416,7 +416,7 @@ export const assignTicket = async (req: Request, res: Response) => {
       type: 'system',
       title: 'Ticket Assigned',
       message: `You have been assigned to ticket: ${ticket.subject}`,
-      link: `/admin/support/${ticket.ticketId}`,
+      link: `/admin/support/${ticket.ticketId}`, // Admin gets admin link
     });
 
     res.json({
