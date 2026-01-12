@@ -180,7 +180,7 @@ export const ProposalsPage: React.FC = () => {
                         ${proposal.bidAmount || 0}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        fixed
+                        {proposal.proposedBudget?.type === 'hourly' ? '/hour' : 'fixed'}
                       </Typography>
                     </Box>
                   </Box>
@@ -275,7 +275,8 @@ export const ProposalsPage: React.FC = () => {
                   Proposed Budget
                 </Typography>
                 <Typography variant="h6" color="primary">
-                  ${selectedProposal.bidAmount || 0} (fixed)
+                  ${selectedProposal.bidAmount || 0}
+                  {selectedProposal.proposedBudget?.type === 'hourly' ? '/hour' : ' (fixed)'}
                 </Typography>
               </Box>
 
@@ -428,5 +429,3 @@ export const ProposalsPage: React.FC = () => {
     </Container>
   );
 };
-
-export default ProposalsPage;
