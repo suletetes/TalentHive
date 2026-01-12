@@ -1,0 +1,9 @@
+#!/usr/bin/env node
+
+/**
+ * Executable wrapper for the seeding CLI
+ * This allows the CLI to be run directly as: ./seed [command] [options]
+ */
+
+require('ts-node/register');
+require('./cli.ts');
