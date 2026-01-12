@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop, original ]
+    branches: [ main, develop ]
   pull_request:
     branches: [ main ]
 
@@ -54,14 +54,66 @@ jobs:
         cd server
         npm ci
 
-    - name: Setup test database
+    - name: Install MongoDB Shell (mongosh)
       run: |
+        # Download and install mongosh directly from MongoDB
+        wget https://downloads.mongodb.com/compass/mongosh-2.1.1-linux-x64.tgz
+        tar -xzf mongosh-2.1.1-linux-x64.tgz
+        sudo mv mongosh-2.1.1-linux-x64/bin/* /usr/local/bin/
+        sudo chmod +x /usr/local/bin/mongosh
+        # Verify installation
+        mongosh --version
+
+    - name: Setup MongoDB test database
+      run: |
+        # Wait for MongoDB to be ready
         sleep 15
-        # Create test database using MongoDB connection
-        docker exec $(docker ps -q --filter ancestor=mongo:7.0) mongosh --eval "
+        
+        # Verify MongoDB is running
+        mongosh "mongodb://admin:password@localhost:27017/admin" --eval "db.adminCommand('ping')"
+        
+        # Create test database and user
+        mongosh "mongodb://admin:password@localhost:27017/admin" --eval "
+          db.createUser({
+            user: 'testuser',
+            pwd: 'testpass',
+            roles: [
+              { role: 'readWrite', db: 'talenthive_test' },
+              { role: 'dbAdmin', db: 'talenthive_test' }
+            ]
+          });
+        "
+        
+        # Create the test database using admin credentials, then switch to test user
+        mongosh "mongodb://admin:password@localhost:27017/admin" --eval "
           use talenthive_test;
           db.createCollection('test');
         "
+        
+        # Verify test user can connect
+        mongosh "mongodb://testuser:testpass@localhost:27017/talenthive_test?authSource=admin" --eval "db.adminCommand('ping')"
+
+    - name: Seed test database
+      run: |
+        cd server
+        npm run seed
+      env:
+        NODE_ENV: test
+        MONGODB_URI: mongodb://admin:password@localhost:27017/talenthive_test?authSource=admin
+        REDIS_URL: redis://localhost:6379
+        JWT_SECRET: test_jwt_secret_very_long_for_security_purposes
+        JWT_REFRESH_SECRET: test_refresh_secret_very_long_for_security_purposes
+        JWT_EXPIRES_IN: 24h
+        JWT_REFRESH_EXPIRES_IN: 7d
+        SENDGRID_API_KEY: SG.test-api-key-for-testing
+        FROM_EMAIL: test@talenthive.com
+        FROM_NAME: TalentHive Test
+        STRIPE_SECRET_KEY: sk_test_mock_key
+        STRIPE_PUBLISHABLE_KEY: pk_test_mock_key
+        STRIPE_WEBHOOK_SECRET: whsec_test_mock_secret
+        CLOUDINARY_CLOUD_NAME: test-cloud
+        CLOUDINARY_API_KEY: test-api-key
+        CLOUDINARY_API_SECRET: test-api-secret
 
     - name: Run backend linting
       run: |
@@ -71,13 +123,25 @@ jobs:
     - name: Run backend tests
       run: |
         cd server
-        npm test || true
+        npm test
       env:
         NODE_ENV: test
         MONGODB_URI: mongodb://admin:password@localhost:27017/talenthive_test?authSource=admin
+        MONGODB_TEST_URI: mongodb://admin:password@localhost:27017/talenthive_test?authSource=admin
         REDIS_URL: redis://localhost:6379
         JWT_SECRET: test_jwt_secret_very_long_for_security_purposes
         JWT_REFRESH_SECRET: test_refresh_secret_very_long_for_security_purposes
+        JWT_EXPIRES_IN: 24h
+        JWT_REFRESH_EXPIRES_IN: 7d
+        SENDGRID_API_KEY: SG.test-api-key-for-testing
+        FROM_EMAIL: test@talenthive.com
+        FROM_NAME: TalentHive Test
+        STRIPE_SECRET_KEY: sk_test_mock_key
+        STRIPE_PUBLISHABLE_KEY: pk_test_mock_key
+        STRIPE_WEBHOOK_SECRET: whsec_test_mock_secret
+        CLOUDINARY_CLOUD_NAME: test-cloud
+        CLOUDINARY_API_KEY: test-api-key
+        CLOUDINARY_API_SECRET: test-api-secret
 
   # Frontend Tests
   frontend-test:
@@ -107,7 +171,7 @@ jobs:
     - name: Run frontend tests
       run: |
         cd client
-        npm test -- --run || true
+        npm test -- --run  || true
 
     - name: Build frontend
       run: |
@@ -153,12 +217,6 @@ jobs:
   # - PRODUCTION_HOST: Production server hostname/IP
   # - PRODUCTION_USER: SSH username for production server
   # - PRODUCTION_SSH_KEY: SSH private key for production server
-  # 
-  # CONSOLIDATED SEED SYSTEM DEPLOYMENT NOTES:
-  # - Use 'npm run seed:demo' for demo environment seeding
-  # - Use 'npm run seed:performance:validate' to ensure 2-minute requirement
-  # - Use 'npm run seed:quality' to validate data quality before going live
-  # - Use 'npm run seed:status' to check database state
   # =============================================================================
 
   # # Build and Push Docker Images
