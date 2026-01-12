@@ -56,12 +56,17 @@ interface ProfileHeaderProps {
     isVerified: boolean;
     role: 'freelancer' | 'client' | 'admin';
   };
+  stats?: {
+    totalProjectsPosted?: number;
+    [key: string]: any;
+  };
   isOwnProfile?: boolean;
   onEdit?: () => void;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   user,
+  stats,
   isOwnProfile = false,
   onEdit,
 }) => {
@@ -302,7 +307,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           {user.role === 'client' && user.clientProfile && (
             <Box mt={2}>
               <Typography variant="h6" color="primary">
-                {user.clientProfile.projectsPosted} Projects Posted
+                {stats?.totalProjectsPosted ?? user.clientProfile.projectsPosted ?? 0} Projects Posted
               </Typography>
               {user.clientProfile.industry && (
                 <Typography variant="body2" color="text.secondary">

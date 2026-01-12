@@ -479,7 +479,7 @@ export const ProjectDetailPage = () => {
               fullWidth
               onClick={() => navigate(`/dashboard/projects/${id}/proposals`)}
             >
-              View Proposals ({project.proposals?.filter((p: any) => p.status === 'submitted' || p.status === 'accepted').length || 0})
+              View Proposals ({project.proposalCount || project.proposals?.filter((p: any) => p.status === 'submitted' || p.status === 'accepted').length || 0})
             </Button>
             <Button
               variant={project.acceptingProposals ? 'outlined' : 'contained'}
@@ -632,7 +632,7 @@ export const ProjectDetailPage = () => {
                 <Typography variant="body2" color="text.secondary">
                   Proposals
                 </Typography>
-                <Typography variant="h6">{project.proposals?.length || 0}</Typography>
+                <Typography variant="h6">{project.proposalCount || project.proposals?.length || 0}</Typography>
               </Box>
               <Divider />
               <Box>
