@@ -40,6 +40,12 @@ export interface Project {
   requirements: string[];
   attachments: string[];
   proposalCount: number;
+  proposals?: Array<{
+    _id: string;
+    status: string;
+    freelancer: any;
+    [key: string]: any;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -143,11 +143,11 @@ async function startServer() {
     monitorMemory();
     
     server.listen(PORT, () => {
-      logger.info(`🚀 Server running on port ${PORT} in ${NODE_ENV} mode`);
-      logger.info(`  Health check available at http://localhost:${PORT}/health`);
-      logger.info(`🔗 API available at http://localhost:${PORT}/api`);
-      logger.info(`🔒 Security middleware active`);
-      logger.info(`⚡ Performance monitoring enabled`);
+      logger.info(` Server running on port ${PORT} in ${NODE_ENV} mode`);
+      logger.info(` Health check available at http://localhost:${PORT}/health`);
+      logger.info(` API available at http://localhost:${PORT}/api`);
+      logger.info(` Security middleware active`);
+      logger.info(` Performance monitoring enabled`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);
