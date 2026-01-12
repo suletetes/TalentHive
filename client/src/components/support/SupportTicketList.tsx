@@ -4,6 +4,7 @@ import { Search } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { SupportTicketCard } from './SupportTicketCard';
+import { AdminTicketCard } from './AdminTicketCard';
 import { fetchTickets } from '@/store/slices/supportTicketSlice';
 import { RootState, AppDispatch } from '@/store';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -16,11 +17,15 @@ export const SupportTicketList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { tickets, loading, error } = useSelector((state: RootState) => state.supportTicket);
+  const { user } = useSelector((state: RootState) => state.auth);
 
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [page, setPage] = useState<number>(1);
+
+  // Check if we're in admin context
+  const isAdminView = window.location.pathname.startsWith('/admin') && user?.role === 'admin';
 
   useEffect(() => {
     const params: any = {};
@@ -36,7 +41,17 @@ export const SupportTicketList: React.FC = () => {
   }, [statusFilter, priorityFilter, searchQuery]);
 
   const handleTicketClick = (ticketId: string) => {
-    navigate(`/dashboard/support/${ticketId}`);
+    // Check if we're in admin context
+    const basePath = isAdminView ? '/admin/support' : '/dashboard/support';
+    navigate(`${basePath}/${ticketId}`);
+  };
+
+  const handleTicketUpdate = () => {
+    // Refresh tickets after admin actions
+    const params: any = {};
+    if (statusFilter !== 'all') params.status = statusFilter;
+    if (priorityFilter !== 'all') params.priority = priorityFilter;
+    dispatch(fetchTickets(params));
   };
 
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
@@ -119,7 +134,15 @@ export const SupportTicketList: React.FC = () => {
           <Grid container spacing={2}>
             {paginatedTickets.map((ticket) => (
               <Grid item xs={12} key={ticket._id}>
-                <SupportTicketCard ticket={ticket} onClick={handleTicketClick} />
+                {isAdminView ? (
+                  <AdminTicketCard 
+                    ticket={ticket} 
+                    onClick={handleTicketClick}
+                    onUpdate={handleTicketUpdate}
+                  />
+                ) : (
+                  <SupportTicketCard ticket={ticket} onClick={handleTicketClick} />
+                )}
               </Grid>
             ))}
           </Grid>
