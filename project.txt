@@ -156,3 +156,57 @@
   5. Relevance to TalentHive
 
 **Tip:** This is often a single table summarizing 4–10 key studies.
+
+
+--
+
+Task:
+Carefully read the provided chapter content (Summary, Conclusion, Limitation, and Recommendation section of my Final Year Project).
+
+Context:
+This project follows the SWE4600 Final Year Project Guide by Maryam Ibrahim Mukhtar, which requires the final chapter to contain ONLY the following sections:
+
+Summary
+
+Conclusion
+
+Limitation
+
+Recommendation
+
+Instructions:
+
+Read the entire chapter text thoroughly.
+
+Ignore all numbering and subsection titles used in the document.
+
+Analyze whether the content complies with the SWE4600 guideline structure and expectations.
+
+Map the existing content into the four required sections:
+
+Summary: Paragraph summaries of all previous chapters
+
+Conclusion: Project overview, problem statement, methodology, and key results/functionalities
+
+Limitation: Features or capabilities that should exist but are not implemented
+
+Recommendation: Future enhancements and areas for expansion
+
+Identify:
+
+Content that fits correctly under each required section
+
+Content that is repetitive, excessive, or unnecessary for SWE4600 marking
+
+Provide:
+
+Clear guidance on what to merge, compress, or remove
+
+Suggestions on how to restructure the chapter to fully comply with SWE4600 without losing marks
+
+Do NOT rewrite the chapter fully unless explicitly instructed.
+
+Focus strictly on academic compliance, examiner expectations, and grading safety, not journal-style writing.
+
+Goal:
+Ensure the final chapter is fully compliant with SWE4600 requirements, concise, examiner-friendly, and optimized for maximum marks.
