@@ -141,6 +141,25 @@ export class ApiCore {
           }
         }
 
+        // Handle 429 (Rate Limit) errors
+        if (error.response?.status === 429) {
+          console.warn('  [API] Rate limit exceeded on:', requestUrl);
+          
+          // Get retry-after header if available
+          const retryAfter = error.response.headers['retry-after'];
+          const retryAfterMs = retryAfter ? parseInt(retryAfter) * 1000 : 5000; // Default 5 seconds
+          
+          console.log(`  [API] Retrying after ${retryAfterMs}ms`);
+          
+          // Wait and retry once
+          if (!originalRequest._retry) {
+            originalRequest._retry = true;
+            
+            await new Promise(resolve => setTimeout(resolve, retryAfterMs));
+            return this.api(originalRequest);
+          }
+        }
+
         return Promise.reject(error);
       }
     );
