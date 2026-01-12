@@ -50,6 +50,10 @@ export const TicketDetailPage: React.FC = () => {
     }
   };
 
+  // Determine if we're in admin view based on current path
+  const isAdminView = window.location.pathname.startsWith('/admin');
+  const backPath = isAdminView ? '/admin/support' : '/dashboard/support';
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'urgent':
@@ -93,7 +97,7 @@ export const TicketDetailPage: React.FC = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Button
         startIcon={<ArrowBack />}
-        onClick={() => navigate('/dashboard/support')}
+        onClick={() => navigate(backPath)}
         sx={{ mb: 3 }}
       >
         Back to Tickets
