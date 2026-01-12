@@ -21,11 +21,29 @@ import servicePackageRoutes from './servicePackages';
 import disputeRoutes from './disputes';
 import supportTicketRoutes from './supportTicket';
 import onboardingRoutes from './onboarding';
+import searchRoutes from './search';
+import categoryRoutes from './categories';
+import skillRoutes from './skills';
+import webhookRoutes from './webhook.routes';
+import analyticsRoutes from './analytics.routes';
+import hireNowRoutes from './hireNow.routes';
+import rbacRoutes from './rbac';
+import { getFeaturedFreelancers } from '@/controllers/adminController';
+
+// Conditionally import dev routes
+let devRoutes: any = null;
+if (process.env.NODE_ENV === 'development') {
+  try {
+    devRoutes = require('./dev').default;
+  } catch (error) {
+    console.warn('Dev routes not found, skipping...');
+  }
+}
 
 const router = Router();
 
 // Health check for API
-router.get('/', (req, res) => {
+router.get('/', (_req, res) => {
   res.json({
     status: 'success',
     message: 'TalentHive API is running',
@@ -59,40 +77,19 @@ router.use('/services', servicePackageRoutes);
 router.use('/disputes', disputeRoutes);
 router.use('/support/tickets', supportTicketRoutes);
 router.use('/onboarding', onboardingRoutes);
-
-// Import and use search routes
-import searchRoutes from './search';
 router.use('/search', searchRoutes);
-
-// Category and skill routes
-import categoryRoutes from './categories';
-import skillRoutes from './skills';
 router.use('/categories', categoryRoutes);
 router.use('/skills', skillRoutes);
-
-// Webhook routes
-import webhookRoutes from './webhook.routes';
 router.use('/webhooks', webhookRoutes);
-
-// Analytics routes (admin only)
-import analyticsRoutes from './analytics.routes';
 router.use('/analytics', analyticsRoutes);
-
-// Hire Now routes
-import hireNowRoutes from './hireNow.routes';
 router.use('/hire-now', hireNowRoutes);
-
-// Featured freelancers (public route)
-import { getFeaturedFreelancers } from '@/controllers/adminController';
-router.get('/featured-freelancers', getFeaturedFreelancers);
-
-// RBAC routes (admin only)
-import rbacRoutes from './rbac';
 router.use('/rbac', rbacRoutes);
 
+// Featured freelancers (public route)
+router.get('/featured-freelancers', getFeaturedFreelancers);
+
 // Development routes (only in development)
-if (process.env.NODE_ENV === 'development') {
-  import devRoutes from './dev';
+if (process.env.NODE_ENV === 'development' && devRoutes) {
   router.use('/dev', devRoutes);
 }
 
