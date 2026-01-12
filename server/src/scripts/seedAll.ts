@@ -53,7 +53,7 @@ async function runNewFeatures() {
   logger.info('Running new features seed only...');
   try {
     await connectDB();
-    const { seedNewFeatures } = await import('./seedNewFeatures');
+    const { seedNewFeatures } = await import('./obsolete-backup/seedNewFeatures');
     await seedNewFeatures();
     await disconnectDB();
   } catch (error) {
@@ -101,7 +101,7 @@ async function runRoles() {
 async function runCompleteProfiles() {
   logger.info('Running complete profiles seed...');
   try {
-    const seedProfilesModule = await import('./seedWithCompleteProfiles');
+    const seedProfilesModule = await import('./obsolete-backup/seedWithCompleteProfiles');
     if (seedProfilesModule.seedCompleteProfiles) {
       await seedProfilesModule.seedCompleteProfiles();
     } else {
