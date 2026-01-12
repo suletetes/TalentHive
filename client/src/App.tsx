@@ -175,6 +175,7 @@ function App() {
           <Route path="commission-settings" element={<CommissionSettingsPage />} />
           <Route path="transactions" element={<AdminTransactionsPage />} />
           <Route path="support" element={<AdminSupportDashboard />} />
+          <Route path="support/:ticketId" element={<TicketDetailPage />} />
           <Route path="roles" element={<RoleManagementPage />} />
           <Route path="audit-logs" element={<AuditLogPage />} />
         </Route>
