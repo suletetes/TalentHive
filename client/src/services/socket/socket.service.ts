@@ -73,11 +73,11 @@ export class SocketService {
 
   // Message events
   onNewMessage(callback: (message: any) => void) {
-    this.socket?.on('message:new', callback);
+    this.socket?.on('new_message', callback);
   }
 
   offNewMessage(callback?: (message: any) => void) {
-    this.socket?.off('message:new', callback);
+    this.socket?.off('new_message', callback);
   }
 
   sendMessage(data: any) {
