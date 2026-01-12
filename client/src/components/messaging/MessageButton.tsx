@@ -40,9 +40,13 @@ export const MessageButton: React.FC<MessageButtonProps> = ({
       const conversation = response.data;
       
       if (conversation && conversation._id) {
-        // Invalidate conversations cache to ensure the new conversation appears in the list
-        console.log(' Invalidating conversations cache...');
+        // Invalidate and refetch conversations cache to ensure the new conversation appears in the list
+        console.log(' Invalidating and refetching conversations cache...');
         await queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        await queryClient.refetchQueries({ queryKey: ['conversations'] });
+        
+        // Small delay to ensure the cache is updated
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         const url = `/dashboard/messages?conversation=${conversation._id}`;
         console.log(' Navigating to:', url);

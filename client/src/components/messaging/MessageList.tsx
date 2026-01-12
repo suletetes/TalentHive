@@ -25,8 +25,6 @@ interface MessageListProps {
 }
 
 export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }) => {
-  console.log(' MessageList rendering for conversation:', conversation._id);
-  
   const currentUser = useSelector((state: RootState) => state.auth.user);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -35,27 +33,13 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
   const { data, isLoading, error } = useQuery({
     queryKey: ['messages', conversation._id, page],
     queryFn: async () => {
-      console.log('  Fetching messages for conversation:', conversation._id);
       const response = await messagesService.getMessages(conversation._id, { page, limit: 50 });
-      console.log(' Messages fetched:', response);
       return response;
     },
   });
 
-  console.log(' Current user:', currentUser);
-  console.log(' Conversation participants:', conversation.participants);
-  
   const currentUserId = currentUser?.id || currentUser?._id;
   const otherParticipant = conversation.participants.find((p) => p._id !== currentUserId);
-  console.log(' Other participant:', otherParticipant);
-  
-  if (error) {
-    console.error('  Error loading messages:', error);
-  }
-  
-  if (isLoading) {
-    console.log(' Loading messages...');
-  }
 
   useEffect(() => {
     // Mark messages as read when viewing conversation
