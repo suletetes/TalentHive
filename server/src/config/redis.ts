@@ -43,11 +43,11 @@ export const connectRedis = async (): Promise<void> => {
     });
 
     redisClient.on('connect', () => {
-      logger.info('🔴 Redis connecting...');
+      logger.info('   Redis connecting...');
     });
 
     redisClient.on('ready', () => {
-      logger.info('🔴 Redis connected and ready');
+      logger.info('   Redis connected and ready');
       redisEnabled = true;
     });
 
