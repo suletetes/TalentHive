@@ -90,4 +90,10 @@ router.get('/featured-freelancers', getFeaturedFreelancers);
 import rbacRoutes from './rbac';
 router.use('/rbac', rbacRoutes);
 
+// Development routes (only in development)
+if (process.env.NODE_ENV === 'development') {
+  import devRoutes from './dev';
+  router.use('/dev', devRoutes);
+}
+
 export default router;
