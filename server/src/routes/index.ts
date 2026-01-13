@@ -89,7 +89,7 @@ router.use('/rbac', rbacRoutes);
 router.get('/featured-freelancers', getFeaturedFreelancers);
 
 // Development routes (only in development)
-if ((process.env.NODE_ENV === 'development' || process.env.MOCK_STRIPE_CONNECT === 'true') && devRoutes) {
+if (process.env.NODE_ENV === 'development' && devRoutes) {
   router.use('/dev', devRoutes);
 }
 

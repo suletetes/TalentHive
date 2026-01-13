@@ -27,8 +27,50 @@ export const createMockTransaction = async (
   const processingFee = Math.round(amountInCents * 0.029) + 30; // 2.9% + $0.30
   const freelancerAmount = amountInCents - platformCommission - processingFee;
 
+  // Try to find an existing contract, or create a mock one
+  const { Contract } = await import('../models/Contract');
+  let contractId;
+  
+  try {
+    // Try to find any existing contract
+    const existingContract = await Contract.findOne();
+    if (existingContract) {
+      contractId = existingContract._id;
+      console.log(`[DEV] Using existing contract: ${contractId}`);
+    } else {
+      // Create a minimal mock contract
+      const mockContract = new Contract({
+        title: `Mock Contract for Testing - ${Date.now()}`,
+        description: 'Mock contract created for transaction testing',
+        client: new mongoose.Types.ObjectId(),
+        freelancer: new mongoose.Types.ObjectId(freelancerId),
+        budget: amountInCents,
+        status: 'active',
+        paymentType: 'milestone',
+        milestones: [{
+          title: 'Mock Milestone',
+          description: 'Mock milestone for testing',
+          amount: amountInCents,
+          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          status: 'in_progress',
+        }],
+        metadata: {
+          mockContract: true,
+          createdForTesting: true,
+        },
+      });
+      
+      await mockContract.save();
+      contractId = mockContract._id;
+      console.log(`[DEV] Created mock contract: ${contractId}`);
+    }
+  } catch (error) {
+    console.warn('[DEV] Could not create/find contract, using random ObjectId');
+    contractId = new mongoose.Types.ObjectId();
+  }
+
   const mockTransaction = new Transaction({
-    contract: new mongoose.Types.ObjectId(), // Mock contract ID
+    contract: contractId,
     client: new mongoose.Types.ObjectId(), // Mock client ID
     freelancer: new mongoose.Types.ObjectId(freelancerId),
     amount: amountInCents,

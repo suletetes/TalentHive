@@ -10,7 +10,7 @@ import {
 const router = Router();
 
 // Only enable dev routes in development
-if (process.env.NODE_ENV === 'development' || process.env.MOCK_STRIPE_CONNECT === 'true') {
+if (process.env.NODE_ENV === 'development') {
   
   // Get development status for current user
   router.get('/status', authenticate, async (req: Request, res: Response) => {
@@ -149,6 +149,56 @@ if (process.env.NODE_ENV === 'development' || process.env.MOCK_STRIPE_CONNECT ==
         status: 'success',
         message: `Created test earning of $${amount} with status '${status}'`,
         data: { transaction },
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        status: 'error',
+        message: error.message,
+      });
+    }
+  });
+
+  // Fix Stripe account capabilities
+  router.post('/fix-stripe-account', authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?._id?.toString();
+      const { User } = await import('../models/User');
+      
+      const user = await User.findById(userId);
+      if (!user || !user.stripeConnectedAccountId) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'No Stripe account found',
+        });
+      }
+
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      
+      // Get current account status
+      const account = await stripe.accounts.retrieve(user.stripeConnectedAccountId);
+      
+      // Update capabilities
+      const updatedAccount = await stripe.accounts.update(user.stripeConnectedAccountId, {
+        capabilities: {
+          card_payments: { requested: true },
+          transfers: { requested: true },
+        },
+      });
+      
+      res.json({
+        status: 'success',
+        message: 'Stripe account capabilities updated',
+        data: {
+          accountId: user.stripeConnectedAccountId,
+          before: {
+            transfers: account.capabilities?.transfers,
+            card_payments: account.capabilities?.card_payments,
+          },
+          after: {
+            transfers: updatedAccount.capabilities?.transfers,
+            card_payments: updatedAccount.capabilities?.card_payments,
+          },
+        },
       });
     } catch (error: any) {
       res.status(500).json({
