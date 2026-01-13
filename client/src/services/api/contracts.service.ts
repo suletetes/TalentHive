@@ -70,8 +70,12 @@ export class ContractsService {
       });
     }
     
+    console.log('[CONTRACTS SERVICE] Making API call to:', `${this.basePath}/my?${queryParams.toString()}`);
     const response = await apiCore.get(`${this.basePath}/my?${queryParams.toString()}`);
+    console.log('[CONTRACTS SERVICE] Raw response:', response);
+    
     const contracts = extractContracts<Contract>(response);
+    console.log('[CONTRACTS SERVICE] Extracted contracts:', contracts.length);
     
     return { data: contracts };
   }

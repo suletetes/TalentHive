@@ -63,8 +63,12 @@ export const ContractsPage: React.FC = () => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['my-contracts'],
     queryFn: async () => {
+      console.log('[CONTRACTS] Fetching contracts...');
       const response = await contractsService.getMyContracts();
-      return response.data || [];
+      console.log('[CONTRACTS] Response:', response);
+      const contracts = response.data || [];
+      console.log('[CONTRACTS] Contracts count:', contracts.length);
+      return contracts;
     },
   });
 
