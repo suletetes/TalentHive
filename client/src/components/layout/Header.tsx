@@ -318,6 +318,7 @@ export const Header: React.FC = () => {
               alignItems: 'center', 
               gap: { xs: 0.5, sm: 1 },
               flexShrink: 0,
+              ml: 'auto', // Always push to the right
             }}>
               <ThemeToggle />
               

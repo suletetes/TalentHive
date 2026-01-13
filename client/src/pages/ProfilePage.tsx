@@ -160,7 +160,7 @@ export const ProfilePage: React.FC = () => {
 
   if (!user) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1, sm: 2 } }}>
         <Typography variant="h6" color="error">
           Profile not found
         </Typography>
@@ -169,8 +169,15 @@ export const ProfilePage: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1, sm: 2 } }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' }, 
+        gap: { xs: 2, sm: 0 },
+        mb: 3 
+      }}>
         <Box>
           <Typography variant="h4" gutterBottom>
             My Profile
@@ -200,26 +207,22 @@ export const ProfilePage: React.FC = () => {
         {/* Profile Header */}
         <Grid item xs={12}>
           <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                <Box sx={{ flex: 1 }}>
-                  <ProfileHeader
-                    user={user}
-                    stats={statsData?.data}
-                    isOwnProfile={true}
-                    onEdit={() => setEditDialogOpen(true)}
-                  />
-                </Box>
-              </Box>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+              <ProfileHeader
+                user={user}
+                stats={statsData?.data}
+                isOwnProfile={true}
+                onEdit={() => setEditDialogOpen(true)}
+              />
             </CardContent>
           </Card>
         </Grid>
 
         {/* Skills Section (for freelancers) */}
         {user.role === 'freelancer' && (
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12}>
             <Card>
-              <CardContent>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <SkillsManager
                   skills={user.freelancerProfile?.skills || []}
                   skillRates={user.freelancerProfile?.skillRates || []}

@@ -130,7 +130,7 @@ export const FreelancerDetailPage = () => {
 
   if (error || !freelancerResponse?.data) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1, sm: 2 } }}>
         <Typography variant="h6" color="error">
           Freelancer not found
         </Typography>
@@ -151,67 +151,118 @@ export const FreelancerDetailPage = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1, sm: 2 } }}>
       {/* Header Section */}
-      <Paper sx={{ p: 4, mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'start', gap: 3, mb: 4 }}>
+      <Paper sx={{ p: { xs: 2, sm: 4 }, mb: 3 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'center', sm: 'start' }, 
+          gap: 3, 
+          mb: 4,
+          textAlign: { xs: 'center', sm: 'left' }
+        }}>
           <Avatar
             src={freelancer.profile.avatar}
-            sx={{ width: 120, height: 120 }}
+            sx={{ width: { xs: 100, sm: 120 }, height: { xs: 100, sm: 120 }, flexShrink: 0 }}
           >
             {freelancer.profile.firstName[0]}
           </Avatar>
-          <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              <Typography variant="h4">
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'center', sm: 'center' }, 
+              gap: 1, 
+              mb: 1,
+              justifyContent: { xs: 'center', sm: 'flex-start' }
+            }}>
+              <Typography variant="h4" sx={{
+                fontSize: { xs: '1.75rem', sm: '2.125rem' },
+                textAlign: { xs: 'center', sm: 'left' }
+              }}>
                 {freelancer.profile.firstName} {freelancer.profile.lastName}
               </Typography>
               {freelancer.isVerified && (
                 <Verified color="primary" />
               )}
             </Box>
-            <Typography variant="h6" color="text.secondary" gutterBottom>
+            <Typography variant="h6" color="text.secondary" gutterBottom sx={{
+              fontSize: { xs: '1.1rem', sm: '1.25rem' },
+              textAlign: { xs: 'center', sm: 'left' }
+            }}>
               {freelancer.freelancerProfile?.title || 'Freelancer'}
             </Typography>
             {freelancer.profile.location && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 0.5, 
+                mb: 2,
+                justifyContent: { xs: 'center', sm: 'flex-start' }
+              }}>
                 <LocationOn fontSize="small" color="action" />
                 <Typography variant="body2" color="text.secondary">
                   {freelancer.profile.location}
                 </Typography>
               </Box>
             )}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: 'center', 
+              gap: 2, 
+              mb: 2,
+              justifyContent: { xs: 'center', sm: 'flex-start' }
+            }}>
               <Rating value={freelancer.rating?.average || 0} readOnly precision={0.1} />
               <Typography variant="body2">
                 {(freelancer.rating?.average || 0).toFixed(1)} ({freelancer.rating?.count || 0} reviews)
               </Typography>
             </Box>
-            <Chip
-              label={freelancer.freelancerProfile?.availability?.status || 'Available'}
-              color={freelancer.freelancerProfile?.availability?.status === 'available' ? 'success' : 'default'}
-            />
+            <Box sx={{ 
+              display: 'flex',
+              justifyContent: { xs: 'center', sm: 'flex-start' },
+              mb: { xs: 2, sm: 0 }
+            }}>
+              <Chip
+                label={freelancer.freelancerProfile?.availability?.status || 'Available'}
+                color={freelancer.freelancerProfile?.availability?.status === 'available' ? 'success' : 'default'}
+              />
+            </Box>
           </Box>
-          <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="h5" color="primary" gutterBottom>
+          <Box sx={{ 
+            textAlign: { xs: 'center', sm: 'right' },
+            flexShrink: 0,
+            minWidth: { xs: '100%', sm: 'auto' }
+          }}>
+            <Typography variant="h5" color="primary" gutterBottom sx={{
+              fontSize: { xs: '1.5rem', sm: '1.5rem' }
+            }}>
               ${freelancer.freelancerProfile?.hourlyRate || 0}/hr
             </Typography>
             {isClient && (
-              <>
+              <Box sx={{ 
+                display: 'flex',
+                flexDirection: { xs: 'row', sm: 'column' },
+                gap: 1,
+                justifyContent: { xs: 'center', sm: 'flex-end' }
+              }}>
                 <Button 
                   variant="contained" 
                   size="large" 
-                  sx={{ mb: 1 }}
                   onClick={() => setHireNowModalOpen(true)}
+                  sx={{ flex: { xs: 1, sm: 'none' } }}
                 >
                   Hire Now
                 </Button>
                 <MessageButton 
                   userId={freelancer._id} 
                   size="large" 
-                  fullWidth 
+                  fullWidth={false}
+                  sx={{ flex: { xs: 1, sm: 'none' } }}
                 />
-              </>
+              </Box>
             )}
           </Box>
         </Box>

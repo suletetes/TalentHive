@@ -300,7 +300,7 @@ export const ProjectDetailPage = () => {
 
   if (error || !projectResponse?.data) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1, sm: 2 } }}>
         <ErrorState error={error} onRetry={() => window.location.reload()} />
       </Container>
     );
@@ -332,9 +332,9 @@ export const ProjectDetailPage = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1, sm: 2 } }}>
       {/* Header */}
-      <Paper sx={{ p: 4, mb: 3 }}>
+      <Paper sx={{ p: { xs: 2, sm: 4 }, mb: 3 }}>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
           <Box flex={1}>
             <Typography variant="h4" gutterBottom>
