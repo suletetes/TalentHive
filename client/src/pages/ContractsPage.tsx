@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -38,6 +38,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { contractsDebugger } from '@/utils/contractsDebug';
 
 const ITEMS_PER_PAGE = 5;
 
@@ -51,6 +52,16 @@ export const ContractsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
 
+  // Component lifecycle logging
+  useEffect(() => {
+    contractsDebugger.logPageMount();
+    contractsDebugger.logAuthCheck(user, localStorage.getItem('token'));
+    
+    return () => {
+      contractsDebugger.logPageUnmount();
+    };
+  }, [user]);
+
   // Helper to get the other party in the contract
   const getOtherParty = (contract: Contract) => {
     if (user?.role === 'client') {
@@ -63,34 +74,47 @@ export const ContractsPage: React.FC = () => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['my-contracts'],
     queryFn: async () => {
+      contractsDebugger.logApiCallStart('/api/contracts/my', { userId: user?._id, userRole: user?.role });
+      
       console.log(`[CONTRACTS PAGE] ========== FETCHING CONTRACTS ==========`);
       console.log(`[CONTRACTS PAGE] User:`, user);
       console.log(`[CONTRACTS PAGE] User ID:`, user?._id);
       console.log(`[CONTRACTS PAGE] User Role:`, user?.role);
       
-      const response = await contractsService.getMyContracts();
-      console.log(`[CONTRACTS PAGE] API response:`, response);
-      
-      // The service now returns { data: Contract[] } with standardized extraction
-      const contracts = response.data || [];
-      
-      console.log(`[CONTRACTS PAGE] Total contracts found: ${contracts.length}`);
-      
-      // Debug each contract
-      contracts.forEach((contract: Contract, index: number) => {
-        console.log(`[CONTRACTS PAGE] Contract ${index + 1}:`, {
-          id: contract._id,
-          title: contract.title,
-          status: contract.status,
-          sourceType: (contract as any).sourceType || 'NOT SET',
-          client: typeof contract.client === 'object' ? contract.client?._id : contract.client,
-          freelancer: typeof contract.freelancer === 'object' ? contract.freelancer?._id : contract.freelancer,
-          createdAt: contract.createdAt,
+      try {
+        const response = await contractsService.getMyContracts();
+        console.log(`[CONTRACTS PAGE] API response:`, response);
+        
+        contractsDebugger.logApiCallSuccess('/api/contracts/my', response);
+        contractsDebugger.logDataExtractionStart(response);
+        
+        // The service now returns { data: Contract[] } with standardized extraction
+        const contracts = response.data || [];
+        
+        contractsDebugger.logDataExtractionResult(contracts);
+        
+        console.log(`[CONTRACTS PAGE] Total contracts found: ${contracts.length}`);
+        
+        // Debug each contract
+        contracts.forEach((contract: Contract, index: number) => {
+          console.log(`[CONTRACTS PAGE] Contract ${index + 1}:`, {
+            id: contract._id,
+            title: contract.title,
+            status: contract.status,
+            sourceType: (contract as any).sourceType || 'NOT SET',
+            client: typeof contract.client === 'object' ? contract.client?._id : contract.client,
+            freelancer: typeof contract.freelancer === 'object' ? contract.freelancer?._id : contract.freelancer,
+            createdAt: contract.createdAt,
+          });
         });
-      });
-      
-      console.log(`[CONTRACTS PAGE] ========== END FETCH ==========`);
-      return contracts;
+        
+        console.log(`[CONTRACTS PAGE] ========== END FETCH ==========`);
+        return contracts;
+      } catch (err) {
+        contractsDebugger.logApiCallError('/api/contracts/my', err);
+        console.error('[CONTRACTS PAGE] Error fetching contracts:', err);
+        throw err;
+      }
     },
   });
 
@@ -223,6 +247,16 @@ export const ContractsPage: React.FC = () => {
 
   // ALL HOOKS MUST BE BEFORE CONDITIONAL RETURNS
   const contracts = data || [];
+  
+  // Log query state changes
+  useEffect(() => {
+    contractsDebugger.logQueryState({ isLoading, error, data, isFetching: false });
+  }, [isLoading, error, data]);
+  
+  // Log render state
+  useEffect(() => {
+    contractsDebugger.logRenderState(contracts, isLoading, error);
+  }, [contracts, isLoading, error]);
   
   // Filter contracts
   const filteredContracts = useMemo(() => {
