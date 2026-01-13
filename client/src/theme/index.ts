@@ -91,7 +91,8 @@ const getDesignTokens = (mode: PaletteMode) => ({
 });
 
 export const createAppTheme = (mode: PaletteMode) => {
-  const theme = createTheme({
+  // First create a base theme with breakpoints and spacing
+  const baseTheme = createTheme({
     ...getDesignTokens(mode),
     breakpoints: {
       values: {
@@ -102,19 +103,24 @@ export const createAppTheme = (mode: PaletteMode) => {
         xl: 1536,
       },
     },
+    spacing: 8, // Base spacing unit
+    shape: {
+      borderRadius: 8,
+    },
   });
 
-  return createTheme(theme, {
+  // Then create the full theme with component overrides
+  return createTheme(baseTheme, {
     typography: {
       fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
       h1: {
         fontSize: '2.5rem',
         fontWeight: 600,
         lineHeight: 1.2,
-        [theme.breakpoints.down('md')]: {
+        '@media (max-width:899px)': { // md breakpoint down
           fontSize: '2rem',
         },
-        [theme.breakpoints.down('sm')]: {
+        '@media (max-width:599px)': { // sm breakpoint down
           fontSize: '1.75rem',
         },
       },
@@ -122,10 +128,10 @@ export const createAppTheme = (mode: PaletteMode) => {
         fontSize: '2rem',
         fontWeight: 600,
         lineHeight: 1.3,
-        [theme.breakpoints.down('md')]: {
+        '@media (max-width:899px)': { // md breakpoint down
           fontSize: '1.75rem',
         },
-        [theme.breakpoints.down('sm')]: {
+        '@media (max-width:599px)': { // sm breakpoint down
           fontSize: '1.5rem',
         },
       },
@@ -133,10 +139,10 @@ export const createAppTheme = (mode: PaletteMode) => {
         fontSize: '1.75rem',
         fontWeight: 600,
         lineHeight: 1.3,
-        [theme.breakpoints.down('md')]: {
+        '@media (max-width:899px)': { // md breakpoint down
           fontSize: '1.5rem',
         },
-        [theme.breakpoints.down('sm')]: {
+        '@media (max-width:599px)': { // sm breakpoint down
           fontSize: '1.25rem',
         },
       },
@@ -144,10 +150,10 @@ export const createAppTheme = (mode: PaletteMode) => {
         fontSize: '1.5rem',
         fontWeight: 600,
         lineHeight: 1.4,
-        [theme.breakpoints.down('md')]: {
+        '@media (max-width:899px)': { // md breakpoint down
           fontSize: '1.25rem',
         },
-        [theme.breakpoints.down('sm')]: {
+        '@media (max-width:599px)': { // sm breakpoint down
           fontSize: '1.125rem',
         },
       },
@@ -155,7 +161,7 @@ export const createAppTheme = (mode: PaletteMode) => {
         fontSize: '1.25rem',
         fontWeight: 600,
         lineHeight: 1.4,
-        [theme.breakpoints.down('sm')]: {
+        '@media (max-width:599px)': { // sm breakpoint down
           fontSize: '1.125rem',
         },
       },
@@ -163,49 +169,45 @@ export const createAppTheme = (mode: PaletteMode) => {
         fontSize: '1.125rem',
         fontWeight: 600,
         lineHeight: 1.4,
-        [theme.breakpoints.down('sm')]: {
+        '@media (max-width:599px)': { // sm breakpoint down
           fontSize: '1rem',
         },
       },
       body1: {
         fontSize: '1rem',
         lineHeight: 1.6,
-        [theme.breakpoints.down('sm')]: {
+        '@media (max-width:599px)': { // sm breakpoint down
           fontSize: '0.875rem',
         },
       },
       body2: {
         fontSize: '0.875rem',
         lineHeight: 1.6,
-        [theme.breakpoints.down('sm')]: {
+        '@media (max-width:599px)': { // sm breakpoint down
           fontSize: '0.8125rem',
         },
       },
       button: {
         textTransform: 'none',
         fontWeight: 500,
-        [theme.breakpoints.down('sm')]: {
+        '@media (max-width:599px)': { // sm breakpoint down
           fontSize: '0.8125rem',
         },
       },
-    },
-    spacing: 8, // Base spacing unit
-    shape: {
-      borderRadius: 8,
     },
     components: {
       MuiContainer: {
         styleOverrides: {
           root: {
-            paddingLeft: theme.spacing(2),
-            paddingRight: theme.spacing(2),
-            [theme.breakpoints.up('sm')]: {
-              paddingLeft: theme.spacing(3),
-              paddingRight: theme.spacing(3),
+            paddingLeft: 16, // 2 * 8px spacing
+            paddingRight: 16,
+            '@media (min-width:600px)': { // sm breakpoint
+              paddingLeft: 24, // 3 * 8px spacing
+              paddingRight: 24,
             },
-            [theme.breakpoints.up('md')]: {
-              paddingLeft: theme.spacing(4),
-              paddingRight: theme.spacing(4),
+            '@media (min-width:900px)': { // md breakpoint
+              paddingLeft: 32, // 4 * 8px spacing
+              paddingRight: 32,
             },
           },
         },
@@ -220,7 +222,7 @@ export const createAppTheme = (mode: PaletteMode) => {
             textTransform: 'none',
             boxShadow: 'none',
             minHeight: 36,
-            [theme.breakpoints.down('sm')]: {
+            '@media (max-width:599px)': { // sm breakpoint down
               padding: '6px 12px',
               fontSize: '0.8125rem',
               minHeight: 32,
@@ -243,7 +245,7 @@ export const createAppTheme = (mode: PaletteMode) => {
             padding: '12px 24px',
             fontSize: '1rem',
             minHeight: 44,
-            [theme.breakpoints.down('sm')]: {
+            '@media (max-width:599px)': { // sm breakpoint down
               padding: '10px 20px',
               fontSize: '0.875rem',
               minHeight: 40,
@@ -265,14 +267,14 @@ export const createAppTheme = (mode: PaletteMode) => {
       MuiCardContent: {
         styleOverrides: {
           root: {
-            padding: theme.spacing(3),
-            [theme.breakpoints.down('sm')]: {
-              padding: theme.spacing(2),
+            padding: 24, // 3 * 8px spacing
+            '@media (max-width:599px)': { // sm breakpoint down
+              padding: 16, // 2 * 8px spacing
             },
             '&:last-child': {
-              paddingBottom: theme.spacing(3),
-              [theme.breakpoints.down('sm')]: {
-                paddingBottom: theme.spacing(2),
+              paddingBottom: 24, // 3 * 8px spacing
+              '@media (max-width:599px)': { // sm breakpoint down
+                paddingBottom: 16, // 2 * 8px spacing
               },
             },
           },
@@ -285,7 +287,7 @@ export const createAppTheme = (mode: PaletteMode) => {
               borderRadius: 8,
             },
             '& .MuiInputBase-input': {
-              [theme.breakpoints.down('sm')]: {
+              '@media (max-width:599px)': { // sm breakpoint down
                 fontSize: '0.875rem',
               },
             },
@@ -296,7 +298,7 @@ export const createAppTheme = (mode: PaletteMode) => {
         styleOverrides: {
           root: {
             borderRadius: 6,
-            [theme.breakpoints.down('sm')]: {
+            '@media (max-width:599px)': { // sm breakpoint down
               fontSize: '0.75rem',
               height: 24,
             },
@@ -314,10 +316,10 @@ export const createAppTheme = (mode: PaletteMode) => {
         styleOverrides: {
           root: {
             minHeight: '64px !important',
-            [theme.breakpoints.down('sm')]: {
+            '@media (max-width:599px)': { // sm breakpoint down
               minHeight: '56px !important',
-              paddingLeft: theme.spacing(2),
-              paddingRight: theme.spacing(2),
+              paddingLeft: 16, // 2 * 8px spacing
+              paddingRight: 16,
             },
           },
         },
@@ -333,10 +335,10 @@ export const createAppTheme = (mode: PaletteMode) => {
         styleOverrides: {
           container: {
             '&.MuiGrid-container': {
-              [theme.breakpoints.down('sm')]: {
-                margin: theme.spacing(-1),
+              '@media (max-width:599px)': { // sm breakpoint down
+                margin: -8, // -1 * 8px spacing
                 '& > .MuiGrid-item': {
-                  padding: theme.spacing(1),
+                  padding: 8, // 1 * 8px spacing
                 },
               },
             },
@@ -346,8 +348,8 @@ export const createAppTheme = (mode: PaletteMode) => {
       MuiIconButton: {
         styleOverrides: {
           root: {
-            [theme.breakpoints.down('sm')]: {
-              padding: theme.spacing(1),
+            '@media (max-width:599px)': { // sm breakpoint down
+              padding: 8, // 1 * 8px spacing
             },
           },
         },
@@ -356,7 +358,7 @@ export const createAppTheme = (mode: PaletteMode) => {
         styleOverrides: {
           gutterBottom: {
             marginBottom: '0.75em',
-            [theme.breakpoints.down('sm')]: {
+            '@media (max-width:599px)': { // sm breakpoint down
               marginBottom: '0.5em',
             },
           },
