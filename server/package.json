@@ -41,7 +41,7 @@
     "resend": "^6.5.2",
     "socket.io": "^4.7.4",
     "streamifier": "^0.1.1",
-    "stripe": "^14.9.0",
+    "stripe": "^17.7.0",
     "winston": "^3.11.0"
   },
   "_moduleAliases": {
