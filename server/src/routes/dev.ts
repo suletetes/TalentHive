@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { auth } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 import { 
   createMockTransaction, 
   createMockTransactionsForFreelancer, 
@@ -13,10 +13,10 @@ const router = Router();
 if (process.env.NODE_ENV === 'development' || process.env.MOCK_STRIPE_CONNECT === 'true') {
   
   // Get development status for current user
-  router.get('/status', auth, async (req: Request, res: Response) => {
+  router.get('/status', authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = req.user?._id;
-      const status = await getDevStatus(userId);
+      const userId = req.user?._id?.toString();
+      const status = await getDevStatus(userId!);
       
       res.json({
         status: 'success',
@@ -31,9 +31,9 @@ if (process.env.NODE_ENV === 'development' || process.env.MOCK_STRIPE_CONNECT ==
   });
 
   // Create a single mock transaction
-  router.post('/mock-transaction', auth, async (req: Request, res: Response) => {
+  router.post('/mock-transaction', authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = req.user?._id;
+      const userId = req.user?._id?.toString();
       const { amount, status = 'released' } = req.body;
 
       if (!amount || amount <= 0) {
@@ -43,7 +43,7 @@ if (process.env.NODE_ENV === 'development' || process.env.MOCK_STRIPE_CONNECT ==
         });
       }
 
-      const transaction = await createMockTransaction(userId, amount, status);
+      const transaction = await createMockTransaction(userId!, amount, status);
       
       res.json({
         status: 'success',
@@ -59,9 +59,9 @@ if (process.env.NODE_ENV === 'development' || process.env.MOCK_STRIPE_CONNECT ==
   });
 
   // Create multiple mock transactions
-  router.post('/mock-transactions', auth, async (req: Request, res: Response) => {
+  router.post('/mock-transactions', authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = req.user?._id;
+      const userId = req.user?._id?.toString();
       const { transactions } = req.body;
 
       if (!Array.isArray(transactions) || transactions.length === 0) {
@@ -71,7 +71,7 @@ if (process.env.NODE_ENV === 'development' || process.env.MOCK_STRIPE_CONNECT ==
         });
       }
 
-      const createdTransactions = await createMockTransactionsForFreelancer(userId, transactions);
+      const createdTransactions = await createMockTransactionsForFreelancer(userId!, transactions);
       
       res.json({
         status: 'success',
@@ -87,7 +87,7 @@ if (process.env.NODE_ENV === 'development' || process.env.MOCK_STRIPE_CONNECT ==
   });
 
   // Clean up all mock transactions
-  router.delete('/mock-transactions', auth, async (req: Request, res: Response) => {
+  router.delete('/mock-transactions', authenticate, async (req: Request, res: Response) => {
     try {
       const deletedCount = await cleanupMockTransactions();
       
@@ -105,12 +105,12 @@ if (process.env.NODE_ENV === 'development' || process.env.MOCK_STRIPE_CONNECT ==
   });
 
   // Quick setup for testing withdrawals
-  router.post('/setup-withdrawal-test', auth, async (req: Request, res: Response) => {
+  router.post('/setup-withdrawal-test', authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = req.user?._id;
+      const userId = req.user?._id?.toString();
       
       // Create some mock transactions in different states
-      const transactions = await createMockTransactionsForFreelancer(userId, [
+      const transactions = await createMockTransactionsForFreelancer(userId!, [
         { amount: 100, status: 'released' },
         { amount: 250, status: 'released' },
         { amount: 75, status: 'held_in_escrow' },
@@ -123,11 +123,32 @@ if (process.env.NODE_ENV === 'development' || process.env.MOCK_STRIPE_CONNECT ==
         data: {
           transactions,
           summary: {
-            available: '$350 (2 released transactions)',
-            inEscrow: '$75 (1 transaction)',
-            paidOut: '$50 (1 transaction)',
+            available: '$350.00 (2 released transactions)',
+            inEscrow: '$75.00 (1 transaction)',
+            paidOut: '$50.00 (1 transaction)',
           },
         },
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        status: 'error',
+        message: error.message,
+      });
+    }
+  });
+
+  // Simple endpoint to create a single test transaction
+  router.post('/create-test-earning', authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?._id?.toString();
+      const { amount = 100, status = 'released' } = req.body;
+      
+      const transaction = await createMockTransaction(userId!, amount, status);
+      
+      res.json({
+        status: 'success',
+        message: `Created test earning of $${amount} with status '${status}'`,
+        data: { transaction },
       });
     } catch (error: any) {
       res.status(500).json({

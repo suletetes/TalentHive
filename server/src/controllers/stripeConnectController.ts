@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import { User } from '@/models/User';
 import { Transaction } from '@/models/Transaction';
+import { getTestIndividualData, getTestBankAccount, isStripeTestMode, logTestModeInfo } from '@/utils/stripeTestData';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-02-24.acacia', // Updated to latest API version
@@ -21,29 +22,81 @@ export const createConnectAccount = async (req: Request, res: Response) => {
       return res.status(403).json({ status: 'error', message: 'Only freelancers can set up payment accounts' });
     }
 
-    // Check if using mock mode for development
-    const useMockMode = process.env.MOCK_STRIPE_CONNECT === 'true' || process.env.NODE_ENV === 'development';
+    // Check if using test mode for development
+    const useTestMode = isStripeTestMode();
     
-    if (useMockMode) {
-      console.log('[CONNECT] Using mock Stripe Connect (development mode)');
+    if (useTestMode) {
+      logTestModeInfo();
+      console.log('[CONNECT] Using Stripe test mode with auto-approved test data');
       
-      // In development mode, just mark the user as having a mock account
-      if (!user.stripeConnectedAccountId) {
-        user.stripeConnectedAccountId = `acct_mock_${userId}_${Date.now()}`;
+      // Create real Stripe Express account but with test data that auto-approves
+      let accountId = user.stripeConnectedAccountId;
+
+      if (!accountId) {
+        const testIndividualData = getTestIndividualData(user.profile, user.email);
+        
+        const account = await stripe.accounts.create({
+          type: 'express',
+          country: 'US',
+          email: user.email,
+          capabilities: {
+            card_payments: { requested: true },
+            transfers: { requested: true },
+          },
+          business_type: 'individual',
+          individual: testIndividualData,
+          business_profile: {
+            mcc: '5734', // Computer software stores
+            url: process.env.CLIENT_URL,
+            product_description: 'Freelance services',
+          },
+          tos_acceptance: {
+            date: Math.floor(Date.now() / 1000),
+            ip: req.ip || '127.0.0.1',
+          },
+          metadata: {
+            userId: userId.toString(),
+            testMode: 'true',
+            autoApproved: 'true',
+          },
+        });
+        
+        accountId = account.id;
+        user.stripeConnectedAccountId = accountId;
         await user.save();
-        console.log('[CONNECT] Created mock Stripe account:', user.stripeConnectedAccountId);
+        console.log('[CONNECT] Created Stripe Express account with test data:', accountId);
+
+        // In test mode, add external account with test bank details
+        try {
+          const testBankAccount = getTestBankAccount();
+          await stripe.accounts.createExternalAccount(accountId, {
+            external_account: testBankAccount,
+          });
+          console.log('[CONNECT] Added test bank account to Express account');
+        } catch (bankError: any) {
+          console.log('[CONNECT] Bank account will be added during onboarding flow:', bankError.message);
+        }
       }
-      
-      // Return a mock success URL
+
+      // Create account link for onboarding (completes any remaining setup)
+      const accountLink = await stripe.accountLinks.create({
+        account: accountId,
+        refresh_url: `${process.env.CLIENT_URL}/dashboard/earnings?refresh=true`,
+        return_url: `${process.env.CLIENT_URL}/dashboard/earnings?success=true&test=true`,
+        type: 'account_onboarding',
+      });
+
       return res.status(200).json({
         status: 'success',
         data: { 
-          url: `${process.env.CLIENT_URL}/dashboard/earnings?success=true&mock=true`,
-          message: 'Mock Stripe account created for development'
+          url: accountLink.url,
+          message: 'Stripe Express account created with test data (auto-approved)',
+          testMode: true,
         },
       });
     }
 
+    // Production mode - regular flow
     let accountId = user.stripeConnectedAccountId;
 
     // Create new account if doesn't exist
@@ -105,45 +158,50 @@ export const getConnectStatus = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if using mock mode for development
-    const useMockMode = process.env.MOCK_STRIPE_CONNECT === 'true' || process.env.NODE_ENV === 'development';
+    // Check if using test mode
+    const useTestMode = isStripeTestMode();
     
-    if (useMockMode) {
-      console.log('[CONNECT] Returning mock Stripe Connect status (development mode)');
-      return res.status(200).json({
+    try {
+      const account = await stripe.accounts.retrieve(user.stripeConnectedAccountId);
+
+      const response = {
         status: 'success',
         data: {
           isConnected: true,
           accountStatus: {
-            chargesEnabled: true,
-            payoutsEnabled: true,
-            detailsSubmitted: true,
-            requirements: {
-              currently_due: [],
-              eventually_due: [],
-              past_due: [],
-              pending_verification: [],
-            },
+            chargesEnabled: account.charges_enabled,
+            payoutsEnabled: account.payouts_enabled,
+            detailsSubmitted: account.details_submitted,
+            requirements: account.requirements,
           },
-          mockMode: true,
+          testMode: useTestMode,
         },
-      });
-    }
+      };
 
-    const account = await stripe.accounts.retrieve(user.stripeConnectedAccountId);
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        isConnected: true,
-        accountStatus: {
+      if (useTestMode) {
+        console.log('[CONNECT] Stripe Connect status (test mode):', {
+          accountId: user.stripeConnectedAccountId,
           chargesEnabled: account.charges_enabled,
           payoutsEnabled: account.payouts_enabled,
           detailsSubmitted: account.details_submitted,
-          requirements: account.requirements,
-        },
-      },
-    });
+        });
+      }
+
+      res.status(200).json(response);
+    } catch (stripeError: any) {
+      // If account doesn't exist in Stripe, reset the user's account ID
+      if (stripeError.code === 'resource_missing') {
+        user.stripeConnectedAccountId = undefined;
+        await user.save();
+        
+        return res.status(200).json({
+          status: 'success',
+          data: { isConnected: false, accountStatus: null },
+        });
+      }
+      
+      throw stripeError;
+    }
   } catch (error: any) {
     console.error('Get Stripe Connect status error:', error);
     res.status(500).json({
@@ -269,121 +327,135 @@ export const requestPayout = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if using mock mode for development (skip verification)
-    const useMockPayout = process.env.MOCK_STRIPE_CONNECT === 'true' || process.env.NODE_ENV === 'development';
-    
-    console.log('  [PAYOUT] Development mode settings:');
-    console.log('  [PAYOUT] MOCK_STRIPE_CONNECT:', process.env.MOCK_STRIPE_CONNECT);
-    console.log('  [PAYOUT] NODE_ENV:', process.env.NODE_ENV);
-    console.log('  [PAYOUT] Using mock payout:', useMockPayout);
-
-    // In development mode, skip Stripe account verification
-    if (!useMockPayout && !user.stripeConnectedAccountId) {
-      console.log('  [PAYOUT] User has no Stripe account connected (production mode)');
+    if (!user.stripeConnectedAccountId) {
+      console.log('  [PAYOUT] User has no Stripe account connected');
       return res.status(400).json({
         status: 'error',
         message: 'Payment account not set up',
       });
     }
 
-    if (user.stripeConnectedAccountId) {
-      console.log('  [PAYOUT] User Stripe account:', user.stripeConnectedAccountId);
-    } else {
-      console.log('  [PAYOUT] No Stripe account, but proceeding in development mode');
-    }
+    console.log('  [PAYOUT] User Stripe account:', user.stripeConnectedAccountId);
+
+    // Check if using test mode
+    const useTestMode = isStripeTestMode();
+    
+    console.log('  [PAYOUT] Test mode settings:');
+    console.log('  [PAYOUT] NODE_ENV:', process.env.NODE_ENV);
+    console.log('  [PAYOUT] Using test mode:', useTestMode);
 
     let availableAmount = 0;
     let payout: any;
 
-    if (useMockPayout) {
-      console.log('  [PAYOUT] Using mock payout (development mode)');
-      console.log('  [PAYOUT] MOCK_STRIPE_CONNECT:', process.env.MOCK_STRIPE_CONNECT);
-      console.log('  [PAYOUT] NODE_ENV:', process.env.NODE_ENV);
+    if (useTestMode) {
+      console.log('  [PAYOUT] Using test mode - checking both Stripe balance and released transactions');
       
-      // Calculate available balance from released transactions
-      const mongoose = require('mongoose');
-      const userObjectId = new mongoose.Types.ObjectId(userId);
-      console.log('  [PAYOUT] User ObjectId for query:', userObjectId);
-      
-      // First check how many released transactions exist
-      const allReleased = await Transaction.find({ status: 'released' });
-      console.log('  [PAYOUT] Total released transactions in system:', allReleased.length);
-      if (allReleased.length > 0) {
-        console.log('  [PAYOUT] First released transaction freelancer:', allReleased[0].freelancer);
-        console.log('  [PAYOUT] Current user ObjectId:', userObjectId);
-        console.log('  [PAYOUT] Match:', allReleased[0].freelancer.toString() === userObjectId.toString());
-      }
-      
-      const releasedTransactions = await Transaction.aggregate([
-        { $match: { freelancer: userObjectId, status: 'released' } },
-        { $group: { _id: null, total: { $sum: '$freelancerAmount' } } },
-      ]);
-
-      console.log('  [PAYOUT] Aggregation result:', JSON.stringify(releasedTransactions, null, 2));
-      
-      // Amounts are already in cents in the database
-      availableAmount = releasedTransactions[0]?.total || 0;
-      console.log('  [PAYOUT] Available from transactions (cents):', availableAmount);
-      console.log('  [PAYOUT] Available from transactions (dollars):', availableAmount / 100);
-
-      if (availableAmount <= 0) {
-        console.log('  [PAYOUT] No released transactions to withdraw');
-        console.log('  [PAYOUT] availableAmount value:', availableAmount);
-        console.log('  [PAYOUT] Check failed: availableAmount <= 0 is', availableAmount <= 0);
-        return res.status(400).json({
-          status: 'error',
-          message: 'No available balance to withdraw',
+      // In test mode, we'll try to get the actual Stripe balance first
+      try {
+        const balance = await stripe.balance.retrieve({
+          stripeAccount: user.stripeConnectedAccountId,
         });
+        
+        availableAmount = balance.available.reduce((sum, b) => sum + b.amount, 0);
+        console.log('  [PAYOUT] Stripe balance available (cents):', availableAmount);
+        
+        if (availableAmount > 0) {
+          // Create real test payout
+          payout = await stripe.payouts.create(
+            {
+              amount: availableAmount,
+              currency: 'usd',
+            },
+            { stripeAccount: user.stripeConnectedAccountId }
+          );
+          
+          console.log('  [PAYOUT] Real test payout created:', payout.id);
+        } else {
+          // Fallback to mock payout for released transactions
+          console.log('  [PAYOUT] No Stripe balance, checking released transactions for mock payout');
+          
+          const mongoose = require('mongoose');
+          const userObjectId = new mongoose.Types.ObjectId(userId);
+          
+          const releasedTransactions = await Transaction.aggregate([
+            { $match: { freelancer: userObjectId, status: 'released' } },
+            { $group: { _id: null, total: { $sum: '$freelancerAmount' } } },
+          ]);
+
+          availableAmount = releasedTransactions[0]?.total || 0;
+          console.log('  [PAYOUT] Available from released transactions (cents):', availableAmount);
+
+          if (availableAmount <= 0) {
+            return res.status(400).json({
+              status: 'error',
+              message: 'No available balance to withdraw',
+            });
+          }
+
+          // Create mock payout for test mode
+          payout = {
+            id: `po_test_${Date.now()}`,
+            amount: availableAmount,
+            currency: 'usd',
+            status: 'paid',
+            arrival_date: Math.floor(Date.now() / 1000),
+            method: 'instant',
+          };
+
+          // Update transaction statuses to 'paid_out'
+          const updateResult = await Transaction.updateMany(
+            { freelancer: userObjectId, status: 'released' },
+            { $set: { status: 'paid_out', paidOutAt: new Date() } }
+          );
+          
+          console.log('  [PAYOUT] Updated transactions to paid_out:', updateResult.modifiedCount);
+        }
+      } catch (stripeError: any) {
+        console.log('  [PAYOUT] Stripe balance check failed, using mock payout:', stripeError.message);
+        
+        // Fallback to mock payout
+        const mongoose = require('mongoose');
+        const userObjectId = new mongoose.Types.ObjectId(userId);
+        
+        const releasedTransactions = await Transaction.aggregate([
+          { $match: { freelancer: userObjectId, status: 'released' } },
+          { $group: { _id: null, total: { $sum: '$freelancerAmount' } } },
+        ]);
+
+        availableAmount = releasedTransactions[0]?.total || 0;
+
+        if (availableAmount <= 0) {
+          return res.status(400).json({
+            status: 'error',
+            message: 'No available balance to withdraw',
+          });
+        }
+
+        payout = {
+          id: `po_test_mock_${Date.now()}`,
+          amount: availableAmount,
+          currency: 'usd',
+          status: 'paid',
+          arrival_date: Math.floor(Date.now() / 1000),
+          method: 'standard',
+        };
+
+        await Transaction.updateMany(
+          { freelancer: userObjectId, status: 'released' },
+          { $set: { status: 'paid_out', paidOutAt: new Date() } }
+        );
       }
-      
-      console.log('  [PAYOUT] Proceeding with payout, amount:', availableAmount);
-
-      // Mock payout
-      payout = {
-        id: `po_mock_${Date.now()}`,
-        amount: availableAmount,
-        currency: 'usd',
-        status: 'paid',
-        arrival_date: Math.floor(Date.now() / 1000),
-      };
-
-      console.log('  [PAYOUT] Mock payout created:', payout.id);
-      
-      // Update transaction statuses to 'paid_out' so they don't show as available anymore
-      const updateResult = await Transaction.updateMany(
-        { freelancer: userObjectId, status: 'released' },
-        { $set: { status: 'paid_out', paidOutAt: new Date() } }
-      );
-      
-      console.log('  [PAYOUT] Updated transactions to paid_out:', updateResult.modifiedCount);
     } else {
-      // Real Stripe payout
-      console.log('  [PAYOUT] Checking Stripe balance...');
+      // Production mode - real Stripe payout
+      console.log('  [PAYOUT] Production mode - checking Stripe balance...');
       const balance = await stripe.balance.retrieve({
         stripeAccount: user.stripeConnectedAccountId,
       });
 
-      console.log('  [PAYOUT] Stripe balance:', JSON.stringify(balance, null, 2));
-
       availableAmount = balance.available.reduce((sum, b) => sum + b.amount, 0);
       console.log('  [PAYOUT] Available amount (cents):', availableAmount);
-      console.log('  [PAYOUT] Available amount (dollars):', availableAmount / 100);
 
       if (availableAmount <= 0) {
-        console.log('  [PAYOUT] No available balance');
-        
-        // Check if there are released transactions
-        const releasedTransactions = await Transaction.find({
-          freelancer: userId,
-          status: 'released',
-        });
-        
-        console.log('  [PAYOUT] Released transactions count:', releasedTransactions.length);
-        if (releasedTransactions.length > 0) {
-          console.log('  [PAYOUT] Transactions are released but not yet in Stripe balance');
-          console.log('  [PAYOUT] This may take a few minutes to reflect in Stripe');
-        }
-
         return res.status(400).json({
           status: 'error',
           message: 'No available balance to withdraw',
@@ -391,7 +463,6 @@ export const requestPayout = async (req: Request, res: Response) => {
       }
 
       // Create real payout
-      console.log(' [PAYOUT] Creating Stripe payout for amount:', availableAmount);
       payout = await stripe.payouts.create(
         {
           amount: availableAmount,
@@ -400,13 +471,16 @@ export const requestPayout = async (req: Request, res: Response) => {
         { stripeAccount: user.stripeConnectedAccountId }
       );
 
-      console.log('  [PAYOUT] Payout created successfully:', payout.id);
+      console.log('  [PAYOUT] Production payout created:', payout.id);
     }
 
     res.status(200).json({
       status: 'success',
       message: 'Payout requested successfully',
-      data: { payout },
+      data: { 
+        payout,
+        testMode: useTestMode,
+      },
     });
   } catch (error: any) {
     console.error('  [PAYOUT] Request payout error:', error);

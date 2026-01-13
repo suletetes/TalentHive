@@ -1,31 +1,145 @@
-# Stripe Development Mode
+# Stripe Test Mode (Option 4)
 
-This document explains how to use Stripe functionality in development mode without requiring full verification.
+This document explains how to use Stripe functionality in test mode with auto-approved test data, providing real Stripe integration without requiring manual verification.
 
 ## Overview
 
-In development mode, the application bypasses Stripe verification requirements to allow freelancers to test withdrawal functionality without setting up real Stripe Connect accounts.
+In test mode, the application uses real Stripe APIs but with special test data that Stripe automatically approves. This provides:
+
+- **Real Stripe Integration**: Uses actual Stripe Connect APIs and flows
+- **Instant Approval**: Test data is automatically approved by Stripe
+- **No Manual Verification**: No need to provide real SSN, bank details, or identity documents
+- **Safe Testing**: No real money is involved, all transactions are simulated
 
 ## Configuration
 
 ### Environment Variables
 
-Set these environment variables to enable development mode:
+The system automatically detects test mode when:
 
 ```bash
-# In server/.env or server/.env.development
+# In server/.env
 NODE_ENV=development
-MOCK_STRIPE_CONNECT=true
+STRIPE_SECRET_KEY=sk_test_... # Any test key (starts with sk_test_)
+
+# Remove or comment out mock mode
+# MOCK_STRIPE_CONNECT=false
 ```
 
-### What Gets Bypassed
+### What Happens in Test Mode
 
-When `MOCK_STRIPE_CONNECT=true` or `NODE_ENV=development`:
+When test mode is detected:
 
-1. **Account Creation**: Creates mock Stripe Connect accounts instead of real ones
-2. **Verification**: Skips all Stripe verification requirements
-3. **Payouts**: Processes mock payouts without actual money transfer
-4. **Account Status**: Returns mock "verified" status for all accounts
+1. **Account Creation**: Creates real Stripe Express accounts with auto-approved test data
+2. **Instant Verification**: Uses Stripe's test SSN (0000) and test bank account details
+3. **Real API Responses**: Gets actual Stripe API responses and webhooks
+4. **Test Payouts**: Processes real Stripe payouts (but no actual money moves)
+
+## Test Data Used
+
+The system automatically uses these Stripe-approved test values:
+
+```javascript
+// Auto-approved test data
+{
+  ssn_last_4: '0000',           // Test SSN that always approves
+  phone: '+16505551234',        // Test phone number
+  routing_number: '110000000',  // Test bank routing number
+  account_number: '000123456789', // Test bank account number
+  address: {
+    line1: '123 Test Street',
+    city: 'San Francisco',
+    state: 'CA',
+    postal_code: '94102',
+    country: 'US'
+  }
+}
+```
+
+## API Endpoints
+
+All standard Stripe endpoints work normally:
+
+- `POST /api/v1/payments/stripe-connect/onboard` - Creates Stripe Express account with test data
+- `GET /api/v1/payments/stripe-connect/status` - Returns real Stripe account status
+- `POST /api/v1/payments/payout/request` - Processes real Stripe test payouts
+- `GET /api/v1/payments/earnings` - Shows earnings from transactions
+
+## Testing Workflow
+
+### 1. Setup Test Mode
+
+```bash
+# Ensure test mode is enabled
+echo "NODE_ENV=development" >> server/.env
+# Ensure you're using test Stripe keys (sk_test_...)
+
+# Start the server
+cd server
+npm run dev
+
+# Start the client
+cd client
+npm run dev
+```
+
+### 2. Test Stripe Connect Flow
+
+1. Navigate to `http://localhost:3000/dashboard/earnings` as a freelancer
+2. Click "Set Up Payments" 
+3. You'll be redirected to Stripe's real onboarding flow
+4. The form will be pre-filled with test data that auto-approves
+5. Complete the flow (usually just clicking "Continue" a few times)
+6. Return to the earnings page - account should be verified and ready
+
+### 3. Test Withdrawals
+
+1. Create test transactions using the "Create Test Data" button
+2. Check that earnings show up correctly
+3. Click "Request Payout" to test withdrawal
+4. Real Stripe payout will be created (but no money moves)
+
+## Advantages Over Mock Mode
+
+| Feature | Mock Mode | Test Mode |
+|---------|-----------|-----------|
+| Stripe Integration | Fake | Real |
+| API Responses | Simulated | Actual Stripe |
+| Webhooks | None | Real Stripe webhooks |
+| Verification Flow | Skipped | Real but auto-approved |
+| Payout Processing | Database only | Real Stripe payouts |
+| Error Handling | Limited | Full Stripe errors |
+
+## Production Deployment
+
+When deploying to production:
+
+1. Set `NODE_ENV=production`
+2. Use live Stripe keys (`sk_live_...`)
+3. Remove test data utilities
+4. Users will need real verification
+
+## Troubleshooting
+
+### Account Not Auto-Approving
+
+If the test account requires additional verification:
+- Check that you're using test Stripe keys
+- Verify `NODE_ENV=development`
+- Check server logs for test data being applied
+
+### Payouts Failing
+
+- Ensure the Stripe account shows as verified in the dashboard
+- Check that test bank account was added successfully
+- Verify there are released transactions to withdraw
+
+### Real Money Concerns
+
+- Test mode never involves real money
+- All transactions are simulated by Stripe
+- Test bank accounts don't connect to real banks
+- Payouts show as "paid" but no actual transfer occurs
 
 ## API Endpoints
 
@@ -105,23 +219,27 @@ echo "MOCK_STRIPE_CONNECT=true" >> server/.env
 # Start the server
 cd server
 npm run dev
+
+# Start the client (in another terminal)
+cd client
+npm run dev
 ```
 
-### 2. Create Mock Stripe Account (Freelancer)
+### 2. Access Earnings Page
 
-```bash
-# Login as a freelancer and create mock Stripe account
-curl -X POST http://localhost:5000/api/v1/payments/connect/create \
-  -H "Authorization: Bearer <freelancer_token>"
-```
+1. Navigate to `http://localhost:3000`
+2. Login as a freelancer user
+3. Go to `http://localhost:3000/dashboard/earnings`
+4. You should see the earnings dashboard
 
-### 3. Create Test Transactions
+### 3. Create Test Data (Development Only)
 
-```bash
-# Create some released transactions for withdrawal testing
-curl -X POST http://localhost:5000/api/v1/dev/setup-withdrawal-test \
-  -H "Authorization: Bearer <freelancer_token>"
-```
+The earnings page includes a "Create Test Data" button in development mode that will:
+- Create sample transactions in different states
+- Set up realistic earnings data for testing
+- Allow you to test the withdrawal flow
+
+Alternatively, use the API directly:
 
 ### 4. Check Earnings
 
