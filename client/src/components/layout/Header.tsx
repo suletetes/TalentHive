@@ -286,7 +286,7 @@ export const Header: React.FC = () => {
               gap: 1,
               overflow: 'hidden',
             }}>
-              {navItems.slice(0, 6).map((item) => (
+              {navItems.map((item) => (
                 <Button
                   key={item.path}
                   color="inherit"
@@ -302,15 +302,6 @@ export const Header: React.FC = () => {
                   {item.label}
                 </Button>
               ))}
-              {navItems.length > 6 && (
-                <Button
-                  color="inherit"
-                  onClick={handleMenu}
-                  sx={{ whiteSpace: 'nowrap' }}
-                >
-                  More
-                </Button>
-              )}
             </Box>
 
             {/* User Actions */}
@@ -430,7 +421,7 @@ export const Header: React.FC = () => {
           }
         }}
       >
-        {isAuthenticated ? (
+        {isAuthenticated && (
           [
             <MenuItem key="dashboard" onClick={() => { navigate('/dashboard'); handleClose(); }}>
               Dashboard
@@ -457,12 +448,6 @@ export const Header: React.FC = () => {
               Logout
             </MenuItem>
           ]
-        ) : (
-          navItems.length > 6 ? navItems.slice(6).map((item) => (
-            <MenuItem key={item.path} onClick={() => { navigate(item.path); handleClose(); }}>
-              {item.label}
-            </MenuItem>
-          )) : []
         )}
       </Menu>
 
