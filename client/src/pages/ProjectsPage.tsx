@@ -67,7 +67,7 @@ export const ProjectsPage: React.FC = () => {
     isFetching,
   } = useMyProjects();
 
-  const projects = projectsData || [];
+  const projects = projectsData?.data || [];
   const pagination = null; // My projects doesn't have pagination
 
   const handleFiltersChange = (newFilters: any) => {

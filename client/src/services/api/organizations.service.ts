@@ -1,4 +1,5 @@
 import { apiCore } from './core';
+import { dataExtractor } from '@/utils/dataExtractor';
 
 export interface Organization {
   _id: string;
@@ -47,7 +48,14 @@ export class OrganizationsService {
   }
 
   async getMyOrganizations(): Promise<{ data: Organization[] }> {
-    return apiCore.get<{ data: Organization[] }>(`${this.basePath}/my`);
+    const response = await apiCore.get<any>(`${this.basePath}/my`);
+    
+    // Extract organizations with robust data extraction
+    const organizations = dataExtractor.extractArray<Organization>(response, [
+      'data', 'data.organizations', 'organizations', 'data.data', 'data.data.organizations'
+    ]);
+    
+    return { data: organizations };
   }
 
   async inviteMember(
@@ -61,7 +69,14 @@ export class OrganizationsService {
   }
 
   async getMembers(orgId: string): Promise<{ data: any[] }> {
-    return apiCore.get<{ data: any[] }>(`${this.basePath}/${orgId}/members`);
+    const response = await apiCore.get<any>(`${this.basePath}/${orgId}/members`);
+    
+    // Extract members with robust data extraction
+    const members = dataExtractor.extractArray<any>(response, [
+      'data', 'data.members', 'members', 'data.data', 'data.data.members'
+    ]);
+    
+    return { data: members };
   }
 
   async removeMember(orgId: string, userId: string): Promise<{ message: string }> {
@@ -78,9 +93,16 @@ export class OrganizationsService {
   }
 
   async getBudgetApprovals(orgId: string): Promise<{ data: BudgetApproval[] }> {
-    return apiCore.get<{ data: BudgetApproval[] }>(
+    const response = await apiCore.get<any>(
       `${this.basePath}/${orgId}/approvals`
     );
+    
+    // Extract approvals with robust data extraction
+    const approvals = dataExtractor.extractArray<BudgetApproval>(response, [
+      'data', 'data.approvals', 'approvals', 'data.data', 'data.data.approvals'
+    ]);
+    
+    return { data: approvals };
   }
 
   async requestBudgetApproval(

@@ -1,4 +1,5 @@
 import { apiCore } from './core';
+import { dataExtractor } from '@/utils/dataExtractor';
 
 export interface Message {
   _id: string;
@@ -81,13 +82,35 @@ export class MessagesService {
         }
       });
     }
-    return apiCore.get<{ data: Message[]; pagination: any }>(
+    const response = await apiCore.get<any>(
       `${this.basePath}/conversations/${conversationId}/messages?${queryParams.toString()}`
     );
+    
+    // Extract messages with robust data extraction
+    const messages = dataExtractor.extractArray<Message>(response, [
+      'data', 'data.messages', 'messages', 'data.data', 'data.data.messages'
+    ]);
+    
+    // Extract pagination
+    const pagination = response?.data?.pagination || response?.pagination || {
+      page: 1,
+      limit: 20,
+      total: messages.length,
+      pages: Math.ceil(messages.length / 20),
+    };
+    
+    return { data: messages, pagination };
   }
 
   async getConversations(): Promise<{ data: Conversation[] }> {
-    return apiCore.get<{ data: Conversation[] }>(`${this.basePath}/conversations`);
+    const response = await apiCore.get<any>(`${this.basePath}/conversations`);
+    
+    // Extract conversations with robust data extraction
+    const conversations = dataExtractor.extractArray<Conversation>(response, [
+      'data', 'data.conversations', 'conversations', 'data.data', 'data.data.conversations'
+    ]);
+    
+    return { data: conversations };
   }
 
   async markAsRead(conversationId: string): Promise<{ message: string }> {
