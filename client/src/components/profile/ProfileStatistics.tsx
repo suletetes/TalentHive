@@ -68,14 +68,34 @@ export const ProfileStatistics = ({ userId, role }: ProfileStatisticsProps) => {
         </Box>
         <Grid container spacing={2}>
           {statItems.map((item, index) => (
-            <Grid item xs={12} sm={6} key={index}>
-              <Box sx={{ display: 'flex', alignItems: 'center', p: 1.5, bgcolor: 'background.default', borderRadius: 1 }}>
-                <item.icon sx={{ color: item.color, mr: 1.5, fontSize: 28 }} />
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                p: { xs: 1, sm: 1.5 }, 
+                bgcolor: 'background.default', 
+                borderRadius: 1,
+                minHeight: { xs: 60, sm: 70 }
+              }}>
+                <item.icon sx={{ 
+                  color: item.color, 
+                  mr: { xs: 1, sm: 1.5 }, 
+                  fontSize: { xs: 24, sm: 28 },
+                  flexShrink: 0
+                }} />
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    lineHeight: 1.2
+                  }}>
                     {item.label}
                   </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  <Typography variant="h6" sx={{ 
+                    fontWeight: 600,
+                    fontSize: { xs: '1rem', sm: '1.25rem' },
+                    lineHeight: 1.2,
+                    wordBreak: 'break-word'
+                  }}>
                     {item.value}
                   </Typography>
                 </Box>

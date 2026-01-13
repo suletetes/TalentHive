@@ -155,13 +155,20 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       )}
 
       {/* Main Profile Header */}
-      <Box display="flex" alignItems="start" gap={3} mb={3}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        alignItems: { xs: 'center', sm: 'start' }, 
+        gap: 3, 
+        mb: 3,
+        textAlign: { xs: 'center', sm: 'left' }
+      }}>
         {/* Avatar */}
-        <Box position="relative">
+        <Box position="relative" sx={{ flexShrink: 0 }}>
           <Avatar
             src={user.profile.avatar}
             alt={`${user.profile.firstName} ${user.profile.lastName}`}
-            sx={{ width: 120, height: 120 }}
+            sx={{ width: { xs: 100, sm: 120 }, height: { xs: 100, sm: 120 } }}
           />
           {isOwnProfile && (
             <IconButton
@@ -184,10 +191,25 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         </Box>
 
         {/* Profile Info */}
-        <Box flexGrow={1}>
-          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-            <Box display="flex" alignItems="center" gap={1}>
-              <Typography variant="h4" component="h1">
+        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'center', sm: 'center' }, 
+            justifyContent: { xs: 'center', sm: 'space-between' }, 
+            gap: { xs: 1, sm: 0 },
+            mb: 1 
+          }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: 'center', 
+              gap: 1 
+            }}>
+              <Typography variant="h4" component="h1" sx={{ 
+                fontSize: { xs: '1.75rem', sm: '2.125rem' },
+                textAlign: { xs: 'center', sm: 'left' }
+              }}>
                 {user.profile.firstName} {user.profile.lastName}
               </Typography>
               {user.isVerified && (
@@ -200,6 +222,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 variant="outlined"
                 startIcon={<Edit />}
                 onClick={onEdit}
+                size="small"
+                sx={{ mt: { xs: 1, sm: 0 } }}
               >
                 Edit Profile
               </Button>
@@ -208,19 +232,32 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
           {/* Role-specific title */}
           {user.role === 'freelancer' && user.freelancerProfile && (
-            <Typography variant="h6" color="text.secondary" gutterBottom>
+            <Typography variant="h6" color="text.secondary" gutterBottom sx={{
+              fontSize: { xs: '1.1rem', sm: '1.25rem' },
+              textAlign: { xs: 'center', sm: 'left' }
+            }}>
               {user.freelancerProfile.title}
             </Typography>
           )}
 
           {user.role === 'client' && user.clientProfile?.companyName && (
-            <Typography variant="h6" color="text.secondary" gutterBottom>
+            <Typography variant="h6" color="text.secondary" gutterBottom sx={{
+              fontSize: { xs: '1.1rem', sm: '1.25rem' },
+              textAlign: { xs: 'center', sm: 'left' }
+            }}>
               {user.clientProfile.companyName}
             </Typography>
           )}
 
           {/* Location and Timezone */}
-          <Box display="flex" alignItems="center" gap={2} mb={2}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: 'center', 
+            gap: 2, 
+            mb: 2,
+            justifyContent: { xs: 'center', sm: 'flex-start' }
+          }}>
             {user.profile.location && (
               <Box display="flex" alignItems="center" gap={0.5}>
                 <LocationOn fontSize="small" color="action" />
@@ -241,7 +278,14 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </Box>
 
           {/* Rating and Availability */}
-          <Box display="flex" alignItems="center" gap={3} mb={2}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: 'center', 
+            gap: { xs: 1, sm: 3 }, 
+            mb: 2,
+            justifyContent: { xs: 'center', sm: 'flex-start' }
+          }}>
             {user.rating.count > 0 && (
               <Box display="flex" alignItems="center" gap={1}>
                 <Rating
@@ -267,18 +311,28 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
           {/* Bio */}
           {user.profile.bio && (
-            <Typography variant="body1" paragraph>
+            <Typography variant="body1" paragraph sx={{
+              textAlign: { xs: 'center', sm: 'left' },
+              maxWidth: { xs: '100%', sm: 'none' }
+            }}>
               {user.profile.bio}
             </Typography>
           )}
 
           {/* Skills (for freelancers) */}
           {user.role === 'freelancer' && user.freelancerProfile?.skills && user.freelancerProfile.skills.length > 0 && (
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" gutterBottom sx={{
+                textAlign: { xs: 'center', sm: 'left' }
+              }}>
                 Skills
               </Typography>
-              <Box display="flex" flexWrap="wrap" gap={0.5}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                gap: 0.5,
+                justifyContent: { xs: 'center', sm: 'flex-start' }
+              }}>
                 {user.freelancerProfile?.skills?.map((skill) => (
                   <Chip
                     key={skill}
@@ -293,7 +347,10 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
           {/* Hourly Rate (for freelancers) */}
           {user.role === 'freelancer' && user.freelancerProfile?.hourlyRate && user.freelancerProfile.hourlyRate > 0 && (
-            <Box mt={2}>
+            <Box sx={{ 
+              mt: 2,
+              textAlign: { xs: 'center', sm: 'left' }
+            }}>
               <Typography variant="h5" color="primary">
                 ${user.freelancerProfile?.hourlyRate}/hour
               </Typography>
@@ -305,7 +362,10 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
           {/* Projects Posted (for clients) */}
           {user.role === 'client' && user.clientProfile && (
-            <Box mt={2}>
+            <Box sx={{ 
+              mt: 2,
+              textAlign: { xs: 'center', sm: 'left' }
+            }}>
               <Typography variant="h6" color="primary">
                 {stats?.totalProjectsPosted ?? user.clientProfile.projectsPosted ?? 0} Projects Posted
               </Typography>
