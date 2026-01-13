@@ -22,12 +22,12 @@ import { PlatformSettings } from '@/models/PlatformSettings';
 import { Settings } from '@/models/Settings';
 import { SupportTicket } from '@/models/SupportTicket';
 import { OnboardingAnalytics } from '@/models/OnboardingAnalytics';
-import { generateEnhancedUsers, generateAdditionalProjects, generateAdditionalProposals } from './enhancedSeedData';
-import { seedClientProjectsAndReviews } from './seedClientData';
-import { enhanceSeedData } from './seedEnhanced';
+import { generateEnhancedUsers, generateAdditionalProjects, generateAdditionalProposals } from './obsolete-backup/enhancedSeedData';
+import { seedClientProjectsAndReviews } from './obsolete-backup/seedClientData';
+import { enhanceSeedData } from './obsolete-backup/seedEnhanced';
 import { seedPermissions } from './seedPermissions';
 import { seedRoles } from './seedRoles';
-import { seedNewFeatures } from './seedNewFeatures';
+import { seedNewFeatures } from './obsolete-backup/seedNewFeatures';
 import WorkLog from '@/models/WorkLog';
 
 // Load environment variables

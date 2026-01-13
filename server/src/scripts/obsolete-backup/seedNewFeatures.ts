@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
-import { User } from '../models/User';
-import { SupportTicket } from '../models/SupportTicket';
-import { OnboardingAnalytics } from '../models/OnboardingAnalytics';
-import { generateSlug } from '../utils/slugUtils';
+import { User } from '../../models/User';
+import { SupportTicket } from '../../models/SupportTicket';
+import { OnboardingAnalytics } from '../../models/OnboardingAnalytics';
+import { generateSlug } from '../../utils/slugUtils';
 
 /**
  * Add profile slugs to existing users
