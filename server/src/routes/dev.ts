@@ -208,6 +208,55 @@ if (process.env.NODE_ENV === 'development') {
     }
   });
 
+  // Explain the architectural issue with payment flow
+  router.get('/payment-architecture-info', authenticate, async (req: Request, res: Response) => {
+    res.json({
+      status: 'info',
+      message: 'Payment Architecture Analysis',
+      data: {
+        currentIssue: {
+          problem: 'Trying to transfer money that platform never collected',
+          error: 'insufficient_capabilities_for_transfer',
+          cause: 'Wrong payment flow pattern',
+        },
+        correctPatterns: {
+          option1: {
+            name: 'Destination Charges (Recommended)',
+            description: 'Client pays freelancer directly, platform takes fee',
+            implementation: 'Use transfer_data.destination in PaymentIntent',
+            pros: ['No escrow needed', 'Immediate payment', 'Simpler flow'],
+            cons: ['Less control over funds', 'Harder to implement refunds'],
+          },
+          option2: {
+            name: 'Platform Collects Then Transfers',
+            description: 'Platform collects payment, then transfers to freelancer',
+            implementation: 'Collect to platform account, then use transfers',
+            pros: ['Full control', 'Easy refunds', 'True escrow'],
+            cons: ['More complex', 'Requires platform balance management'],
+          },
+          option3: {
+            name: 'Express Account Payouts',
+            description: 'Money goes to freelancer Stripe balance, then payout',
+            implementation: 'Use stripe.payouts.create() with stripeAccount',
+            pros: ['Real Stripe integration', 'Freelancer controls timing'],
+            cons: ['Requires Express account setup', 'More steps for freelancer'],
+          },
+        },
+        currentWorkaround: {
+          description: 'Skip Stripe transfers in development, update transaction status only',
+          limitation: 'No real money movement in test mode',
+          recommendation: 'Implement proper payment flow for production',
+        },
+        nextSteps: [
+          'Choose payment pattern based on business requirements',
+          'Implement client payment collection properly',
+          'Test with small amounts in Stripe test mode',
+          'Update escrow release logic accordingly',
+        ],
+      },
+    });
+  });
+
 } else {
   // In production, return 404 for all dev routes
   router.use('*', (req: Request, res: Response) => {
