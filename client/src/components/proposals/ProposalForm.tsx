@@ -343,7 +343,7 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
               variant="outlined"
               onClick={handleAddMilestone}
               disabled={!newMilestone.title || !newMilestone.description || !newMilestone.amount || !newMilestone.dueDate}
-              sx={{ height: '40px' }}
+              sx={{ height: { xs: '32px', sm: '40px' } }}
             >
               <Add />
             </Button>

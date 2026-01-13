@@ -95,7 +95,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               sx={{
                 p: 1.5,
                 maxWidth: '70%',
-                bgcolor: msg.sender._id === currentUserId ? 'primary.main' : 'grey.100',
+                bgcolor: msg.sender._id === currentUserId ? 'primary.main' : (theme) => theme.palette.mode === 'dark' ? 'grey.700' : 'grey.100',
                 color: msg.sender._id === currentUserId ? 'white' : 'text.primary',
               }}
             >
