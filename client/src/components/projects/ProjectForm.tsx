@@ -23,6 +23,17 @@ import { useToast } from '@/components/ui/ToastProvider';
 
 const steps = ['Basic Information', 'Budget & Timeline', 'Requirements', 'Review'];
 
+// Helper function to get abbreviated labels for mobile
+const getAbbreviatedLabel = (label: string): string => {
+  const abbreviations: { [key: string]: string } = {
+    'Basic Information': 'Basic',
+    'Budget & Timeline': 'Budget',
+    'Requirements': 'Reqs',
+    'Review': 'Review'
+  };
+  return abbreviations[label] || label.split(' ')[0];
+};
+
 const projectSchema = yup.object({
   title: yup.string()
     .required('Title is required')
@@ -198,15 +209,78 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         return null;
     }
   };  return (
-    <Paper sx={{ p: 4 }}>
-      <Typography variant="h5" gutterBottom>
+    <Paper sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+      <Typography variant="h5" gutterBottom sx={{
+        fontSize: { xs: '1.25rem', sm: '1.5rem' },
+        textAlign: { xs: 'center', sm: 'left' }
+      }}>
         {isEditMode ? 'Edit Project' : 'Create New Project'}
       </Typography>
 
-      <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-        {steps.map((label) => (
+      <Stepper 
+        activeStep={activeStep} 
+        sx={{ 
+          mb: 4,
+          // Responsive stepper styling
+          '& .MuiStepLabel-root': {
+            padding: { xs: '0 2px', sm: '0 8px' },
+          },
+          '& .MuiStepLabel-label': {
+            fontSize: { xs: '0.625rem', sm: '0.875rem' },
+            fontWeight: 500,
+            textAlign: 'center',
+            lineHeight: 1.2,
+            // Show abbreviated labels on mobile
+            display: 'block',
+          },
+          '& .MuiStepLabel-labelContainer': {
+            maxWidth: { xs: '50px', sm: '120px', md: 'none' },
+          },
+          // Step icon (number) styling
+          '& .MuiStepIcon-root': {
+            fontSize: { xs: '1rem', sm: '1.5rem' },
+            '& .MuiStepIcon-text': {
+              fontSize: { xs: '0.625rem', sm: '0.875rem' },
+              fontWeight: 600,
+            },
+          },
+          // Connector line styling
+          '& .MuiStepConnector-root': {
+            display: { xs: 'none', sm: 'block' },
+          },
+          // Step container styling
+          '& .MuiStep-root': {
+            padding: { xs: '0 1px', sm: '0 8px' },
+            flex: 1,
+          },
+          // Horizontal scroll for mobile if needed
+          overflowX: 'auto',
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
+          scrollbarWidth: 'none',
+        }}
+        alternativeLabel
+      >
+        {steps.map((label, index) => (
           <Step key={label}>
-            <StepLabel>{label}</StepLabel>
+            <StepLabel>
+              {/* Show abbreviated labels on mobile, full labels on desktop */}
+              <Box sx={{ 
+                fontSize: { xs: '0.625rem', sm: '0.875rem' },
+                textAlign: 'center',
+                lineHeight: 1.2,
+                wordBreak: 'break-word',
+                hyphens: 'auto'
+              }}>
+                <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                  {label}
+                </Box>
+                <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+                  {getAbbreviatedLabel(label)}
+                </Box>
+              </Box>
+            </StepLabel>
           </Step>
         ))}
       </Stepper>
@@ -220,24 +294,61 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       <Box component="form" onSubmit={formik.handleSubmit}>
         {renderStepContent(activeStep)}
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between', 
+          alignItems: { xs: 'stretch', sm: 'center' },
+          gap: { xs: 2, sm: 0 },
+          mt: 4 
+        }}>
           <Button
             onClick={activeStep === 0 ? onCancel : handleBack}
             variant="outlined"
             disabled={isSubmitting}
+            size="large"
+            sx={{ 
+              order: { xs: 2, sm: 0 },
+              minHeight: { xs: 48, sm: 36 }
+            }}
           >
             {activeStep === 0 ? 'Cancel' : 'Back'}
           </Button>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {isSubmitting && <CircularProgress size={24} />}
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: 'center', 
+            gap: { xs: 1, sm: 2 },
+            order: { xs: 1, sm: 0 },
+            width: { xs: '100%', sm: 'auto' }
+          }}>
+            {isSubmitting && (
+              <CircularProgress 
+                size={24} 
+                sx={{ 
+                  alignSelf: { xs: 'center', sm: 'auto' },
+                  mb: { xs: 1, sm: 0 }
+                }} 
+              />
+            )}
             
             {activeStep === steps.length - 1 ? (
-              <>
+              <Box sx={{ 
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: { xs: 1, sm: 2 },
+                width: { xs: '100%', sm: 'auto' }
+              }}>
                 <Button
                   onClick={handleSaveAsDraft}
                   variant="outlined"
                   disabled={isSubmitting}
+                  size="large"
+                  sx={{ 
+                    minHeight: { xs: 48, sm: 36 },
+                    flex: { xs: 1, sm: 'none' }
+                  }}
                 >
                   {isSubmitting ? 'Saving...' : 'Save as Draft'}
                 </Button>
@@ -245,18 +356,28 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                   type="submit"
                   variant="contained"
                   disabled={isSubmitting || !formik.isValid}
+                  size="large"
+                  sx={{ 
+                    minHeight: { xs: 48, sm: 36 },
+                    flex: { xs: 1, sm: 'none' }
+                  }}
                 >
                   {isSubmitting 
                     ? (isEditMode ? 'Updating...' : 'Publishing...') 
                     : (isEditMode ? 'Update Project' : 'Publish Project')
                   }
                 </Button>
-              </>
+              </Box>
             ) : (
               <Button
                 onClick={handleNext}
                 variant="contained"
                 disabled={!isStepValid(activeStep) || isSubmitting}
+                size="large"
+                sx={{ 
+                  minHeight: { xs: 48, sm: 36 },
+                  width: { xs: '100%', sm: 'auto' }
+                }}
               >
                 Next
               </Button>
