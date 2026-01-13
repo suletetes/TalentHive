@@ -176,6 +176,23 @@ export const EarningsPage: React.FC = () => {
               Create Test Data
             </Button>
           )}
+          {process.env.NODE_ENV === 'development' && isStripeConnected && (
+            <Button
+              onClick={async () => {
+                try {
+                  await apiCore.post('/dev/fix-stripe-account');
+                  toast.success('Stripe account capabilities updated!');
+                  queryClient.invalidateQueries({ queryKey: ['stripe-connect-status'] });
+                } catch (error) {
+                  toast.error('Failed to fix Stripe account');
+                }
+              }}
+              variant="outlined"
+              color="warning"
+            >
+              Fix Stripe Account
+            </Button>
+          )}
           {!isStripeConnected && (
             <Button
               startIcon={<SettingsIcon />}
@@ -197,6 +214,20 @@ export const EarningsPage: React.FC = () => {
           </Button>
         }>
           Set up your payment account to receive earnings. Connect your bank account via Stripe.
+          {process.env.NODE_ENV === 'development' && (
+            <Typography variant="body2" sx={{ mt: 1, opacity: 0.8 }}>
+              <strong>Test Mode:</strong> Uses Stripe test data that auto-approves instantly.
+            </Typography>
+          )}
+        </Alert>
+      )}
+
+      {/* Test Mode Indicator */}
+      {process.env.NODE_ENV === 'development' && isStripeConnected && stripeStatus?.testMode && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <Typography variant="body2">
+            <strong>Test Mode Active:</strong> You're using Stripe test mode. All transactions are simulated and no real money is involved.
+          </Typography>
         </Alert>
       )}
 
@@ -362,17 +393,25 @@ export const EarningsPage: React.FC = () => {
         <DialogContent>
           <Alert severity="info" sx={{ mb: 2 }}>
             To receive payments, you need to connect a Stripe account. This allows us to securely transfer your earnings.
+            {process.env.NODE_ENV === 'development' && (
+              <Typography variant="body2" sx={{ mt: 1, fontWeight: 'bold' }}>
+                Test Mode: Uses auto-approved test data for instant setup.
+              </Typography>
+            )}
           </Alert>
           <Typography variant="body2" paragraph>
             You'll be redirected to Stripe to:
           </Typography>
           <Box component="ul" sx={{ pl: 2 }}>
-            <li>Verify your identity</li>
-            <li>Add your bank account details</li>
+            <li>Verify your identity{process.env.NODE_ENV === 'development' && ' (auto-approved with test data)'}</li>
+            <li>Add your bank account details{process.env.NODE_ENV === 'development' && ' (test bank account)'}</li>
             <li>Set up your payout preferences</li>
           </Box>
           <Typography variant="body2" color="text.secondary">
-            This process typically takes 5-10 minutes.
+            {process.env.NODE_ENV === 'development' 
+              ? 'This process takes about 1-2 minutes in test mode.'
+              : 'This process typically takes 5-10 minutes.'
+            }
           </Typography>
         </DialogContent>
         <DialogActions>
