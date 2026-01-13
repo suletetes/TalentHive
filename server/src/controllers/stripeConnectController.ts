@@ -164,6 +164,22 @@ export const getConnectStatus = async (req: Request, res: Response) => {
     try {
       const account = await stripe.accounts.retrieve(user.stripeConnectedAccountId);
 
+      // Check if account needs transfers capability
+      if (!account.capabilities?.transfers || account.capabilities.transfers !== 'active') {
+        console.log('[CONNECT] Account missing transfers capability, attempting to enable...');
+        
+        try {
+          await stripe.accounts.update(user.stripeConnectedAccountId, {
+            capabilities: {
+              transfers: { requested: true },
+            },
+          });
+          console.log('[CONNECT] Transfers capability requested for existing account');
+        } catch (updateError: any) {
+          console.log('[CONNECT] Could not update account capabilities:', updateError.message);
+        }
+      }
+
       const response = {
         status: 'success',
         data: {
@@ -173,6 +189,7 @@ export const getConnectStatus = async (req: Request, res: Response) => {
             payoutsEnabled: account.payouts_enabled,
             detailsSubmitted: account.details_submitted,
             requirements: account.requirements,
+            transfersEnabled: account.capabilities?.transfers === 'active',
           },
           testMode: useTestMode,
         },
@@ -184,6 +201,7 @@ export const getConnectStatus = async (req: Request, res: Response) => {
           chargesEnabled: account.charges_enabled,
           payoutsEnabled: account.payouts_enabled,
           detailsSubmitted: account.details_submitted,
+          transfersEnabled: account.capabilities?.transfers === 'active',
         });
       }
 
