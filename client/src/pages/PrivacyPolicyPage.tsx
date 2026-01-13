@@ -158,7 +158,7 @@ export const PrivacyPolicyPage: React.FC = () => {
         Address: 123 Business Street, San Francisco, CA 94105
       </Typography>
 
-      <Box sx={{ mt: 6, p: 3, bgcolor: 'grey.100', borderRadius: 1 }}>
+      <Box sx={{ mt: 6, p: 3, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100', borderRadius: 1 }}>
         <Typography variant="body2" color="text.secondary">
           By using TalentHive, you acknowledge that you have read and understood this Privacy Policy and agree to its terms.
         </Typography>

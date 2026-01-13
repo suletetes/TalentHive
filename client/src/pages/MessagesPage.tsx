@@ -21,7 +21,14 @@ export const MessagesPage: React.FC = () => {
           Communicate with clients and freelancers
         </Typography>
       </Box>
-      <Paper elevation={2} sx={{ height: 'calc(100vh - 200px)', overflow: 'hidden' }}>
+      <Paper elevation={2} sx={{ 
+        height: { 
+          xs: 'calc(100vh - 220px)', // More space on mobile
+          sm: 'calc(100vh - 200px)' 
+        }, 
+        minHeight: { xs: '400px', sm: '500px' },
+        overflow: 'hidden' 
+      }}>
         <MessagingInterface />
       </Paper>
     </Container>

@@ -199,7 +199,7 @@ export const FreelancersPage = () => {
               fullWidth
               variant="outlined"
               onClick={handleClearFilters}
-              sx={{ height: '56px' }}
+              sx={{ height: { xs: '48px', sm: '56px' } }}
             >
               Clear Filters
             </Button>

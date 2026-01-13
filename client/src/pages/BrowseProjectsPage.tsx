@@ -188,7 +188,7 @@ export const BrowseProjectsPage = () => {
                 setSortOrder('desc');
                 setPage(1);
               }}
-              sx={{ height: '56px' }}
+              sx={{ height: { xs: '48px', sm: '56px' } }}
             >
               Clear Filters
             </Button>
@@ -229,7 +229,7 @@ export const BrowseProjectsPage = () => {
 
       {/* Projects Grid */}
       {projects.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 8, bgcolor: 'grey.50', borderRadius: 2 }}>
+        <Box sx={{ textAlign: 'center', py: 8, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50', borderRadius: 2 }}>
           <Typography variant="h6" gutterBottom>
             No projects found
           </Typography>
