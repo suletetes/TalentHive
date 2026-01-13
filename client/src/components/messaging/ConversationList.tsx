@@ -95,86 +95,90 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   }
 
   return (
-    <Box sx={{ height: '100%', overflow: 'auto' }}>
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', flexShrink: 0 }}>
         <Typography variant="h6">Messages</Typography>
       </Box>
-      <List sx={{ p: 0 }}>
-        {data.map((conversation, index) => {
-          const otherParticipant = getOtherParticipant(conversation);
-          const unreadCount = getUnreadCount(conversation);
-          const isSelected = selectedConversation?._id === conversation._id;
+      <Box sx={{ flex: 1, overflow: 'auto' }}>
+        <List sx={{ p: 0 }}>
+          {data.map((conversation, index) => {
+            const otherParticipant = getOtherParticipant(conversation);
+            const unreadCount = getUnreadCount(conversation);
+            const isSelected = selectedConversation?._id === conversation._id;
 
-          if (!otherParticipant) return null;
+            if (!otherParticipant) return null;
 
-          return (
-            <React.Fragment key={conversation._id}>
-              <ListItem disablePadding>
-                <ListItemButton
-                  selected={isSelected}
-                  onClick={() => onSelectConversation(conversation)}
-                  sx={{
-                    py: 2,
-                    '&.Mui-selected': {
-                      bgcolor: 'action.selected',
-                    },
-                  }}
-                >
-                  <ListItemAvatar>
-                    <Badge
-                      badgeContent={unreadCount}
-                      color="primary"
-                      overlap="circular"
-                    >
-                      <Avatar
-                        src={otherParticipant.profile.avatar}
-                        alt={`${otherParticipant.profile.firstName} ${otherParticipant.profile.lastName}`}
+            return (
+              <React.Fragment key={conversation._id}>
+                <ListItem disablePadding>
+                  <ListItemButton
+                    selected={isSelected}
+                    onClick={() => onSelectConversation(conversation)}
+                    sx={{
+                      py: 1.5,
+                      '&.Mui-selected': {
+                        bgcolor: 'action.selected',
+                      },
+                    }}
+                  >
+                    <ListItemAvatar>
+                      <Badge
+                        badgeContent={unreadCount}
+                        color="primary"
+                        overlap="circular"
                       >
-                        {otherParticipant.profile.firstName[0]}
-                        {otherParticipant.profile.lastName[0]}
-                      </Avatar>
-                    </Badge>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={
-                      <Typography
-                        variant="subtitle2"
-                        fontWeight={unreadCount > 0 ? 600 : 400}
-                      >
-                        {otherParticipant.profile.firstName} {otherParticipant.profile.lastName}
-                      </Typography>
-                    }
-                    secondary={
-                      <Box component="span" sx={{ display: 'block' }}>
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          color="text.secondary"
-                          noWrap
-                          sx={{
-                            display: 'block',
-                            fontWeight: unreadCount > 0 ? 500 : 400,
-                          }}
+                        <Avatar
+                          src={otherParticipant.profile.avatar}
+                          alt={`${otherParticipant.profile.firstName} ${otherParticipant.profile.lastName}`}
+                          sx={{ width: 40, height: 40 }}
                         >
-                          {conversation.lastMessage?.content || 'No messages yet'}
+                          {otherParticipant.profile.firstName[0]}
+                          {otherParticipant.profile.lastName[0]}
+                        </Avatar>
+                      </Badge>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight={unreadCount > 0 ? 600 : 400}
+                          noWrap
+                        >
+                          {otherParticipant.profile.firstName} {otherParticipant.profile.lastName}
                         </Typography>
-                        <Typography component="span" variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                          {conversation.lastMessage
-                            ? formatDistanceToNow(new Date(conversation.lastMessage.createdAt), {
-                                addSuffix: true,
-                              })
-                            : ''}
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                </ListItemButton>
-              </ListItem>
-              {index < data.length - 1 && <Divider />}
-            </React.Fragment>
-          );
-        })}
-      </List>
+                      }
+                      secondary={
+                        <Box component="span">
+                          <Typography
+                            component="span"
+                            variant="body2"
+                            color="text.secondary"
+                            noWrap
+                            sx={{
+                              display: 'block',
+                              fontWeight: unreadCount > 0 ? 500 : 400,
+                            }}
+                          >
+                            {conversation.lastMessage?.content || 'No messages yet'}
+                          </Typography>
+                          <Typography component="span" variant="caption" color="text.secondary">
+                            {conversation.lastMessage
+                              ? formatDistanceToNow(new Date(conversation.lastMessage.createdAt), {
+                                  addSuffix: true,
+                                })
+                              : ''}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </ListItemButton>
+                </ListItem>
+                {index < data.length - 1 && <Divider />}
+              </React.Fragment>
+            );
+          })}
+        </List>
+      </Box>
     </Box>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   TextField,
@@ -25,6 +25,11 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ conversationId
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  // Don't render if no conversation ID
+  if (!conversationId || conversationId.trim() === '' || conversationId === 'undefined' || conversationId === 'null') {
+    return null;
+  }
 
   const uploadMutation = useMutation({
     mutationFn: async (files: File[]) => {
@@ -130,11 +135,12 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ conversationId
 
   return (
     <Paper
-      elevation={3}
+      elevation={0}
       sx={{
         p: 2,
         borderTop: 1,
         borderColor: 'divider',
+        bgcolor: 'background.paper',
       }}
     >
       {/* Attachments preview */}
@@ -155,7 +161,11 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ conversationId
       )}
 
       {/* Input area */}
-      <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'flex-end', 
+        gap: 1
+      }}>
         <input
           ref={fileInputRef}
           type="file"
@@ -174,7 +184,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ conversationId
           title="Attach files"
         >
           {uploadMutation.isPending ? (
-            <CircularProgress size={24} />
+            <CircularProgress size={20} />
           ) : (
             <AttachFileIcon />
           )}
@@ -194,6 +204,10 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ conversationId
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: 3,
+              backgroundColor: 'background.paper',
+            },
+            '& .MuiInputBase-input': {
+              padding: '10px 12px',
             },
           }}
         />
@@ -210,11 +224,12 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ conversationId
             },
             '&.Mui-disabled': {
               bgcolor: 'action.disabledBackground',
+              color: 'action.disabled',
             },
           }}
         >
           {isLoading ? (
-            <CircularProgress size={24} color="inherit" />
+            <CircularProgress size={20} color="inherit" />
           ) : (
             <SendIcon />
           )}
