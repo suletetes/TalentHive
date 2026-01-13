@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import { User } from '@/models/User';
 import { Transaction } from '@/models/Transaction';
-import { getTestIndividualData, getTestBankAccount, isStripeTestMode, logTestModeInfo } from '@/utils/stripeTestData';
+import { getTestIndividualData, getTestBankAccount, isStripeTestMode, logTestModeInfo, getValidBusinessUrl } from '@/utils/stripeTestData';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-02-24.acacia', // Updated to latest API version
@@ -35,6 +35,26 @@ export const createConnectAccount = async (req: Request, res: Response) => {
       if (!accountId) {
         const testIndividualData = getTestIndividualData(user.profile, user.email);
         
+        // Ensure we have a valid URL for business profile
+        const businessUrl = getValidBusinessUrl();
+        console.log('[CONNECT] Business URL being used:', businessUrl);
+        console.log('[CONNECT] CLIENT_URL env var:', process.env.CLIENT_URL);
+
+        // Create business profile - URL is optional and localhost is not allowed by Stripe
+        const businessProfile: any = {
+          mcc: '5734', // Computer software stores
+          product_description: 'Freelance services',
+        };
+
+        // Only add URL if it's not localhost (Stripe doesn't accept localhost URLs)
+        const testBusinessUrl = getValidBusinessUrl();
+        if (!testBusinessUrl.includes('localhost')) {
+          businessProfile.url = testBusinessUrl;
+          console.log('[CONNECT] Added business URL to profile:', testBusinessUrl);
+        } else {
+          console.log('[CONNECT] Skipping localhost URL - not allowed by Stripe API');
+        }
+
         const account = await stripe.accounts.create({
           type: 'express',
           country: 'US',
@@ -45,15 +65,7 @@ export const createConnectAccount = async (req: Request, res: Response) => {
           },
           business_type: 'individual',
           individual: testIndividualData,
-          business_profile: {
-            mcc: '5734', // Computer software stores
-            url: process.env.CLIENT_URL,
-            product_description: 'Freelance services',
-          },
-          tos_acceptance: {
-            date: Math.floor(Date.now() / 1000),
-            ip: req.ip || '127.0.0.1',
-          },
+          business_profile: businessProfile,
           metadata: {
             userId: userId.toString(),
             testMode: 'true',
@@ -79,10 +91,11 @@ export const createConnectAccount = async (req: Request, res: Response) => {
       }
 
       // Create account link for onboarding (completes any remaining setup)
+      const clientUrl = getValidBusinessUrl();
       const accountLink = await stripe.accountLinks.create({
         account: accountId,
-        refresh_url: `${process.env.CLIENT_URL}/dashboard/earnings?refresh=true`,
-        return_url: `${process.env.CLIENT_URL}/dashboard/earnings?success=true&test=true`,
+        refresh_url: `${clientUrl}/dashboard/earnings?refresh=true`,
+        return_url: `${clientUrl}/dashboard/earnings?success=true&test=true`,
         type: 'account_onboarding',
       });
 
@@ -120,10 +133,11 @@ export const createConnectAccount = async (req: Request, res: Response) => {
     }
 
     // Create account link for onboarding
+    const clientUrl = getValidBusinessUrl();
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${process.env.CLIENT_URL}/dashboard/earnings?refresh=true`,
-      return_url: `${process.env.CLIENT_URL}/dashboard/earnings?success=true`,
+      refresh_url: `${clientUrl}/dashboard/earnings?refresh=true`,
+      return_url: `${clientUrl}/dashboard/earnings?success=true`,
       type: 'account_onboarding',
     });
 

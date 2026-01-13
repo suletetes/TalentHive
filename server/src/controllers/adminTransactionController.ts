@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Transaction } from '@/models/Transaction';
 import { Contract } from '@/models/Contract';
+import { User } from '@/models/User';
 
 // Get all transactions (admin)
 export const getAllTransactions = async (req: Request, res: Response) => {
