@@ -20,7 +20,7 @@ import { format, isToday, isYesterday } from 'date-fns';
 import { MessageAttachment } from './MessageAttachment';
 
 interface MessageListProps {
-  conversation: Conversation;
+  conversation: Conversation | null;
   onBack?: () => void;
 }
 
@@ -31,17 +31,21 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
   const [page, setPage] = useState(1);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['messages', conversation._id, page],
+    queryKey: ['messages', conversation?._id, page],
     queryFn: async () => {
+      if (!conversation?._id) return { data: [], pagination: {} };
       const response = await messagesService.getMessages(conversation._id, { page, limit: 50 });
       return response;
     },
+    enabled: !!conversation?._id,
   });
 
   const currentUserId = currentUser?.id || currentUser?._id;
-  const otherParticipant = conversation.participants.find((p) => p._id !== currentUserId);
+  const otherParticipant = conversation?.participants?.find((p) => p._id !== currentUserId);
 
   useEffect(() => {
+    if (!conversation?._id) return;
+    
     // Mark messages as read when viewing conversation
     messagesService.markAsRead(conversation._id);
 
@@ -60,7 +64,7 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
     return () => {
       socketService.off('new_message', handleNewMessage);
     };
-  }, [conversation._id, queryClient]);
+  }, [conversation?._id, queryClient]);
 
   useEffect(() => {
     // Scroll to bottom when messages load or new message arrives
@@ -195,26 +199,29 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Header */}
-      <AppBar position="static" color="default" elevation={1}>
-        <Toolbar>
+      <AppBar position="static" color="default" elevation={1} sx={{ flexShrink: 0 }}>
+        <Toolbar variant="dense">
           {onBack && (
             <IconButton edge="start" onClick={onBack} sx={{ mr: 2 }}>
               <ArrowBackIcon />
             </IconButton>
           )}
           <Avatar
-            src={otherParticipant?.profile.avatar}
-            alt={`${otherParticipant?.profile.firstName} ${otherParticipant?.profile.lastName}`}
-            sx={{ width: 40, height: 40, mr: 2 }}
+            src={otherParticipant?.profile?.avatar}
+            alt={otherParticipant ? `${otherParticipant.profile.firstName} ${otherParticipant.profile.lastName}` : 'New Chat'}
+            sx={{ width: 36, height: 36, mr: 2 }}
           >
-            {otherParticipant?.profile.firstName[0]}
-            {otherParticipant?.profile.lastName[0]}
+            {otherParticipant?.profile?.firstName?.[0] || '?'}
+            {otherParticipant?.profile?.lastName?.[0] || ''}
           </Avatar>
           <Box>
-            <Typography variant="subtitle1" fontWeight={600}>
-              {otherParticipant?.profile.firstName} {otherParticipant?.profile.lastName}
+            <Typography variant="subtitle2" fontWeight={600}>
+              {otherParticipant 
+                ? `${otherParticipant.profile.firstName} ${otherParticipant.profile.lastName}`
+                : 'New Conversation'
+              }
             </Typography>
           </Box>
         </Toolbar>
@@ -225,8 +232,9 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
         sx={{
           flex: 1,
           overflowY: 'auto',
-          py: 2,
+          py: 1,
           bgcolor: 'background.default',
+          minHeight: 0,
         }}
       >
         {isLoading ? (
