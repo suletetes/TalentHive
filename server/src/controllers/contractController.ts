@@ -229,8 +229,11 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
   const { status, role } = req.query;
 
   console.log('[GET MY CONTRACTS] ========== START ==========');
+  console.log('[GET MY CONTRACTS] User from req.user:', req.user);
   console.log('[GET MY CONTRACTS] User ID:', req.user?._id);
+  console.log('[GET MY CONTRACTS] User ID toString():', req.user?._id?.toString());
   console.log('[GET MY CONTRACTS] User Role:', req.user?.role);
+  console.log('[GET MY CONTRACTS] User Email:', req.user?.email);
   console.log('[GET MY CONTRACTS] Query params:', { page, limit, status, role });
 
   const query: any = {};
@@ -242,19 +245,27 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
     return next(new AppError('Unauthorized', 401));
   }
 
+  console.log('[GET MY CONTRACTS] Using userId for query:', userId.toString());
+  console.log('[GET MY CONTRACTS] userId type:', typeof userId);
+  console.log('[GET MY CONTRACTS] userId instanceof ObjectId:', userId instanceof mongoose.Types.ObjectId);
+
+  // Ensure userId is an ObjectId for the query
+  const userObjectId = userId instanceof mongoose.Types.ObjectId ? userId : new mongoose.Types.ObjectId(userId);
+  console.log('[GET MY CONTRACTS] userObjectId:', userObjectId);
+
   if (role === 'client') {
-    query.client = userId;
-    console.log('[GET MY CONTRACTS] Filtering by client:', userId);
+    query.client = userObjectId;
+    console.log('[GET MY CONTRACTS] Filtering by client:', userObjectId);
   } else if (role === 'freelancer') {
-    query.freelancer = userId;
-    console.log('[GET MY CONTRACTS] Filtering by freelancer:', userId);
+    query.freelancer = userObjectId;
+    console.log('[GET MY CONTRACTS] Filtering by freelancer:', userObjectId);
   } else {
     // Show all contracts where user is either client or freelancer
     query.$or = [
-      { client: userId },
-      { freelancer: userId },
+      { client: userObjectId },
+      { freelancer: userObjectId },
     ];
-    console.log('[GET MY CONTRACTS] Filtering by client OR freelancer:', userId);
+    console.log('[GET MY CONTRACTS] Filtering by client OR freelancer:', userObjectId);
   }
 
   if (status) {
@@ -268,6 +279,23 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
 
   let contracts, total;
   try {
+    // First, let's do a simple test query to see what's in the database
+    console.log('[GET MY CONTRACTS] Testing simple query...');
+    const testContracts = await Contract.find({}).limit(3).lean();
+    console.log('[GET MY CONTRACTS] Sample contracts in DB:', testContracts.map(c => ({
+      id: c._id,
+      title: c.title,
+      client: c.client,
+      freelancer: c.freelancer,
+      clientType: typeof c.client,
+      freelancerType: typeof c.freelancer
+    })));
+
+    // Test direct query with the user ID
+    console.log('[GET MY CONTRACTS] Testing direct freelancer query...');
+    const directQuery = await Contract.find({ freelancer: userObjectId }).limit(2).lean();
+    console.log('[GET MY CONTRACTS] Direct freelancer query result:', directQuery.length);
+
     // Use aggregation pipeline for better performance
     const aggregationPipeline = [
       { $match: query },
@@ -325,6 +353,7 @@ export const getMyContracts = catchAsync(async (req: AuthRequest, res: Response,
       }
     ];
 
+    console.log('[GET MY CONTRACTS] Running aggregation pipeline...');
     const [result] = await Contract.aggregate(aggregationPipeline);
     contracts = result.contracts;
     total = result.totalCount[0]?.count || 0;

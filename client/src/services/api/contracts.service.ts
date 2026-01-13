@@ -74,8 +74,19 @@ export class ContractsService {
     const response = await apiCore.get(`${this.basePath}/my?${queryParams.toString()}`);
     console.log('[CONTRACTS SERVICE] Raw response:', response);
     
-    const contracts = extractContracts<Contract>(response);
-    console.log('[CONTRACTS SERVICE] Extracted contracts:', contracts.length);
+    // Extract contracts with robust data extraction
+    const contracts = dataExtractor.extractArray<Contract>(response, [
+      'data.contracts', 'contracts', 'data', 'data.data.contracts'
+    ]);
+    
+    console.log('[CONTRACTS SERVICE] Data extraction details:', {
+      responseKeys: Object.keys(response || {}),
+      dataKeys: response?.data ? Object.keys(response.data) : 'no data',
+      hasContracts: !!response?.data?.contracts,
+      contractsIsArray: Array.isArray(response?.data?.contracts),
+      contractsLength: Array.isArray(response?.data?.contracts) ? response.data.contracts.length : 'not array',
+      extractedLength: contracts.length
+    });
     
     return { data: contracts };
   }

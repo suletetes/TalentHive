@@ -70,6 +70,8 @@ export const ContractsPage: React.FC = () => {
       console.log('[CONTRACTS] Contracts count:', contracts.length);
       return contracts;
     },
+    staleTime: 0, // Always refetch
+    gcTime: 0, // Don't cache
   });
 
   // Sign contract mutation
@@ -272,9 +274,23 @@ export const ContractsPage: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        My Contracts
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4" component="h1">
+          My Contracts
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Typography variant="caption" color="text.secondary">
+            User: {user?.email} ({user?.role})
+          </Typography>
+          <Button 
+            variant="outlined" 
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Loading...' : 'Refresh'}
+          </Button>
+        </Box>
+      </Box>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
         View and manage all your contracts
       </Typography>

@@ -19,6 +19,7 @@
     "seed:roles": "ts-node -r tsconfig-paths/register src/scripts/seedAll.ts roles",
     "seed:profiles": "ts-node -r tsconfig-paths/register src/scripts/seedAll.ts profiles",
     "assign-contracts": "ts-node -r tsconfig-paths/register src/scripts/assignContractsToUser.ts",
+    "debug-user": "ts-node -r tsconfig-paths/register src/scripts/debugUserContracts.ts",
     "validate-data": "ts-node -r tsconfig-paths/register src/scripts/validateData.ts"
   },
   "dependencies": {
