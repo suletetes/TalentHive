@@ -41,6 +41,7 @@ const navigationConfig: NavigationItem[] = [
   { label: 'Find Work', path: '/projects', roles: ['freelancer'] },
   { label: 'My Proposals', path: '/dashboard/proposals', roles: ['freelancer'] },
   { label: 'My Contracts', path: '/dashboard/contracts', roles: ['freelancer'] },
+  { label: 'Earnings', path: '/dashboard/earnings', roles: ['freelancer'] },
   { label: 'My Services', path: '/dashboard/services', roles: ['freelancer'] },
   
   // Client-specific
