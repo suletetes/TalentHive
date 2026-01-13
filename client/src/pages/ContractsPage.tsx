@@ -69,23 +69,10 @@ export const ContractsPage: React.FC = () => {
       console.log(`[CONTRACTS PAGE] User Role:`, user?.role);
       
       const response = await contractsService.getMyContracts();
-      console.log(`[CONTRACTS PAGE] Raw API response:`, response);
+      console.log(`[CONTRACTS PAGE] API response:`, response);
       
-      // Simplified response extraction - API should return { status: 'success', data: [...] }
-      let contracts = [];
-      if (response?.data && Array.isArray(response.data)) {
-        contracts = response.data;
-        console.log(`[CONTRACTS PAGE] Extracted from response.data (array)`);
-      } else if (response?.data?.data && Array.isArray(response.data.data)) {
-        contracts = response.data.data;
-        console.log(`[CONTRACTS PAGE] Extracted from response.data.data (array)`);
-      } else if (response?.data?.contracts && Array.isArray(response.data.contracts)) {
-        contracts = response.data.contracts;
-        console.log(`[CONTRACTS PAGE] Extracted from response.data.contracts (array)`);
-      } else {
-        console.log(`[CONTRACTS PAGE] Could not extract contracts array, using empty array`);
-        contracts = [];
-      }
+      // The service now returns { data: Contract[] } with standardized extraction
+      const contracts = response.data || [];
       
       console.log(`[CONTRACTS PAGE] Total contracts found: ${contracts.length}`);
       

@@ -22,6 +22,7 @@ import { proposalsService, Proposal } from '@/services/api/proposals.service';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { EditProposalForm } from '@/components/proposals/EditProposalForm';
+import { getProposalBudget, formatProposalBudget, getBudgetTypeDisplay } from '@/utils/proposalHelpers';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -177,10 +178,10 @@ export const ProposalsPage: React.FC = () => {
                     </Box>
                     <Box>
                       <Typography variant="h6" color="primary">
-                        ${proposal.bidAmount || 0}
+                        {formatProposalBudget(proposal)}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {proposal.proposedBudget?.type === 'hourly' ? '/hour' : 'fixed'}
+                        {getBudgetTypeDisplay(proposal)}
                       </Typography>
                     </Box>
                   </Box>
@@ -275,8 +276,7 @@ export const ProposalsPage: React.FC = () => {
                   Proposed Budget
                 </Typography>
                 <Typography variant="h6" color="primary">
-                  ${selectedProposal.bidAmount || 0}
-                  {selectedProposal.proposedBudget?.type === 'hourly' ? '/hour' : ' (fixed)'}
+                  {formatProposalBudget(selectedProposal)}
                 </Typography>
               </Box>
 
