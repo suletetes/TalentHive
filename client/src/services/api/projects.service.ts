@@ -116,30 +116,74 @@ export class ProjectsService {
       });
     }
 
-    const response = await apiCore.get<{ status: string; data: { projects: Project[]; pagination: any } }>(
-      `${this.basePath}?${params.toString()}`
-    );
+    console.log('[PROJECTS SERVICE] ========== FETCHING PROJECTS ==========');
+    console.log('[PROJECTS SERVICE] Query params:', params.toString());
     
-    // Transform API response to expected format
+    const response = await apiCore.get<any>(`${this.basePath}?${params.toString()}`);
+    console.log('[PROJECTS SERVICE] Raw API response:', response);
+    console.log('[PROJECTS SERVICE] Response structure:', {
+      hasStatus: !!response?.status,
+      hasData: !!response?.data,
+      hasProjects: !!response?.data?.projects,
+      projectsLength: Array.isArray(response?.data?.projects) ? response.data.projects.length : 'not array',
+      responseKeys: Object.keys(response || {}),
+      dataKeys: response?.data ? Object.keys(response.data) : 'no data',
+    });
+    
+    // Use robust data extraction with multiple fallback paths
+    const projects = extractProjects<Project>(response);
+    
+    // Extract pagination info
+    let pagination = response?.data?.pagination || response?.pagination || {
+      page: 1,
+      limit: 12,
+      total: projects.length,
+      pages: Math.ceil(projects.length / 12),
+    };
+
+    console.log('[PROJECTS SERVICE] Extracted projects:', projects.length);
+    console.log('[PROJECTS SERVICE] Pagination:', pagination);
+    console.log('[PROJECTS SERVICE] ========== END FETCH ==========');
+    
     return {
-      data: response.data.projects,
-      pagination: response.data.pagination,
+      data: projects,
+      pagination,
     };
   }
 
   async getProjectById(id: string): Promise<{ data: Project }> {
-    const response = await apiCore.get<{ status: string; data: { project: Project } }>(`${this.basePath}/${id}`);
-    return { data: response.data.project };
+    const response = await apiCore.get<any>(`${this.basePath}/${id}`);
+    console.log('[PROJECTS SERVICE] Raw project response:', response);
+    
+    const project = extractProject<Project>(response);
+    
+    if (!project) {
+      throw new Error('Project not found');
+    }
+    
+    return { data: project };
   }
 
   async createProject(data: CreateProjectDto): Promise<{ data: Project }> {
-    const response = await apiCore.post<{ status: string; data: { project: Project } }>(this.basePath, data);
-    return { data: response.data.project };
+    const response = await apiCore.post<any>(this.basePath, data);
+    const project = extractProject<Project>(response);
+    
+    if (!project) {
+      throw new Error('Failed to create project');
+    }
+    
+    return { data: project };
   }
 
   async updateProject(id: string, data: UpdateProjectDto): Promise<{ data: Project }> {
-    const response = await apiCore.put<{ status: string; data: { project: Project } }>(`${this.basePath}/${id}`, data);
-    return { data: response.data.project };
+    const response = await apiCore.put<any>(`${this.basePath}/${id}`, data);
+    const project = extractProject<Project>(response);
+    
+    if (!project) {
+      throw new Error('Failed to update project');
+    }
+    
+    return { data: project };
   }
 
   async deleteProject(id: string): Promise<{ message: string }> {
@@ -147,8 +191,14 @@ export class ProjectsService {
   }
 
   async getMyProjects(): Promise<{ data: Project[] }> {
-    const response = await apiCore.get<{ status: string; data: { projects: Project[]; pagination: any } }>(`${this.basePath}/my/projects`);
-    return { data: response.data.projects };
+    console.log('[PROJECTS SERVICE] Fetching my projects...');
+    const response = await apiCore.get<any>(`${this.basePath}/my/projects`);
+    console.log('[PROJECTS SERVICE] My projects response:', response);
+    
+    const projects = extractProjects<Project>(response);
+    console.log('[PROJECTS SERVICE] Extracted my projects:', projects.length);
+    
+    return { data: projects };
   }
 
   async searchProjects(
@@ -168,27 +218,54 @@ export class ProjectsService {
       });
     }
 
-    return apiCore.get<PaginatedResponse<Project>>(
-      `${this.basePath}/search?${params.toString()}`
-    );
+    const response = await apiCore.get<any>(`${this.basePath}/search?${params.toString()}`);
+    const projects = extractProjects<Project>(response);
+    
+    // Extract pagination info
+    let pagination = response?.data?.pagination || response?.pagination || {
+      page: 1,
+      limit: 12,
+      total: projects.length,
+      pages: Math.ceil(projects.length / 12),
+    };
+
+    return {
+      data: projects,
+      pagination,
+    };
   }
 
   async toggleProjectStatus(id: string): Promise<{ data: Project }> {
-    const response = await apiCore.patch<{ status: string; data: { project: Project } }>(`${this.basePath}/${id}/status`);
-    return { data: response.data.project };
+    const response = await apiCore.patch<any>(`${this.basePath}/${id}/status`);
+    const project = extractProject<Project>(response);
+    
+    if (!project) {
+      throw new Error('Failed to toggle project status');
+    }
+    
+    return { data: project };
   }
 
   async getProjectStats(): Promise<{ data: any }> {
-    return apiCore.get<{ data: any }>(`${this.basePath}/my/stats`);
+    const response = await apiCore.get<any>(`${this.basePath}/my/stats`);
+    return { data: dataExtractor.extractObject(response, ['data', 'stats']) || response };
   }
 
   async getProjectCategories(): Promise<{ data: string[] }> {
-    return apiCore.get<{ data: string[] }>(`${this.basePath}/categories`);
+    const response = await apiCore.get<any>(`${this.basePath}/categories`);
+    const categories = dataExtractor.extractArray(response, ['data', 'categories', 'data.categories']);
+    return { data: categories };
   }
 
   async toggleProposalAcceptance(id: string): Promise<{ data: Project }> {
-    const response = await apiCore.post<{ status: string; data: { project: Project } }>(`${this.basePath}/${id}/toggle-proposals`);
-    return { data: response.data.project };
+    const response = await apiCore.post<any>(`${this.basePath}/${id}/toggle-proposals`);
+    const project = extractProject<Project>(response);
+    
+    if (!project) {
+      throw new Error('Failed to toggle proposal acceptance');
+    }
+    
+    return { data: project };
   }
 }
 
