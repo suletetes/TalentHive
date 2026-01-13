@@ -74,7 +74,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const messages = messagesData?.messages || [];
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '600px' }}>
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: { xs: '400px', sm: '500px', md: '600px' },
+      minHeight: '300px',
+      maxHeight: { xs: '70vh', sm: '80vh' }
+    }}>
       <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
         {messages.map((msg: any) => (
           <Box

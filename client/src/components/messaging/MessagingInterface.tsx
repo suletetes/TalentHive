@@ -66,7 +66,14 @@ export const MessagingInterface: React.FC = () => {
   }, [isMobile, selectedConversation]);
 
   return (
-    <Box sx={{ height: 'calc(100vh - 120px)', display: 'flex' }}>
+    <Box sx={{ 
+      height: { 
+        xs: 'calc(100vh - 140px)', // More space on mobile for header
+        sm: 'calc(100vh - 120px)' 
+      }, 
+      display: 'flex',
+      minHeight: { xs: '400px', sm: '500px' } // Minimum height for usability
+    }}>
       {isMobile ? (
         <>
           <Drawer
