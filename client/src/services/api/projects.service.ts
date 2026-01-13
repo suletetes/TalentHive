@@ -152,10 +152,23 @@ export class ProjectsService {
   }
 
   async getProjectById(id: string): Promise<{ data: Project }> {
+    console.log('[PROJECTS SERVICE] ========== FETCHING PROJECT BY ID ==========');
+    console.log('[PROJECTS SERVICE] Project ID:', id);
+    
     const response = await apiCore.get<any>(`${this.basePath}/${id}`);
     console.log('[PROJECTS SERVICE] Raw project response:', response);
+    console.log('[PROJECTS SERVICE] Response structure:', {
+      hasStatus: !!response?.status,
+      hasData: !!response?.data,
+      hasProject: !!response?.data?.project,
+      responseKeys: Object.keys(response || {}),
+      dataKeys: response?.data ? Object.keys(response.data) : 'no data',
+    });
     
     const project = extractProject<Project>(response);
+    console.log('[PROJECTS SERVICE] Extracted project:', project);
+    console.log('[PROJECTS SERVICE] Project title:', project?.title);
+    console.log('[PROJECTS SERVICE] ========== END FETCH PROJECT ==========');
     
     if (!project) {
       throw new Error('Project not found');
