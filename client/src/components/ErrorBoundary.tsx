@@ -202,7 +202,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                           wordBreak: 'break-word',
                           maxHeight: 200,
                           overflow: 'auto',
-                          backgroundColor: 'grey.100',
+                          backgroundColor: (theme) =>
+                            theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100',
+                          color: (theme) =>
+                            theme.palette.mode === 'dark' ? 'grey.100' : 'grey.900',
                           padding: 1,
                           borderRadius: 1,
                         }}
@@ -225,7 +228,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                               wordBreak: 'break-word',
                               maxHeight: 200,
                               overflow: 'auto',
-                              backgroundColor: 'grey.100',
+                              backgroundColor: (theme) =>
+                                theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100',
+                              color: (theme) =>
+                                theme.palette.mode === 'dark' ? 'grey.100' : 'grey.900',
                               padding: 1,
                               borderRadius: 1,
                             }}

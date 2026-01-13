@@ -52,7 +52,10 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       sx={{
         p: 6,
         textAlign: 'center',
-        bgcolor: 'error.lighter',
+        bgcolor: (theme) =>
+          theme.palette.mode === 'dark' 
+            ? 'rgba(244, 67, 54, 0.1)' // Dark red background for dark mode
+            : 'error.lighter',
         border: 1,
         borderColor: 'error.light',
         borderRadius: 2,
@@ -90,7 +93,8 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           sx={{
             mt: 3,
             p: 2,
-            bgcolor: 'grey.900',
+            bgcolor: (theme) =>
+              theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100',
             borderRadius: 1,
             textAlign: 'left',
             overflow: 'auto',
@@ -102,7 +106,8 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
             sx={{ 
               whiteSpace: 'pre-wrap', 
               wordBreak: 'break-word',
-              color: 'grey.100',
+              color: (theme) =>
+                theme.palette.mode === 'dark' ? 'grey.100' : 'grey.900',
               fontFamily: 'monospace',
             }}
           >

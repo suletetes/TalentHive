@@ -162,7 +162,7 @@ const WorkLogReport: React.FC = () => {
               variant="contained"
               onClick={handleGenerateReport}
               disabled={loading}
-              sx={{ height: '56px' }}
+              sx={{ height: { xs: '48px', sm: '56px' } }}
             >
               {loading ? 'Loading...' : 'Generate Report'}
             </Button>
