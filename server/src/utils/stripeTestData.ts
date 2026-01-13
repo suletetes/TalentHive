@@ -145,6 +145,32 @@ export const TEST_SCENARIOS = {
 };
 
 /**
+ * Get a valid URL for Stripe business profile
+ */
+export const getValidBusinessUrl = (): string => {
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  
+  // If empty or undefined, use default
+  if (!clientUrl || clientUrl.trim() === '') {
+    console.log('[URL_VALIDATION] CLIENT_URL is empty, using default');
+    return 'http://localhost:3000';
+  }
+  
+  const trimmedUrl = clientUrl.trim();
+  
+  // Check if URL already has protocol
+  if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+    console.log('[URL_VALIDATION] URL has protocol:', trimmedUrl);
+    return trimmedUrl;
+  }
+  
+  // Add http:// if missing (for development)
+  const finalUrl = `http://${trimmedUrl}`;
+  console.log('[URL_VALIDATION] Added protocol:', finalUrl);
+  return finalUrl;
+};
+
+/**
  * Log test mode information
  */
 export const logTestModeInfo = () => {
@@ -153,5 +179,7 @@ export const logTestModeInfo = () => {
     console.log('[STRIPE TEST MODE] Test SSN last 4:', STRIPE_TEST_DATA.SSN_LAST_4);
     console.log('[STRIPE TEST MODE] Test routing number:', STRIPE_TEST_DATA.BANK_ACCOUNT.routing_number);
     console.log('[STRIPE TEST MODE] Test account number:', STRIPE_TEST_DATA.BANK_ACCOUNT.account_number);
+    console.log('[STRIPE TEST MODE] Business URL:', getValidBusinessUrl());
+    console.log('[STRIPE TEST MODE] CLIENT_URL env var:', process.env.CLIENT_URL);
   }
 };

@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { logger } from './logger';
+import { getValidBusinessUrl } from './stripeTestData';
 
 // Initialize Resend only if API key is available
 let resend: Resend | null = null;
@@ -50,7 +51,7 @@ export const sendVerificationEmail = async (
   email: string,
   verificationToken: string
 ): Promise<void> => {
-  const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
+  const verificationUrl = `${getValidBusinessUrl()}/verify-email?token=${verificationToken}`;
 
   const html = `
     <!DOCTYPE html>
@@ -101,7 +102,7 @@ export const sendPasswordResetEmail = async (
   email: string,
   resetToken: string
 ): Promise<void> => {
-  const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
+  const resetUrl = `${getValidBusinessUrl()}/reset-password?token=${resetToken}`;
 
   const html = `
     <!DOCTYPE html>
@@ -186,7 +187,7 @@ export const sendWelcomeEmail = async (
                 <li>Start building amazing things together</li>
               </ul>
             </div>
-            <a href="${process.env.CLIENT_URL}/dashboard" class="button">Go to Dashboard</a>
+            <a href="${getValidBusinessUrl()}/dashboard" class="button">Go to Dashboard</a>
             <p>If you have any questions, feel free to reach out to our support team.</p>
           </div>
           <div class="footer">

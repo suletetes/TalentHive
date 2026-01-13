@@ -3,6 +3,7 @@ import { User } from '@/models/User';
 import { emitToUser } from '@/config/socket';
 import { sendEmail } from './email';
 import { logger } from './logger';
+import { getValidBusinessUrl } from './stripeTestData';
 
 interface NotificationData {
   userId: string;
@@ -85,7 +86,7 @@ class NotificationBatch {
         html: `
           <h2>${notification.title}</h2>
           <p>${notification.message}</p>
-          ${notification.link ? `<p><a href="${process.env.CLIENT_URL}${notification.link}">View Details</a></p>` : ''}
+          ${notification.link ? `<p><a href="${getValidBusinessUrl()}${notification.link}">View Details</a></p>` : ''}
         `,
       }).catch(error => {
         logger.error(`Failed to send email to ${user.email}:`, error);
@@ -145,7 +146,7 @@ export const createImmediateNotification = async (notificationData: Notification
         html: `
           <h2>${notificationData.title}</h2>
           <p>${notificationData.message}</p>
-          ${notificationData.link ? `<p><a href="${process.env.CLIENT_URL}${notificationData.link}">View Details</a></p>` : ''}
+          ${notificationData.link ? `<p><a href="${getValidBusinessUrl()}${notificationData.link}">View Details</a></p>` : ''}
         `,
       });
     }
