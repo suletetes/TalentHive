@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Grid,
   Paper,
   useTheme,
   useMediaQuery,
@@ -21,6 +20,7 @@ export const MessagingInterface: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [searchParams] = useSearchParams();
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   // Fetch conversations to find the one from URL
@@ -36,17 +36,36 @@ export const MessagingInterface: React.FC = () => {
   useEffect(() => {
     const conversationId = searchParams.get('conversation');
     
-    if (conversationId && conversations) {
-      const conversation = conversations.find(c => c._id === conversationId);
+    if (conversationId && conversationId !== selectedConversationId) {
+      setSelectedConversationId(conversationId);
       
-      if (conversation) {
-        setSelectedConversation(conversation);
+      // Always create a temporary conversation to ensure UI renders
+      const tempConversation: Conversation = {
+        _id: conversationId,
+        participants: [],
+        unreadCount: 0,
+        updatedAt: new Date(),
+      };
+      setSelectedConversation(tempConversation);
+    } else if (!conversationId && selectedConversationId) {
+      // Don't clear the selection if URL param disappears - this might be a navigation issue
+      // Keep the conversation selected to prevent UI flickering
+    }
+  }, [searchParams.get('conversation')]); // Only depend on the actual conversation ID
+  
+  // Separate effect to update conversation details when conversations load
+  useEffect(() => {
+    if (selectedConversationId && conversations) {
+      const realConversation = conversations.find(c => c._id === selectedConversationId);
+      if (realConversation) {
+        setSelectedConversation(realConversation);
       }
     }
-  }, [searchParams, conversations]);
+  }, [conversations, selectedConversationId]);
 
   const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
+    setSelectedConversationId(conversation._id);
     if (isMobile) {
       setMobileDrawerOpen(false);
     }
@@ -54,6 +73,7 @@ export const MessagingInterface: React.FC = () => {
 
   const handleBackToList = () => {
     setSelectedConversation(null);
+    setSelectedConversationId(null);
     if (isMobile) {
       setMobileDrawerOpen(true);
     }
@@ -61,19 +81,20 @@ export const MessagingInterface: React.FC = () => {
 
   useEffect(() => {
     if (isMobile) {
-      setMobileDrawerOpen(!selectedConversation);
+      // On mobile, close drawer when conversation is selected, open when none selected
+      const hasSelection = selectedConversation || selectedConversationId;
+      setMobileDrawerOpen(!hasSelection);
     }
-  }, [isMobile, selectedConversation]);
+  }, [isMobile, selectedConversation, selectedConversationId]);
 
   return (
     <Box sx={{ 
-      height: { 
-        xs: 'calc(100vh - 140px)', // More space on mobile for header
-        sm: 'calc(100vh - 120px)' 
-      }, 
+      height: '100%',
       display: 'flex',
-      minHeight: { xs: '400px', sm: '500px' } // Minimum height for usability
+      flexDirection: 'column',
+      overflow: 'hidden'
     }}>
+      
       {isMobile ? (
         <>
           <Drawer
@@ -92,13 +113,19 @@ export const MessagingInterface: React.FC = () => {
               onSelectConversation={handleSelectConversation}
             />
           </Drawer>
-          {selectedConversation ? (
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <MessageList
-                conversation={selectedConversation}
-                onBack={handleBackToList}
-              />
-              <MessageComposer conversationId={selectedConversation._id} />
+          {selectedConversation || selectedConversationId ? (
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <Box sx={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+                <MessageList
+                  conversation={selectedConversation}
+                  onBack={handleBackToList}
+                />
+              </Box>
+              {selectedConversationId && (
+                <Box sx={{ flexShrink: 0 }}>
+                  <MessageComposer conversationId={selectedConversationId} />
+                </Box>
+              )}
             </Box>
           ) : (
             <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -113,18 +140,34 @@ export const MessagingInterface: React.FC = () => {
           )}
         </>
       ) : (
-        <Grid container sx={{ height: '100%' }}>
-          <Grid item xs={12} md={4} sx={{ height: '100%', borderRight: 1, borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+          <Box sx={{ 
+            width: '33.333333%', // Equivalent to md={4}
+            borderRight: 1, 
+            borderColor: 'divider',
+            overflow: 'hidden'
+          }}>
             <ConversationList
               selectedConversation={selectedConversation}
               onSelectConversation={handleSelectConversation}
             />
-          </Grid>
-          <Grid item xs={12} md={8} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            {selectedConversation ? (
-              <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <MessageList conversation={selectedConversation} />
-                <MessageComposer conversationId={selectedConversation._id} />
+          </Box>
+          <Box sx={{ 
+            flex: 1, // Equivalent to md={8}
+            display: 'flex', 
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            {selectedConversation || selectedConversationId ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                <Box sx={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+                  <MessageList conversation={selectedConversation} />
+                </Box>
+                {selectedConversationId && (
+                  <Box sx={{ flexShrink: 0 }}>
+                    <MessageComposer conversationId={selectedConversationId} />
+                  </Box>
+                )}
               </Box>
             ) : (
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -135,8 +178,8 @@ export const MessagingInterface: React.FC = () => {
                 />
               </Box>
             )}
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       )}
     </Box>
   );

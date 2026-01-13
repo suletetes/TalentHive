@@ -1,5 +1,6 @@
 import sgMail from '@sendgrid/mail';
 import { logger } from './logger';
+import { getValidBusinessUrl } from './stripeTestData';
 
 // Only set API key if it exists
 if (process.env.SENDGRID_API_KEY) {
@@ -42,7 +43,7 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
 };
 
 export const sendVerificationEmail = async (email: string, token: string): Promise<void> => {
-  const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${token}`;
+  const verificationUrl = `${getValidBusinessUrl()}/verify-email/${token}`;
   
   const html = `
     <h1>Welcome to TalentHive!</h1>

@@ -257,7 +257,7 @@ export const DashboardPage: React.FC = () => {
                   <Typography variant="h6">Earnings</Typography>
                 </Box>
                 <Typography variant="h4" color="success.main">
-                  ${(stats.totalEarnings ?? 0).toFixed(2)}
+                  ${((stats.totalEarnings ?? 0) / 100).toFixed(2)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   View earnings dashboard

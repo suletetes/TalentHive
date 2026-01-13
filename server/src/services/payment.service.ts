@@ -3,6 +3,7 @@ import { Transaction } from '../models/Transaction';
 import { PlatformSettings } from '../models/PlatformSettings';
 import { Contract } from '../models/Contract';
 import mongoose from 'mongoose';
+import { getValidBusinessUrl } from '../utils/stripeTestData';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-02-24.acacia', // Updated to latest API version
@@ -151,8 +152,8 @@ export class PaymentService {
           tax: fees.tax.toString(),
           freelancerAmount: fees.freelancerAmount.toString(),
         },
-        success_url: successUrl || `${process.env.CLIENT_URL}/dashboard/contracts/${contractId}?payment=success`,
-        cancel_url: cancelUrl || `${process.env.CLIENT_URL}/dashboard/contracts/${contractId}?payment=cancelled`,
+        success_url: successUrl || `${getValidBusinessUrl()}/dashboard/contracts/${contractId}?payment=success`,
+        cancel_url: cancelUrl || `${getValidBusinessUrl()}/dashboard/contracts/${contractId}?payment=cancelled`,
         client_reference_id: clientId,
       });
 

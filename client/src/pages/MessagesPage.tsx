@@ -12,8 +12,8 @@ export const MessagesPage: React.FC = () => {
   }, []);
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ mb: 3 }}>
+    <Container maxWidth="xl" sx={{ py: 3, height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ mb: 2, flexShrink: 0 }}>
         <Typography variant="h4" gutterBottom>
           Messages
         </Typography>
@@ -21,14 +21,16 @@ export const MessagesPage: React.FC = () => {
           Communicate with clients and freelancers
         </Typography>
       </Box>
-      <Paper elevation={2} sx={{ 
-        height: { 
-          xs: 'calc(100vh - 220px)', // More space on mobile
-          sm: 'calc(100vh - 200px)' 
-        }, 
-        minHeight: { xs: '400px', sm: '500px' },
-        overflow: 'hidden' 
-      }}>
+      <Paper 
+        elevation={2} 
+        sx={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0, // Important for flex children
+        }}
+      >
         <MessagingInterface />
       </Paper>
     </Container>

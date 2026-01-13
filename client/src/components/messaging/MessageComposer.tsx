@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   TextField,
@@ -25,6 +25,11 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ conversationId
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  // Don't render if no conversation ID
+  if (!conversationId || conversationId.trim() === '' || conversationId === 'undefined' || conversationId === 'null') {
+    return null;
+  }
 
   const uploadMutation = useMutation({
     mutationFn: async (files: File[]) => {
@@ -129,12 +134,13 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ conversationId
   const canSend = (message.trim().length > 0 || attachments.length > 0) && !isLoading;
 
   return (
-    <Paper
-      elevation={3}
+    <Box
       sx={{
         p: 2,
         borderTop: 1,
         borderColor: 'divider',
+        bgcolor: 'background.paper',
+        boxShadow: '0 -2px 8px rgba(0,0,0,0.1)',
       }}
     >
       {/* Attachments preview */}
@@ -147,7 +153,14 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ conversationId
                 label={attachment.filename}
                 onDelete={() => handleRemoveAttachment(index)}
                 size="small"
-                icon={attachment.type === 'image' ? undefined : undefined}
+                variant="outlined"
+                sx={{
+                  maxWidth: '200px',
+                  '& .MuiChip-label': {
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }
+                }}
               />
             ))}
           </Stack>
@@ -155,7 +168,12 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ conversationId
       )}
 
       {/* Input area */}
-      <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'flex-end', 
+        gap: 1.5,
+        position: 'relative'
+      }}>
         <input
           ref={fileInputRef}
           type="file"
@@ -170,56 +188,90 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ conversationId
           color="primary"
           onClick={handleAttachClick}
           disabled={isLoading}
-          size="small"
-          title="Attach files"
+          size="medium"
+          sx={{
+            bgcolor: 'transparent',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 2,
+            '&:hover': {
+              bgcolor: 'action.hover',
+              borderColor: 'primary.main',
+            },
+            '&.Mui-disabled': {
+              borderColor: 'action.disabled',
+            }
+          }}
         >
           {uploadMutation.isPending ? (
-            <CircularProgress size={24} />
+            <CircularProgress size={20} />
           ) : (
-            <AttachFileIcon />
+            <AttachFileIcon fontSize="small" />
           )}
         </IconButton>
 
-        <TextField
-          fullWidth
-          multiline
-          maxRows={4}
-          placeholder="Type a message..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
-          disabled={isLoading}
-          variant="outlined"
-          size="small"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 3,
-            },
-          }}
-        />
+        <Box sx={{ flex: 1, position: 'relative' }}>
+          <TextField
+            fullWidth
+            multiline
+            maxRows={4}
+            minRows={1}
+            placeholder="Type a message..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            disabled={isLoading}
+            variant="outlined"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 3,
+                backgroundColor: 'background.paper',
+                fontSize: '14px',
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderWidth: '2px',
+                },
+              },
+              '& .MuiInputBase-input': {
+                padding: '12px 16px',
+                lineHeight: '1.4',
+              },
+              '& .MuiInputBase-inputMultiline': {
+                resize: 'none',
+              },
+            }}
+          />
+        </Box>
 
         <IconButton
-          color="primary"
           onClick={handleSend}
           disabled={!canSend}
+          size="medium"
           sx={{
-            bgcolor: 'primary.main',
-            color: 'white',
+            bgcolor: canSend ? 'primary.main' : 'action.disabledBackground',
+            color: canSend ? 'primary.contrastText' : 'action.disabled',
+            borderRadius: 2,
+            width: 44,
+            height: 44,
             '&:hover': {
-              bgcolor: 'primary.dark',
+              bgcolor: canSend ? 'primary.dark' : 'action.disabledBackground',
             },
             '&.Mui-disabled': {
               bgcolor: 'action.disabledBackground',
+              color: 'action.disabled',
             },
+            transition: 'all 0.2s ease-in-out',
           }}
         >
           {isLoading ? (
-            <CircularProgress size={24} color="inherit" />
+            <CircularProgress size={20} color="inherit" />
           ) : (
-            <SendIcon />
+            <SendIcon fontSize="small" />
           )}
         </IconButton>
       </Box>
-    </Paper>
+    </Box>
   );
 };

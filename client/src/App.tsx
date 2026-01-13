@@ -67,6 +67,7 @@ import { ClientDetailPage } from '@/pages/ClientDetailPage';
 import { RoleManagementPage } from '@/pages/admin/RoleManagementPage';
 import { UserPermissionsPage } from '@/pages/admin/UserPermissionsPage';
 import { AuditLogPage } from '@/pages/admin/AuditLogPage';
+import { EarningsPage } from '@/pages/EarningsPage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { ToastProvider } from '@/components/ui/ToastProvider';
@@ -141,6 +142,7 @@ function App() {
           <Route path="proposals" element={<ProposalsPage />} />
           <Route path="contracts" element={<ContractsPage />} />
           <Route path="payments" element={<PaymentsPage />} />
+          <Route path="earnings" element={<EarningsPage />} />
           <Route path="reviews" element={<ReviewsPage />} />
           <Route path="messages" element={<MessagesPage />} />
           <Route path="notifications" element={<NotificationsPage />} />

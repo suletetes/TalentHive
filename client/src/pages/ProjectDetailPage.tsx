@@ -101,6 +101,17 @@ export const ProjectDetailPage = () => {
   const queryClient = useQueryClient();
   const { data: projectResponse, isLoading, error } = useProject(id || '');
 
+  // Debug logging
+  console.log('[PROJECT_DETAIL] Debug info:', {
+    id,
+    isLoading,
+    error,
+    projectResponse,
+    hasData: !!projectResponse?.data,
+    projectTitle: projectResponse?.data?.project?.title || projectResponse?.data?.title,
+    projectPath: projectResponse?.data?.project ? 'data.project' : 'data',
+  });
+
   const [proposalDialogOpen, setProposalDialogOpen] = useState(false);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -209,7 +220,7 @@ export const ProjectDetailPage = () => {
   };
 
   const validateProposal = (): boolean => {
-    const project = projectResponse?.data;
+    const project = projectResponse?.data?.project || projectResponse?.data;
     const bid = parseFloat(bidAmount);
     const dur = parseInt(duration);
 
@@ -306,7 +317,7 @@ export const ProjectDetailPage = () => {
     );
   }
 
-  const project = projectResponse.data;
+  const project = projectResponse?.data?.project || projectResponse?.data;
   
   const isFreelancer = user?.role === 'freelancer';
   const isClient = user?.role === 'client';

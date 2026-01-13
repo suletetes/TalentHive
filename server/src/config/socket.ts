@@ -2,13 +2,14 @@ import { Server as HTTPServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { verifyToken } from '@/utils/jwt';
 import { logger } from '@/utils/logger';
+import { getValidBusinessUrl } from '@/utils/stripeTestData';
 
 export let io: Server;
 
 export const initializeSocket = (server: HTTPServer) => {
   io = new Server(server, {
     cors: {
-      origin: process.env.CLIENT_URL || 'http://localhost:3000',
+      origin: getValidBusinessUrl(),
       credentials: true,
     },
   });

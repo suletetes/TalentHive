@@ -24,47 +24,27 @@ export const MessageButton: React.FC<MessageButtonProps> = ({
 
   const createConversationMutation = useMutation({
     mutationFn: async () => {
-      console.log(' Creating conversation with user:', userId);
       const response = await messagesService.createConversation(userId);
-      console.log(' Raw API response:', response);
       return response;
     },
     onSuccess: async (response) => {
-      console.log('  Conversation mutation successful');
-      console.log('  Response structure:', {
-        hasData: !!response.data,
-        dataKeys: response.data ? Object.keys(response.data) : [],
-        fullResponse: response
-      });
-      
       const conversation = response.data;
       
       if (conversation && conversation._id) {
         // Invalidate and refetch conversations cache to ensure the new conversation appears in the list
-        console.log(' Invalidating and refetching conversations cache...');
         await queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        await queryClient.refetchQueries({ queryKey: ['conversations'] });
         
-        // Small delay to ensure the cache is updated
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
+        // Navigate immediately - don't wait for refetch
         const url = `/dashboard/messages?conversation=${conversation._id}`;
-        console.log(' Navigating to:', url);
         navigate(url);
+        
+        // Refetch in background to update the conversation list
+        queryClient.refetchQueries({ queryKey: ['conversations'] });
       } else {
-        console.warn(' No conversation ID found, navigating without parameter');
-        console.log('Response.data:', conversation);
         navigate('/dashboard/messages');
       }
     },
     onError: (error: any) => {
-      console.error('  Conversation creation failed');
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response,
-        status: error.response?.status,
-        data: error.response?.data
-      });
       toast.error(error.response?.data?.message || 'Failed to start conversation');
     },
   });

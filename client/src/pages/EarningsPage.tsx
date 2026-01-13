@@ -159,6 +159,40 @@ export const EarningsPage: React.FC = () => {
           >
             Refresh
           </Button>
+          {process.env.NODE_ENV === 'development' && (
+            <Button
+              onClick={async () => {
+                try {
+                  await apiCore.post('/dev/setup-withdrawal-test');
+                  toast.success('Test data created! Refresh to see changes.');
+                  refetch();
+                } catch (error) {
+                  toast.error('Failed to create test data');
+                }
+              }}
+              variant="outlined"
+              color="secondary"
+            >
+              Create Test Data
+            </Button>
+          )}
+          {process.env.NODE_ENV === 'development' && isStripeConnected && (
+            <Button
+              onClick={async () => {
+                try {
+                  await apiCore.post('/dev/fix-stripe-account');
+                  toast.success('Stripe account capabilities updated!');
+                  queryClient.invalidateQueries({ queryKey: ['stripe-connect-status'] });
+                } catch (error) {
+                  toast.error('Failed to fix Stripe account');
+                }
+              }}
+              variant="outlined"
+              color="warning"
+            >
+              Fix Stripe Account
+            </Button>
+          )}
           {!isStripeConnected && (
             <Button
               startIcon={<SettingsIcon />}
@@ -180,6 +214,20 @@ export const EarningsPage: React.FC = () => {
           </Button>
         }>
           Set up your payment account to receive earnings. Connect your bank account via Stripe.
+          {process.env.NODE_ENV === 'development' && (
+            <Typography variant="body2" sx={{ mt: 1, opacity: 0.8 }}>
+              <strong>Test Mode:</strong> Uses Stripe test data that auto-approves instantly.
+            </Typography>
+          )}
+        </Alert>
+      )}
+
+      {/* Test Mode Indicator */}
+      {process.env.NODE_ENV === 'development' && isStripeConnected && stripeStatus?.testMode && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <Typography variant="body2">
+            <strong>Test Mode Active:</strong> You're using Stripe test mode. All transactions are simulated and no real money is involved.
+          </Typography>
         </Alert>
       )}
 
@@ -192,7 +240,7 @@ export const EarningsPage: React.FC = () => {
                 <Schedule sx={{ mr: 1 }} />
                 <Typography variant="subtitle2">In Escrow</Typography>
               </Box>
-              <Typography variant="h4">${earnings.inEscrow?.toLocaleString() || '0'}</Typography>
+              <Typography variant="h4">${earnings.inEscrow?.toFixed(2) || '0.00'}</Typography>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
                 Awaiting release
               </Typography>
@@ -207,7 +255,7 @@ export const EarningsPage: React.FC = () => {
                 <TrendingUp sx={{ mr: 1 }} />
                 <Typography variant="subtitle2">Pending</Typography>
               </Box>
-              <Typography variant="h4">${earnings.pending?.toLocaleString() || '0'}</Typography>
+              <Typography variant="h4">${earnings.pending?.toFixed(2) || '0.00'}</Typography>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
                 Processing
               </Typography>
@@ -222,7 +270,7 @@ export const EarningsPage: React.FC = () => {
                 <AccountBalance sx={{ mr: 1 }} />
                 <Typography variant="subtitle2">Available</Typography>
               </Box>
-              <Typography variant="h4">${earnings.available?.toLocaleString() || '0'}</Typography>
+              <Typography variant="h4">${earnings.available?.toFixed(2) || '0.00'}</Typography>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
                 Ready to withdraw
               </Typography>
@@ -249,7 +297,7 @@ export const EarningsPage: React.FC = () => {
                 <CheckCircle sx={{ mr: 1 }} />
                 <Typography variant="subtitle2">Total Earned</Typography>
               </Box>
-              <Typography variant="h4">${earnings.totalEarned?.toLocaleString() || '0'}</Typography>
+              <Typography variant="h4">${earnings.totalEarned?.toFixed(2) || '0.00'}</Typography>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
                 All time
               </Typography>
@@ -317,10 +365,10 @@ export const EarningsPage: React.FC = () => {
                       <TableCell>
                         {tx.contract?.title || tx.description || `Payment for contract ${tx.contract?._id || tx.contract || ''}`}
                       </TableCell>
-                      <TableCell>${tx.amount?.toLocaleString()}</TableCell>
+                      <TableCell>${(tx.amount / 100)?.toFixed(2) || '0.00'}</TableCell>
                       <TableCell color="success">
                         <Typography color="success.main" fontWeight="bold">
-                          ${tx.freelancerAmount?.toLocaleString()}
+                          ${(tx.freelancerAmount / 100)?.toFixed(2) || '0.00'}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -345,17 +393,25 @@ export const EarningsPage: React.FC = () => {
         <DialogContent>
           <Alert severity="info" sx={{ mb: 2 }}>
             To receive payments, you need to connect a Stripe account. This allows us to securely transfer your earnings.
+            {process.env.NODE_ENV === 'development' && (
+              <Typography variant="body2" sx={{ mt: 1, fontWeight: 'bold' }}>
+                Test Mode: Uses auto-approved test data for instant setup.
+              </Typography>
+            )}
           </Alert>
           <Typography variant="body2" paragraph>
             You'll be redirected to Stripe to:
           </Typography>
           <Box component="ul" sx={{ pl: 2 }}>
-            <li>Verify your identity</li>
-            <li>Add your bank account details</li>
+            <li>Verify your identity{process.env.NODE_ENV === 'development' && ' (auto-approved with test data)'}</li>
+            <li>Add your bank account details{process.env.NODE_ENV === 'development' && ' (test bank account)'}</li>
             <li>Set up your payout preferences</li>
           </Box>
           <Typography variant="body2" color="text.secondary">
-            This process typically takes 5-10 minutes.
+            {process.env.NODE_ENV === 'development' 
+              ? 'This process takes about 1-2 minutes in test mode.'
+              : 'This process typically takes 5-10 minutes.'
+            }
           </Typography>
         </DialogContent>
         <DialogActions>
