@@ -1,4 +1,5 @@
 import { apiCore } from './core';
+import { dataExtractor, COMMON_PATHS } from '@/utils/dataExtractor';
 
 export interface Freelancer {
   _id: string;
@@ -64,37 +65,60 @@ export class UsersService {
       });
     }
 
-    const response = await apiCore.get<{
-      freelancers: Freelancer[];
-      pagination: any;
-    }>(`${this.basePath}/freelancers?${params.toString()}`);
+    console.log('[USERS SERVICE] Fetching freelancers with params:', params.toString());
+    const response = await apiCore.get<any>(`${this.basePath}/freelancers?${params.toString()}`);
+    console.log('[USERS SERVICE] Raw freelancers response:', response);
+
+    // Use robust data extraction with multiple fallback paths
+    const freelancers = dataExtractor.extractArray<Freelancer>(response, [
+      'freelancers', 'data.freelancers', 'data', 'users', 'data.users'
+    ]);
+
+    // Extract pagination info
+    let pagination = response.pagination || response.data?.pagination || {
+      page: 1,
+      limit: 12,
+      total: freelancers.length,
+      pages: Math.ceil(freelancers.length / 12),
+    };
+
+    console.log('[USERS SERVICE] Extracted freelancers:', freelancers.length);
+    console.log('[USERS SERVICE] Pagination:', pagination);
 
     return {
-      data: response.freelancers,
-      pagination: response.pagination,
+      data: freelancers,
+      pagination,
     };
   }
 
   async getFreelancerById(id: string): Promise<{ data: Freelancer }> {
-    const response = await apiCore.get<{ freelancer: Freelancer }>(
-      `${this.basePath}/freelancer/${id}`
-    );
-    return { data: response.freelancer };
+    const response = await apiCore.get<any>(`${this.basePath}/freelancer/${id}`);
+    console.log('[USERS SERVICE] Raw freelancer response:', response);
+    
+    const freelancer = dataExtractor.extractObject<Freelancer>(response, [
+      'freelancer', 'data.freelancer', 'data', 'user', 'data.user'
+    ]);
+    
+    if (!freelancer) {
+      throw new Error('Freelancer not found');
+    }
+    
+    return { data: freelancer };
   }
 
   async getFreelancerProfile(slugOrId: string): Promise<any> {
     const response = await apiCore.get(`/freelancers/${slugOrId}/profile`);
-    return response.data;
+    return dataExtractor.extractObject(response, ['data', 'profile', 'freelancer']) || response;
   }
 
   async getClientProfile(slugOrId: string): Promise<any> {
     const response = await apiCore.get(`/clients/${slugOrId}/profile`);
-    return response.data;
+    return dataExtractor.extractObject(response, ['data', 'profile', 'client']) || response;
   }
 
   async getUserStats(userId: string): Promise<any> {
     const response = await apiCore.get(`${this.basePath}/${userId}/stats`);
-    return response.data;
+    return dataExtractor.extractObject(response, ['data', 'stats']) || response;
   }
 
   async trackProfileView(userId: string): Promise<void> {
@@ -105,12 +129,12 @@ export class UsersService {
     const response = await apiCore.get(`${this.basePath}/${userId}/profile-views`, {
       params: { days },
     });
-    return response.data;
+    return dataExtractor.extractObject(response, ['data', 'analytics']) || response;
   }
 
   async getProfileViewers(userId: string): Promise<any> {
     const response = await apiCore.get(`${this.basePath}/${userId}/profile-viewers`);
-    return response.data;
+    return dataExtractor.extractObject(response, ['data', 'viewers']) || response;
   }
 }
 

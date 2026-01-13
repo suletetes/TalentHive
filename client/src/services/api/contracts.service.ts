@@ -1,4 +1,5 @@
 import { apiCore } from './core';
+import { dataExtractor, extractContracts, extractContract, COMMON_PATHS } from '@/utils/dataExtractor';
 
 export interface ContractSignature {
   signedBy: string;
@@ -68,11 +69,15 @@ export class ContractsService {
         }
       });
     }
-    return apiCore.get(`${this.basePath}/my?${queryParams.toString()}`);
+    const response = await apiCore.get(`${this.basePath}/my?${queryParams.toString()}`);
+    const contracts = extractContracts<Contract>(response);
+    return { data: contracts };
   }
 
   async getContractById(id: string) {
-    return apiCore.get(`${this.basePath}/${id}`);
+    const response = await apiCore.get(`${this.basePath}/${id}`);
+    const contract = extractContract<Contract>(response);
+    return { data: contract };
   }
 
   async signContract(id: string, data: { ipAddress: string; userAgent: string }) {

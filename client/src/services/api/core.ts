@@ -2,6 +2,17 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import { store } from '@/store';
 import { logout, setTokens } from '@/store/slices/authSlice';
 
+// Enhanced error logging interface
+interface ApiErrorContext {
+  url: string;
+  method: string;
+  status?: number;
+  message: string;
+  timestamp: string;
+  userId?: string;
+  requestId?: string;
+}
+
 // List of endpoints that don't require authentication
 const PUBLIC_ENDPOINTS = [
   '/auth/login',
@@ -39,8 +50,35 @@ export class ApiCore {
     this.setupResponseInterceptor();
   }
 
-  private isPublicEndpoint(url: string): boolean {
-    return PUBLIC_ENDPOINTS.some(endpoint => url.startsWith(endpoint));
+  private logError(context: ApiErrorContext) {
+    console.error('[API ERROR]', {
+      timestamp: context.timestamp,
+      method: context.method,
+      url: context.url,
+      status: context.status,
+      message: context.message,
+      userId: context.userId,
+      requestId: context.requestId,
+    });
+    
+    // In production, you might want to send this to an error tracking service
+    // like Sentry, LogRocket, or your own logging endpoint
+  }
+
+  private createErrorContext(error: AxiosError, additionalInfo?: Partial<ApiErrorContext>): ApiErrorContext {
+    const state = store.getState();
+    const userId = state.auth.user?._id;
+    
+    return {
+      url: error.config?.url || 'unknown',
+      method: (error.config?.method || 'unknown').toUpperCase(),
+      status: error.response?.status,
+      message: error.message,
+      timestamp: new Date().toISOString(),
+      userId,
+      requestId: error.config?.headers?.['X-Request-ID'] as string,
+      ...additionalInfo,
+    };
   }
 
   private isSilentFailEndpoint(url: string): boolean {
@@ -53,22 +91,50 @@ export class ApiCore {
         const state = store.getState();
         const token = state.auth.token;
 
+        // Add request ID for tracking
+        if (config.headers) {
+          config.headers['X-Request-ID'] = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        }
+
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
 
+        // Log request in development
+        if (import.meta.env.DEV) {
+          console.log(`[API REQUEST] ${config.method?.toUpperCase()} ${config.url}`, {
+            headers: config.headers,
+            data: config.data,
+          });
+        }
+
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => {
+        this.logError(this.createErrorContext(error, { message: 'Request setup failed' }));
+        return Promise.reject(error);
+      }
     );
   }
 
   private setupResponseInterceptor() {
     this.api.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        // Log successful responses in development
+        if (import.meta.env.DEV) {
+          console.log(`[API RESPONSE] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`, {
+            status: response.status,
+            data: response.data,
+          });
+        }
+        return response;
+      },
       async (error: AxiosError) => {
         const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean; _silentFail?: boolean };
         const requestUrl = originalRequest.url || '';
+        
+        // Create error context for logging
+        const errorContext = this.createErrorContext(error);
 
         // Handle 401 errors
         if (error.response?.status === 401) {
@@ -83,6 +149,7 @@ export class ApiCore {
           // Don't retry if already retried
           if (originalRequest._retry) {
             console.log('  [API] Already retried, giving up');
+            this.logError({ ...errorContext, message: 'Authentication failed after retry' });
             return Promise.reject(error);
           }
 
@@ -127,6 +194,11 @@ export class ApiCore {
             this.refreshPromise = null;
             console.log('  [API] Token refresh failed:', refreshError.message);
             
+            this.logError({
+              ...errorContext,
+              message: `Token refresh failed: ${refreshError.message}`,
+            });
+            
             // Only logout and redirect if not on a public page
             const currentPath = window.location.pathname;
             const isPublicPage = currentPath === '/' || currentPath === '/login' || currentPath === '/register';
@@ -157,7 +229,23 @@ export class ApiCore {
             
             await new Promise(resolve => setTimeout(resolve, retryAfterMs));
             return this.api(originalRequest);
+          } else {
+            this.logError({
+              ...errorContext,
+              message: 'Rate limit exceeded after retry',
+            });
           }
+        }
+
+        // Handle network errors
+        if (!error.response) {
+          this.logError({
+            ...errorContext,
+            message: `Network error: ${error.message}`,
+          });
+        } else {
+          // Log other HTTP errors
+          this.logError(errorContext);
         }
 
         return Promise.reject(error);

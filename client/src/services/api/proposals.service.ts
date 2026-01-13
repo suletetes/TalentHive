@@ -1,4 +1,5 @@
 import { apiCore } from './core';
+import { dataExtractor, extractProposals, extractProposal, COMMON_PATHS } from '@/utils/dataExtractor';
 
 export interface Proposal {
   _id: string;
@@ -12,7 +13,11 @@ export interface Proposal {
     };
   };
   coverLetter: string;
-  bidAmount: number; // Fixed: Changed from proposedBudget to bidAmount
+  bidAmount: number; // Primary field
+  proposedBudget?: { // Legacy support
+    amount: number;
+    type: 'hourly' | 'fixed';
+  };
   timeline: {
     duration: number;
     unit: 'days' | 'weeks' | 'months';
@@ -31,7 +36,11 @@ export interface Proposal {
 
 export interface CreateProposalDto {
   coverLetter: string;
-  bidAmount: number; // Fixed: Changed from proposedBudget to bidAmount
+  bidAmount: number; // Primary field
+  proposedBudget?: { // Legacy support
+    amount: number;
+    type: 'hourly' | 'fixed';
+  };
   timeline: {
     duration: number;
     unit: 'days' | 'weeks' | 'months';
@@ -60,31 +69,45 @@ export class ProposalsService {
     }
     const queryString = params.toString();
     const url = queryString ? `${this.basePath}?${queryString}` : this.basePath;
-    return apiCore.get<{ data: Proposal[] }>(url);
+    const response = await apiCore.get<any>(url);
+    const proposals = extractProposals<Proposal>(response);
+    return { data: proposals };
   }
 
   async createProposal(
     projectId: string,
     data: CreateProposalDto
   ): Promise<{ data: Proposal }> {
-    return apiCore.post<{ data: Proposal }>(`${this.basePath}/project/${projectId}`, data);
+    const response = await apiCore.post<any>(`${this.basePath}/project/${projectId}`, data);
+    const proposal = extractProposal<Proposal>(response);
+    return { data: proposal! };
   }
 
   async getProposalsForProject(projectId: string): Promise<{ data: Proposal[] }> {
-    return apiCore.get<{ data: Proposal[] }>(`${this.basePath}/project/${projectId}`);
+    const response = await apiCore.get<any>(`${this.basePath}/project/${projectId}`);
+    const proposals = extractProposals<Proposal>(response);
+    return { data: proposals };
   }
 
   async getMyProposals(): Promise<{ data: Proposal[] }> {
-    const response = await apiCore.get<{ proposals: Proposal[]; pagination: any }>(`${this.basePath}/my`);
-    return { data: response.proposals };
+    const response = await apiCore.get<any>(`${this.basePath}/my`);
+    // Try multiple extraction paths for my proposals
+    const proposals = dataExtractor.extractArray<Proposal>(response, [
+      'proposals', 'data.proposals', 'data', 'data.data', 'data.data.proposals'
+    ]);
+    return { data: proposals };
   }
 
   async getProposalById(id: string): Promise<{ data: Proposal }> {
-    return apiCore.get<{ data: Proposal }>(`${this.basePath}/${id}`);
+    const response = await apiCore.get<any>(`${this.basePath}/${id}`);
+    const proposal = extractProposal<Proposal>(response);
+    return { data: proposal! };
   }
 
   async updateProposal(id: string, data: UpdateProposalDto): Promise<{ data: Proposal }> {
-    return apiCore.put<{ data: Proposal }>(`${this.basePath}/${id}`, data);
+    const response = await apiCore.put<any>(`${this.basePath}/${id}`, data);
+    const proposal = extractProposal<Proposal>(response);
+    return { data: proposal! };
   }
 
   async withdrawProposal(id: string): Promise<{ message: string }> {
@@ -92,15 +115,21 @@ export class ProposalsService {
   }
 
   async acceptProposal(id: string): Promise<{ data: Proposal }> {
-    return apiCore.post<{ data: Proposal }>(`${this.basePath}/${id}/accept`);
+    const response = await apiCore.post<any>(`${this.basePath}/${id}/accept`);
+    const proposal = extractProposal<Proposal>(response);
+    return { data: proposal! };
   }
 
   async rejectProposal(id: string): Promise<{ data: Proposal }> {
-    return apiCore.post<{ data: Proposal }>(`${this.basePath}/${id}/reject`);
+    const response = await apiCore.post<any>(`${this.basePath}/${id}/reject`);
+    const proposal = extractProposal<Proposal>(response);
+    return { data: proposal! };
   }
 
   async highlightProposal(id: string): Promise<{ data: Proposal }> {
-    return apiCore.patch<{ data: Proposal }>(`${this.basePath}/${id}/highlight`);
+    const response = await apiCore.patch<any>(`${this.basePath}/${id}/highlight`);
+    const proposal = extractProposal<Proposal>(response);
+    return { data: proposal! };
   }
 
   async getProposalStats(): Promise<{ data: any }> {
