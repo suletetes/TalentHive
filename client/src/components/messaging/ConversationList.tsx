@@ -96,11 +96,36 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', flexShrink: 0 }}>
-        <Typography variant="h6">Messages</Typography>
+      <Box sx={{ 
+        p: 2, 
+        borderBottom: 1, 
+        borderColor: 'divider', 
+        flexShrink: 0,
+        bgcolor: 'background.paper'
+      }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
+          Messages
+        </Typography>
       </Box>
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
-        <List sx={{ p: 0 }}>
+      <Box sx={{ 
+        flex: 1, 
+        overflow: 'auto',
+        bgcolor: 'grey.50',
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: 'transparent',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: 'rgba(0,0,0,0.2)',
+          borderRadius: '3px',
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+          background: 'rgba(0,0,0,0.3)',
+        },
+      }}>
+        <List sx={{ p: 1 }}>
           {data.map((conversation, index) => {
             const otherParticipant = getOtherParticipant(conversation);
             const unreadCount = getUnreadCount(conversation);
@@ -116,9 +141,21 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                     onClick={() => onSelectConversation(conversation)}
                     sx={{
                       py: 1.5,
+                      px: 2,
+                      borderRadius: 1,
+                      mx: 1,
+                      mb: 0.5,
                       '&.Mui-selected': {
-                        bgcolor: 'action.selected',
+                        bgcolor: 'primary.light',
+                        color: 'primary.contrastText',
+                        '&:hover': {
+                          bgcolor: 'primary.main',
+                        }
                       },
+                      '&:hover': {
+                        bgcolor: 'action.hover',
+                      },
+                      transition: 'all 0.2s ease-in-out',
                     }}
                   >
                     <ListItemAvatar>
@@ -173,7 +210,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                     />
                   </ListItemButton>
                 </ListItem>
-                {index < data.length - 1 && <Divider />}
+                {index < data.length - 1 && <Box sx={{ height: '1px' }} />}
               </React.Fragment>
             );
           })}

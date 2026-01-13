@@ -92,7 +92,7 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
         sx={{
           display: 'flex',
           justifyContent: isOwnMessage ? 'flex-end' : 'flex-start',
-          mb: 2,
+          mb: 1.5,
           px: 2,
         }}
       >
@@ -100,7 +100,7 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
           <Avatar
             src={message.sender.profile.avatar}
             alt={`${message.sender.profile.firstName} ${message.sender.profile.lastName}`}
-            sx={{ width: 32, height: 32, mr: 1 }}
+            sx={{ width: 32, height: 32, mr: 1.5, mt: 0.5 }}
           >
             {message.sender.profile.firstName[0]}
           </Avatar>
@@ -119,22 +119,35 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
                 label="Support" 
                 size="small" 
                 color="primary" 
-                sx={{ mb: 0.5 }}
+                sx={{ mb: 0.5, height: 20, fontSize: '11px' }}
               />
             )}
             <Paper
-              elevation={1}
+              elevation={0}
               sx={{
                 p: 1.5,
-                bgcolor: isOwnMessage ? 'primary.main' : 'background.paper',
+                bgcolor: isOwnMessage ? 'primary.main' : 'grey.100',
                 color: isOwnMessage ? 'primary.contrastText' : 'text.primary',
-                borderRadius: 2,
-                borderTopRightRadius: isOwnMessage ? 0 : 2,
-                borderTopLeftRadius: isOwnMessage ? 2 : 0,
+                borderRadius: 2.5,
+                borderTopRightRadius: isOwnMessage ? 0.5 : 2.5,
+                borderTopLeftRadius: isOwnMessage ? 2.5 : 0.5,
+                border: isOwnMessage ? 'none' : '1px solid',
+                borderColor: isOwnMessage ? 'transparent' : 'grey.200',
+                boxShadow: isOwnMessage 
+                  ? '0 2px 8px rgba(25, 118, 210, 0.15)' 
+                  : '0 1px 3px rgba(0,0,0,0.1)',
               }}
             >
               {message.content && (
-                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    whiteSpace: 'pre-wrap', 
+                    wordBreak: 'break-word',
+                    lineHeight: 1.4,
+                    fontSize: '14px'
+                  }}
+                >
                   {message.content}
                 </Typography>
               )}
@@ -152,8 +165,12 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
                           sx={{
                             maxWidth: '100%',
                             maxHeight: 300,
-                            borderRadius: 1,
+                            borderRadius: 1.5,
                             cursor: 'pointer',
+                            transition: 'transform 0.2s',
+                            '&:hover': {
+                              transform: 'scale(1.02)',
+                            }
                           }}
                           onClick={() => window.open(attachment.url, '_blank')}
                         />
@@ -163,17 +180,18 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
                             display: 'flex',
                             alignItems: 'center',
                             gap: 1,
-                            p: 1,
-                            bgcolor: isOwnMessage ? 'rgba(255,255,255,0.2)' : 'action.hover',
-                            borderRadius: 1,
+                            p: 1.5,
+                            bgcolor: isOwnMessage ? 'rgba(255,255,255,0.15)' : 'action.hover',
+                            borderRadius: 1.5,
                             cursor: 'pointer',
+                            transition: 'background-color 0.2s',
                             '&:hover': {
-                              bgcolor: isOwnMessage ? 'rgba(255,255,255,0.3)' : 'action.selected',
+                              bgcolor: isOwnMessage ? 'rgba(255,255,255,0.25)' : 'action.selected',
                             },
                           }}
                           onClick={() => window.open(attachment.url, '_blank')}
                         >
-                          <Typography variant="caption" sx={{ flex: 1, wordBreak: 'break-word' }}>
+                          <Typography variant="body2" sx={{ flex: 1, wordBreak: 'break-word', fontSize: '13px' }}>
                             📎 {attachment.filename}
                           </Typography>
                         </Box>
@@ -184,13 +202,22 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
               )}
 
               {message.isEdited && (
-                <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.7 }}>
+                <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.7, fontSize: '11px' }}>
                   (edited)
                 </Typography>
               )}
             </Paper>
           </Box>
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, px: 1 }}>
+          <Typography 
+            variant="caption" 
+            color="text.secondary" 
+            sx={{ 
+              mt: 0.5, 
+              px: 1,
+              fontSize: '11px',
+              opacity: 0.7
+            }}
+          >
             {formatMessageTime(message.createdAt)}
           </Typography>
         </Box>
@@ -201,27 +228,56 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Header */}
-      <AppBar position="static" color="default" elevation={1} sx={{ flexShrink: 0 }}>
-        <Toolbar variant="dense">
+      <AppBar 
+        position="static" 
+        color="default" 
+        elevation={0} 
+        sx={{ 
+          flexShrink: 0,
+          bgcolor: 'background.paper',
+          borderBottom: 1,
+          borderColor: 'divider'
+        }}
+      >
+        <Toolbar variant="dense" sx={{ minHeight: '64px' }}>
           {onBack && (
-            <IconButton edge="start" onClick={onBack} sx={{ mr: 2 }}>
+            <IconButton 
+              edge="start" 
+              onClick={onBack} 
+              sx={{ 
+                mr: 2,
+                bgcolor: 'action.hover',
+                '&:hover': {
+                  bgcolor: 'action.selected',
+                }
+              }}
+            >
               <ArrowBackIcon />
             </IconButton>
           )}
           <Avatar
             src={otherParticipant?.profile?.avatar}
             alt={otherParticipant ? `${otherParticipant.profile.firstName} ${otherParticipant.profile.lastName}` : 'New Chat'}
-            sx={{ width: 36, height: 36, mr: 2 }}
+            sx={{ 
+              width: 40, 
+              height: 40, 
+              mr: 2,
+              border: '2px solid',
+              borderColor: 'primary.light'
+            }}
           >
             {otherParticipant?.profile?.firstName?.[0] || '?'}
             {otherParticipant?.profile?.lastName?.[0] || ''}
           </Avatar>
           <Box>
-            <Typography variant="subtitle2" fontWeight={600}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ color: 'text.primary' }}>
               {otherParticipant 
                 ? `${otherParticipant.profile.firstName} ${otherParticipant.profile.lastName}`
                 : 'New Conversation'
               }
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {otherParticipant ? 'Active now' : 'Start a conversation'}
             </Typography>
           </Box>
         </Toolbar>
@@ -232,9 +288,22 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
         sx={{
           flex: 1,
           overflowY: 'auto',
-          py: 1,
-          bgcolor: 'background.default',
+          py: 2,
+          bgcolor: 'grey.50',
           minHeight: 0,
+          '&::-webkit-scrollbar': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'rgba(0,0,0,0.2)',
+            borderRadius: '3px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: 'rgba(0,0,0,0.3)',
+          },
         }}
       >
         {isLoading ? (
@@ -247,9 +316,19 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
             <div ref={messagesEndRef} />
           </>
         ) : (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            height: '100%',
+            flexDirection: 'column',
+            gap: 1
+          }}>
             <Typography variant="body2" color="text.secondary">
               No messages yet. Start the conversation!
+            </Typography>
+            <Typography variant="caption" color="text.disabled">
+              Send a message to begin chatting
             </Typography>
           </Box>
         )}
