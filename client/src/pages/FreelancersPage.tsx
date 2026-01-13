@@ -22,7 +22,7 @@ import { FreelancerCard } from '@/components/profile/FreelancerCard';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useFreelancers } from '@/hooks/api/useUsers';
 import { useQuery } from '@tanstack/react-query';
-import { apiService } from '@/services/api';
+import { skillsService } from '@/services/api/skills.service';
 import { ErrorHandler } from '@/utils/errorHandler';
 
 export const FreelancersPage = () => {
@@ -56,14 +56,9 @@ export const FreelancersPage = () => {
     queryKey: ['skills'],
     queryFn: async () => {
       console.log('[SKILLS] Fetching skills...');
-      // apiService.get returns response.data directly
-      const response: any = await apiService.get('/skills');
-      console.log('[SKILLS] Raw response:', response);
-      console.log('[SKILLS] Response.data:', response?.data);
-      const skills = response?.data?.skills || response?.skills || response?.data || response || [];
-      console.log('[SKILLS] Parsed skills:', skills);
-      console.log('[SKILLS] Is array:', Array.isArray(skills));
-      return Array.isArray(skills) ? skills : [];
+      const response = await skillsService.getSkills();
+      console.log('[SKILLS] Skills response:', response);
+      return response.data || [];
     },
   });
 

@@ -69,8 +69,25 @@ export class ContractsService {
         }
       });
     }
+    
+    console.log('[CONTRACTS SERVICE] ========== FETCHING CONTRACTS ==========');
+    console.log('[CONTRACTS SERVICE] Query params:', queryParams.toString());
+    
     const response = await apiCore.get(`${this.basePath}/my?${queryParams.toString()}`);
+    console.log('[CONTRACTS SERVICE] Raw API response:', response);
+    console.log('[CONTRACTS SERVICE] Response structure:', {
+      hasStatus: !!response?.status,
+      hasData: !!response?.data,
+      hasContracts: !!response?.data?.contracts,
+      contractsLength: Array.isArray(response?.data?.contracts) ? response.data.contracts.length : 'not array',
+      responseKeys: Object.keys(response || {}),
+      dataKeys: response?.data ? Object.keys(response.data) : 'no data',
+    });
+    
     const contracts = extractContracts<Contract>(response);
+    console.log('[CONTRACTS SERVICE] Extracted contracts:', contracts.length);
+    console.log('[CONTRACTS SERVICE] ========== END FETCH ==========');
+    
     return { data: contracts };
   }
 

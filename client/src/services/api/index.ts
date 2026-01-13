@@ -14,6 +14,8 @@ import { searchService } from './search.service';
 import { uploadService } from './upload.service';
 import { supportTicketService } from './supportTicket.service';
 import { rbacService } from './rbac.service';
+import { usersService } from './users.service';
+import { skillsService } from './skills.service';
 
 // Export API core
 export { apiCore } from './core';
@@ -35,6 +37,8 @@ export {
   uploadService,
   supportTicketService,
   rbacService,
+  usersService,
+  skillsService,
 };
 
 // Export all types and additional exports from service modules
@@ -53,3 +57,5 @@ export * from './search.service';
 export * from './upload.service';
 export * from './supportTicket.service';
 export * from './rbac.service';
+export * from './users.service';
+export * from './skills.service';
