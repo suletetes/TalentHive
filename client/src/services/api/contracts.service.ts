@@ -1,6 +1,5 @@
 import { apiCore } from './core';
 import { dataExtractor, extractContracts, extractContract, COMMON_PATHS } from '@/utils/dataExtractor';
-import { contractsDebugger } from '@/utils/contractsDebug';
 
 export interface ContractSignature {
   signedBy: string;
@@ -71,39 +70,10 @@ export class ContractsService {
       });
     }
     
-    contractsDebugger.logApiCallStart(`${this.basePath}/my`, params);
+    const response = await apiCore.get(`${this.basePath}/my?${queryParams.toString()}`);
+    const contracts = extractContracts<Contract>(response);
     
-    console.log('[CONTRACTS SERVICE] ========== FETCHING CONTRACTS ==========');
-    console.log('[CONTRACTS SERVICE] Query params:', queryParams.toString());
-    
-    try {
-      const response = await apiCore.get(`${this.basePath}/my?${queryParams.toString()}`);
-      console.log('[CONTRACTS SERVICE] Raw API response:', response);
-      console.log('[CONTRACTS SERVICE] Response structure:', {
-        hasStatus: !!response?.status,
-        hasData: !!response?.data,
-        hasContracts: !!response?.data?.contracts,
-        contractsLength: Array.isArray(response?.data?.contracts) ? response.data.contracts.length : 'not array',
-        responseKeys: Object.keys(response || {}),
-        dataKeys: response?.data ? Object.keys(response.data) : 'no data',
-      });
-      
-      contractsDebugger.logApiCallSuccess(`${this.basePath}/my`, response);
-      contractsDebugger.logDataExtractionStart(response);
-      
-      const contracts = extractContracts<Contract>(response);
-      
-      contractsDebugger.logDataExtractionResult(contracts);
-      
-      console.log('[CONTRACTS SERVICE] Extracted contracts:', contracts.length);
-      console.log('[CONTRACTS SERVICE] ========== END FETCH ==========');
-      
-      return { data: contracts };
-    } catch (error) {
-      contractsDebugger.logApiCallError(`${this.basePath}/my`, error);
-      console.error('[CONTRACTS SERVICE] Error fetching contracts:', error);
-      throw error;
-    }
+    return { data: contracts };
   }
 
   async getContractById(id: string) {
