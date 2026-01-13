@@ -32,7 +32,7 @@ import { getFeaturedFreelancers } from '@/controllers/adminController';
 
 // Conditionally import dev routes
 let devRoutes: any = null;
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === 'development' || process.env.MOCK_STRIPE_CONNECT === 'true') {
   try {
     devRoutes = require('./dev').default;
   } catch (error) {
@@ -89,7 +89,7 @@ router.use('/rbac', rbacRoutes);
 router.get('/featured-freelancers', getFeaturedFreelancers);
 
 // Development routes (only in development)
-if (process.env.NODE_ENV === 'development' && devRoutes) {
+if ((process.env.NODE_ENV === 'development' || process.env.MOCK_STRIPE_CONNECT === 'true') && devRoutes) {
   router.use('/dev', devRoutes);
 }
 

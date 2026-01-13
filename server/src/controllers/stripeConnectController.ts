@@ -21,6 +21,29 @@ export const createConnectAccount = async (req: Request, res: Response) => {
       return res.status(403).json({ status: 'error', message: 'Only freelancers can set up payment accounts' });
     }
 
+    // Check if using mock mode for development
+    const useMockMode = process.env.MOCK_STRIPE_CONNECT === 'true' || process.env.NODE_ENV === 'development';
+    
+    if (useMockMode) {
+      console.log('[CONNECT] Using mock Stripe Connect (development mode)');
+      
+      // In development mode, just mark the user as having a mock account
+      if (!user.stripeConnectedAccountId) {
+        user.stripeConnectedAccountId = `acct_mock_${userId}_${Date.now()}`;
+        await user.save();
+        console.log('[CONNECT] Created mock Stripe account:', user.stripeConnectedAccountId);
+      }
+      
+      // Return a mock success URL
+      return res.status(200).json({
+        status: 'success',
+        data: { 
+          url: `${process.env.CLIENT_URL}/dashboard/earnings?success=true&mock=true`,
+          message: 'Mock Stripe account created for development'
+        },
+      });
+    }
+
     let accountId = user.stripeConnectedAccountId;
 
     // Create new account if doesn't exist
@@ -79,6 +102,31 @@ export const getConnectStatus = async (req: Request, res: Response) => {
       return res.status(200).json({
         status: 'success',
         data: { isConnected: false, accountStatus: null },
+      });
+    }
+
+    // Check if using mock mode for development
+    const useMockMode = process.env.MOCK_STRIPE_CONNECT === 'true' || process.env.NODE_ENV === 'development';
+    
+    if (useMockMode) {
+      console.log('[CONNECT] Returning mock Stripe Connect status (development mode)');
+      return res.status(200).json({
+        status: 'success',
+        data: {
+          isConnected: true,
+          accountStatus: {
+            chargesEnabled: true,
+            payoutsEnabled: true,
+            detailsSubmitted: true,
+            requirements: {
+              currently_due: [],
+              eventually_due: [],
+              past_due: [],
+              pending_verification: [],
+            },
+          },
+          mockMode: true,
+        },
       });
     }
 
@@ -213,18 +261,36 @@ export const requestPayout = async (req: Request, res: Response) => {
 
     const user = await User.findById(userId);
 
-    if (!user || !user.stripeConnectedAccountId) {
-      console.log('  [PAYOUT] User has no Stripe account connected');
+    if (!user) {
+      console.log('  [PAYOUT] User not found');
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found',
+      });
+    }
+
+    // Check if using mock mode for development (skip verification)
+    const useMockPayout = process.env.MOCK_STRIPE_CONNECT === 'true' || process.env.NODE_ENV === 'development';
+    
+    console.log('  [PAYOUT] Development mode settings:');
+    console.log('  [PAYOUT] MOCK_STRIPE_CONNECT:', process.env.MOCK_STRIPE_CONNECT);
+    console.log('  [PAYOUT] NODE_ENV:', process.env.NODE_ENV);
+    console.log('  [PAYOUT] Using mock payout:', useMockPayout);
+
+    // In development mode, skip Stripe account verification
+    if (!useMockPayout && !user.stripeConnectedAccountId) {
+      console.log('  [PAYOUT] User has no Stripe account connected (production mode)');
       return res.status(400).json({
         status: 'error',
         message: 'Payment account not set up',
       });
     }
 
-    console.log('  [PAYOUT] User Stripe account:', user.stripeConnectedAccountId);
-
-    // Check if using mock mode for development
-    const useMockPayout = process.env.MOCK_STRIPE_CONNECT === 'true' || process.env.NODE_ENV === 'development';
+    if (user.stripeConnectedAccountId) {
+      console.log('  [PAYOUT] User Stripe account:', user.stripeConnectedAccountId);
+    } else {
+      console.log('  [PAYOUT] No Stripe account, but proceeding in development mode');
+    }
 
     let availableAmount = 0;
     let payout: any;
