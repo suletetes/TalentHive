@@ -218,18 +218,22 @@ export class PaymentsService {
   /**
    * Get transaction history for a contract
    */
-  async getTransactionHistory(contractId: string): Promise<Transaction[]> {
+  async getTransactionHistory(params?: { limit?: number; contractId?: string }): Promise<{ data: Transaction[] }> {
     try {
-      const response = await apiCore.get<any>(`${this.basePath}/history/${contractId}`);
+      const queryParams = new URLSearchParams();
+      if (params?.limit) queryParams.append('limit', params.limit.toString());
+      if (params?.contractId) queryParams.append('contractId', params.contractId);
+      
+      const response = await apiCore.get<any>(`/transactions/history?${queryParams.toString()}`);
       
       if (response.status === 'success' && response.data) {
-        return response.data;
+        return { data: response.data };
       }
       
-      return [];
+      return { data: [] };
     } catch (error: any) {
       console.error('[PAYMENTS] Failed to get transaction history:', error);
-      return [];
+      return { data: [] };
     }
   }
 

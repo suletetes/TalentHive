@@ -159,6 +159,23 @@ export const EarningsPage: React.FC = () => {
           >
             Refresh
           </Button>
+          {process.env.NODE_ENV === 'development' && (
+            <Button
+              onClick={async () => {
+                try {
+                  await apiCore.post('/dev/setup-withdrawal-test');
+                  toast.success('Test data created! Refresh to see changes.');
+                  refetch();
+                } catch (error) {
+                  toast.error('Failed to create test data');
+                }
+              }}
+              variant="outlined"
+              color="secondary"
+            >
+              Create Test Data
+            </Button>
+          )}
           {!isStripeConnected && (
             <Button
               startIcon={<SettingsIcon />}
@@ -192,7 +209,7 @@ export const EarningsPage: React.FC = () => {
                 <Schedule sx={{ mr: 1 }} />
                 <Typography variant="subtitle2">In Escrow</Typography>
               </Box>
-              <Typography variant="h4">${earnings.inEscrow?.toLocaleString() || '0'}</Typography>
+              <Typography variant="h4">${earnings.inEscrow?.toFixed(2) || '0.00'}</Typography>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
                 Awaiting release
               </Typography>
@@ -207,7 +224,7 @@ export const EarningsPage: React.FC = () => {
                 <TrendingUp sx={{ mr: 1 }} />
                 <Typography variant="subtitle2">Pending</Typography>
               </Box>
-              <Typography variant="h4">${earnings.pending?.toLocaleString() || '0'}</Typography>
+              <Typography variant="h4">${earnings.pending?.toFixed(2) || '0.00'}</Typography>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
                 Processing
               </Typography>
@@ -222,7 +239,7 @@ export const EarningsPage: React.FC = () => {
                 <AccountBalance sx={{ mr: 1 }} />
                 <Typography variant="subtitle2">Available</Typography>
               </Box>
-              <Typography variant="h4">${earnings.available?.toLocaleString() || '0'}</Typography>
+              <Typography variant="h4">${earnings.available?.toFixed(2) || '0.00'}</Typography>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
                 Ready to withdraw
               </Typography>
@@ -249,7 +266,7 @@ export const EarningsPage: React.FC = () => {
                 <CheckCircle sx={{ mr: 1 }} />
                 <Typography variant="subtitle2">Total Earned</Typography>
               </Box>
-              <Typography variant="h4">${earnings.totalEarned?.toLocaleString() || '0'}</Typography>
+              <Typography variant="h4">${earnings.totalEarned?.toFixed(2) || '0.00'}</Typography>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
                 All time
               </Typography>
@@ -317,10 +334,10 @@ export const EarningsPage: React.FC = () => {
                       <TableCell>
                         {tx.contract?.title || tx.description || `Payment for contract ${tx.contract?._id || tx.contract || ''}`}
                       </TableCell>
-                      <TableCell>${tx.amount?.toLocaleString()}</TableCell>
+                      <TableCell>${(tx.amount / 100)?.toFixed(2) || '0.00'}</TableCell>
                       <TableCell color="success">
                         <Typography color="success.main" fontWeight="bold">
-                          ${tx.freelancerAmount?.toLocaleString()}
+                          ${(tx.freelancerAmount / 100)?.toFixed(2) || '0.00'}
                         </Typography>
                       </TableCell>
                       <TableCell>
