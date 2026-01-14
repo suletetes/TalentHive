@@ -112,9 +112,15 @@ export const FreelancerProfileView = ({ userId }: FreelancerProfileViewProps) =>
               Skills
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {user.skills.map((skill: string, index: number) => (
-                <Chip key={index} label={skill} size="small" />
-              ))}
+              {Array.isArray(user.skills) && user.skills.length > 0 ? (
+                user.skills.map((skill: string, index: number) => (
+                  <Chip key={index} label={skill} size="small" />
+                ))
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No skills listed
+                </Typography>
+              )}
             </Box>
           </Box>
         )}

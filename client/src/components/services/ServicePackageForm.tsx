@@ -293,7 +293,7 @@ const ServicePackageForm: React.FC<ServicePackageFormProps> = ({
 
           <Grid item xs={12}>
             <Typography variant="subtitle2" gutterBottom>Skills</Typography>
-            {formData.skills.map((skill, index) => (
+            {Array.isArray(formData.skills) && formData.skills.map((skill, index) => (
               <Box key={index} display="flex" gap={1} mb={1}>
                 <TextField
                   fullWidth
