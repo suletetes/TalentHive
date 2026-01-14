@@ -164,9 +164,27 @@ export const ContractsPage: React.FC = () => {
     const signatures = contract.signatures || [];
     const userId = user?._id;
     
+    console.log('[CONTRACT SIGNATURE CHECK]', {
+      contractId: contract._id,
+      title: contract.title,
+      sourceType: (contract as any).sourceType,
+      status: contract.status,
+      userId,
+      signaturesCount: signatures.length,
+      signatures: signatures.map((s: any) => ({
+        signedBy: s.signedBy,
+        signedById: s.signedBy?._id,
+      })),
+    });
+    
     // Check if current user has already signed
     const userHasSigned = signatures.some(
-      (sig: any) => sig.signedBy === userId || sig.signedBy?._id === userId
+      (sig: any) => {
+        const signedById = sig.signedBy?._id || sig.signedBy;
+        const match = signedById === userId || signedById?.toString() === userId?.toString();
+        console.log('[SIGNATURE] Checking signature:', { signedById, userId, match });
+        return match;
+      }
     );
     
     // Check if both parties have signed
@@ -174,15 +192,22 @@ export const ContractsPage: React.FC = () => {
     const freelancerId = typeof contract.freelancer === 'string' ? contract.freelancer : contract.freelancer?._id;
     
     const clientSigned = signatures.some(
-      (sig: any) => sig.signedBy === clientId || sig.signedBy?._id === clientId
+      (sig: any) => {
+        const signedById = sig.signedBy?._id || sig.signedBy;
+        return signedById === clientId || signedById?.toString() === clientId?.toString();
+      }
     );
     const freelancerSigned = signatures.some(
-      (sig: any) => sig.signedBy === freelancerId || sig.signedBy?._id === freelancerId
+      (sig: any) => {
+        const signedById = sig.signedBy?._id || sig.signedBy;
+        return signedById === freelancerId || signedById?.toString() === freelancerId?.toString();
+      }
     );
     const isFullySigned = clientSigned && freelancerSigned;
     
-    console.log('[CONTRACT] needsSignature check:', {
+    console.log('[CONTRACT] needsSignature result:', {
       contractId: contract._id,
+      sourceType: (contract as any).sourceType,
       userId,
       clientId,
       freelancerId,
@@ -192,6 +217,7 @@ export const ContractsPage: React.FC = () => {
       freelancerSigned,
       isFullySigned,
       contractStatus: contract.status,
+      needsSign: !userHasSigned && !['completed', 'cancelled'].includes(contract.status) && !isFullySigned,
     });
     
     // User needs to sign if:

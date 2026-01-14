@@ -64,9 +64,10 @@ const PaymentFormContent: React.FC<PaymentFormProps> = ({
   const queryClient = useQueryClient();
 
   const createPaymentMutation = useMutation({
-    mutationFn: (data: any) => paymentsService.createPaymentIntent(data),
+    mutationFn: (data: { contractId: string; milestoneId: string }) => 
+      paymentsService.createPaymentIntent(data.contractId, data.milestoneId),
     onSuccess: async (response) => {
-      const { clientSecret: secret } = response.data;
+      const { clientSecret: secret } = response;
       setClientSecret(secret);
 
       // Confirm the payment with Stripe
@@ -85,9 +86,7 @@ const PaymentFormContent: React.FC<PaymentFormProps> = ({
           } else if (paymentIntent?.status === 'succeeded') {
             // Confirm payment on backend
             try {
-              await paymentsService.confirmPayment({
-                paymentIntentId: paymentIntent.id,
-              });
+              await paymentsService.confirmPayment(paymentIntent.id);
               queryClient.invalidateQueries({ queryKey: ['contracts'] });
               queryClient.invalidateQueries({ queryKey: ['transactions'] });
               toast.success('Payment completed successfully!');
