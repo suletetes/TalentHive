@@ -28,8 +28,23 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik, onEditStep }) =>
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const response = await apiService.get('/categories');
-      return response.data.data;
+      try {
+        const response = await apiService.get('/categories');
+        let categories = [];
+        if (response?.data?.categories) {
+          categories = response.data.categories;
+        } else if (response?.categories) {
+          categories = response.categories;
+        } else if (response?.data && Array.isArray(response.data)) {
+          categories = response.data;
+        } else if (Array.isArray(response)) {
+          categories = response;
+        }
+        return Array.isArray(categories) ? categories : [];
+      } catch (error) {
+        console.error('[ReviewStep] Categories error:', error);
+        return [];
+      }
     },
   });
 
@@ -37,8 +52,23 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik, onEditStep }) =>
   const { data: skillsData } = useQuery({
     queryKey: ['skills'],
     queryFn: async () => {
-      const response = await apiService.get('/skills');
-      return response.data?.data || response.data || [];
+      try {
+        const response = await apiService.get('/skills');
+        let skills = [];
+        if (response?.data?.skills) {
+          skills = response.data.skills;
+        } else if (response?.skills) {
+          skills = response.skills;
+        } else if (response?.data && Array.isArray(response.data)) {
+          skills = response.data;
+        } else if (Array.isArray(response)) {
+          skills = response;
+        }
+        return Array.isArray(skills) ? skills : [];
+      } catch (error) {
+        console.error('[ReviewStep] Skills error:', error);
+        return [];
+      }
     },
   });
 
