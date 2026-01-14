@@ -42,15 +42,17 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik, onEditStep }) =>
     },
   });
 
-  const categories = categoriesData || [];
-  const skills = skillsData || [];
+  const categories = Array.isArray(categoriesData) ? categoriesData : [];
+  const skills = Array.isArray(skillsData) ? skillsData : [];
 
   const getCategoryName = (categoryId: string) => {
+    if (!categoryId) return 'N/A';
     const category = categories.find((cat: any) => cat._id === categoryId);
     return category ? category.name : categoryId;
   };
 
   const getSkillName = (skillId: string) => {
+    if (!skillId) return 'N/A';
     const skill = skills.find((s: any) => s._id === skillId);
     return skill ? skill.name : skillId;
   };
@@ -95,9 +97,15 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formik, onEditStep }) =>
                   Required Skills
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {values.skills.map((skillId: string) => (
-                    <Chip key={skillId} label={getSkillName(skillId)} size="small" />
-                  ))}
+                  {Array.isArray(values.skills) && values.skills.length > 0 ? (
+                    values.skills.map((skillId: string) => (
+                      <Chip key={skillId} label={getSkillName(skillId)} size="small" />
+                    ))
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      No skills specified
+                    </Typography>
+                  )}
                 </Box>
               </Box>
 
