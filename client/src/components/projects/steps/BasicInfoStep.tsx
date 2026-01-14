@@ -30,12 +30,28 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
   const { data: categoriesData, isLoading: loadingCategories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      // apiService.get returns response.data directly
-      const response: any = await apiService.get('/categories');
-      console.log('[CATEGORIES] Response:', response);
-      const categories = response?.data?.categories || response?.categories || response?.data || response || [];
-      console.log('[CATEGORIES] Parsed:', categories);
-      return Array.isArray(categories) ? categories : [];
+      try {
+        const response: any = await apiService.get('/categories');
+        console.log('[CATEGORIES] Raw response:', response);
+        
+        // Handle various response structures
+        let categories = [];
+        if (response?.data?.categories) {
+          categories = response.data.categories;
+        } else if (response?.categories) {
+          categories = response.categories;
+        } else if (response?.data && Array.isArray(response.data)) {
+          categories = response.data;
+        } else if (Array.isArray(response)) {
+          categories = response;
+        }
+        
+        console.log('[CATEGORIES] Extracted:', categories);
+        return Array.isArray(categories) ? categories : [];
+      } catch (error) {
+        console.error('[CATEGORIES] Error:', error);
+        return [];
+      }
     },
   });
 
@@ -43,12 +59,28 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
   const { data: skillsData, isLoading: loadingSkills } = useQuery({
     queryKey: ['skills'],
     queryFn: async () => {
-      // apiService.get returns response.data directly
-      const response: any = await apiService.get('/skills');
-      console.log('[SKILLS] Response:', response);
-      const skills = response?.data?.skills || response?.skills || response?.data || response || [];
-      console.log('[SKILLS] Parsed:', skills);
-      return Array.isArray(skills) ? skills : [];
+      try {
+        const response: any = await apiService.get('/skills');
+        console.log('[SKILLS] Raw response:', response);
+        
+        // Handle various response structures
+        let skills = [];
+        if (response?.data?.skills) {
+          skills = response.data.skills;
+        } else if (response?.skills) {
+          skills = response.skills;
+        } else if (response?.data && Array.isArray(response.data)) {
+          skills = response.data;
+        } else if (Array.isArray(response)) {
+          skills = response;
+        }
+        
+        console.log('[SKILLS] Extracted:', skills);
+        return Array.isArray(skills) ? skills : [];
+      } catch (error) {
+        console.error('[SKILLS] Error:', error);
+        return [];
+      }
     },
   });
 
@@ -85,8 +117,8 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
     },
   });
 
-  const categories = categoriesData || [];
-  const skills = skillsData || [];
+  const categories = Array.isArray(categoriesData) ? categoriesData : [];
+  const skills = Array.isArray(skillsData) ? skillsData : [];
   // API returns { status: 'success', data: [...organizations] }
   const organizations = Array.isArray(organizationsData?.data) ? organizationsData.data : 
                         Array.isArray(organizationsData) ? organizationsData : [];
@@ -99,9 +131,10 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
   };
 
   const handleSkillRemove = (skillToRemove: string) => {
+    const currentSkills = Array.isArray(formik.values.skills) ? formik.values.skills : [];
     formik.setFieldValue(
       'skills',
-      formik.values.skills.filter((skill: string) => skill !== skillToRemove)
+      currentSkills.filter((skill: string) => skill !== skillToRemove)
     );
   };
 
@@ -272,17 +305,21 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
           }}
           onChange={handleSkillChange}
           filterOptions={(options, params) => {
+            // Ensure options is an array
+            const optionsArray = Array.isArray(options) ? options : [];
+            const currentSkills = Array.isArray(formik.values.skills) ? formik.values.skills : [];
+            
             // Filter out already selected skills
-            const availableOptions = options.filter((option: any) => 
-              !formik.values.skills.includes(option._id)
+            const availableOptions = optionsArray.filter((option: any) => 
+              !currentSkills.includes(option._id)
             );
             
             const filtered = availableOptions.filter((option: any) =>
-              option.name.toLowerCase().includes(params.inputValue.toLowerCase())
+              option.name && option.name.toLowerCase().includes(params.inputValue.toLowerCase())
             );
 
             const { inputValue } = params;
-            const isExisting = options.some((option: any) => inputValue === option.name);
+            const isExisting = optionsArray.some((option: any) => inputValue === option.name);
             if (inputValue !== '' && !isExisting) {
               filtered.push({
                 inputValue,
@@ -315,14 +352,20 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ formik }) => {
         />
 
         <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-          {formik.values.skills.map((skillId: string) => (
-            <Chip
-              key={skillId}
-              label={getSkillName(skillId)}
-              onDelete={() => handleSkillRemove(skillId)}
-              size="small"
-            />
-          ))}
+          {Array.isArray(formik.values.skills) && formik.values.skills.length > 0 ? (
+            formik.values.skills.map((skillId: string) => (
+              <Chip
+                key={skillId}
+                label={getSkillName(skillId)}
+                onDelete={() => handleSkillRemove(skillId)}
+                size="small"
+              />
+            ))
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
+              No skills selected. Add skills to help freelancers find your project.
+            </Typography>
+          )}
         </Box>
 
         {formik.touched.skills && formik.errors.skills && (

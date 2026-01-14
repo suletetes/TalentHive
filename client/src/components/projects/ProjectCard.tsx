@@ -291,25 +291,33 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {/* Skills */}
         <Box sx={{ mb: 2 }}>
           <Box display="flex" flexWrap="wrap" gap={0.5}>
-            {project.skills
-              .map((skill) => getSkillDisplay(skill))
-              .filter((s) => s) // Filter out empty strings (ObjectIds)
-              .slice(0, 5)
-              .map((skillName) => (
-                <Chip
-                  key={skillName}
-                  label={skillName}
-                  size="small"
-                  variant="outlined"
-                />
-              ))}
-            {project.skills.filter((s) => getSkillDisplay(s)).length > 5 && (
-              <Chip
-                label={`+${project.skills.filter((s) => getSkillDisplay(s)).length - 5} more`}
-                size="small"
-                variant="outlined"
-                color="primary"
-              />
+            {Array.isArray(project.skills) && project.skills.length > 0 ? (
+              <>
+                {project.skills
+                  .map((skill) => getSkillDisplay(skill))
+                  .filter((s) => s) // Filter out empty strings (ObjectIds)
+                  .slice(0, 5)
+                  .map((skillName) => (
+                    <Chip
+                      key={skillName}
+                      label={skillName}
+                      size="small"
+                      variant="outlined"
+                    />
+                  ))}
+                {project.skills.filter((s) => getSkillDisplay(s)).length > 5 && (
+                  <Chip
+                    label={`+${project.skills.filter((s) => getSkillDisplay(s)).length - 5} more`}
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                  />
+                )}
+              </>
+            ) : (
+              <Typography variant="caption" color="text.secondary">
+                No skills specified
+              </Typography>
             )}
           </Box>
         </Box>

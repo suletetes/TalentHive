@@ -79,14 +79,15 @@ export class PaymentsService {
    * Create a Payment Intent (Legacy support)
    */
   async createPaymentIntent(contractId: string, milestoneId: string): Promise<{
-    paymentIntent: PaymentIntent;
+    clientSecret: string;
+    paymentIntentId: string;
     transaction: Transaction;
     breakdown: PaymentBreakdown;
   }> {
     try {
       console.log('[PAYMENTS] Creating payment intent:', { contractId, milestoneId });
       
-      const response = await apiCore.post<any>(`${this.basePath}/intent`, {
+      const response = await apiCore.post<any>(`${this.basePath}/create-intent`, {
         contractId,
         milestoneId,
       });

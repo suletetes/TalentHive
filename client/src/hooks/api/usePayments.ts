@@ -48,7 +48,8 @@ export function useCreatePaymentIntent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreatePaymentIntentDto) => paymentsService.createPaymentIntent(data),
+    mutationFn: (data: CreatePaymentIntentDto) => 
+      paymentsService.createPaymentIntent(data.contractId, data.milestoneId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: transactionKeys.history() });
       toast.success('Payment intent created successfully!');
@@ -63,7 +64,7 @@ export function useConfirmPayment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: ConfirmPaymentDto) => paymentsService.confirmPayment(data),
+    mutationFn: (data: ConfirmPaymentDto) => paymentsService.confirmPayment(data.paymentIntentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: transactionKeys.history() });
       toast.success('Payment confirmed and held in escrow!');

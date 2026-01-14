@@ -178,10 +178,22 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
   const isStepValid = (step: number) => {
     switch (step) {
       case 0:
-        return !formik.errors.title && !formik.errors.description && 
+        // Basic info: title, description, category, and at least one skill
+        const hasTitle = formik.values.title && formik.values.title.trim().length >= 5;
+        const hasDescription = formik.values.description && formik.values.description.trim().length >= 20;
+        const hasCategory = formik.values.category && formik.values.category.trim().length > 0;
+        const hasSkills = Array.isArray(formik.values.skills) && formik.values.skills.length > 0;
+        
+        return hasTitle && hasDescription && hasCategory && hasSkills &&
+               !formik.errors.title && !formik.errors.description && 
                !formik.errors.category && !formik.errors.skills;
       case 1:
-        return !formik.errors.budget && !formik.errors.timeline;
+        // Budget & Timeline
+        const hasBudget = formik.values.budget?.min > 0 && formik.values.budget?.max > 0 &&
+                         formik.values.budget?.max >= formik.values.budget?.min;
+        const hasTimeline = formik.values.timeline?.duration > 0;
+        
+        return hasBudget && hasTimeline && !formik.errors.budget && !formik.errors.timeline;
       case 2:
         return true; // Requirements are optional
       case 3:
