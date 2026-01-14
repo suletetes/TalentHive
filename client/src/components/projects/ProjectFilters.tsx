@@ -378,7 +378,7 @@ export const ProjectFilters: React.FC<ProjectFiltersProps> = ({
                 onDelete={() => handleFilterChange('organization', '')}
               />
             )}
-            {filters.skills.map((skill) => (
+            {Array.isArray(filters.skills) && filters.skills.map((skill) => (
               <Chip
                 key={skill}
                 label={skill}
