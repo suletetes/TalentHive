@@ -29,7 +29,7 @@ export const PaymentSuccessPage: React.FC = () => {
   // Confirm payment mutation
   const confirmMutation = useMutation({
     mutationFn: async (intentId: string) => {
-      return paymentsService.confirmPayment({ paymentIntentId: intentId });
+      return paymentsService.confirmPayment(intentId);
     },
     onSuccess: () => {
       setConfirmed(true);

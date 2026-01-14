@@ -101,7 +101,7 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
         console.error('[PAYMENT] Stripe error:', error);
         setErrorMessage(error.message || 'Payment failed');
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        await paymentsService.confirmPayment({ paymentIntentId: paymentIntent.id });
+        await paymentsService.confirmPayment(paymentIntent.id);
         toast.success('Payment successful! Funds are now in escrow.');
         
         await queryClient.invalidateQueries({ queryKey: ['contract', contractId] });
@@ -219,18 +219,17 @@ export const ReleasePaymentPage: React.FC = () => {
         throw new Error(`Milestone amount ($${amount}) must be at least $0.50`);
       }
       console.log('[PAYMENT] Amount:', amount);
-      const response = await paymentsService.createPaymentIntent({
-        contractId: contractId!,
-        milestoneId: milestoneId!,
-        amount,
-      });
+      const response = await paymentsService.createPaymentIntent(
+        contractId!,
+        milestoneId!
+      );
       console.log('[PAYMENT] Response:', response);
       return response;
     },
     onSuccess: (data) => {
       console.log('[PAYMENT] Success:', data);
-      setClientSecret(data.data.clientSecret);
-      setPaymentData(data.data);
+      setClientSecret(data.clientSecret);
+      setPaymentData(data);
     },
     onError: (err: any) => {
       console.error('[PAYMENT] Error:', err);
