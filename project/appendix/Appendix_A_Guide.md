@@ -2,14 +2,14 @@
 
 ## A.1 Freelancer Interview Data
 
-This section contains detailed interview data from 15 freelancers across various skill categories. The interviews were conducted between January 15, 2024, and February 1, 2024.
+This section contains detailed interview data from 15 freelancers across various skill categories. The interviews were conducted between September 2025 and January 2026.
 
 **Data File:** Appendix_A1_Freelancer_Interviews.csv
 
 **Summary Statistics:**
 - Total Participants: 15
 - Average Years of Experience: 4.6 years
-- Interview Period: January 15 - February 1, 2024
+- Interview Period: September 15, 2025 - January 7, 2026
 - Primary Skills Covered: Web Development, Graphic Design, Content Writing, Mobile Development, UI/UX Design, Data Analysis, Digital Marketing, Video Editing, Software Testing, Backend Development, Social Media Management, SEO, Copywriting, Database Administration, DevOps
 
 **Key Findings:**
@@ -22,7 +22,7 @@ This section contains detailed interview data from 15 freelancers across various
 
 ## A.2 Client Interview Data
 
-This section contains detailed interview data from 12 business owners and project managers who regularly hire freelancers. The interviews were conducted between January 15, 2024, and January 30, 2024.
+This section contains detailed interview data from 12 business owners and project managers who regularly hire freelancers. The interviews were conducted between September 2025 and December 2025.
 
 **Data File:** Appendix_A2_Client_Interviews.csv
 
@@ -32,7 +32,7 @@ This section contains detailed interview data from 12 business owners and projec
   - Small (10-50 employees): 5 clients (42%)
   - Medium (51-200 employees): 5 clients (42%)
   - Large (200+ employees): 2 clients (16%)
-- Interview Period: January 15 - January 30, 2024
+- Interview Period: September 16, 2025 - December 13, 2025
 - Industries Represented: Technology, Marketing, E-commerce, Finance, Healthcare, Education, Real Estate, Retail, Manufacturing, Consulting, Media, Hospitality
 
 **Key Findings:**
@@ -45,7 +45,7 @@ This section contains detailed interview data from 12 business owners and projec
 
 ## A.3 Platform Administrator Interview Data
 
-This section contains detailed interview data from 5 professionals with experience in platform management. The interviews were conducted between January 15, 2024, and January 19, 2024.
+This section contains detailed interview data from 5 professionals with experience in platform management. The interviews were conducted between September 2025 and November 2025.
 
 **Data File:** Appendix_A3_Administrator_Interviews.csv
 
@@ -53,7 +53,7 @@ This section contains detailed interview data from 5 professionals with experien
 - Total Participants: 5
 - Average Years in Platform Management: 6 years
 - Previous Platform Experience: Upwork, Fiverr, Freelancer.com, Toptal, Guru
-- Interview Period: January 15 - January 19, 2024
+- Interview Period: September 17, 2025 - November 20, 2025
 
 **Key Findings:**
 - 100% of administrators identified comprehensive user management as a critical need
@@ -65,7 +65,7 @@ This section contains detailed interview data from 5 professionals with experien
 
 ## A.4 Industry Expert Interview Data
 
-This section contains detailed interview data from 3 professionals with expertise in freelancing platform operations. The interviews were conducted between January 20, 2024, and January 26, 2024.
+This section contains detailed interview data from 3 professionals with expertise in freelancing platform operations. The interviews were conducted between October 2025 and December 2025.
 
 **Data File:** Appendix_A4_Industry_Expert_Interviews.csv
 
@@ -73,7 +73,7 @@ This section contains detailed interview data from 3 professionals with expertis
 - Total Participants: 3
 - Average Years of Experience: 12.3 years
 - Areas of Expertise: Freelancing Platform Operations, Digital Marketplace Design, Online Payment Systems
-- Interview Period: January 20 - January 26, 2024
+- Interview Period: October 10, 2025 - December 5, 2025
 
 **Key Insights:**
 - Payment security identified as critical for platform trust
@@ -92,7 +92,7 @@ This section contains aggregated survey responses from all stakeholder groups re
 **Survey Methodology:**
 - Distribution Method: Online survey platform
 - Response Rate: 100% (all interview participants completed the survey)
-- Survey Period: January 15 - February 1, 2024
+- Survey Period: September 15, 2025 - January 7, 2026
 - Total Responses: 27 (15 freelancers + 12 clients)
 
 **Critical Priority Features (100% Very Important):**
@@ -125,7 +125,7 @@ This section contains aggregated survey responses from all stakeholder groups re
 If required by your institution, you can cite the appendix data as:
 
 ```
-TalentHive Project Team. (2024). Requirement Elicitation Data: Stakeholder Interviews and Surveys [Data files]. Appendix A.1-A.5.
+TalentHive Project Team. (2025-2026). Requirement Elicitation Data: Stakeholder Interviews and Surveys [Data files]. Appendix A.1-A.5.
 ```
 
 ---
