@@ -375,9 +375,9 @@ export function logIntegrityReport(report: DataIntegrityReport, itemType: string
   const prefix = `[DATA INTEGRITY] ${itemType}${itemId ? ` ${itemId}` : ''}`;
   
   if (report.isValid) {
-    console.log(`${prefix}: ✅ Valid`);
+    console.log(`${prefix}:  Valid`);
   } else {
-    console.warn(`${prefix}: ❌ Invalid`);
+    console.warn(`${prefix}:  Invalid`);
   }
   
   if (report.errors.length > 0) {
