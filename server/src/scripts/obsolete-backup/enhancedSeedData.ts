@@ -7,11 +7,11 @@ export async function generateEnhancedUsers() {
   const hashedPassword = await bcrypt.hash('Password123!', 10);
 
   const firstNames = {
-    male: ['James', 'Michael', 'Robert', 'David', 'William', 'Richard', 'Joseph', 'Thomas', 'Christopher', 'Daniel', 'Matthew', 'Anthony', 'Mark', 'Donald', 'Steven', 'Andrew', 'Kenneth', 'Joshua', 'Kevin', 'Brian'],
-    female: ['Mary', 'Patricia', 'Jennifer', 'Linda', 'Elizabeth', 'Barbara', 'Susan', 'Jessica', 'Sarah', 'Karen', 'Lisa', 'Nancy', 'Betty', 'Margaret', 'Sandra', 'Ashley', 'Kimberly', 'Emily', 'Donna', 'Michelle'],
+    male: ['Suleiman', 'Ibrahim', 'Usman', 'Aminu', 'Yusuf', 'Hassan', 'Ahmad', 'Musa', 'Abdullahi', 'Aliyu', 'Bashir', 'Garba', 'Ismail', 'Kabir', 'Lawal', 'Mahmud', 'Nasir', 'Rabiu', 'Sani', 'Tijani'],
+    female: ['Fatima', 'Aisha', 'Zainab', 'Khadija', 'Hauwa', 'Maryam', 'Safiya', 'Hadiza', 'Asma', 'Halima', 'Nafisa', 'Rahma', 'Salamatu', 'Umma', 'Yakaka', 'Zara', 'Bilkisu', 'Jamila', 'Kaltum', 'Laila'],
   };
 
-  const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Thompson', 'White', 'Harris', 'Clark'];
+  const lastNames = ['Abdulkadir', 'Bashir', 'Abdullahi', 'Muhammad', 'Yusuf', 'Ahmed', 'Hassan', 'Sani', 'Musa', 'Ibrahim', 'Garba', 'Aliyu', 'Lawal', 'Mahmud', 'Nasir', 'Rabiu', 'Tijani', 'Kabir', 'Ismail', 'Ahmad', 'Umar', 'Salisu', 'Haruna', 'Bello', 'Danjuma'];
 
   const cities = ['New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Phoenix, AZ', 'Philadelphia, PA', 'San Antonio, TX', 'San Diego, CA', 'Dallas, TX', 'San Jose, CA', 'Austin, TX', 'Jacksonville, FL', 'Seattle, WA', 'Denver, CO', 'Boston, MA', 'Portland, OR', 'Miami, FL', 'Atlanta, GA', 'Nashville, TN', 'Detroit, MI'];
 

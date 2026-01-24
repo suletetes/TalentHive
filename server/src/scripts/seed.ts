@@ -260,51 +260,51 @@ async function seedUsers() {
       isEmailVerified: true,
       isVerified: true,
       profile: {
-        firstName: 'Admin',
-        lastName: 'User',
+        firstName: 'Suleiman',
+        lastName: 'Abdulkadir',
       },
     },
     // Clients
     {
-      email: 'john.client@example.com',
+      email: 'fatima.client@example.com',
       password: hashedPassword,
       role: 'client',
       accountStatus: 'active',
       isEmailVerified: true,
       isVerified: true,
       profile: {
-        firstName: 'John',
-        lastName: 'Smith',
+        firstName: 'Fatima',
+        lastName: 'Bashir',
         bio: 'CEO of TechCorp, looking for talented developers',
         location: 'San Francisco, CA',
         website: 'https://techcorp.com',
       },
     },
     {
-      email: 'sarah.manager@example.com',
+      email: 'ismail.manager@example.com',
       password: hashedPassword,
       role: 'client',
       accountStatus: 'active',
       isEmailVerified: true,
       isVerified: true,
       profile: {
-        firstName: 'Sarah',
-        lastName: 'Johnson',
+        firstName: 'Ismail',
+        lastName: 'Abdullahi',
         bio: 'Project Manager at StartupXYZ',
         location: 'New York, NY',
       },
     },
     // Freelancers
     {
-      email: 'alice.dev@example.com',
+      email: 'aisha.dev@example.com',
       password: hashedPassword,
       role: 'freelancer',
       accountStatus: 'active',
       isEmailVerified: true,
       isVerified: true,
       profile: {
-        firstName: 'Alice',
-        lastName: 'Developer',
+        firstName: 'Aisha',
+        lastName: 'Muhammad',
         bio: 'Passionate full-stack developer with 5+ years of experience building scalable web applications. Specialized in React, Node.js, and cloud technologies. I love turning complex problems into elegant solutions and have successfully delivered 50+ projects for clients worldwide.',
         location: 'Austin, TX',
         timezone: 'America/Chicago',
@@ -344,15 +344,15 @@ async function seedUsers() {
       rating: { average: 4.8, count: 15 },
     },
     {
-      email: 'bob.designer@example.com',
+      email: 'ibrahim.designer@example.com',
       password: hashedPassword,
       role: 'freelancer',
       accountStatus: 'active',
       isEmailVerified: true,
       isVerified: true,
       profile: {
-        firstName: 'Bob', 
-        lastName: 'Designer',
+        firstName: 'Ibrahim', 
+        lastName: 'Yusuf',
         bio: 'Award-winning UI/UX Designer with 7+ years of experience creating beautiful, user-centered digital experiences. I specialize in mobile app design, web applications, and design systems. My work has been featured in Awwwards and CSS Design Awards.',
         location: 'Los Angeles, CA',
         timezone: 'America/Los_Angeles',
@@ -385,15 +385,15 @@ async function seedUsers() {
       rating: { average: 4.9, count: 22 },
     },
     {
-      email: 'carol.writer@example.com',
+      email: 'zainab.writer@example.com',
       password: hashedPassword,
       role: 'freelancer',
       accountStatus: 'active',
       isEmailVerified: true,
       isVerified: true,
       profile: {
-        firstName: 'Carol',
-        lastName: 'Writer',
+        firstName: 'Zainab',
+        lastName: 'Ahmed',
         bio: 'Technical writer and content strategist',
         location: 'Seattle, WA',
       },
@@ -409,15 +409,15 @@ async function seedUsers() {
     },
     // Additional Freelancers
     {
-      email: 'david.mobile@example.com',
+      email: 'usman.mobile@example.com',
       password: hashedPassword,
       role: 'freelancer',
       accountStatus: 'active',
       isEmailVerified: true,
       isVerified: true,
       profile: {
-        firstName: 'David',
-        lastName: 'Martinez',
+        firstName: 'Usman',
+        lastName: 'Hassan',
         bio: 'Mobile app developer specializing in React Native and Flutter',
         location: 'Miami, FL',
       },
@@ -432,15 +432,15 @@ async function seedUsers() {
       rating: { average: 4.6, count: 12 },
     },
     {
-      email: 'emma.data@example.com',
+      email: 'khadija.data@example.com',
       password: hashedPassword,
       role: 'freelancer',
       accountStatus: 'active',
       isEmailVerified: true,
       isVerified: true,
       profile: {
-        firstName: 'Emma',
-        lastName: 'Chen',
+        firstName: 'Khadija',
+        lastName: 'Ibrahim',
         bio: 'Data scientist and machine learning engineer',
         location: 'Boston, MA',
       },
@@ -456,27 +456,27 @@ async function seedUsers() {
     },
     // Additional Clients
     {
-      email: 'michael.startup@example.com',
+      email: 'aminu.startup@example.com',
       password: hashedPassword,
       role: 'client',
       accountStatus: 'active',
       isEmailVerified: true,
       profile: {
-        firstName: 'Michael',
-        lastName: 'Brown',
+        firstName: 'Aminu',
+        lastName: 'Sani',
         bio: 'Founder of HealthTech startup',
         location: 'Denver, CO',
       },
     },
     {
-      email: 'lisa.enterprise@example.com',
+      email: 'hauwa.enterprise@example.com',
       password: hashedPassword,
       role: 'client',
       accountStatus: 'active',
       isEmailVerified: true,
       profile: {
-        firstName: 'Lisa',
-        lastName: 'Anderson',
+        firstName: 'Hauwa',
+        lastName: 'Musa',
         bio: 'IT Director at Fortune 500 company',
         location: 'Chicago, IL',
       },
@@ -492,34 +492,34 @@ async function seedUsers() {
   logger.info(` Created ${createdUsers.length} users`);
   
   // Mark some freelancers as featured
-  const alice = createdUsers.find(u => u.email === 'alice.dev@example.com');
-  const bob = createdUsers.find(u => u.email === 'bob.designer@example.com');
-  const david = createdUsers.find(u => u.email === 'david.mobile@example.com');
+  const aisha = createdUsers.find(u => u.email === 'aisha.dev@example.com');
+  const ibrahim = createdUsers.find(u => u.email === 'ibrahim.designer@example.com');
+  const usman = createdUsers.find(u => u.email === 'usman.mobile@example.com');
   
-  if (alice) {
-    alice.isFeatured = true;
-    alice.featuredOrder = 1;
-    alice.featuredSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    await alice.save();
+  if (aisha) {
+    aisha.isFeatured = true;
+    aisha.featuredOrder = 1;
+    aisha.featuredSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    await aisha.save();
   }
   
-  if (bob) {
-    bob.isFeatured = true;
-    bob.featuredOrder = 2;
-    bob.featuredSince = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000);
-    await bob.save();
+  if (ibrahim) {
+    ibrahim.isFeatured = true;
+    ibrahim.featuredOrder = 2;
+    ibrahim.featuredSince = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000);
+    await ibrahim.save();
   }
   
-  if (david) {
-    david.isFeatured = true;
-    david.featuredOrder = 3;
-    david.featuredSince = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
-    await david.save();
+  if (usman) {
+    usman.isFeatured = true;
+    usman.featuredOrder = 3;
+    usman.featuredSince = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+    await usman.save();
   }
   
   // Add work experience and education to freelancers
-  if (alice && alice.freelancerProfile) {
-    (alice.freelancerProfile as any).workExperience = [
+  if (aisha && aisha.freelancerProfile) {
+    (aisha.freelancerProfile as any).workExperience = [
       {
         title: 'Senior Software Engineer',
         company: 'Tech Innovations Inc.',
@@ -539,7 +539,7 @@ async function seedUsers() {
         description: 'Built and maintained multiple web applications using React and Node.js. Implemented CI/CD pipelines and automated testing.',
       },
     ];
-    (alice.freelancerProfile as any).education = [
+    (aisha.freelancerProfile as any).education = [
       {
         degree: 'Bachelor of Science',
         institution: 'University of Texas',
@@ -549,15 +549,15 @@ async function seedUsers() {
         description: 'Graduated with honors. Focus on software engineering and algorithms.',
       },
     ];
-    (alice.freelancerProfile as any).languages = [
+    (aisha.freelancerProfile as any).languages = [
       { language: 'English', proficiency: 'native' },
       { language: 'Spanish', proficiency: 'conversational' },
     ];
-    await alice.save();
+    await aisha.save();
   }
   
-  if (bob && bob.freelancerProfile) {
-    (bob.freelancerProfile as any).workExperience = [
+  if (ibrahim && ibrahim.freelancerProfile) {
+    (ibrahim.freelancerProfile as any).workExperience = [
       {
         title: 'Lead UI/UX Designer',
         company: 'Design Studio Pro',
@@ -576,7 +576,7 @@ async function seedUsers() {
         description: 'Designed user interfaces for web and mobile applications. Conducted user research and usability testing.',
       },
     ];
-    (bob.freelancerProfile as any).education = [
+    (ibrahim.freelancerProfile as any).education = [
       {
         degree: 'Bachelor of Fine Arts',
         institution: 'Art Center College of Design',
@@ -586,15 +586,15 @@ async function seedUsers() {
         description: 'Specialized in digital design and user experience.',
       },
     ];
-    (bob.freelancerProfile as any).languages = [
+    (ibrahim.freelancerProfile as any).languages = [
       { language: 'English', proficiency: 'native' },
       { language: 'French', proficiency: 'fluent' },
     ];
-    await bob.save();
+    await ibrahim.save();
   }
   
-  if (david && david.freelancerProfile) {
-    (david.freelancerProfile as any).workExperience = [
+  if (usman && usman.freelancerProfile) {
+    (usman.freelancerProfile as any).workExperience = [
       {
         title: 'Mobile App Developer',
         company: 'App Solutions LLC',
@@ -604,7 +604,7 @@ async function seedUsers() {
         description: 'Developing cross-platform mobile applications using React Native and Flutter. Published 10+ apps on App Store and Google Play.',
       },
     ];
-    (david.freelancerProfile as any).education = [
+    (usman.freelancerProfile as any).education = [
       {
         degree: 'Bachelor of Science',
         institution: 'Florida International University',
@@ -614,14 +614,14 @@ async function seedUsers() {
         description: 'Focus on mobile development and user interface design.',
       },
     ];
-    (david.freelancerProfile as any).languages = [
+    (usman.freelancerProfile as any).languages = [
       { language: 'English', proficiency: 'native' },
       { language: 'Spanish', proficiency: 'native' },
     ];
-    await david.save();
+    await usman.save();
   }
   
-  logger.info(` Created ${createdUsers.length} users (${alice && bob && david ? '3' : '0'} featured)`);
+  logger.info(` Created ${createdUsers.length} users (${aisha && ibrahim && usman ? '3' : '0'} featured)`);
   
   return createdUsers;
 }
@@ -629,8 +629,8 @@ async function seedUsers() {
 async function seedOrganizations(users: any[]) {
   logger.info('Seeding organizations...');
   
-  const client1 = users.find(u => u.email === 'john.client@example.com');
-  const client2 = users.find(u => u.email === 'sarah.manager@example.com');
+  const client1 = users.find(u => u.email === 'fatima.client@example.com');
+  const client2 = users.find(u => u.email === 'ismail.manager@example.com');
   
   const organizations = [
     {
@@ -795,8 +795,8 @@ async function seedOrganizations(users: any[]) {
 async function seedProjects(users: any[], organizations: any[], categories: any[]) {
   logger.info('Seeding projects...');
   
-  const client1 = users.find(u => u.email === 'john.client@example.com');
-  const client2 = users.find(u => u.email === 'sarah.manager@example.com');
+  const client1 = users.find(u => u.email === 'fatima.client@example.com');
+  const client2 = users.find(u => u.email === 'ismail.manager@example.com');
   
   // Get category IDs
   const webDevCat = categories.find(c => c.slug === 'web-development')?._id;
@@ -1023,7 +1023,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         'Automated reports',
         'Documentation',
       ],
-      client: users.find(u => u.email === 'michael.startup@example.com')?._id || client1._id,
+      client: users.find(u => u.email === 'aminu.startup@example.com')?._id || client1._id,
       status: 'open',
     },
     {
@@ -1046,7 +1046,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         'Social features',
         'Push notifications',
       ],
-      client: users.find(u => u.email === 'michael.startup@example.com')?._id || client1._id,
+      client: users.find(u => u.email === 'aminu.startup@example.com')?._id || client1._id,
       status: 'open',
     },
     {
@@ -1069,7 +1069,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         'Technical SEO audit',
         'Monthly reports',
       ],
-      client: users.find(u => u.email === 'lisa.enterprise@example.com')?._id || client2._id,
+      client: users.find(u => u.email === 'hauwa.enterprise@example.com')?._id || client2._id,
       status: 'open',
     },
     {
@@ -1092,7 +1092,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         'Monitoring setup',
         'Documentation',
       ],
-      client: users.find(u => u.email === 'lisa.enterprise@example.com')?._id || client2._id,
+      client: users.find(u => u.email === 'hauwa.enterprise@example.com')?._id || client2._id,
       status: 'open',
     },
     {
@@ -1115,7 +1115,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         'Subtitles',
         'Thumbnail design',
       ],
-      client: users.find(u => u.email === 'michael.startup@example.com')?._id || client1._id,
+      client: users.find(u => u.email === 'aminu.startup@example.com')?._id || client1._id,
       status: 'open',
     },
     // Draft projects
@@ -1139,7 +1139,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         'Performance evaluation',
         'Documentation',
       ],
-      client: users.find(u => u.email === 'lisa.enterprise@example.com')?._id || client2._id,
+      client: users.find(u => u.email === 'hauwa.enterprise@example.com')?._id || client2._id,
       status: 'draft',
       isDraft: true,
       draftSavedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
@@ -1164,7 +1164,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         'Security audit',
         'Testing',
       ],
-      client: users.find(u => u.email === 'michael.startup@example.com')?._id || client1._id,
+      client: users.find(u => u.email === 'aminu.startup@example.com')?._id || client1._id,
       status: 'draft',
       isDraft: true,
       draftSavedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
@@ -1189,7 +1189,7 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
         'SEO optimization',
         'Performance optimization',
       ],
-      client: users.find(u => u.email === 'lisa.enterprise@example.com')?._id || client2._id,
+      client: users.find(u => u.email === 'hauwa.enterprise@example.com')?._id || client2._id,
       status: 'draft',
       isDraft: true,
       draftSavedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
@@ -1209,9 +1209,9 @@ async function seedProjects(users: any[], organizations: any[], categories: any[
 async function seedServicePackages(users: any[]) {
   logger.info('Seeding service packages...');
   
-  const alice = users.find(u => u.email === 'alice.dev@example.com');
-  const bob = users.find(u => u.email === 'bob.designer@example.com');
-  const carol = users.find(u => u.email === 'carol.writer@example.com');
+  const aisha = users.find(u => u.email === 'aisha.dev@example.com');
+  const ibrahim = users.find(u => u.email === 'ibrahim.designer@example.com');
+  const zainab = users.find(u => u.email === 'zainab.writer@example.com');
   
   // Get categories
   const categories = await Category.find();
@@ -1221,7 +1221,7 @@ async function seedServicePackages(users: any[]) {
   
   const packages = [
     {
-      freelancer: alice._id,
+      freelancer: aisha._id,
       title: 'Full-Stack Web Application',
       description: 'Complete web application development with modern technologies',
       category: webDevCat,
@@ -1241,7 +1241,7 @@ async function seedServicePackages(users: any[]) {
       isActive: true,
     },
     {
-      freelancer: bob._id,
+      freelancer: ibrahim._id,
       title: 'UI/UX Design Package',
       description: 'Complete UI/UX design for web or mobile applications',
       category: designCat,
@@ -1261,7 +1261,7 @@ async function seedServicePackages(users: any[]) {
       isActive: true,
     },
     {
-      freelancer: carol._id,
+      freelancer: zainab._id,
       title: 'Content Writing Service',
       description: 'Professional content writing for websites and blogs',
       category: writingCat,
@@ -1290,9 +1290,9 @@ async function seedServicePackages(users: any[]) {
 async function seedProposals(users: any[], projects: any[]) {
   logger.info('Seeding proposals...');
   
-  const alice = users.find(u => u.email === 'alice.dev@example.com');
-  const bob = users.find(u => u.email === 'bob.designer@example.com');
-  const carol = users.find(u => u.email === 'carol.writer@example.com');
+  const aisha = users.find(u => u.email === 'aisha.dev@example.com');
+  const ibrahim = users.find(u => u.email === 'ibrahim.designer@example.com');
+  const zainab = users.find(u => u.email === 'zainab.writer@example.com');
   
   const ecommerceProject = projects.find(p => p.title === 'E-commerce Website Development');
   const designProject = projects.find(p => p.title === 'Mobile App UI/UX Design');
@@ -1304,7 +1304,7 @@ async function seedProposals(users: any[], projects: any[]) {
     // Pending proposals
     {
       project: ecommerceProject._id,
-      freelancer: alice._id,
+      freelancer: aisha._id,
       coverLetter: 'I have extensive experience building e-commerce platforms with React and Node.js. I can deliver a high-quality solution within your timeline.',
       bidAmount: 6500,
       timeline: {
@@ -1335,7 +1335,7 @@ async function seedProposals(users: any[], projects: any[]) {
     },
     {
       project: marketingProject._id,
-      freelancer: bob._id,
+      freelancer: ibrahim._id,
       coverLetter: 'I can help redesign your marketing website with a modern, conversion-focused design.',
       bidAmount: 4000,
       timeline: {
@@ -1361,7 +1361,7 @@ async function seedProposals(users: any[], projects: any[]) {
     // Accepted proposals
     {
       project: designProject._id,
-      freelancer: bob._id,
+      freelancer: ibrahim._id,
       coverLetter: 'I specialize in mobile app design and have created award-winning interfaces. I would love to work on your project.',
       bidAmount: 2800,
       timeline: {
@@ -1392,7 +1392,7 @@ async function seedProposals(users: any[], projects: any[]) {
     },
     {
       project: docProject._id,
-      freelancer: carol._id,
+      freelancer: zainab._id,
       coverLetter: 'I have written technical documentation for many APIs and can create clear, comprehensive guides for your users.',
       bidAmount: 2000,
       timeline: {
@@ -1417,7 +1417,7 @@ async function seedProposals(users: any[], projects: any[]) {
     },
     {
       project: backendProject._id,
-      freelancer: alice._id,
+      freelancer: aisha._id,
       coverLetter: 'I have 5+ years of experience building scalable APIs with Node.js. I can deliver a robust solution.',
       bidAmount: 3500,
       timeline: {
@@ -1443,7 +1443,7 @@ async function seedProposals(users: any[], projects: any[]) {
     // Rejected proposals
     {
       project: ecommerceProject._id,
-      freelancer: bob._id,
+      freelancer: ibrahim._id,
       coverLetter: 'I can help with the frontend design of your e-commerce platform. With my expertise in UI/UX design, I will create a beautiful and user-friendly interface.',
       bidAmount: 7500,
       timeline: {
@@ -1456,7 +1456,7 @@ async function seedProposals(users: any[], projects: any[]) {
     // Withdrawn proposals
     {
       project: marketingProject._id,
-      freelancer: carol._id,
+      freelancer: zainab._id,
       coverLetter: 'I can help with content for your marketing website. I specialize in creating engaging copy that converts visitors into customers.',
       bidAmount: 3000,
       timeline: {
@@ -1491,19 +1491,19 @@ async function seedProposals(users: any[], projects: any[]) {
 async function seedHireNowRequests(users: any[]) {
   logger.info('Seeding hire now requests...');
   
-  const client1 = users.find(u => u.email === 'john.client@example.com');
-  const client2 = users.find(u => u.email === 'sarah.manager@example.com');
-  const michael = users.find(u => u.email === 'michael.startup@example.com');
-  const alice = users.find(u => u.email === 'alice.dev@example.com');
-  const bob = users.find(u => u.email === 'bob.designer@example.com');
-  const carol = users.find(u => u.email === 'carol.writer@example.com');
-  const emma = users.find(u => u.email === 'emma.data@example.com');
+  const client1 = users.find(u => u.email === 'fatima.client@example.com');
+  const client2 = users.find(u => u.email === 'ismail.manager@example.com');
+  const aminu = users.find(u => u.email === 'aminu.startup@example.com');
+  const aisha = users.find(u => u.email === 'aisha.dev@example.com');
+  const ibrahim = users.find(u => u.email === 'ibrahim.designer@example.com');
+  const zainab = users.find(u => u.email === 'zainab.writer@example.com');
+  const khadija = users.find(u => u.email === 'khadija.data@example.com');
   
   const hireNowRequests = [
     // Pending request
     {
       client: client1._id,
-      freelancer: alice._id,
+      freelancer: aisha._id,
       projectTitle: 'Quick Website Fix',
       projectDescription: 'Need urgent help fixing a bug in our production website. Should take 2-3 hours.',
       budget: 300,
@@ -1519,14 +1519,14 @@ async function seedHireNowRequests(users: any[]) {
           dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
         },
       ],
-      message: 'Hi Alice, we have an urgent bug that needs fixing. Can you help us out?',
+      message: 'Hi Aisha, we have an urgent bug that needs fixing. Can you help us out?',
       status: 'pending',
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
     },
     // Accepted request
     {
       client: client2._id,
-      freelancer: bob._id,
+      freelancer: ibrahim._id,
       projectTitle: 'Logo Redesign',
       projectDescription: 'Redesign our company logo with a modern look',
       budget: 800,
@@ -1556,8 +1556,8 @@ async function seedHireNowRequests(users: any[]) {
     },
     // Rejected request
     {
-      client: michael._id,
-      freelancer: emma._id,
+      client: aminu._id,
+      freelancer: khadija._id,
       projectTitle: 'Data Analysis Project',
       projectDescription: 'Analyze customer data and provide insights',
       budget: 1500,
@@ -1581,8 +1581,8 @@ async function seedHireNowRequests(users: any[]) {
     },
     // Another pending request
     {
-      client: michael._id,
-      freelancer: carol._id,
+      client: aminu._id,
+      freelancer: zainab._id,
       projectTitle: 'Blog Content Writing',
       projectDescription: 'Write 5 blog posts for our company blog',
       budget: 500,
@@ -1988,11 +1988,11 @@ async function seedContracts(users: any[], projects: any[], proposals: any[], hi
 async function seedReviews(users: any[], contracts: any[], projects: any[]) {
   logger.info('Seeding reviews...');
   
-  const alice = users.find(u => u.email === 'alice.dev@example.com');
-  const bob = users.find(u => u.email === 'bob.designer@example.com');
-  const carol = users.find(u => u.email === 'carol.writer@example.com');
-  const client1 = users.find(u => u.email === 'john.client@example.com');
-  const client2 = users.find(u => u.email === 'sarah.manager@example.com');
+  const aisha = users.find(u => u.email === 'aisha.dev@example.com');
+  const ibrahim = users.find(u => u.email === 'ibrahim.designer@example.com');
+  const zainab = users.find(u => u.email === 'zainab.writer@example.com');
+  const client1 = users.find(u => u.email === 'fatima.client@example.com');
+  const client2 = users.find(u => u.email === 'ismail.manager@example.com');
   
   // Only create reviews for contracts that exist and have the proper structure
   const reviews = [];
@@ -2005,7 +2005,7 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
       reviewer: contracts[0].client,
       reviewee: contracts[0].freelancer,
       rating: 5,
-      feedback: 'Excellent work! Alice delivered exactly what we needed on time and within budget. The code quality was outstanding and she was very professional throughout the project.',
+      feedback: 'Excellent work! Aisha delivered exactly what we needed on time and within budget. The code quality was outstanding and she was very professional throughout the project.',
       categories: {
         communication: 5,
         quality: 5,
@@ -2024,7 +2024,7 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
       reviewer: contracts[1].client,
       reviewee: contracts[1].freelancer,
       rating: 4,
-      feedback: 'Great design work. Bob was very responsive and incorporated our feedback well. The final deliverable exceeded our expectations and was delivered on schedule.',
+      feedback: 'Great design work. Ibrahim was very responsive and incorporated our feedback well. The final deliverable exceeded our expectations and was delivered on schedule.',
       categories: {
         communication: 4,
         quality: 5,
@@ -2039,15 +2039,15 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
   // These reviews will show on freelancer profiles but aren't tied to actual contracts
   const mockProject = projects[0];
   
-  // Additional reviews for Alice (using mock data)
+  // Additional reviews for Aisha (using mock data)
   reviews.push(
     {
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
       reviewer: client2._id,
-      reviewee: alice._id,
+      reviewee: aisha._id,
       rating: 5,
-      feedback: 'Alice is an exceptional developer! She built our entire backend infrastructure from scratch and it has been running flawlessly. Her attention to detail and proactive communication made the entire process smooth.',
+      feedback: 'Aisha is an exceptional developer! She built our entire backend infrastructure from scratch and it has been running flawlessly. Her attention to detail and proactive communication made the entire process smooth.',
       categories: {
         communication: 5,
         quality: 5,
@@ -2060,9 +2060,9 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
       reviewer: client1._id,
-      reviewee: alice._id,
+      reviewee: aisha._id,
       rating: 4,
-      feedback: 'Very skilled developer with great problem-solving abilities. Alice completed the project ahead of schedule and was always available for questions. Would definitely hire again!',
+      feedback: 'Very skilled developer with great problem-solving abilities. Aisha completed the project ahead of schedule and was always available for questions. Would definitely hire again!',
       categories: {
         communication: 4,
         quality: 5,
@@ -2073,15 +2073,15 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
     }
   );
   
-  // Additional reviews for Bob
+  // Additional reviews for Ibrahim
   reviews.push(
     {
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
       reviewer: client1._id,
-      reviewee: bob._id,
+      reviewee: ibrahim._id,
       rating: 5,
-      feedback: 'Bob created an amazing UI/UX design for our mobile app. His creativity and understanding of user experience principles really shined through. The design has received excellent feedback from our users.',
+      feedback: 'Ibrahim created an amazing UI/UX design for our mobile app. His creativity and understanding of user experience principles really shined through. The design has received excellent feedback from our users.',
       categories: {
         communication: 5,
         quality: 5,
@@ -2094,9 +2094,9 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
       reviewer: client2._id,
-      reviewee: bob._id,
+      reviewee: ibrahim._id,
       rating: 4,
-      feedback: 'Professional designer who delivered high-quality mockups. Bob was patient with our revision requests and always provided thoughtful explanations for his design choices.',
+      feedback: 'Professional designer who delivered high-quality mockups. Ibrahim was patient with our revision requests and always provided thoughtful explanations for his design choices.',
       categories: {
         communication: 4,
         quality: 4,
@@ -2107,15 +2107,15 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
     }
   );
   
-  // Reviews for Carol
+  // Reviews for Zainab
   reviews.push(
     {
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
       reviewer: client1._id,
-      reviewee: carol._id,
+      reviewee: zainab._id,
       rating: 5,
-      feedback: 'Carol is an outstanding content writer! She delivered well-researched, engaging articles that perfectly matched our brand voice. Her SEO expertise really helped improve our search rankings.',
+      feedback: 'Zainab is an outstanding content writer! She delivered well-researched, engaging articles that perfectly matched our brand voice. Her SEO expertise really helped improve our search rankings.',
       categories: {
         communication: 5,
         quality: 5,
@@ -2128,9 +2128,9 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
       reviewer: client2._id,
-      reviewee: carol._id,
+      reviewee: zainab._id,
       rating: 4,
-      feedback: 'Great writer with excellent attention to detail. Carol produced high-quality content consistently and was very receptive to feedback. Highly recommended!',
+      feedback: 'Great writer with excellent attention to detail. Zainab produced high-quality content consistently and was very receptive to feedback. Highly recommended!',
       categories: {
         communication: 4,
         quality: 5,
@@ -2165,13 +2165,13 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
     'Outstanding work! Highly recommended for future projects.',
   ];
 
-  // Add 20 reviews for Alice
+  // Add 20 reviews for Aisha
   for (let i = 0; i < 20; i++) {
     reviews.push({
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
       reviewer: i % 2 === 0 ? client1._id : client2._id,
-      reviewee: alice._id,
+      reviewee: aisha._id,
       rating: 4 + Math.random(),
       feedback: feedbackTemplates[i % feedbackTemplates.length],
       categories: {
@@ -2184,13 +2184,13 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
     });
   }
 
-  // Add 20 reviews for Bob
+  // Add 20 reviews for Ibrahim
   for (let i = 0; i < 20; i++) {
     reviews.push({
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
       reviewer: i % 2 === 0 ? client1._id : client2._id,
-      reviewee: bob._id,
+      reviewee: ibrahim._id,
       rating: 4 + Math.random(),
       feedback: feedbackTemplates[i % feedbackTemplates.length],
       categories: {
@@ -2203,13 +2203,13 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
     });
   }
 
-  // Add 20 reviews for Carol
+  // Add 20 reviews for Zainab
   for (let i = 0; i < 20; i++) {
     reviews.push({
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
       reviewer: i % 2 === 0 ? client1._id : client2._id,
-      reviewee: carol._id,
+      reviewee: zainab._id,
       rating: 4 + Math.random(),
       feedback: feedbackTemplates[i % feedbackTemplates.length],
       categories: {
@@ -2232,15 +2232,15 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
     'Highly recommend this client. Fair expectations and timely payments.',
   ];
 
-  // Alice reviews clients
+  // Aisha reviews clients
   reviews.push(
     {
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
-      reviewer: alice._id,
+      reviewer: aisha._id,
       reviewee: client1._id,
       rating: 5,
-      feedback: 'John was an excellent client to work with. He provided clear requirements from the start and was always available for questions. The project scope was well-defined and he gave constructive feedback throughout.',
+      feedback: 'Fatima was an excellent client to work with. She provided clear requirements from the start and was always available for questions. The project scope was well-defined and she gave constructive feedback throughout.',
       categories: {
         communication: 5,
         quality: 5,
@@ -2252,10 +2252,10 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
     {
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
-      reviewer: alice._id,
+      reviewer: aisha._id,
       reviewee: client2._id,
       rating: 4,
-      feedback: 'Sarah was professional and organized. The project requirements were clear and she provided timely feedback. Would definitely work with her again on future projects.',
+      feedback: 'Ismail was professional and organized. The project requirements were clear and he provided timely feedback. Would definitely work with him again on future projects.',
       categories: {
         communication: 4,
         quality: 5,
@@ -2266,15 +2266,15 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
     }
   );
 
-  // Bob reviews clients
+  // Ibrahim reviews clients
   reviews.push(
     {
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
-      reviewer: bob._id,
+      reviewer: ibrahim._id,
       reviewee: client1._id,
       rating: 5,
-      feedback: 'Working with John was a pleasure. He had a clear vision for the design and gave helpful feedback. Communication was excellent throughout the project.',
+      feedback: 'Working with Fatima was a pleasure. She had a clear vision for the design and gave helpful feedback. Communication was excellent throughout the project.',
       categories: {
         communication: 5,
         quality: 5,
@@ -2286,10 +2286,10 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
     {
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
-      reviewer: bob._id,
+      reviewer: ibrahim._id,
       reviewee: client2._id,
       rating: 4,
-      feedback: 'Sarah provided detailed design briefs and was open to creative suggestions. Great collaboration experience.',
+      feedback: 'Ismail provided detailed design briefs and was open to creative suggestions. Great collaboration experience.',
       categories: {
         communication: 4,
         quality: 4,
@@ -2300,15 +2300,15 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
     }
   );
 
-  // Carol reviews clients
+  // Zainab reviews clients
   reviews.push(
     {
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
-      reviewer: carol._id,
+      reviewer: zainab._id,
       reviewee: client1._id,
       rating: 5,
-      feedback: 'John is a fantastic client! He provided all the necessary information upfront and was very responsive to drafts. The content direction was clear and feedback was constructive.',
+      feedback: 'Fatima is a fantastic client! She provided all the necessary information upfront and was very responsive to drafts. The content direction was clear and feedback was constructive.',
       categories: {
         communication: 5,
         quality: 5,
@@ -2320,10 +2320,10 @@ async function seedReviews(users: any[], contracts: any[], projects: any[]) {
     {
       contract: new mongoose.Types.ObjectId(),
       project: mockProject._id,
-      reviewer: carol._id,
+      reviewer: zainab._id,
       reviewee: client2._id,
       rating: 5,
-      feedback: 'Sarah was wonderful to work with. She had a clear content strategy and provided excellent feedback. Highly recommend working with her.',
+      feedback: 'Ismail was wonderful to work with. He had a clear content strategy and provided excellent feedback. Highly recommend working with him.',
       categories: {
         communication: 5,
         quality: 5,
@@ -2400,20 +2400,20 @@ async function seedMessages(users: any[]) {
   
   const { Conversation } = await import('@/models/Conversation');
   
-  const alice = users.find(u => u.email === 'alice.dev@example.com');
-  const bob = users.find(u => u.email === 'bob.designer@example.com');
-  const client1 = users.find(u => u.email === 'john.client@example.com');
-  const client2 = users.find(u => u.email === 'sarah.manager@example.com');
+  const aisha = users.find(u => u.email === 'aisha.dev@example.com');
+  const ibrahim = users.find(u => u.email === 'ibrahim.designer@example.com');
+  const client1 = users.find(u => u.email === 'fatima.client@example.com');
+  const client2 = users.find(u => u.email === 'ismail.manager@example.com');
   
   // Create conversations first
   const conversations = [
     {
-      participants: [client1._id, alice._id],
-      unreadCount: new Map([[client1._id.toString(), 0], [alice._id.toString(), 0]]),
+      participants: [client1._id, aisha._id],
+      unreadCount: new Map([[client1._id.toString(), 0], [aisha._id.toString(), 0]]),
     },
     {
-      participants: [client2._id, bob._id],
-      unreadCount: new Map([[client2._id.toString(), 1], [bob._id.toString(), 0]]),
+      participants: [client2._id, ibrahim._id],
+      unreadCount: new Map([[client2._id.toString(), 1], [ibrahim._id.toString(), 0]]),
     },
   ];
   
@@ -2425,17 +2425,17 @@ async function seedMessages(users: any[]) {
     {
       conversation: createdConversations[0]._id,
       sender: client1._id,
-      content: 'Hi Alice, I reviewed your proposal for the e-commerce project. Can we discuss the timeline?',
+      content: 'Hi Aisha, I reviewed your proposal for the e-commerce project. Can we discuss the timeline?',
       type: 'text',
-      readBy: [client1._id, alice._id],
+      readBy: [client1._id, aisha._id],
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
     },
     {
       conversation: createdConversations[0]._id,
-      sender: alice._id,
+      sender: aisha._id,
       content: 'Sure! I can start next week and deliver within 45 days. Let me know if you have any questions.',
       type: 'text',
-      readBy: [client1._id, alice._id],
+      readBy: [client1._id, aisha._id],
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 3600000),
     },
     {
@@ -2443,7 +2443,7 @@ async function seedMessages(users: any[]) {
       sender: client1._id,
       content: 'That sounds perfect! Let\'s move forward with the project.',
       type: 'text',
-      readBy: [client1._id, alice._id],
+      readBy: [client1._id, aisha._id],
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
     },
     {
@@ -2456,10 +2456,10 @@ async function seedMessages(users: any[]) {
     },
     {
       conversation: createdConversations[1]._id,
-      sender: bob._id,
+      sender: ibrahim._id,
       content: 'Absolutely! I\'ll update the color palette and send you the revised mockups by tomorrow.',
       type: 'text',
-      readBy: [client2._id, bob._id],
+      readBy: [client2._id, ibrahim._id],
       createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
     },
   ];
@@ -2481,13 +2481,13 @@ async function seedMessages(users: any[]) {
 async function seedNotifications(users: any[]) {
   logger.info('Seeding notifications...');
   
-  const alice = users.find(u => u.email === 'alice.dev@example.com');
-  const bob = users.find(u => u.email === 'bob.designer@example.com');
-  const client1 = users.find(u => u.email === 'john.client@example.com');
+  const aisha = users.find(u => u.email === 'aisha.dev@example.com');
+  const ibrahim = users.find(u => u.email === 'ibrahim.designer@example.com');
+  const client1 = users.find(u => u.email === 'fatima.client@example.com');
   
   const notifications = [
     {
-      user: alice._id,
+      user: aisha._id,
       type: 'proposal',
       title: 'Proposal Accepted',
       message: 'Your proposal for "Backend API Development" has been accepted!',
@@ -2497,10 +2497,10 @@ async function seedNotifications(users: any[]) {
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
     },
     {
-      user: bob._id,
+      user: ibrahim._id,
       type: 'message',
       title: 'New Message',
-      message: 'You have a new message from Sarah Johnson',
+      message: 'You have a new message from Ismail Abdullahi',
       link: '/messages',
       isRead: false,
       priority: 'normal',
@@ -2517,7 +2517,7 @@ async function seedNotifications(users: any[]) {
       createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
     },
     {
-      user: alice._id,
+      user: aisha._id,
       type: 'contract',
       title: 'Contract Signed',
       message: 'Contract for "Mobile App UI/UX Design" has been signed by the client',
@@ -2537,17 +2537,17 @@ async function seedNotifications(users: any[]) {
       createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
     },
     {
-      user: bob._id,
+      user: ibrahim._id,
       type: 'review',
       title: 'New Review',
-      message: 'You received a 5-star review from Sarah Johnson',
+      message: 'You received a 5-star review from Ismail Abdullahi',
       link: '/profile',
       isRead: false,
       priority: 'normal',
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
     },
     {
-      user: alice._id,
+      user: aisha._id,
       type: 'system',
       title: 'New Project Match',
       message: 'A new project matching your skills has been posted: "Python Data Analysis Script"',

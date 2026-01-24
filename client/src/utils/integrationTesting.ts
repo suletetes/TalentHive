@@ -53,7 +53,7 @@ export class IntegrationTestRunner {
       };
       
       this.results.push(result);
-      console.log(`✅ ${name} - ${duration.toFixed(2)}ms`);
+      console.log(` ${name} - ${duration.toFixed(2)}ms`);
       return result;
     } catch (error: any) {
       const duration = performance.now() - startTime;
@@ -460,13 +460,13 @@ export class ApiIntegrationTests {
     const passRate = totalTests > 0 ? (totalPassed / totalTests) * 100 : 0;
     const overallPassed = workflows.every(w => w.passed);
 
-    console.log(`\n📊 Integration Test Summary:`);
+    console.log(`\n Integration Test Summary:`);
     console.log(`Total Tests: ${totalTests}`);
     console.log(`Passed: ${totalPassed}`);
     console.log(`Failed: ${totalTests - totalPassed}`);
     console.log(`Pass Rate: ${passRate.toFixed(1)}%`);
     console.log(`Duration: ${totalDuration.toFixed(2)}ms`);
-    console.log(`Overall: ${overallPassed ? '✅ PASSED' : '❌ FAILED'}`);
+    console.log(`Overall: ${overallPassed ? ' PASSED' : ' FAILED'}`);
 
     return {
       overall: {
