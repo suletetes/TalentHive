@@ -2,7 +2,7 @@
  * Data integrity utilities to ensure consistency across the application
  */
 
-import { validateUserReference, extractUserId, normalizeUserData } from './userHelpers';
+import { validateUserReference } from './userHelpers';
 import { getProposalBudget } from './proposalHelpers';
 
 export interface DataIntegrityReport {
