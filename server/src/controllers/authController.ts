@@ -12,7 +12,11 @@ import { ResponseFormatter } from '@/utils/standardResponse';
 
 export const registerValidation = [
   body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
-  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
+  body('password')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
   body('role').isIn(['freelancer', 'client', 'admin']).withMessage('Invalid role'),
   body().custom((value, { req }) => {
     const firstName = req.body.firstName || req.body.profile?.firstName;
@@ -141,7 +145,14 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
   user.emailVerificationExpires = undefined;
   await user.save();
 
-  return ResponseFormatter.success(res, 'User registered successfully. You can now login.', {
+  // Generate tokens for auto-login after registration
+  const { accessToken, refreshToken } = generateTokens({
+    userId: (user._id as any).toString(),
+    email: user.email,
+    role: user.role,
+  });
+
+  return ResponseFormatter.success(res, 'User registered successfully. Welcome to TalentHive!', {
     user: {
       id: user._id,
       email: user.email,
@@ -149,6 +160,10 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
       firstName: user.profile?.firstName,
       lastName: user.profile?.lastName,
       isVerified: user.isVerified,
+    },
+    tokens: {
+      accessToken,
+      refreshToken,
     },
   }, 201);
 });
@@ -194,22 +209,18 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
   // Remove password from response
   user.password = undefined as any;
 
-  res.json({
-    status: 'success',
-    message: 'Login successful',
-    data: {
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        firstName: user.profile?.firstName,
-        lastName: user.profile?.lastName,
-        isVerified: user.isVerified,
-      },
-      tokens: {
-        accessToken,
-        refreshToken,
-      },
+  return ResponseFormatter.success(res, 'Login successful', {
+    user: {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      firstName: user.profile?.firstName,
+      lastName: user.profile?.lastName,
+      isVerified: user.isVerified,
+    },
+    tokens: {
+      accessToken,
+      refreshToken,
     },
   });
 });
@@ -235,13 +246,10 @@ export const refreshToken = catchAsync(async (req: Request, res: Response, next:
       role: user.role,
     });
 
-    res.json({
-      status: 'success',
-      data: {
-        tokens: {
-          accessToken,
-          refreshToken: newRefreshToken,
-        },
+    return ResponseFormatter.success(res, 'Tokens refreshed successfully', {
+      tokens: {
+        accessToken,
+        refreshToken: newRefreshToken,
       },
     });
   } catch (error) {
@@ -255,10 +263,7 @@ export const logout = catchAsync(async (req: any, res: Response, next: NextFunct
     await deleteCache(`user:${req.user._id}`);
   }
 
-  res.json({
-    status: 'success',
-    message: 'Logout successful',
-  });
+  return ResponseFormatter.success(res, 'Logout successful');
 });
 
 export const changePasswordValidation = [
@@ -305,10 +310,7 @@ export const changePassword = catchAsync(async (req: AuthRequest, res: Response,
   // Clear user cache
   await deleteCache(`user:${userId}`);
 
-  res.json({
-    status: 'success',
-    message: 'Password changed successfully',
-  });
+  return ResponseFormatter.success(res, 'Password changed successfully');
 });
 
 export const verifyEmail = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -391,10 +393,7 @@ export const verifyEmail = catchAsync(async (req: Request, res: Response, next: 
   await userWithToken.save();
 
   console.log('  [VERIFY_EMAIL] User verified successfully');
-  res.status(200).json({
-    status: 'success',
-    message: 'Email verified successfully',
-  });
+  return ResponseFormatter.success(res, 'Email verified successfully');
 });
 
 // Forgot password validation
@@ -416,10 +415,7 @@ export const forgotPassword = catchAsync(async (req: Request, res: Response, nex
   
   if (!user) {
     // Don't reveal if user exists or not for security
-    return res.json({
-      status: 'success',
-      message: 'If an account exists with this email, a password reset link has been sent.',
-    });
+    return ResponseFormatter.success(res, 'If an account exists with this email, a password reset link has been sent.');
   }
 
   // Generate reset token with longer expiry
@@ -436,10 +432,7 @@ export const forgotPassword = catchAsync(async (req: Request, res: Response, nex
   try {
     await sendPasswordResetEmail(user.email, resetToken);
 
-    res.json({
-      status: 'success',
-      message: 'If an account exists with this email, a password reset link has been sent.',
-    });
+    return ResponseFormatter.success(res, 'If an account exists with this email, a password reset link has been sent.');
   } catch (error) {
     // Clear reset token if email fails
     user.passwordResetToken = undefined;
@@ -501,18 +494,14 @@ export const resetPassword = catchAsync(async (req: Request, res: Response, next
     role: user.role,
   });
 
-  res.json({
-    status: 'success',
-    message: 'Password reset successful',
-    data: {
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        profile: user.profile,
-      },
-      ...tokens,
+  return ResponseFormatter.success(res, 'Password reset successful', {
+    user: {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      profile: user.profile,
     },
+    tokens,
   });
 });
 
@@ -533,11 +522,7 @@ export const verifyResetToken = catchAsync(async (req: Request, res: Response, n
     return next(new AppError('Invalid or expired reset token', 400));
   }
 
-  res.json({
-    status: 'success',
-    message: 'Token is valid',
-    data: {
-      email: user.email,
-    },
+  return ResponseFormatter.success(res, 'Token is valid', {
+    email: user.email,
   });
 });
