@@ -3,14 +3,27 @@ import { apiCore } from './core';
 export interface SupportTicket {
   _id: string;
   ticketId: string;
-  userId: string;
+  userId: string | {
+    _id: string;
+    profile: {
+      firstName: string;
+      lastName: string;
+    };
+    email: string;
+  };
   subject: string;
   status: 'open' | 'in-progress' | 'resolved' | 'closed';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   category: 'technical' | 'billing' | 'account' | 'project' | 'other';
   messages: TicketMessage[];
   tags?: string[];
-  assignedAdminId?: string;
+  assignedAdminId?: string | {
+    _id: string;
+    profile: {
+      firstName: string;
+      lastName: string;
+    };
+  };
   createdAt: string;
   updatedAt: string;
   lastResponseAt?: string;
@@ -94,7 +107,11 @@ class SupportTicketService {
   async createTicket(data: CreateTicketData): Promise<SupportTicket> {
     const response: any = await apiCore.post('/support/tickets', data);
     // Backend returns { success: true, data: ticket }
-    return response.data || response;
+    const rawTicket = response.data || response;
+    
+    // Clean and validate the ticket data
+    const cleanTicket = this.cleanTicketData(rawTicket);
+    return cleanTicket;
   }
 
   /**
@@ -124,7 +141,73 @@ class SupportTicketService {
   async getTicketById(ticketId: string): Promise<SupportTicket> {
     const response: any = await apiCore.get(`/support/tickets/${ticketId}`);
     // Backend returns { success: true, data: ticket }
-    return response.data || response;
+    const rawTicket = response.data || response;
+    
+    // Clean and validate the ticket data to prevent rendering issues
+    const cleanTicket = this.cleanTicketData(rawTicket);
+    return cleanTicket;
+  }
+
+  /**
+   * Clean ticket data to remove virtual fields and ensure proper structure
+   */
+  private cleanTicketData(ticket: any): SupportTicket {
+    if (!ticket) return ticket;
+
+    // Clean messages to ensure senderId objects don't have virtual fields
+    if (ticket.messages && Array.isArray(ticket.messages)) {
+      ticket.messages = ticket.messages.map((message: any) => {
+        if (message.senderId && typeof message.senderId === 'object') {
+          // Create a clean sender object with only the fields we need
+          const cleanSender = {
+            _id: String(message.senderId._id || ''),
+            profile: {
+              firstName: String(message.senderId.profile?.firstName || 'Unknown'),
+              lastName: String(message.senderId.profile?.lastName || 'User'),
+              avatar: String(message.senderId.profile?.avatar || ''),
+            },
+            role: String(message.senderId.role || 'user'),
+          };
+          
+          return {
+            ...message,
+            senderId: cleanSender,
+            message: String(message.message || ''),
+            isAdminResponse: Boolean(message.isAdminResponse),
+            isRead: Boolean(message.isRead),
+            createdAt: String(message.createdAt || new Date().toISOString()),
+          };
+        }
+        return message;
+      });
+    }
+
+    // Clean assignedAdminId if it's populated
+    if (ticket.assignedAdminId && typeof ticket.assignedAdminId === 'object') {
+      const cleanAdmin = {
+        _id: String(ticket.assignedAdminId._id || ''),
+        profile: {
+          firstName: String(ticket.assignedAdminId.profile?.firstName || 'Unknown'),
+          lastName: String(ticket.assignedAdminId.profile?.lastName || 'Admin'),
+        },
+      };
+      ticket.assignedAdminId = cleanAdmin;
+    }
+
+    // Clean userId if it's populated
+    if (ticket.userId && typeof ticket.userId === 'object') {
+      const cleanUser = {
+        _id: String(ticket.userId._id || ''),
+        profile: {
+          firstName: String(ticket.userId.profile?.firstName || 'Unknown'),
+          lastName: String(ticket.userId.profile?.lastName || 'User'),
+        },
+        email: String(ticket.userId.email || ''),
+      };
+      ticket.userId = cleanUser;
+    }
+
+    return ticket;
   }
 
   /**
@@ -133,7 +216,11 @@ class SupportTicketService {
   async addMessage(ticketId: string, data: AddMessageData): Promise<SupportTicket> {
     const response: any = await apiCore.post(`/support/tickets/${ticketId}/messages`, data);
     // Backend returns { success: true, data: ticket }
-    return response.data || response;
+    const rawTicket = response.data || response;
+    
+    // Clean and validate the ticket data
+    const cleanTicket = this.cleanTicketData(rawTicket);
+    return cleanTicket;
   }
 
   /**

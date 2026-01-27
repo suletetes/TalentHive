@@ -294,6 +294,17 @@ userSchema.virtual('fullName').get(function() {
   return `${this.profile.firstName} ${this.profile.lastName}`;
 });
 
+// Method to get clean JSON for API responses (without virtuals)
+userSchema.methods.toCleanJSON = function() {
+  const obj = this.toObject({ virtuals: false });
+  // Remove sensitive fields
+  delete obj.password;
+  delete obj.emailVerificationToken;
+  delete obj.passwordResetToken;
+  delete obj.passwordResetExpires;
+  return obj;
+};
+
 // Pre-save middleware to hash password
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();

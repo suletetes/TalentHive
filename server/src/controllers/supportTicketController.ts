@@ -164,16 +164,21 @@ export const getTicketById = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Ticket not found' });
     }
 
-    // Check authorization
-    const ticketUserId = typeof ticket.userId === 'object' ? (ticket.userId as any)._id : ticket.userId;
-    if (userRole !== 'admin' && ticketUserId.toString() !== userId.toString()) {
+    // Check authorization - handle case where userId population failed
+    let ticketUserId: string | null = null;
+    if (ticket.userId) {
+      ticketUserId = typeof ticket.userId === 'object' ? (ticket.userId as any)._id : ticket.userId;
+    }
+    
+    if (userRole !== 'admin' && (!ticketUserId || ticketUserId.toString() !== userId.toString())) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
     // Mark messages as read for the current user
     let updated = false;
     ticket.messages.forEach(msg => {
-      if (msg.senderId.toString() !== userId && !msg.isRead) {
+      // Check if senderId exists and is not null before comparing
+      if (msg.senderId && msg.senderId.toString() !== userId && !msg.isRead) {
         msg.isRead = true;
         updated = true;
       }
@@ -183,9 +188,48 @@ export const getTicketById = async (req: Request, res: Response) => {
       await ticket.save();
     }
 
+    // Clean the ticket data to remove virtual fields before sending
+    const cleanTicket = ticket.toObject({ virtuals: false });
+    
+    // Ensure messages.senderId objects don't have virtual fields
+    if (cleanTicket.messages) {
+      cleanTicket.messages = cleanTicket.messages.map((msg: any) => {
+        if (msg.senderId && typeof msg.senderId === 'object') {
+          const cleanSender = {
+            _id: msg.senderId._id,
+            profile: msg.senderId.profile,
+            role: msg.senderId.role
+          };
+          return { ...msg, senderId: cleanSender };
+        }
+        return msg;
+      });
+    }
+
+    // Clean assignedAdminId if it's populated
+    if (cleanTicket.assignedAdminId && typeof cleanTicket.assignedAdminId === 'object') {
+      const populatedAdmin = cleanTicket.assignedAdminId as any;
+      const cleanAdmin = {
+        _id: populatedAdmin._id,
+        profile: populatedAdmin.profile
+      };
+      cleanTicket.assignedAdminId = cleanAdmin as any;
+    }
+
+    // Clean userId if it's populated
+    if (cleanTicket.userId && typeof cleanTicket.userId === 'object') {
+      const populatedUser = cleanTicket.userId as any;
+      const cleanUser = {
+        _id: populatedUser._id,
+        profile: populatedUser.profile,
+        email: populatedUser.email
+      };
+      cleanTicket.userId = cleanUser as any;
+    }
+
     res.json({
       success: true,
-      data: ticket,
+      data: cleanTicket,
     });
   } catch (error: any) {
     console.error('Get ticket error:', error);
@@ -222,9 +266,13 @@ export const addMessage = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Ticket not found' });
     }
 
-    // Check authorization
-    const ticketUserId = typeof ticket.userId === 'object' ? (ticket.userId as any)._id : ticket.userId;
-    if (userRole !== 'admin' && ticketUserId.toString() !== userId.toString()) {
+    // Check authorization - handle case where userId population failed
+    let ticketUserId: string | null = null;
+    if (ticket.userId) {
+      ticketUserId = typeof ticket.userId === 'object' ? (ticket.userId as any)._id : ticket.userId;
+    }
+    
+    if (userRole !== 'admin' && (!ticketUserId || ticketUserId.toString() !== userId.toString())) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
@@ -247,31 +295,43 @@ export const addMessage = async (req: Request, res: Response) => {
 
     // Send notification to the other party
     if (isAdminResponse) {
-      // Notify ticket creator
-      await Notification.create({
-        user: ticket.userId._id,
-        type: 'system',
-        title: 'Support Ticket Response',
-        message: `Admin responded to your ticket: ${ticket.subject}`,
-        link: `/dashboard/support/${ticket.ticketId}`, // User gets dashboard link
-      });
-
-      // Send email (wrapped in try-catch)
-      try {
-        await sendEmail({
-          to: (ticket.userId as any).email,
-          subject: `Response to your support ticket: ${ticket.subject}`,
-          html: `
-            <h2>Support Ticket Response</h2>
-            <p><strong>Ticket ID:</strong> ${ticket.ticketId}</p>
-            <p><strong>Subject:</strong> ${ticket.subject}</p>
-            <p><strong>Admin Response:</strong></p>
-            <p>${message}</p>
-            <p><a href="${process.env.CLIENT_URL}/dashboard/support/${ticket.ticketId}">View Ticket</a></p>
-          `,
+      // Notify ticket creator - check if userId exists
+      const notificationUserId = ticket.userId && typeof ticket.userId === 'object' 
+        ? (ticket.userId as any)._id 
+        : ticket.userId;
+        
+      if (notificationUserId) {
+        await Notification.create({
+          user: notificationUserId,
+          type: 'system',
+          title: 'Support Ticket Response',
+          message: `Admin responded to your ticket: ${ticket.subject}`,
+          link: `/dashboard/support/${ticket.ticketId}`, // User gets dashboard link
         });
-      } catch (emailError) {
-        console.error('Failed to send email notification:', emailError);
+
+        // Send email (wrapped in try-catch)
+        try {
+          const userEmail = ticket.userId && typeof ticket.userId === 'object' 
+            ? (ticket.userId as any).email 
+            : null;
+            
+          if (userEmail) {
+            await sendEmail({
+              to: userEmail,
+              subject: `Response to your support ticket: ${ticket.subject}`,
+              html: `
+                <h2>Support Ticket Response</h2>
+                <p><strong>Ticket ID:</strong> ${ticket.ticketId}</p>
+                <p><strong>Subject:</strong> ${ticket.subject}</p>
+                <p><strong>Admin Response:</strong></p>
+                <p>${message}</p>
+                <p><a href="${process.env.CLIENT_URL}/dashboard/support/${ticket.ticketId}">View Ticket</a></p>
+              `,
+            });
+          }
+        } catch (emailError) {
+          console.error('Failed to send email notification:', emailError);
+        }
       }
     } else {
       // Notify assigned admin or all admins
@@ -340,14 +400,20 @@ export const updateTicketStatus = async (req: Request, res: Response) => {
 
     await ticket.save();
 
-    // Notify ticket creator
-    await Notification.create({
-      user: ticket.userId._id,
-      type: 'system',
-      title: 'Ticket Status Updated',
-      message: `Your ticket "${ticket.subject}" status changed to: ${status}`,
-      link: `/dashboard/support/${ticket.ticketId}`, // User gets dashboard link
-    });
+    // Notify ticket creator - check if userId exists
+    const notificationUserId = ticket.userId && typeof ticket.userId === 'object' 
+      ? (ticket.userId as any)._id 
+      : ticket.userId;
+      
+    if (notificationUserId) {
+      await Notification.create({
+        user: notificationUserId,
+        type: 'system',
+        title: 'Ticket Status Updated',
+        message: `Your ticket "${ticket.subject}" status changed to: ${status}`,
+        link: `/dashboard/support/${ticket.ticketId}`, // User gets dashboard link
+      });
+    }
 
     // Send email (wrapped in try-catch)
     try {
