@@ -35,9 +35,64 @@ export const TicketConversation: React.FC<TicketConversationProps> = ({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {messages.map((message) => {
-        const isCurrentUser = message.senderId._id === currentUserId;
-        const isAdmin = message.isAdminResponse;
+      {messages.map((message, index) => {
+        // Debug logging to understand the exact data structure
+        console.log(`[TICKET CONVERSATION] Message ${index}:`, message);
+        console.log(`[TICKET CONVERSATION] SenderId structure:`, message.senderId);
+        
+        // Safety checks for message data
+        if (!message || !message._id) {
+          console.warn('Invalid message object:', message);
+          return null;
+        }
+
+        // Handle cases where senderId might be malformed or have unexpected structure
+        const sender = message.senderId;
+        if (!sender || typeof sender !== 'object') {
+          console.warn('Invalid sender object:', sender);
+          return null;
+        }
+
+        // Extract sender information safely with multiple fallback strategies
+        let senderId = '';
+        let firstName = 'Unknown';
+        let lastName = 'User';
+        let avatar = '';
+
+        try {
+          // CRITICAL: Only use _id, never the virtual 'id' field
+          senderId = sender._id ? String(sender._id) : '';
+          
+          // Handle different possible structures for profile data
+          if (sender.profile && typeof sender.profile === 'object') {
+            // Standard structure: sender.profile.firstName
+            const profile = sender.profile;
+            firstName = profile.firstName ? String(profile.firstName) : 'Unknown';
+            lastName = profile.lastName ? String(profile.lastName) : 'User';
+            avatar = profile.avatar ? String(profile.avatar) : '';
+          } else {
+            // If profile is missing or malformed, try direct properties
+            firstName = sender.firstName ? String(sender.firstName) : 'Unknown';
+            lastName = sender.lastName ? String(sender.lastName) : 'User';
+            avatar = sender.avatar ? String(sender.avatar) : '';
+          }
+
+          // Final safety check - ensure we have valid strings
+          if (typeof firstName !== 'string') firstName = 'Unknown';
+          if (typeof lastName !== 'string') lastName = 'User';
+          if (typeof avatar !== 'string') avatar = '';
+          if (typeof senderId !== 'string') senderId = '';
+
+        } catch (error) {
+          console.error('Error processing sender data:', error, sender);
+          firstName = 'Unknown';
+          lastName = 'User';
+          avatar = '';
+          senderId = '';
+        }
+        
+        const isCurrentUser = senderId === currentUserId;
+        const isAdmin = Boolean(message.isAdminResponse);
 
         return (
           <Box
@@ -50,12 +105,11 @@ export const TicketConversation: React.FC<TicketConversationProps> = ({
           >
             {!isCurrentUser && (
               <Avatar
-                src={message.senderId.profile.avatar}
-                alt={`${message.senderId.profile.firstName} ${message.senderId.profile.lastName}`}
+                src={avatar}
+                alt={`${firstName} ${lastName}`}
                 sx={{ width: 40, height: 40 }}
               >
-                {message.senderId.profile.firstName[0]}
-                {message.senderId.profile.lastName[0]}
+                {firstName.charAt(0)}{lastName.charAt(0)}
               </Avatar>
             )}
 
@@ -69,13 +123,13 @@ export const TicketConversation: React.FC<TicketConversationProps> = ({
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Typography variant="subtitle2" fontWeight={600}>
-                  {message.senderId.profile.firstName} {message.senderId.profile.lastName}
+                  {firstName} {lastName}
                 </Typography>
                 {isAdmin && <AdminBadge size="small" />}
               </Box>
 
               <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 1 }}>
-                {message.message}
+                {String(message.message || '')}
               </Typography>
 
               {message.attachments && message.attachments.length > 0 && (
@@ -83,10 +137,10 @@ export const TicketConversation: React.FC<TicketConversationProps> = ({
                   {message.attachments.map((attachment, index) => (
                     <Chip
                       key={index}
-                      label={attachment.filename}
+                      label={String(attachment.filename || 'Attachment')}
                       size="small"
                       component="a"
-                      href={attachment.url}
+                      href={String(attachment.url || '#')}
                       target="_blank"
                       clickable
                       sx={{
@@ -115,17 +169,16 @@ export const TicketConversation: React.FC<TicketConversationProps> = ({
 
             {isCurrentUser && (
               <Avatar
-                src={message.senderId.profile.avatar}
-                alt={`${message.senderId.profile.firstName} ${message.senderId.profile.lastName}`}
+                src={avatar}
+                alt={`${firstName} ${lastName}`}
                 sx={{ width: 40, height: 40 }}
               >
-                {message.senderId.profile.firstName[0]}
-                {message.senderId.profile.lastName[0]}
+                {firstName.charAt(0)}{lastName.charAt(0)}
               </Avatar>
             )}
           </Box>
         );
-      })}
+      }).filter(Boolean)}
       <div ref={messagesEndRef} />
     </Box>
   );

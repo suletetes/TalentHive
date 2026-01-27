@@ -2,11 +2,15 @@ import React from 'react';
 import { Chip } from '@mui/material';
 import { VerifiedUser } from '@mui/icons-material';
 
-export const AdminBadge: React.FC = () => {
+interface AdminBadgeProps {
+  size?: 'small' | 'medium';
+}
+
+export const AdminBadge: React.FC<AdminBadgeProps> = ({ size = 'small' }) => {
   return (
     <Chip
       label="Admin"
-      size="small"
+      size={size}
       icon={<VerifiedUser />}
       color="secondary"
       sx={{

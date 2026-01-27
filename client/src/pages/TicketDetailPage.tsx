@@ -7,7 +7,6 @@ import {
   Chip,
   Button,
   Divider,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -34,13 +33,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchTicketById, addMessage } from '@/store/slices/supportTicketSlice';
 import { RootState, AppDispatch } from '@/store';
 import { TicketConversation } from '@/components/support/TicketConversation';
+import { TicketConversationErrorBoundary } from '@/components/support/TicketConversationErrorBoundary';
 import { TicketMessageInput } from '@/components/support/TicketMessageInput';
 import { TicketStatusBadge } from '@/components/support/TicketStatusBadge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { supportTicketService } from '@/services/api/supportTicket.service';
 import { formatDistanceToNow } from 'date-fns';
-import toast from 'react-hot-toast';
+import { toastHelper } from '@/utils/toast';
 
 export const TicketDetailPage: React.FC = () => {
   const { ticketId } = useParams<{ ticketId: string }>();
@@ -69,7 +69,11 @@ export const TicketDetailPage: React.FC = () => {
   useEffect(() => {
     if (currentTicket) {
       setNewStatus(currentTicket.status);
-      setAssigneeId(currentTicket.assignedAdminId || '');
+      // Handle assignedAdminId which might be a string or populated object
+      const adminId = typeof currentTicket.assignedAdminId === 'object' && currentTicket.assignedAdminId !== null
+        ? currentTicket.assignedAdminId._id
+        : currentTicket.assignedAdminId || '';
+      setAssigneeId(adminId);
       setTags(currentTicket.tags?.join(', ') || '');
     }
   }, [currentTicket]);
@@ -80,9 +84,9 @@ export const TicketDetailPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       await dispatch(addMessage({ ticketId, data: { message } })).unwrap();
-      toast.success('Message sent successfully');
+      toastHelper.success('Message sent successfully');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to send message');
+      toastHelper.error(err.message || 'Failed to send message');
     } finally {
       setIsSubmitting(false);
     }
@@ -102,12 +106,12 @@ export const TicketDetailPage: React.FC = () => {
     setAdminLoading(true);
     try {
       await supportTicketService.updateStatus(currentTicket.ticketId, { status: newStatus as any });
-      toast.success(`Ticket status updated to ${newStatus}`);
+      toastHelper.success(`Ticket status updated to ${newStatus}`);
       setStatusDialogOpen(false);
       // Refresh ticket data
       dispatch(fetchTicketById(ticketId!));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update status');
+      toastHelper.error(error.response?.data?.message || 'Failed to update status');
     } finally {
       setAdminLoading(false);
     }
@@ -115,19 +119,19 @@ export const TicketDetailPage: React.FC = () => {
 
   const handleAssignTicket = async () => {
     if (!currentTicket || !assigneeId) {
-      toast.error('Please enter an admin ID to assign');
+      toastHelper.error('Please enter an admin ID to assign');
       return;
     }
 
     setAdminLoading(true);
     try {
       await supportTicketService.assignTicket(currentTicket.ticketId, { adminId: assigneeId });
-      toast.success('Ticket assigned successfully');
+      toastHelper.success('Ticket assigned successfully');
       setAssignDialogOpen(false);
       // Refresh ticket data
       dispatch(fetchTicketById(ticketId!));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to assign ticket');
+      toastHelper.error(error.response?.data?.message || 'Failed to assign ticket');
     } finally {
       setAdminLoading(false);
     }
@@ -141,12 +145,12 @@ export const TicketDetailPage: React.FC = () => {
     setAdminLoading(true);
     try {
       await supportTicketService.updateTags(currentTicket.ticketId, { tags: tagArray });
-      toast.success('Tags updated successfully');
+      toastHelper.success('Tags updated successfully');
       setTagsDialogOpen(false);
       // Refresh ticket data
       dispatch(fetchTicketById(ticketId!));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update tags');
+      toastHelper.error(error.response?.data?.message || 'Failed to update tags');
     } finally {
       setAdminLoading(false);
     }
@@ -271,7 +275,14 @@ export const TicketDetailPage: React.FC = () => {
                   <Box sx={{ mt: 2, p: 1, bgcolor: 'success.50', borderRadius: 1 }}>
                     <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Person color="success" />
-                      Assigned to Admin ID: {currentTicket.assignedAdminId}
+                      Assigned to: {
+                        typeof currentTicket.assignedAdminId === 'object' && 
+                        currentTicket.assignedAdminId !== null &&
+                        'profile' in currentTicket.assignedAdminId &&
+                        currentTicket.assignedAdminId.profile
+                          ? `${currentTicket.assignedAdminId.profile.firstName} ${currentTicket.assignedAdminId.profile.lastName}`
+                          : String(currentTicket.assignedAdminId)
+                      }
                     </Typography>
                   </Box>
                 )}
@@ -342,7 +353,16 @@ export const TicketDetailPage: React.FC = () => {
           Conversation
         </Typography>
         <Divider sx={{ mb: 3 }} />
-        <TicketConversation messages={currentTicket.messages} currentUserId={user?._id || ''} />
+        <TicketConversationErrorBoundary 
+          onRetry={() => {
+            // Retry by refetching the ticket data
+            if (ticketId) {
+              dispatch(fetchTicketById(ticketId));
+            }
+          }}
+        >
+          <TicketConversation messages={currentTicket.messages} currentUserId={user?._id || ''} />
+        </TicketConversationErrorBoundary>
       </Paper>
 
       {currentTicket.status !== 'closed' && (
