@@ -94,6 +94,23 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Debug endpoint to check rate limiting status (development only)
+if (NODE_ENV === 'development') {
+  app.get('/debug/rate-limit-status', (req, res) => {
+    const shouldBypassRateLimit = 
+      process.env.DISABLE_RATE_LIMIT_FOR_TESTING === 'true' || 
+      process.env.NODE_ENV === 'development';
+    
+    res.status(200).json({
+      status: 'OK',
+      rateLimitingDisabled: shouldBypassRateLimit,
+      environment: NODE_ENV,
+      disableFlag: process.env.DISABLE_RATE_LIMIT_FOR_TESTING,
+      timestamp: new Date().toISOString(),
+    });
+  });
+}
+
 // API routes (v1)
 app.use('/api/v1', routes);
 // Also support /api for backward compatibility
