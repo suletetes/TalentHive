@@ -361,16 +361,16 @@ class RedisConnection {
 
       // Event listeners
       this.client.on('connect', () => {
-        logger.info('🔗 Redis connecting...');
+        logger.info('Redis connecting...');
       });
 
       this.client.on('ready', () => {
-        logger.info('✅ Redis connected and ready');
+        logger.info('Redis connected and ready');
         this.isConnected = true;
       });
 
       this.client.on('error', (error) => {
-        logger.error('❌ Redis connection error:', error);
+        logger.error('Redis connection error:', error);
         this.isConnected = false;
       });
 
@@ -380,7 +380,7 @@ class RedisConnection {
       });
 
       this.client.on('reconnecting', () => {
-        logger.info('🔄 Redis reconnecting...');
+        logger.info('Redis reconnecting...');
       });
 
       // Connect to Redis

@@ -19,30 +19,30 @@ const User = mongoose.model('User');
 
 async function debugUserContracts() {
   try {
-    console.log('🔍 Connecting to MongoDB...');
+    console.log('Connecting to MongoDB...');
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive');
-    console.log('✅ Connected to MongoDB');
+    console.log('  Connected to MongoDB');
 
     // Get email from command line arguments
     const args = process.argv.slice(2);
     const emailArg = args.find(arg => arg.startsWith('--email='));
     
     if (!emailArg) {
-      console.log('❌ Please provide email: npm run debug-user -- --email=your@email.com');
+      console.log('  Please provide email: npm run debug-user -- --email=your@email.com');
       process.exit(1);
     }
     
     const email = emailArg.split('=')[1];
-    console.log(`🔍 Looking for user: ${email}`);
+    console.log(`  Looking for user: ${email}`);
 
     // Find the user
     const user = await User.findOne({ email });
     if (!user) {
-      console.log(`❌ User not found: ${email}`);
+      console.log(`  User not found: ${email}`);
       process.exit(1);
     }
 
-    console.log(`✅ Found user:`, {
+    console.log(`  Found user:`, {
       id: user._id.toString(),
       email: user.email,
       role: user.role,
@@ -50,12 +50,12 @@ async function debugUserContracts() {
     });
 
     // Check contracts where user is client
-    console.log('\n🔍 Checking contracts where user is CLIENT...');
+    console.log('\n  Checking contracts where user is CLIENT...');
     const clientContracts = await Contract.find({ client: user._id })
       .populate('freelancer', 'email profile')
       .lean();
     
-    console.log(`📋 Found ${clientContracts.length} contracts as client:`);
+    console.log(`   Found ${clientContracts.length} contracts as client:`);
     clientContracts.forEach((contract, index) => {
       console.log(`  ${index + 1}. ${contract.title}`);
       console.log(`     ID: ${contract._id}`);
@@ -66,12 +66,12 @@ async function debugUserContracts() {
     });
 
     // Check contracts where user is freelancer
-    console.log('\n🔍 Checking contracts where user is FREELANCER...');
+    console.log('\n  Checking contracts where user is FREELANCER...');
     const freelancerContracts = await Contract.find({ freelancer: user._id })
       .populate('client', 'email profile')
       .lean();
     
-    console.log(`📋 Found ${freelancerContracts.length} contracts as freelancer:`);
+    console.log(`   Found ${freelancerContracts.length} contracts as freelancer:`);
     freelancerContracts.forEach((contract, index) => {
       console.log(`  ${index + 1}. ${contract.title}`);
       console.log(`     ID: ${contract._id}`);
@@ -82,7 +82,7 @@ async function debugUserContracts() {
     });
 
     // Check all contracts with $or query (like the API does)
-    console.log('\n🔍 Checking contracts with $or query (like API)...');
+    console.log('\n  Checking contracts with $or query (like API)...');
     const allUserContracts = await Contract.find({
       $or: [
         { client: user._id },
@@ -90,7 +90,7 @@ async function debugUserContracts() {
       ]
     }).populate('client freelancer', 'email profile').lean();
 
-    console.log(`📋 Found ${allUserContracts.length} total contracts for user:`);
+    console.log(`   Found ${allUserContracts.length} total contracts for user:`);
     allUserContracts.forEach((contract, index) => {
       console.log(`  ${index + 1}. ${contract.title}`);
       console.log(`     ID: ${contract._id}`);
@@ -101,7 +101,7 @@ async function debugUserContracts() {
     });
 
     // Test the exact query the API uses
-    console.log('\n🔍 Testing exact API query...');
+    console.log('\n  Testing exact API query...');
     const query = {
       $or: [
         { client: user._id },
@@ -144,7 +144,7 @@ async function debugUserContracts() {
       { $sort: { createdAt: -1 } }
     ]);
 
-    console.log(`📋 API aggregation result: ${apiResult.length} contracts`);
+    console.log(`   API aggregation result: ${apiResult.length} contracts`);
     apiResult.forEach((contract, index) => {
       console.log(`  ${index + 1}. ${contract.title}`);
       console.log(`     Status: ${contract.status}`);
@@ -153,10 +153,10 @@ async function debugUserContracts() {
     });
 
   } catch (error) {
-    console.error('❌ Error debugging user contracts:', error);
+    console.error('  Error debugging user contracts:', error);
   } finally {
     await mongoose.disconnect();
-    console.log('\n👋 Disconnected from MongoDB');
+    console.log('\n   Disconnected from MongoDB');
   }
 }
 

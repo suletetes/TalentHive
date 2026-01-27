@@ -144,7 +144,7 @@ export function validateEnvironmentVariables(): EnvConfig {
   }
 
   // Log successful validation
-  logger.info('✅ Environment variables validated successfully');
+  logger.info('  Environment variables validated successfully');
 
   // Return typed environment config
   return {

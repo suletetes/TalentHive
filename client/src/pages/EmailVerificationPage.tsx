@@ -59,8 +59,8 @@ export const EmailVerificationPage: React.FC = () => {
       } catch (error: any) {
         if (isMounted) {
           console.error('  [EMAIL_VERIFY_PAGE] Verification error:', error);
-          console.error('📋 [EMAIL_VERIFY_PAGE] Error response:', error.response?.data);
-          console.error('📋 [EMAIL_VERIFY_PAGE] Error status:', error.response?.status);
+          console.error('   [EMAIL_VERIFY_PAGE] Error response:', error.response?.data);
+          console.error('   [EMAIL_VERIFY_PAGE] Error status:', error.response?.status);
           setStatus('error');
           setMessage(error.response?.data?.message || 'Failed to verify email. The link may have expired.');
           setHasAttempted(true);
