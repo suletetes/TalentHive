@@ -41,9 +41,10 @@ const messageSchema = new Schema<IMessage>({
   },
   content: {
     type: String,
-    required: [true, 'Message content is required'],
+    required: false, // Allow empty content when attachments are present
     trim: true,
     maxlength: [5000, 'Message cannot exceed 5000 characters'],
+    default: '',
   },
   attachments: [{
     url: {
