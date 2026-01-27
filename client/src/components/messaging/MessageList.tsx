@@ -83,7 +83,12 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, onBack }
   };
 
   const renderMessage = (message: Message, index: number) => {
-    const isOwnMessage = message.sender._id === currentUser?._id;
+    // Fix the user ID comparison - handle both string and ObjectId formats
+    const currentUserId = currentUser?._id || currentUser?.id;
+    const messageSenderId = message.sender._id;
+    
+    // Convert both to strings for reliable comparison
+    const isOwnMessage = String(messageSenderId) === String(currentUserId);
     const showAvatar = !isOwnMessage;
 
     return (
