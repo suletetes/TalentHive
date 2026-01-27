@@ -1,4 +1,4 @@
-import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
 import { logger } from '@/utils/logger';
 import streamifier from 'streamifier';
 
