@@ -211,6 +211,32 @@ const userSchema = new Schema<IUser>({
   },
   isVerified: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
+  // Verification Badges System
+  verificationBadges: [{
+    type: {
+      type: String,
+      enum: ['identity', 'skills', 'trusted'],
+      required: true
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending'
+    },
+    requestedAt: {
+      type: Date,
+      default: Date.now
+    },
+    reviewedAt: Date,
+    reviewedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    approvedAt: Date,
+    rejectedAt: Date,
+    notes: String,
+    rejectionReason: String
+  }],
   // Featured freelancer fields
   isFeatured: { type: Boolean, default: false },
   featuredOrder: { type: Number, default: 0 },
@@ -279,6 +305,9 @@ userSchema.index({ role: 1 });
 userSchema.index({ 'freelancerProfile.skills': 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ isVerified: 1 });
+userSchema.index({ 'verificationBadges.type': 1 });
+userSchema.index({ 'verificationBadges.status': 1 });
+userSchema.index({ 'verificationBadges.requestedAt': 1 });
 userSchema.index({ 'rating.average': -1 });
 userSchema.index({ isFeatured: 1, featuredOrder: 1 });
 userSchema.index({ roles: 1 });
@@ -317,6 +346,37 @@ userSchema.pre('save', async function(next) {
 // Method to compare password
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
+};
+
+// Verification Badge Helper Methods
+userSchema.methods.hasBadge = function(badgeType: string): boolean {
+  return this.verificationBadges.some(
+    (badge: any) => badge.type === badgeType && badge.status === 'approved'
+  );
+};
+
+userSchema.methods.getPendingBadges = function() {
+  return this.verificationBadges.filter((badge: any) => badge.status === 'pending');
+};
+
+userSchema.methods.getBadgeStatus = function(badgeType: string) {
+  return this.verificationBadges.find((badge: any) => badge.type === badgeType);
+};
+
+userSchema.methods.qualifiesForTrustedBadge = function(): boolean {
+  const accountAgeInDays = Math.floor(
+    (Date.now() - new Date(this.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+  );
+  
+  return (
+    this.hasBadge('identity') &&
+    this.hasBadge('skills') &&
+    (this.completedProjects || 0) >= 5 &&
+    this.rating.average >= 4.5 &&
+    this.rating.count >= 5 &&
+    accountAgeInDays >= 90 &&
+    this.accountStatus === 'active'
+  );
 };
 
 // Method to update rating

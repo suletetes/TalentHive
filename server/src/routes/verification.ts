@@ -1,15 +1,28 @@
-import express from 'express';
-import { verificationController } from '../controllers/verificationController';
-import { authenticate } from '../middleware/auth';
+import { Router } from 'express';
+import {
+  requestVerification,
+  getVerificationStatus,
+  cancelVerificationRequest,
+  getPendingVerifications,
+  reviewVerification,
+  getVerificationStats,
+  getFreelancerVerificationDetails
+} from '@/controllers/freelancerVerificationController';
+import { authenticate, authorize } from '@/middleware/auth';
 
-const router = express.Router();
+const router = Router();
 
-// Public route - verify email with token
-router.post('/verify-email', verificationController.verifyEmail);
+// Freelancer routes (authenticated)
+router.use(authenticate);
 
-// Protected routes - require authentication
-router.post('/send-verification', authenticate, verificationController.sendVerificationEmail);
-router.post('/resend-verification', authenticate, verificationController.resendVerificationEmail);
-router.get('/status', authenticate, verificationController.checkVerificationStatus);
+router.post('/request/:badgeType', requestVerification);
+router.get('/status', getVerificationStatus);
+router.delete('/request/:badgeType', cancelVerificationRequest);
+
+// Admin routes
+router.get('/admin/pending', authorize('admin'), getPendingVerifications);
+router.post('/admin/review', authorize('admin'), reviewVerification);
+router.get('/admin/stats', authorize('admin'), getVerificationStats);
+router.get('/admin/freelancer/:userId', authorize('admin'), getFreelancerVerificationDetails);
 
 export default router;

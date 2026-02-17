@@ -342,6 +342,33 @@ async function seedUsers() {
         ],
       },
       rating: { average: 4.8, count: 15 },
+      completedProjects: 12, // For trusted badge qualification
+      verificationBadges: [
+        {
+          type: 'identity',
+          status: 'approved',
+          requestedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          reviewedAt: new Date(Date.now() - 29 * 24 * 60 * 60 * 1000),
+          approvedAt: new Date(Date.now() - 29 * 24 * 60 * 60 * 1000),
+          notes: 'Profile complete and professional'
+        },
+        {
+          type: 'skills',
+          status: 'approved',
+          requestedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+          reviewedAt: new Date(Date.now() - 19 * 24 * 60 * 60 * 1000),
+          approvedAt: new Date(Date.now() - 19 * 24 * 60 * 60 * 1000),
+          notes: 'Excellent portfolio demonstrating claimed skills'
+        },
+        {
+          type: 'trusted',
+          status: 'approved',
+          requestedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+          reviewedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+          approvedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+          notes: 'Meets all criteria for trusted freelancer'
+        }
+      ],
     },
     {
       email: 'ibrahim.designer@example.com',
@@ -383,6 +410,25 @@ async function seedUsers() {
         ],
       },
       rating: { average: 4.9, count: 22 },
+      completedProjects: 8,
+      verificationBadges: [
+        {
+          type: 'identity',
+          status: 'approved',
+          requestedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
+          reviewedAt: new Date(Date.now() - 24 * 24 * 60 * 60 * 1000),
+          approvedAt: new Date(Date.now() - 24 * 24 * 60 * 60 * 1000),
+          notes: 'Verified identity'
+        },
+        {
+          type: 'skills',
+          status: 'approved',
+          requestedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+          reviewedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+          approvedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+          notes: 'Strong portfolio in UI/UX design'
+        }
+      ],
     },
     {
       email: 'zainab.writer@example.com',
@@ -406,6 +452,17 @@ async function seedUsers() {
         },
       },
       rating: { average: 4.7, count: 18 },
+      completedProjects: 3,
+      verificationBadges: [
+        {
+          type: 'identity',
+          status: 'approved',
+          requestedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+          reviewedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000),
+          approvedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000),
+          notes: 'Identity verified'
+        }
+      ],
     },
     // Additional Freelancers
     {
@@ -430,6 +487,15 @@ async function seedUsers() {
         },
       },
       rating: { average: 4.6, count: 12 },
+      completedProjects: 2,
+      verificationBadges: [
+        {
+          type: 'identity',
+          status: 'pending',
+          requestedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+          notes: 'Awaiting admin review'
+        }
+      ],
     },
     {
       email: 'khadija.data@example.com',
