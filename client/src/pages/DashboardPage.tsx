@@ -304,10 +304,6 @@ export const DashboardPage: React.FC = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={4}>
-            <VerificationCard />
-          </Grid>
-
           <Grid item xs={12} md={8}>
             <Card>
               <CardContent>
@@ -324,6 +320,10 @@ export const DashboardPage: React.FC = () => {
                 </Box>
               </CardContent>
             </Card>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <VerificationCard />
           </Grid>
 
           <Grid item xs={12} md={4}>

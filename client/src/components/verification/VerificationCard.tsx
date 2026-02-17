@@ -256,11 +256,11 @@ export const VerificationCard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card sx={{ height: '100%' }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Verification Badges
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">Verification Badges</Typography>
+          </Box>
           <LinearProgress />
         </CardContent>
       </Card>
@@ -269,7 +269,7 @@ export const VerificationCard: React.FC = () => {
 
   if (error) {
     return (
-      <Card>
+      <Card sx={{ height: '100%' }}>
         <CardContent>
           <Alert severity="error">Failed to load verification status</Alert>
         </CardContent>
@@ -283,30 +283,74 @@ export const VerificationCard: React.FC = () => {
   const progress = (approvedCount / totalBadges) * 100;
 
   return (
-    <Card>
+    <Card sx={{ height: '100%' }}>
       <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">Verification Badges</Typography>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          mb: 2,
+          gap: 2,
+          minWidth: 0
+        }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              fontSize: { xs: '1.1rem', sm: '1.25rem' },
+              lineHeight: 1.2,
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+            noWrap
+          >
+            Verification Badges
+          </Typography>
           <Chip
-            label={`${approvedCount}/${totalBadges} Verified`}
+            label={`${approvedCount}/${totalBadges}`}
             color={approvedCount === totalBadges ? 'success' : 'default'}
             size="small"
+            sx={{ 
+              flexShrink: 0,
+              fontWeight: 600,
+              minWidth: 'fit-content'
+            }}
           />
         </Box>
 
         <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-            <Typography variant="body2" color="text.secondary">
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="body2" color="text.secondary" fontWeight={500}>
               Profile Completion
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" fontWeight={600}>
               {Math.round(progress)}%
             </Typography>
           </Box>
-          <LinearProgress variant="determinate" value={progress} sx={{ height: 8, borderRadius: 1 }} />
+          <LinearProgress 
+            variant="determinate" 
+            value={progress} 
+            sx={{ 
+              height: 8, 
+              borderRadius: 1,
+              bgcolor: 'grey.200',
+              '& .MuiLinearProgress-bar': {
+                borderRadius: 1
+              }
+            }} 
+          />
         </Box>
 
-        <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 2 }}>
+        <Alert 
+          severity="info" 
+          icon={<InfoIcon />} 
+          sx={{ 
+            mb: 2,
+            '& .MuiAlert-message': {
+              fontSize: '0.875rem'
+            }
+          }}
+        >
           Verification badges help you stand out to clients and build trust on the platform.
         </Alert>
 
