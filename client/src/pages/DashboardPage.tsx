@@ -18,6 +18,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { adminService } from '@/services/api/admin.service';
 import { ProjectStats } from '@/types/project';
 import { ApiResponse } from '@/types/common';
+import { VerificationCard } from '@/components/verification/VerificationCard';
 
 interface AdminStats {
   totalUsers: number;
@@ -301,6 +302,10 @@ export const DashboardPage: React.FC = () => {
                 </Typography>
               </CardContent>
             </Card>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <VerificationCard />
           </Grid>
 
           <Grid item xs={12} md={8}>

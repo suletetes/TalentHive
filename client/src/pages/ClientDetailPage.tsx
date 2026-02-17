@@ -110,7 +110,9 @@ export const ClientDetailPage = () => {
               <Typography variant="h4">
                 {client.profile?.firstName} {client.profile?.lastName}
               </Typography>
-              {client.isVerified && <Verified color="primary" />}
+              {client.verificationBadges?.some(badge => badge.type === 'identity' && badge.status === 'approved') && (
+                <Verified color="primary" />
+              )}
             </Box>
             <Typography variant="h6" color="text.secondary" gutterBottom>
               {client.clientProfile?.companyName || 'Client'}
