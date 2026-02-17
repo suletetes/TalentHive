@@ -47,6 +47,7 @@ import { RevenueChart } from '@/components/analytics/RevenueChart';
 import { UserGrowthChart } from '@/components/analytics/UserGrowthChart';
 import { ProjectStatsChart } from '@/components/analytics/ProjectStatsChart';
 import { PaymentAnalyticsChart } from '@/components/analytics/PaymentAnalyticsChart';
+import { VerificationQueue } from '@/components/admin/VerificationQueue';
 import {
   useRevenueAnalytics,
   useUserGrowthAnalytics,
@@ -368,6 +369,11 @@ export const AdminDashboardPage: React.FC = () => {
           </TableContainer>
         </CardContent>
       </Card>
+
+      {/* Verification Queue Section */}
+      <Box sx={{ mb: 4 }}>
+        <VerificationQueue />
+      </Box>
 
       {/* Analytics Section */}
       <Box sx={{ mb: 4 }}>

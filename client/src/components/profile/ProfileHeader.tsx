@@ -212,7 +212,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               }}>
                 {user.profile.firstName} {user.profile.lastName}
               </Typography>
-              {user.isVerified && (
+              {user.verificationBadges?.some(badge => badge.type === 'identity' && badge.status === 'approved') && (
                 <Verified color="primary" />
               )}
             </Box>

@@ -70,7 +70,7 @@ export const ClientProfileView = ({ userId }: ClientProfileViewProps) => {
               <Typography variant="h4" sx={{ fontWeight: 600, mr: 1 }}>
                 {user.firstName} {user.lastName}
               </Typography>
-              {user.isVerified && (
+              {user.verificationBadges?.some(badge => badge.type === 'identity' && badge.status === 'approved') && (
                 <Verified sx={{ color: 'primary.main', fontSize: 28 }} />
               )}
             </Box>
