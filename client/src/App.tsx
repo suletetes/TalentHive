@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import { Box } from '@mui/material';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { OnboardingGuard } from '@/components/guards/OnboardingGuard';
 import { Layout } from '@/components/layout/Layout';
 import { HomePage } from '@/pages/HomePage';
 import { LoginPage } from '@/pages/auth/LoginPage';
@@ -85,10 +86,31 @@ function App() {
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
           
-          {/* Onboarding routes */}
-          <Route path="onboarding/freelancer" element={<FreelancerOnboardingPage />} />
-          <Route path="onboarding/client" element={<ClientOnboardingPage />} />
-          <Route path="onboarding/admin" element={<AdminOnboardingPage />} />
+          {/* Onboarding routes - NO guard here */}
+          <Route 
+            path="onboarding/freelancer" 
+            element={
+              <ProtectedRoute>
+                <FreelancerOnboardingPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="onboarding/client" 
+            element={
+              <ProtectedRoute>
+                <ClientOnboardingPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="onboarding/admin" 
+            element={
+              <ProtectedRoute>
+                <AdminOnboardingPage />
+              </ProtectedRoute>
+            } 
+          />
           
           {/* Static pages */}
           <Route path="help" element={<HelpCenterPage />} />
@@ -128,7 +150,9 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Layout />
+              <OnboardingGuard>
+                <Layout />
+              </OnboardingGuard>
             </ProtectedRoute>
           }
         >
