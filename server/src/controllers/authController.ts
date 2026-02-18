@@ -41,7 +41,19 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
 
   if (!errors.isEmpty()) {
     console.log('  Validation failed with errors:', errors.array());
-    return next(new AppError('Validation failed', 400));
+    
+    // Return detailed validation errors
+    const validationErrors = errors.array().map(err => ({
+      field: err.type === 'field' ? err.path : 'unknown',
+      message: err.msg,
+    }));
+    
+    return res.status(400).json({
+      status: 'error',
+      message: 'Validation failed',
+      errors: errors.array(),
+      validationErrors, // Simplified format for frontend
+    });
   }
 
   const { email, password, firstName, lastName, role, companyName, title, profile } = req.body;
@@ -83,6 +95,8 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
     },
     emailVerificationToken: hashedToken,
     emailVerificationExpires,
+    onboardingCompleted: false,
+    onboardingStep: 0,
   };
 
   // Add role-specific data

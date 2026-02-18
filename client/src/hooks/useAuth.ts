@@ -78,15 +78,16 @@ export function useAuth(): UseAuthReturn {
       const response = await authService.login(credentials);
       console.log('[AUTH] Login response:', response);
 
-      // Handle different response structures
+      // Backend returns: { status, message, data: { user, tokens } }
+      // apiCore.post returns response.data, so we get the whole response object
       let user, tokens;
       
-      if (response.data) {
-        // Standard wrapped response
+      if (response.data && response.data.user && response.data.tokens) {
+        // Standard wrapped response: { status, message, data: { user, tokens } }
         user = response.data.user;
         tokens = response.data.tokens;
       } else if (response.user && response.tokens) {
-        // Direct response
+        // Direct response (shouldn't happen but handle it)
         user = response.user;
         tokens = response.tokens;
       } else {
@@ -132,15 +133,17 @@ export function useAuth(): UseAuthReturn {
       const response = await authService.register(data);
       console.log('[AUTH] Registration response:', response);
 
-      // Handle different response structures
+      // Backend returns: { status, message, data: { user, tokens } }
+      // apiCore.post returns response.data, so we get the whole response object
       let user, tokens;
       
-      if (response.data) {
-        // Standard wrapped response
+      // Check if response has the standard format
+      if (response.data && response.data.user && response.data.tokens) {
+        // Standard wrapped response: { status, message, data: { user, tokens } }
         user = response.data.user;
         tokens = response.data.tokens;
       } else if (response.user && response.tokens) {
-        // Direct response
+        // Direct response (shouldn't happen but handle it)
         user = response.user;
         tokens = response.tokens;
       } else {
@@ -152,7 +155,7 @@ export function useAuth(): UseAuthReturn {
       }
 
       if (user && tokens) {
-        // Store tokens securely
+        // Store tokens securely FIRST
         storeAuthTokens(tokens.accessToken, tokens.refreshToken);
 
         // Update Redux state
@@ -164,6 +167,8 @@ export function useAuth(): UseAuthReturn {
 
         console.log('[AUTH] Registration and auto-login successful');
         toast.success('Registration successful! Welcome to TalentHive!');
+        
+        // Navigation will be handled by RegisterPage useEffect
       } else {
         console.log('[AUTH] Registration successful, please verify email');
         toast.success('Registration successful! Please check your email to verify your account.');
