@@ -23,13 +23,21 @@ export const OnboardingGuard: React.FC<OnboardingGuardProps> = ({ children }) =>
 
   useEffect(() => {
     if (!isLoading && onboardingStatus && user) {
-      const statusData = onboardingStatus?.data?.data || onboardingStatus?.data || {};
+      // Handle different response structures
+      // API returns: { success: true, data: { onboardingCompleted, skippedAt } }
+      // apiCore.get returns response.data
+      const statusData = onboardingStatus.data || onboardingStatus;
       const { onboardingCompleted, skippedAt } = statusData;
+
+      console.log('[ONBOARDING GUARD] Status:', { onboardingCompleted, skippedAt, statusData });
 
       // If onboarding not completed and not skipped, redirect to onboarding
       if (!onboardingCompleted && !skippedAt) {
+        console.log('[ONBOARDING GUARD] Redirecting to onboarding');
         const onboardingPath = getOnboardingPath(user.role);
         navigate(onboardingPath, { replace: true });
+      } else {
+        console.log('[ONBOARDING GUARD] Onboarding check passed');
       }
     }
   }, [isLoading, onboardingStatus, user, navigate]);
