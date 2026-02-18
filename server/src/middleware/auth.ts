@@ -9,20 +9,15 @@ export interface AuthRequest extends Request {
 }
 
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  let token: string | undefined;
-  
   try {
-    // console.log('[AUTH] authenticate called for:', req.method, req.originalUrl);
-    token = req.header('Authorization')?.replace('Bearer ', '');
+    const token = req.header('Authorization')?.replace('Bearer ', '');
     
     if (!token) {
-      // console.log('[AUTH] No token provided');
       return next(new AppError('Access token is required', 401));
     }
 
     // Verify token
     const decoded = verifyToken(token);
-    // console.log('[AUTH] Token decoded, userId:', decoded.userId);
     
     // Check if user exists in cache first
     let user = await getCache(`user:${decoded.userId}`);
@@ -54,17 +49,6 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     req.user = user;
     next();
   } catch (error: any) {
-    // Skip logging for polling endpoints to reduce noise
-    const isPollingEndpoint = req.originalUrl.includes('/unread-count') || 
-                              req.originalUrl.includes('/conversations');
-    
-    if (!isPollingEndpoint) {
-      console.log('  [AUTH] Token verification failed');
-      console.log('  [AUTH] Token preview:', token?.substring(0, 20) + '...');
-      console.log('  [AUTH] Error:', error.message);
-      console.log('  [AUTH] URL:', req.originalUrl);
-    }
-    
     // Provide more specific error messages
     if (error.name === 'TokenExpiredError') {
       return next(new AppError('Token expired', 401));
@@ -78,11 +62,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
 export const authorize = (...roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
-    // console.log('[AUTH] authorize called for roles:', roles);
-    // console.log('[AUTH] req.user:', req.user ? { id: req.user._id, role: req.user.role, roles: req.user.roles } : 'NO USER');
-    
     if (!req.user) {
-      // console.log('[AUTH] REJECTED: No user on request');
       return next(new AppError('Authentication required', 401));
     }
 
@@ -91,13 +71,9 @@ export const authorize = (...roles: string[]) => {
       ? req.user.roles 
       : [req.user.role];
     
-    // console.log('[AUTH] userRoles:', userRoles);
-    
     const hasPermission = userRoles.some((userRole: string) => roles.includes(userRole));
-    // console.log('[AUTH] hasPermission:', hasPermission);
 
     if (!hasPermission) {
-      // console.log('[AUTH] REJECTED: Insufficient permissions');
       return next(new AppError('Insufficient permissions', 403));
     }
 
@@ -128,7 +104,6 @@ export const authenticateForLogout = async (req: AuthRequest, res: Response, nex
       }
     } catch (tokenError: any) {
       // If token is expired or invalid, allow logout anyway
-      console.log('Token verification failed for logout, but allowing:', tokenError.message);
     }
 
     next();
