@@ -12,12 +12,14 @@ import {
   ToggleButtonGroup,
   Grid,
   CircularProgress,
+  IconButton,
+  InputAdornment,
 } from '@mui/material';
 import { Link as RouterLink, Navigate, useSearchParams } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useSelector } from 'react-redux';
-import { Person, Business, AdminPanelSettings } from '@mui/icons-material';
+import { Person, Business, AdminPanelSettings, Visibility, VisibilityOff } from '@mui/icons-material';
 
 import { useAuth } from '@/hooks/useAuth';
 import { RootState } from '@/store';
@@ -36,6 +38,8 @@ export const RegisterPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialRole = searchParams.get('type') as 'freelancer' | 'client' | null;
   const [userType, setUserType] = useState<'freelancer' | 'client' | 'admin'>(initialRole || 'freelancer');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const { register, isRegisterLoading } = useAuth();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
@@ -69,6 +73,18 @@ export const RegisterPage: React.FC = () => {
     if (newUserType !== null) {
       setUserType(newUserType);
     }
+  };
+
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleClickShowConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
   };
 
   // Redirect if already authenticated
@@ -109,11 +125,13 @@ export const RegisterPage: React.FC = () => {
               <Business sx={{ mr: 1 }} />
               Hire Freelancers
             </ToggleButton>
-            <ToggleButton value="admin" aria-label="admin">
+          
+            {/* <ToggleButton value="admin" aria-label="admin">
               <AdminPanelSettings sx={{ mr: 1 }} />
               Admin Access
-            </ToggleButton>
+            </ToggleButton> */}
           </ToggleButtonGroup>
+        
         </Box>
 
         <Box component="form" onSubmit={formik.handleSubmit} sx={{ mt: 3 }}>
@@ -169,7 +187,7 @@ export const RegisterPage: React.FC = () => {
             id="password"
             name="password"
             label="Password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             margin="normal"
             value={formik.values.password}
             onChange={formik.handleChange}
@@ -177,6 +195,20 @@ export const RegisterPage: React.FC = () => {
             error={formik.touched.password && Boolean(formik.errors.password)}
             helperText={formik.touched.password && formik.errors.password}
             disabled={isRegisterLoading}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={handleClickShowPassword}
+                    onMouseDown={handleMouseDownPassword}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
 
           <TextField
@@ -184,7 +216,7 @@ export const RegisterPage: React.FC = () => {
             id="confirmPassword"
             name="confirmPassword"
             label="Confirm Password"
-            type="password"
+            type={showConfirmPassword ? 'text' : 'password'}
             margin="normal"
             value={formik.values.confirmPassword}
             onChange={formik.handleChange}
@@ -192,6 +224,20 @@ export const RegisterPage: React.FC = () => {
             error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
             helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
             disabled={isRegisterLoading}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle confirm password visibility"
+                    onClick={handleClickShowConfirmPassword}
+                    onMouseDown={handleMouseDownPassword}
+                    edge="end"
+                  >
+                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
 
           {userType === 'client' && (

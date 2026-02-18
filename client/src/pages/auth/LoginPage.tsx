@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Container,
   Paper,
@@ -9,11 +9,14 @@ import {
   Link,
   Divider,
   CircularProgress,
+  IconButton,
+  InputAdornment,
 } from '@mui/material';
 import { Link as RouterLink, Navigate, useLocation } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useSelector } from 'react-redux';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 import { useAuth } from '@/hooks/useAuth';
 import { RootState } from '@/store';
@@ -25,6 +28,7 @@ const validationSchema = yup.object({
 
 export const LoginPage: React.FC = () => {
   const location = useLocation();
+  const [showPassword, setShowPassword] = useState(false);
   const { login, isLoginLoading } = useAuth();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
@@ -38,6 +42,14 @@ export const LoginPage: React.FC = () => {
       login(values);
     },
   });
+
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -78,7 +90,7 @@ export const LoginPage: React.FC = () => {
             id="password"
             name="password"
             label="Password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             margin="normal"
             value={formik.values.password}
             onChange={formik.handleChange}
@@ -86,6 +98,20 @@ export const LoginPage: React.FC = () => {
             error={formik.touched.password && Boolean(formik.errors.password)}
             helperText={formik.touched.password && formik.errors.password}
             disabled={isLoginLoading}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={handleClickShowPassword}
+                    onMouseDown={handleMouseDownPassword}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
 
           <Button
