@@ -15,7 +15,7 @@ import {
   IconButton,
   InputAdornment,
 } from '@mui/material';
-import { Link as RouterLink, Navigate, useSearchParams } from 'react-router-dom';
+import { Link as RouterLink, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useSelector } from 'react-redux';
@@ -36,13 +36,35 @@ const validationSchema = yup.object({
 
 export const RegisterPage: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const initialRole = searchParams.get('type') as 'freelancer' | 'client' | null;
   const [userType, setUserType] = useState<'freelancer' | 'client' | 'admin'>(initialRole || 'freelancer');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const { register, isRegisterLoading } = useAuth();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+
+  // Navigate to onboarding after successful registration
+  React.useEffect(() => {
+    if (isAuthenticated && user) {
+      const getOnboardingPath = (role: string): string => {
+        switch (role) {
+          case 'freelancer':
+            return '/onboarding/freelancer';
+          case 'client':
+            return '/onboarding/client';
+          case 'admin':
+            return '/onboarding/admin';
+          default:
+            return '/dashboard';
+        }
+      };
+      
+      const onboardingPath = getOnboardingPath(user.role);
+      navigate(onboardingPath, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const formik = useFormik({
     initialValues: {
@@ -65,6 +87,42 @@ export const RegisterPage: React.FC = () => {
       });
     },
   });
+
+  // Quick test data fill function
+  const fillTestData = () => {
+    const timestamp = Date.now();
+    const testData = {
+      freelancer: {
+        firstName: 'John',
+        lastName: 'Freelancer',
+        email: `freelancer${timestamp}@test.com`,
+        password: 'Test123456',
+        confirmPassword: 'Test123456',
+        title: 'Full Stack Developer',
+        companyName: '',
+      },
+      client: {
+        firstName: 'Jane',
+        lastName: 'Client',
+        email: `client${timestamp}@test.com`,
+        password: 'Test123456',
+        confirmPassword: 'Test123456',
+        title: '',
+        companyName: 'Tech Corp Inc',
+      },
+      admin: {
+        firstName: 'Admin',
+        lastName: 'User',
+        email: `admin${timestamp}@test.com`,
+        password: 'Test123456',
+        confirmPassword: 'Test123456',
+        title: '',
+        companyName: '',
+      },
+    };
+
+    formik.setValues(testData[userType]);
+  };
 
   const handleUserTypeChange = (
     event: React.MouseEvent<HTMLElement>,
@@ -102,6 +160,19 @@ export const RegisterPage: React.FC = () => {
           <Typography color="text.secondary">
             Create your account and start your journey
           </Typography>
+          
+          {/* Test Data Button - Only show in development */}
+          {import.meta.env.DEV && (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={fillTestData}
+              sx={{ mt: 2 }}
+              color="secondary"
+            >
+              🧪 Fill Test Data
+            </Button>
+          )}
         </Box>
 
         {/* User Type Selection */}
