@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { useQueryClient } from '@tanstack/react-query';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { FreelancerOnboardingSteps } from '@/components/onboarding/FreelancerOnboardingSteps';
 import { updateOnboardingStep, completeOnboarding, skipOnboarding } from '@/store/slices/onboardingSlice';
@@ -15,6 +16,7 @@ export const FreelancerOnboardingPage = () => {
   const [formData, setFormData] = useState<any>({});
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const queryClient = useQueryClient();
 
   const handleNext = async () => {
     try {
@@ -32,8 +34,12 @@ export const FreelancerOnboardingPage = () => {
   const handleSkip = async () => {
     try {
       await dispatch(skipOnboarding()).unwrap();
+      
+      // Invalidate onboarding status cache
+      await queryClient.invalidateQueries({ queryKey: ['onboardingStatus'] });
+      
       toast.success('Onboarding skipped');
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       toast.error('Failed to skip onboarding');
     }
@@ -50,8 +56,12 @@ export const FreelancerOnboardingPage = () => {
       });
 
       await dispatch(completeOnboarding()).unwrap();
+      
+      // Invalidate onboarding status cache
+      await queryClient.invalidateQueries({ queryKey: ['onboardingStatus'] });
+      
       toast.success('Onboarding completed!');
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to complete onboarding');
     }

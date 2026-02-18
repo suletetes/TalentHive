@@ -95,8 +95,11 @@ export const DashboardPage: React.FC = () => {
   const stats = (statsData || {}) as AdminStats & UserProjectStats;
 
   // Check if should show onboarding banner
-  const statusData = onboardingStatus?.data?.data || onboardingStatus?.data || {};
+  // API returns: { success: true, data: { onboardingCompleted, skippedAt } }
+  const statusData = onboardingStatus?.data || {};
   const showOnboardingBanner = statusData.skippedAt && !statusData.onboardingCompleted;
+
+  console.log('[DASHBOARD] Onboarding status:', { statusData, showOnboardingBanner });
 
   // Helper function to get onboarding path
   const getOnboardingPath = (role: string): string => {
