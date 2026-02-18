@@ -129,6 +129,9 @@ export const updateUserStatus = catchAsync(async (req: AuthRequest, res: Respons
     return next(new AppError('User not found', 404));
   }
 
+  // Clear user cache to force fresh data on next request
+  await deleteCache(`user:${userId}`);
+
   res.json({
     status: 'success',
     data: { user },

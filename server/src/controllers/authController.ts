@@ -201,8 +201,18 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
     return next(new AppError('Invalid email or password', 401));
   }
 
+  // Check if account is active
   if (!user.isActive) {
     return next(new AppError('Account is deactivated', 401));
+  }
+
+  // Check account status (suspended or deactivated)
+  if (user.accountStatus === 'suspended') {
+    return next(new AppError('Your account has been suspended. Please contact support for assistance.', 403));
+  }
+
+  if (user.accountStatus === 'deactivated') {
+    return next(new AppError('Your account has been deactivated. Please contact support to reactivate your account.', 403));
   }
 
   if (!user.isVerified) {

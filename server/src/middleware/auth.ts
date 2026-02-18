@@ -31,7 +31,6 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       // If not in cache, fetch from database
       user = await User.findById(decoded.userId).select('-password');
       if (!user) {
-        // console.log('[AUTH] User not found in DB');
         return next(new AppError('User not found', 401));
       }
       
@@ -39,11 +38,17 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       await setCache(`user:${decoded.userId}`, user, 900);
     }
     
-    // console.log('[AUTH] User found:', { id: user._id, role: user.role, isActive: user.isActive });
-
     if (!user.isActive) {
-      // console.log('[AUTH] User account is deactivated');
       return next(new AppError('Account is deactivated', 401));
+    }
+
+    // Check account status (suspended or deactivated)
+    if (user.accountStatus === 'suspended') {
+      return next(new AppError('Your account has been suspended. Please contact support for assistance.', 403));
+    }
+
+    if (user.accountStatus === 'deactivated') {
+      return next(new AppError('Your account has been deactivated. Please contact support to reactivate your account.', 403));
     }
 
     req.user = user;
