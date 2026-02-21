@@ -26,7 +26,6 @@ import {
   Alert,
   Avatar,
   TextField,
-  CircularProgress,
 } from '@mui/material';
 import {
   People as PeopleIcon,
@@ -35,7 +34,6 @@ import {
   AttachMoney as MoneyIcon,
   Refresh as RefreshIcon,
   Download as DownloadIcon,
-  TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
@@ -44,17 +42,17 @@ import { adminService, AdminUser } from '@/services/api/admin.service';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { format } from 'date-fns';
-import toast from 'react-hot-toast';
+import { toastHelper } from '@/utils/toast';
 import { RevenueChart } from '@/components/analytics/RevenueChart';
 import { UserGrowthChart } from '@/components/analytics/UserGrowthChart';
 import { ProjectStatsChart } from '@/components/analytics/ProjectStatsChart';
 import { PaymentAnalyticsChart } from '@/components/analytics/PaymentAnalyticsChart';
+import { VerificationQueue } from '@/components/admin/VerificationQueue';
 import {
   useRevenueAnalytics,
   useUserGrowthAnalytics,
   useProjectStats,
   usePaymentAnalytics,
-  useDashboardOverview,
 } from '@/hooks/api/useAnalytics';
 
 export const AdminDashboardPage: React.FC = () => {
@@ -89,18 +87,7 @@ export const AdminDashboardPage: React.FC = () => {
     enabled: user?.role === 'admin',
   });
 
-  // Fetch reports
-  const { data: reportsData, isLoading: reportsLoading } = useQuery({
-    queryKey: ['admin-reports'],
-    queryFn: async () => {
-      const response = await adminService.getReports();
-      return response.data;
-    },
-    enabled: user?.role === 'admin',
-  });
-
   // Fetch analytics data
-  const { data: overview, isLoading: overviewLoading, refetch: refetchOverview } = useDashboardOverview();
   const { data: revenueData, isLoading: revenueLoading, refetch: refetchRevenue } = useRevenueAnalytics({
     startDate: dateRange.startDate || undefined,
     endDate: dateRange.endDate || undefined,
@@ -126,12 +113,12 @@ export const AdminDashboardPage: React.FC = () => {
       adminService.updateUserStatus(userId, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('User status updated successfully');
+      toastHelper.success('User status updated successfully');
       setStatusDialogOpen(false);
       setSelectedUser(null);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update user status');
+      toastHelper.error(error.response?.data?.message || 'Failed to update user status');
     },
   });
 
@@ -151,7 +138,6 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    refetchOverview();
     refetchRevenue();
     refetchUserGrowth();
     refetchProjectStats();
@@ -160,7 +146,7 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   const handleExport = () => {
-    toast.info('Export functionality coming soon');
+    toastHelper.info('Export functionality coming soon');
   };
 
   const getStatusColor = (status?: string) => {
@@ -201,14 +187,19 @@ export const AdminDashboardPage: React.FC = () => {
     );
   }
 
-  if (statsLoading || usersLoading || reportsLoading) {
+  if (statsLoading || usersLoading) {
     return <LoadingSpinner message="Loading admin dashboard..." />;
   }
 
   if (statsError || usersError) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <ErrorState error={statsError || usersError} onRetry={refetchUsers} />
+        <ErrorState 
+          title="Failed to load dashboard data"
+          message={statsError?.message || usersError?.message || "An error occurred while loading the dashboard"}
+          onRetry={refetchUsers}
+          type="server"
+        />
       </Container>
     );
   }
@@ -223,7 +214,6 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   const users = usersData?.users || [];
-  const reports = reportsData || { userGrowth: [], revenueData: [], projectStats: [] };
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -380,6 +370,11 @@ export const AdminDashboardPage: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Verification Queue Section */}
+      <Box sx={{ mb: 4 }}>
+        <VerificationQueue />
+      </Box>
+
       {/* Analytics Section */}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -468,12 +463,27 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* Project Stats */}
         <Box sx={{ mb: 4 }}>
-          <ProjectStatsChart data={projectStats} isLoading={projectStatsLoading} />
+          <ProjectStatsChart 
+            data={projectStats || { 
+              statusDistribution: [], 
+              categoryDistribution: [], 
+              budgetDistribution: [], 
+              totals: { total: 0, active: 0, completed: 0 } 
+            }} 
+            isLoading={projectStatsLoading} 
+          />
         </Box>
 
         {/* Payment Analytics */}
         <Box sx={{ mb: 4 }}>
-          <PaymentAnalyticsChart data={paymentAnalytics} isLoading={paymentLoading} />
+          <PaymentAnalyticsChart 
+            data={paymentAnalytics || { 
+              statusDistribution: [], 
+              paymentMethodDistribution: [], 
+              averages: { avgAmount: 0, avgCommission: 0 } 
+            }} 
+            isLoading={paymentLoading} 
+          />
         </Box>
       </Box>
 

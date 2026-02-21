@@ -67,7 +67,7 @@ export class IntegrationTestRunner {
       };
       
       this.results.push(result);
-      console.error(`❌ ${name} - ${duration.toFixed(2)}ms:`, error.message);
+      console.error(`  ${name} - ${duration.toFixed(2)}ms:`, error.message);
       return result;
     }
   }

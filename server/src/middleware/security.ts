@@ -10,6 +10,16 @@ export const createRateLimiter = (
   windowMs: number = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes default
   max: number = parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100')
 ) => {
+  // Check if rate limiting should be disabled for testing or development
+  const shouldBypassRateLimit = 
+    process.env.DISABLE_RATE_LIMIT_FOR_TESTING === 'true' || 
+    process.env.NODE_ENV === 'development';
+
+  if (shouldBypassRateLimit) {
+    console.log('Rate limiting is DISABLED for development/testing (security middleware)');
+    return (req: any, res: any, next: any) => next();
+  }
+
   return rateLimit({
     windowMs,
     max,

@@ -7,6 +7,7 @@ import {
   CardContent,
   Box,
   Button,
+  Alert,
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { Work, Person, Payment, Star, Assignment } from '@mui/icons-material';
@@ -18,6 +19,8 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { adminService } from '@/services/api/admin.service';
 import { ProjectStats } from '@/types/project';
 import { ApiResponse } from '@/types/common';
+import { VerificationCard } from '@/components/verification/VerificationCard';
+import { onboardingService } from '@/services/api/onboarding.service';
 
 interface AdminStats {
   totalUsers: number;
@@ -37,6 +40,13 @@ interface UserProjectStats extends ProjectStats {
 export const DashboardPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
+
+  // Check onboarding status
+  const { data: onboardingStatus } = useQuery({
+    queryKey: ['onboardingStatus'],
+    queryFn: () => onboardingService.getOnboardingStatus(),
+    enabled: !!user,
+  });
 
   // Fetch stats based on role
   const { data: statsData, isLoading } = useQuery<AdminStats | UserProjectStats>({
@@ -84,6 +94,27 @@ export const DashboardPage: React.FC = () => {
   const profile = (profileData as any)?.data?.data?.user;
   const stats = (statsData || {}) as AdminStats & UserProjectStats;
 
+  // Check if should show onboarding banner
+  // API returns: { success: true, data: { onboardingCompleted, skippedAt } }
+  const statusData = onboardingStatus?.data || {};
+  const showOnboardingBanner = statusData.skippedAt && !statusData.onboardingCompleted;
+
+  console.log('[DASHBOARD] Onboarding status:', { statusData, showOnboardingBanner });
+
+  // Helper function to get onboarding path
+  const getOnboardingPath = (role: string): string => {
+    switch (role) {
+      case 'freelancer':
+        return '/onboarding/freelancer';
+      case 'client':
+        return '/onboarding/client';
+      case 'admin':
+        return '/onboarding/admin';
+      default:
+        return '/dashboard';
+    }
+  };
+
   // Log stats rendering - MUST be before any conditional returns to avoid hooks error
   React.useEffect(() => {
     if (Object.keys(stats).length > 0) {
@@ -99,6 +130,25 @@ export const DashboardPage: React.FC = () => {
   if (user?.role === 'admin') {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Onboarding Banner */}
+        {showOnboardingBanner && (
+          <Alert 
+            severity="info" 
+            sx={{ mb: 3 }}
+            action={
+              <Button 
+                color="inherit" 
+                size="small"
+                onClick={() => navigate(getOnboardingPath(user.role))}
+              >
+                Complete Now
+              </Button>
+            }
+          >
+            Complete your profile setup to get the most out of TalentHive!
+          </Alert>
+        )}
+
         <Typography variant="h4" component="h1" gutterBottom>
           Admin Dashboard
         </Typography>
@@ -207,6 +257,25 @@ export const DashboardPage: React.FC = () => {
   if (user?.role === 'freelancer') {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Onboarding Banner */}
+        {showOnboardingBanner && (
+          <Alert 
+            severity="info" 
+            sx={{ mb: 3 }}
+            action={
+              <Button 
+                color="inherit" 
+                size="small"
+                onClick={() => navigate(getOnboardingPath(user.role))}
+              >
+                Complete Now
+              </Button>
+            }
+          >
+            Complete your profile setup to get the most out of TalentHive!
+          </Alert>
+        )}
+
         <Typography variant="h4" component="h1" gutterBottom>
           Dashboard
         </Typography>
@@ -322,6 +391,10 @@ export const DashboardPage: React.FC = () => {
           </Grid>
 
           <Grid item xs={12} md={4}>
+            <VerificationCard />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
@@ -349,6 +422,25 @@ export const DashboardPage: React.FC = () => {
   // Client Dashboard
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Onboarding Banner */}
+      {showOnboardingBanner && (
+        <Alert 
+          severity="info" 
+          sx={{ mb: 3 }}
+          action={
+            <Button 
+              color="inherit" 
+              size="small"
+              onClick={() => navigate(getOnboardingPath(user.role))}
+            >
+              Complete Now
+            </Button>
+          }
+        >
+          Complete your profile setup to get the most out of TalentHive!
+        </Alert>
+      )}
+
       <Typography variant="h4" component="h1" gutterBottom>
         Dashboard
       </Typography>

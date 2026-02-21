@@ -32,8 +32,20 @@ export const createHireNowRequest = async (
     console.log(`[HIRE NOW SEND] Client ${clientId} sending request to freelancer ${freelancerId}`);
     console.log(`[HIRE NOW SEND] Project: ${projectTitle}, Budget: ${budget}`);
 
-    // Validate freelancer exists
-    const freelancer = await User.findById(freelancerId);
+    // Validate freelancer exists - handle both ObjectId and slug formats
+    let freelancer;
+    
+    // Check if freelancerId is a valid ObjectId
+    if (mongoose.Types.ObjectId.isValid(freelancerId)) {
+      freelancer = await User.findById(freelancerId);
+    } else {
+      // Treat as a slug and find by profileSlug
+      freelancer = await User.findOne({ 
+        profileSlug: freelancerId,
+        role: 'freelancer' 
+      });
+    }
+    
     if (!freelancer || freelancer.role !== 'freelancer') {
       console.log(`[HIRE NOW SEND ERROR] Freelancer not found: ${freelancerId}`);
       return next(new AppError('Freelancer not found', 404));
@@ -41,10 +53,10 @@ export const createHireNowRequest = async (
 
     console.log(`[HIRE NOW SEND] Freelancer found: ${freelancer.profile.firstName} ${freelancer.profile.lastName}`);
 
-    // Create hire now request
+    // Create hire now request - use the actual freelancer ObjectId
     const hireNowRequest = await HireNowRequest.create({
       client: clientId,
-      freelancer: freelancerId,
+      freelancer: freelancer._id, // Use the actual ObjectId from the found freelancer
       projectTitle,
       projectDescription,
       budget,
@@ -59,10 +71,10 @@ export const createHireNowRequest = async (
     // Populate freelancer details
     await hireNowRequest.populate('freelancer', 'profile email');
 
-    // Create in-app notification for freelancer
+    // Create in-app notification for freelancer - use the actual ObjectId
     try {
       await Notification.create({
-        user: freelancerId,
+        user: freelancer._id, // Use the actual ObjectId
         type: 'system',
         title: `New Hire Now Request: ${projectTitle}`,
         message: `You have received a new hire now request for "${projectTitle}" with a budget of ${budget}`,

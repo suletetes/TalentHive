@@ -49,6 +49,7 @@ import { MessageButton } from '@/components/messaging/MessageButton';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { usersService } from '@/services/api/users.service';
+import { VerificationBadges } from '@/components/verification/VerificationBadges';
 
 const REVIEWS_PER_PAGE = 5;
 
@@ -183,7 +184,7 @@ export const FreelancerDetailPage = () => {
               }}>
                 {freelancer.profile.firstName} {freelancer.profile.lastName}
               </Typography>
-              {freelancer.isVerified && (
+              {freelancer.verificationBadges?.some(badge => badge.type === 'identity' && badge.status === 'approved') && (
                 <Verified color="primary" />
               )}
             </Box>
@@ -220,6 +221,15 @@ export const FreelancerDetailPage = () => {
                 {(freelancer.rating?.average || 0).toFixed(1)} ({freelancer.rating?.count || 0} reviews)
               </Typography>
             </Box>
+            {freelancer.verificationBadges && freelancer.verificationBadges.length > 0 && (
+              <Box sx={{ 
+                mb: 2,
+                display: 'flex',
+                justifyContent: { xs: 'center', sm: 'flex-start' }
+              }}>
+                <VerificationBadges badges={freelancer.verificationBadges} size="medium" />
+              </Box>
+            )}
             <Box sx={{ 
               display: 'flex',
               justifyContent: { xs: 'center', sm: 'flex-start' },

@@ -22,6 +22,35 @@ import { upload } from '@/utils/fileUpload';
 
 const router = Router();
 
+// Public test endpoint for Cloudinary connectivity (no auth required)
+router.get('/test-cloudinary', async (req, res) => {
+  try {
+    const cloudinary = (await import('../config/cloudinary')).default;
+    
+    // Test Cloudinary connection
+    const result = await cloudinary.api.ping();
+    
+    res.json({
+      success: true,
+      message: 'Cloudinary connection successful',
+      data: {
+        status: result.status,
+        config: {
+          cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? 'SET' : 'MISSING',
+          api_key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'MISSING',
+          api_secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING'
+        }
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'Cloudinary connection failed',
+      error: error.message
+    });
+  }
+});
+
 router.use(authenticate);
 
 // Admin-only routes

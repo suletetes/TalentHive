@@ -1,79 +1,157 @@
-import api from '../api';
+import { apiCore } from './core';
 
-export interface VerificationData {
-  type: 'email' | 'phone' | 'identity';
-  token?: string;
-  code?: string;
-  documentUrl?: string;
-}
-
-export interface VerificationResponse {
-  success: boolean;
-  message: string;
-  verificationStatus?: {
-    email: boolean;
-    phone: boolean;
-    identity: boolean;
+export interface VerificationBadge {
+  _id?: string;
+  type: 'identity' | 'skills' | 'trusted';
+  status: 'pending' | 'approved' | 'rejected' | 'not_requested';
+  requestedAt?: Date;
+  reviewedAt?: Date;
+  approvedAt?: Date;
+  rejectedAt?: Date;
+  rejectionReason?: string;
+  qualifies?: boolean;
+  requirements?: {
+    missing?: string[];
   };
 }
 
-const verificationService = {
-  // Send verification email
-  sendVerificationEmail: async () => {
-    const response = await api.post('/verification/send-email');
-    return response.data;
-  },
+export interface VerificationStatusResponse {
+  status: string;
+  data: {
+    badges: VerificationBadge[];
+  };
+}
 
-  // Verify email with token
-  verifyEmail: async (token: string): Promise<VerificationResponse> => {
-    const response = await api.post('/verification/verify-email', { token });
-    return response.data;
-  },
+export interface PendingVerificationRequest {
+  requestId: string;
+  freelancer: {
+    _id: string;
+    fullName: string;
+    email: string;
+    profileSlug: string;
+    profile: {
+      firstName: string;
+      lastName: string;
+      avatar?: string;
+      bio?: string;
+      location?: string;
+    };
+    skills?: string[];
+    portfolio?: any[];
+    rating: {
+      average: number;
+      count: number;
+    };
+  };
+  badgeType: string;
+  requestedAt: Date;
+  requirements: {
+    qualifies: boolean;
+    missing: string[];
+  };
+}
 
-  // Resend verification email
-  resendVerificationEmail: async () => {
-    const response = await api.post('/verification/resend-email');
-    return response.data;
-  },
+export interface VerificationStatsResponse {
+  status: string;
+  data: {
+    pending: {
+      identity: number;
+      skills: number;
+      trusted: number;
+      total: number;
+    };
+    approved: {
+      identity: number;
+      skills: number;
+      trusted: number;
+      total: number;
+    };
+    rejected: {
+      identity: number;
+      skills: number;
+      trusted: number;
+      total: number;
+    };
+  };
+}
 
-  // Send phone verification code
-  sendPhoneVerificationCode: async (phone: string) => {
-    const response = await api.post('/verification/send-phone-code', { phone });
-    return response.data;
-  },
+export class VerificationService {
+  private basePath = '/verification';
 
-  // Verify phone with code
-  verifyPhone: async (phone: string, code: string): Promise<VerificationResponse> => {
-    const response = await api.post('/verification/verify-phone', { phone, code });
-    return response.data;
-  },
+  /**
+   * Request a verification badge
+   */
+  async requestVerification(badgeType: 'identity' | 'skills' | 'trusted'): Promise<any> {
+    return apiCore.post(`${this.basePath}/request/${badgeType}`);
+  }
 
-  // Submit identity verification
-  submitIdentityVerification: async (documentUrl: string, documentType: string) => {
-    const response = await api.post('/verification/submit-identity', {
-      documentUrl,
-      documentType,
-    });
-    return response.data;
-  },
+  /**
+   * Get verification status for current user
+   */
+  async getVerificationStatus(): Promise<VerificationStatusResponse> {
+    return apiCore.get(`${this.basePath}/status`);
+  }
 
-  // Get verification status
-  getVerificationStatus: async () => {
-    const response = await api.get('/verification/status');
-    return response.data;
-  },
+  /**
+   * Cancel a pending verification request
+   */
+  async cancelVerificationRequest(badgeType: string): Promise<any> {
+    return apiCore.delete(`${this.basePath}/request/${badgeType}`);
+  }
 
-  // Get verification history
-  getVerificationHistory: async () => {
-    const response = await api.get('/verification/history');
-    return response.data;
-  },
+  /**
+   * Get pending verification requests (Admin only)
+   */
+  async getPendingVerifications(params?: {
+    badgeType?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    status: string;
+    data: {
+      requests: PendingVerificationRequest[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        pages: number;
+      };
+    };
+  }> {
+    const queryParams = new URLSearchParams();
+    if (params?.badgeType) queryParams.append('badgeType', params.badgeType);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
 
-  // Check if user is verified
-  isUserVerified: async (userId: string) => {
-    const response = await api.get(`/verification/user/${userId}`);
-    return response.data;
-  },
-};
+    return apiCore.get(`${this.basePath}/admin/pending?${queryParams.toString()}`);
+  }
 
-export default verificationService;
+  /**
+   * Review a verification request (Admin only)
+   */
+  async reviewVerification(data: {
+    userId: string;
+    badgeType: string;
+    action: 'approve' | 'reject';
+    notes?: string;
+    rejectionReason?: string;
+  }): Promise<any> {
+    return apiCore.post(`${this.basePath}/admin/review`, data);
+  }
+
+  /**
+   * Get verification statistics (Admin only)
+   */
+  async getVerificationStats(): Promise<VerificationStatsResponse> {
+    return apiCore.get(`${this.basePath}/admin/stats`);
+  }
+
+  /**
+   * Get freelancer verification details (Admin only)
+   */
+  async getFreelancerVerificationDetails(userId: string): Promise<any> {
+    return apiCore.get(`${this.basePath}/admin/freelancer/${userId}`);
+  }
+}
+
+export const verificationService = new VerificationService();

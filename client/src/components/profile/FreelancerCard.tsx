@@ -102,8 +102,8 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
                 <Typography variant="h6" component="h3">
                   {freelancer.profile.firstName} {freelancer.profile.lastName}
                 </Typography>
-                {freelancer.isVerified && (
-                  <Tooltip title="Verified freelancer">
+                {freelancer.verificationBadges?.some(badge => badge.type === 'identity' && badge.status === 'approved') && (
+                  <Tooltip title="Identity Verified">
                     <Verified color="primary" fontSize="small" />
                   </Tooltip>
                 )}

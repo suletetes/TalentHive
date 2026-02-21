@@ -18,6 +18,15 @@ export function getUserFriendlyErrorMessage(error: any): string {
     const status = error.response.status;
     const data = error.response.data;
     
+    // Handle validation errors with detailed messages
+    if (status === 400 && data?.errors && Array.isArray(data.errors)) {
+      // Extract validation error messages
+      const errorMessages = data.errors.map((err: any) => err.msg || err.message).filter(Boolean);
+      if (errorMessages.length > 0) {
+        return errorMessages.join('. ');
+      }
+    }
+    
     // Use server-provided message if available and user-friendly
     if (data?.message && typeof data.message === 'string' && data.message.length < 200) {
       return data.message;

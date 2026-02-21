@@ -17,7 +17,7 @@ import {
 } from '@/utils/authStorage';
 import { apiCore } from '@/services/api/core';
 import { authService } from '@/services/api/auth.service';
-import { LoginCredentials } from '@/types/auth';
+import { LoginCredentials, RegisterData } from '@/types/auth';
 import { getUserFriendlyErrorMessage } from '@/utils/errorMessages';
 import toast from 'react-hot-toast';
 
@@ -31,6 +31,7 @@ export interface UseAuthReturn {
   
   // Actions
   login: (credentials: LoginCredentials) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   refreshTokens: () => Promise<boolean>;
   validateSession: () => boolean;
@@ -38,6 +39,7 @@ export interface UseAuthReturn {
   
   // Loading states
   isLoginLoading: boolean;
+  isRegisterLoading: boolean;
   
   // Utilities
   hasRole: (role: string) => boolean;
@@ -51,6 +53,7 @@ export function useAuth(): UseAuthReturn {
   const dispatch = useDispatch();
   const authState = useSelector((state: RootState) => state.auth);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [isRegisterLoading, setIsRegisterLoading] = useState(false);
 
   // Initialize auth state from storage on mount
   useEffect(() => {
@@ -75,15 +78,16 @@ export function useAuth(): UseAuthReturn {
       const response = await authService.login(credentials);
       console.log('[AUTH] Login response:', response);
 
-      // Handle different response structures
+      // Backend returns: { status, message, data: { user, tokens } }
+      // apiCore.post returns response.data, so we get the whole response object
       let user, tokens;
       
-      if (response.data) {
-        // Standard wrapped response
+      if (response.data && response.data.user && response.data.tokens) {
+        // Standard wrapped response: { status, message, data: { user, tokens } }
         user = response.data.user;
         tokens = response.data.tokens;
       } else if (response.user && response.tokens) {
-        // Direct response
+        // Direct response (shouldn't happen but handle it)
         user = response.user;
         tokens = response.tokens;
       } else {
@@ -116,6 +120,70 @@ export function useAuth(): UseAuthReturn {
       throw error;
     } finally {
       setIsLoginLoading(false);
+    }
+  }, [dispatch]);
+
+  // Register function
+  const register = useCallback(async (data: RegisterData): Promise<void> => {
+    try {
+      setIsRegisterLoading(true);
+      dispatch(loginStart());
+
+      console.log('[AUTH] Starting registration process...');
+      const response = await authService.register(data);
+      console.log('[AUTH] Registration response:', response);
+
+      // Backend returns: { status, message, data: { user, tokens } }
+      // apiCore.post returns response.data, so we get the whole response object
+      let user, tokens;
+      
+      // Check if response has the standard format
+      if (response.data && response.data.user && response.data.tokens) {
+        // Standard wrapped response: { status, message, data: { user, tokens } }
+        user = response.data.user;
+        tokens = response.data.tokens;
+      } else if (response.user && response.tokens) {
+        // Direct response (shouldn't happen but handle it)
+        user = response.user;
+        tokens = response.tokens;
+      } else {
+        // Registration successful but no tokens (email verification required)
+        console.log('[AUTH] Registration successful, email verification required');
+        toast.success('Registration successful! Please check your email to verify your account.');
+        dispatch(loginFailure());
+        return;
+      }
+
+      if (user && tokens) {
+        // Store tokens securely FIRST
+        storeAuthTokens(tokens.accessToken, tokens.refreshToken);
+
+        // Update Redux state
+        dispatch(loginSuccess({
+          user,
+          token: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+        }));
+
+        console.log('[AUTH] Registration and auto-login successful');
+        toast.success('Registration successful! Welcome to TalentHive!');
+        
+        // Navigation will be handled by RegisterPage useEffect
+      } else {
+        console.log('[AUTH] Registration successful, please verify email');
+        toast.success('Registration successful! Please check your email to verify your account.');
+        dispatch(loginFailure());
+      }
+    } catch (error: any) {
+      console.error('[AUTH] Registration failed:', error);
+      
+      const errorMessage = getUserFriendlyErrorMessage(error);
+      dispatch(loginFailure());
+      toast.error(errorMessage);
+      
+      throw error;
+    } finally {
+      setIsRegisterLoading(false);
     }
   }, [dispatch]);
 
@@ -207,6 +275,7 @@ export function useAuth(): UseAuthReturn {
     
     // Actions
     login,
+    register,
     logout: handleLogout,
     refreshTokens,
     validateSession,
@@ -214,6 +283,7 @@ export function useAuth(): UseAuthReturn {
     
     // Loading states
     isLoginLoading,
+    isRegisterLoading,
     
     // Utilities
     hasRole,

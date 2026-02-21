@@ -2,7 +2,6 @@ import Stripe from 'stripe';
 import { Transaction } from '../models/Transaction';
 import { PlatformSettings } from '../models/PlatformSettings';
 import { Contract } from '../models/Contract';
-import mongoose from 'mongoose';
 import { getValidBusinessUrl } from '../utils/stripeTestData';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {

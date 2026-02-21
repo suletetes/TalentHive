@@ -81,6 +81,9 @@ if (NODE_ENV === 'development') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Static file serving for uploads (fallback when Cloudinary fails)
+app.use('/uploads', express.static('uploads'));
+
 // Rate limiting
 app.use('/api/', apiRateLimiter);
 
@@ -93,6 +96,23 @@ app.get('/health', (req, res) => {
     version: process.env.npm_package_version || '1.0.0',
   });
 });
+
+// Debug endpoint to check rate limiting status (development only)
+if (NODE_ENV === 'development') {
+  app.get('/debug/rate-limit-status', (req, res) => {
+    const shouldBypassRateLimit = 
+      process.env.DISABLE_RATE_LIMIT_FOR_TESTING === 'true' || 
+      process.env.NODE_ENV === 'development';
+    
+    res.status(200).json({
+      status: 'OK',
+      rateLimitingDisabled: shouldBypassRateLimit,
+      environment: NODE_ENV,
+      disableFlag: process.env.DISABLE_RATE_LIMIT_FOR_TESTING,
+      timestamp: new Date().toISOString(),
+    });
+  });
+}
 
 // API routes (v1)
 app.use('/api/v1', routes);

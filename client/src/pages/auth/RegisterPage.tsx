@@ -12,12 +12,14 @@ import {
   ToggleButtonGroup,
   Grid,
   CircularProgress,
+  IconButton,
+  InputAdornment,
 } from '@mui/material';
-import { Link as RouterLink, Navigate, useSearchParams } from 'react-router-dom';
+import { Link as RouterLink, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useSelector } from 'react-redux';
-import { Person, Business, AdminPanelSettings } from '@mui/icons-material';
+import { Person, Business, AdminPanelSettings, Visibility, VisibilityOff } from '@mui/icons-material';
 
 import { useAuth } from '@/hooks/useAuth';
 import { RootState } from '@/store';
@@ -34,11 +36,35 @@ const validationSchema = yup.object({
 
 export const RegisterPage: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const initialRole = searchParams.get('type') as 'freelancer' | 'client' | null;
   const [userType, setUserType] = useState<'freelancer' | 'client' | 'admin'>(initialRole || 'freelancer');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const { register, isRegisterLoading } = useAuth();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+
+  // Navigate to onboarding after successful registration
+  React.useEffect(() => {
+    if (isAuthenticated && user) {
+      const getOnboardingPath = (role: string): string => {
+        switch (role) {
+          case 'freelancer':
+            return '/onboarding/freelancer';
+          case 'client':
+            return '/onboarding/client';
+          case 'admin':
+            return '/onboarding/admin';
+          default:
+            return '/dashboard';
+        }
+      };
+      
+      const onboardingPath = getOnboardingPath(user.role);
+      navigate(onboardingPath, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const formik = useFormik({
     initialValues: {
@@ -62,6 +88,42 @@ export const RegisterPage: React.FC = () => {
     },
   });
 
+  // Quick test data fill function
+  const fillTestData = () => {
+    const timestamp = Date.now();
+    const testData = {
+      freelancer: {
+        firstName: 'John',
+        lastName: 'Freelancer',
+        email: `freelancer${timestamp}@test.com`,
+        password: 'Test123456',
+        confirmPassword: 'Test123456',
+        title: 'Full Stack Developer',
+        companyName: '',
+      },
+      client: {
+        firstName: 'Jane',
+        lastName: 'Client',
+        email: `client${timestamp}@test.com`,
+        password: 'Test123456',
+        confirmPassword: 'Test123456',
+        title: '',
+        companyName: 'Tech Corp Inc',
+      },
+      admin: {
+        firstName: 'Admin',
+        lastName: 'User',
+        email: `admin${timestamp}@test.com`,
+        password: 'Test123456',
+        confirmPassword: 'Test123456',
+        title: '',
+        companyName: '',
+      },
+    };
+
+    formik.setValues(testData[userType]);
+  };
+
   const handleUserTypeChange = (
     event: React.MouseEvent<HTMLElement>,
     newUserType: 'freelancer' | 'client' | 'admin'
@@ -69,6 +131,18 @@ export const RegisterPage: React.FC = () => {
     if (newUserType !== null) {
       setUserType(newUserType);
     }
+  };
+
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleClickShowConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
   };
 
   // Redirect if already authenticated
@@ -86,6 +160,19 @@ export const RegisterPage: React.FC = () => {
           <Typography color="text.secondary">
             Create your account and start your journey
           </Typography>
+          
+          {/* Test Data Button - Only show in development */}
+          {import.meta.env.DEV && (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={fillTestData}
+              sx={{ mt: 2 }}
+              color="secondary"
+            >
+              🧪 Fill Test Data
+            </Button>
+          )}
         </Box>
 
         {/* User Type Selection */}
@@ -109,11 +196,13 @@ export const RegisterPage: React.FC = () => {
               <Business sx={{ mr: 1 }} />
               Hire Freelancers
             </ToggleButton>
-            <ToggleButton value="admin" aria-label="admin">
+          
+            {/* <ToggleButton value="admin" aria-label="admin">
               <AdminPanelSettings sx={{ mr: 1 }} />
               Admin Access
-            </ToggleButton>
+            </ToggleButton> */}
           </ToggleButtonGroup>
+        
         </Box>
 
         <Box component="form" onSubmit={formik.handleSubmit} sx={{ mt: 3 }}>
@@ -169,7 +258,7 @@ export const RegisterPage: React.FC = () => {
             id="password"
             name="password"
             label="Password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             margin="normal"
             value={formik.values.password}
             onChange={formik.handleChange}
@@ -177,6 +266,20 @@ export const RegisterPage: React.FC = () => {
             error={formik.touched.password && Boolean(formik.errors.password)}
             helperText={formik.touched.password && formik.errors.password}
             disabled={isRegisterLoading}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={handleClickShowPassword}
+                    onMouseDown={handleMouseDownPassword}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
 
           <TextField
@@ -184,7 +287,7 @@ export const RegisterPage: React.FC = () => {
             id="confirmPassword"
             name="confirmPassword"
             label="Confirm Password"
-            type="password"
+            type={showConfirmPassword ? 'text' : 'password'}
             margin="normal"
             value={formik.values.confirmPassword}
             onChange={formik.handleChange}
@@ -192,6 +295,20 @@ export const RegisterPage: React.FC = () => {
             error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
             helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
             disabled={isRegisterLoading}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle confirm password visibility"
+                    onClick={handleClickShowConfirmPassword}
+                    onMouseDown={handleMouseDownPassword}
+                    edge="end"
+                  >
+                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
 
           {userType === 'client' && (

@@ -47,6 +47,19 @@ export interface ICertification {
   verificationUrl?: string;
 }
 
+export interface IVerificationBadge {
+  _id?: ObjectId;
+  type: 'identity' | 'skills' | 'trusted';
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: Date;
+  reviewedAt?: Date;
+  reviewedBy?: ObjectId;
+  approvedAt?: Date;
+  rejectedAt?: Date;
+  notes?: string;
+  rejectionReason?: string;
+}
+
 export interface IPortfolioItem {
   _id: ObjectId;
   title: string;
@@ -185,6 +198,13 @@ export interface IUser extends Document {
   accountStatus: 'active' | 'suspended' | 'deactivated';
   isVerified: boolean;
   isActive: boolean;
+  completedProjects?: number; // For trusted badge qualification
+  skills?: string[]; // Top-level skills for easy access
+  portfolio?: IPortfolioItem[]; // Top-level portfolio for easy access
+  
+  // Verification Badges
+  verificationBadges: IVerificationBadge[];
+  
   emailVerificationToken?: string;
   emailVerificationExpires?: Date;
   passwordResetToken?: string;
@@ -225,6 +245,10 @@ export interface IUser extends Document {
   // Instance methods
   comparePassword(candidatePassword: string): Promise<boolean>;
   updateRating(newRating: number): void;
+  hasBadge(badgeType: string): boolean;
+  getPendingBadges(): IVerificationBadge[];
+  getBadgeStatus(badgeType: string): IVerificationBadge | undefined;
+  qualifiesForTrustedBadge(): boolean;
 }
 
 export interface IUserModel {

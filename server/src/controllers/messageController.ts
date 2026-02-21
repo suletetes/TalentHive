@@ -136,8 +136,8 @@ export const sendMessage = async (
     const { content, attachments } = req.body;
     const userId = req.user!._id.toString();
 
-    if (!content || content.trim().length === 0) {
-      return next(new AppError('Message content is required', 400));
+    if ((!content || content.trim().length === 0) && (!attachments || attachments.length === 0)) {
+      return next(new AppError('Message content or attachments are required', 400));
     }
 
     // Verify user is part of the conversation
@@ -154,7 +154,7 @@ export const sendMessage = async (
     const message = await Message.create({
       conversation: conversationId,
       sender: userId,
-      content: content.trim(),
+      content: content ? content.trim() : '',
       attachments: attachments || [],
       readBy: [userId],
     });
@@ -436,33 +436,76 @@ export const uploadMessageAttachments = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    console.log('[UPLOAD] Starting file upload process...');
+    
     if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+      console.log('[UPLOAD] No files provided');
       return next(new AppError('No files uploaded', 400));
     }
 
-    const { uploadToCloudinary, formatFileSize } = await import('@/utils/fileUpload');
+    console.log(`[UPLOAD] Processing ${req.files.length} files`);
+    req.files.forEach((file, index) => {
+      console.log(`[UPLOAD] File ${index + 1}: ${file.originalname} (${file.size} bytes, ${file.mimetype})`);
+    });
 
-    // Upload all files to Cloudinary
-    const uploadPromises = req.files.map((file) => 
-      uploadToCloudinary(file, 'talenthive/messages')
-    );
+    const { uploadToCloudinary, uploadToLocal, formatFileSize } = await import('@/utils/fileUpload');
+
+    // Test Cloudinary configuration
+    console.log('[UPLOAD] Cloudinary config check:', {
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? 'SET' : 'MISSING',
+      api_key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'MISSING',
+      api_secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING'
+    });
+
+    // Upload all files to Cloudinary with fallback to local storage
+    console.log('[UPLOAD] Starting file uploads...');
+    const uploadPromises = req.files.map(async (file, index) => {
+      console.log(`[UPLOAD] Uploading file ${index + 1}: ${file.originalname}`);
+      try {
+        // Try Cloudinary first
+        const result = await Promise.race([
+          uploadToCloudinary(file, 'talenthive/messages'),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error(`Cloudinary timeout for ${file.originalname}`)), 15000)
+          )
+        ]);
+        console.log(`[UPLOAD] Cloudinary upload successful for file ${index + 1}: ${file.originalname}`);
+        return result;
+      } catch (cloudinaryError: any) {
+        console.warn(`[UPLOAD] Cloudinary failed for ${file.originalname}, trying local storage:`, cloudinaryError.message);
+        try {
+          // Fallback to local storage
+          const result = await uploadToLocal(file, 'messages');
+          console.log(`[UPLOAD] Local storage upload successful for file ${index + 1}: ${file.originalname}`);
+          return result;
+        } catch (localError: any) {
+          console.error(`[UPLOAD] Both Cloudinary and local storage failed for ${file.originalname}`);
+          throw new Error(`Upload failed for ${file.originalname}: ${cloudinaryError.message} | ${localError.message}`);
+        }
+      }
+    });
+    
     const results = await Promise.all(uploadPromises);
+    console.log(`[UPLOAD] All ${results.length} files uploaded successfully`);
 
     const uploadedFiles = results.map((result, index) => ({
-      url: result.url,
-      publicId: result.publicId,
+      url: (result as any).url,
+      publicId: (result as any).publicId,
       filename: req.files![index].originalname,
       size: req.files![index].size,
       mimeType: req.files![index].mimetype,
       type: req.files![index].mimetype.startsWith('image/') ? 'image' : 'document',
     }));
 
+    console.log('[UPLOAD] Sending response with uploaded files');
     res.status(200).json({
       success: true,
       message: `${uploadedFiles.length} file(s) uploaded successfully`,
       data: uploadedFiles,
     });
   } catch (error: any) {
+    console.error('[UPLOAD] Upload process failed:', error.message);
+    console.error('[UPLOAD] Full error:', error);
     next(new AppError(error.message || 'Failed to upload attachments', 500));
   }
 };

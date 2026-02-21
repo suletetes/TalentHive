@@ -50,16 +50,29 @@ export const uploadToCloudinary = async (
   folder: string = 'talenthive'
 ): Promise<{ url: string; publicId: string; format: string; size: number }> => {
   return new Promise((resolve, reject) => {
+    console.log(`[CLOUDINARY] Starting upload for ${file.originalname} to folder ${folder}`);
+    
+    // Set a timeout for the upload
+    const timeoutId = setTimeout(() => {
+      console.error(`[CLOUDINARY] Upload timeout for ${file.originalname}`);
+      reject(new Error(`Upload timeout for ${file.originalname} after 25 seconds`));
+    }, 25000); // 25 second timeout
+
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder,
         resource_type: 'auto',
         allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'zip'],
+        timeout: 20000, // 20 second Cloudinary timeout
       },
       (error, result) => {
+        clearTimeout(timeoutId); // Clear our timeout
+        
         if (error) {
+          console.error(`[CLOUDINARY] Upload error for ${file.originalname}:`, error);
           reject(error);
         } else if (result) {
+          console.log(`[CLOUDINARY] Upload success for ${file.originalname}: ${result.secure_url}`);
           resolve({
             url: result.secure_url,
             publicId: result.public_id,
@@ -67,22 +80,63 @@ export const uploadToCloudinary = async (
             size: result.bytes,
           });
         } else {
-          reject(new Error('Upload failed'));
+          console.error(`[CLOUDINARY] Upload failed for ${file.originalname}: No result returned`);
+          reject(new Error('Upload failed - no result returned'));
         }
       }
     );
 
     // Convert buffer to stream and pipe to Cloudinary
-    const bufferStream = new Readable();
-    bufferStream.push(file.buffer);
-    bufferStream.push(null);
-    bufferStream.pipe(uploadStream);
+    try {
+      const bufferStream = new Readable();
+      bufferStream.push(file.buffer);
+      bufferStream.push(null);
+      bufferStream.pipe(uploadStream);
+      console.log(`[CLOUDINARY] Stream created and piped for ${file.originalname}`);
+    } catch (streamError) {
+      clearTimeout(timeoutId);
+      console.error(`[CLOUDINARY] Stream error for ${file.originalname}:`, streamError);
+      reject(streamError);
+    }
   });
 };
 
 /**
- * Delete file from Cloudinary
+ * Upload file to local storage (fallback)
  */
+export const uploadToLocal = async (
+  file: Express.Multer.File,
+  folder: string = 'uploads'
+): Promise<{ url: string; publicId: string; format: string; size: number }> => {
+  const fs = await import('fs');
+  const path = await import('path');
+  
+  // Create uploads directory if it doesn't exist
+  const uploadDir = path.join(process.cwd(), 'uploads', folder);
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+  
+  // Generate unique filename
+  const timestamp = Date.now();
+  const randomString = Math.random().toString(36).substring(2, 15);
+  const extension = path.extname(file.originalname);
+  const filename = `${timestamp}_${randomString}${extension}`;
+  const filepath = path.join(uploadDir, filename);
+  
+  // Write file
+  fs.writeFileSync(filepath, file.buffer);
+  
+  // Return URL (assuming server serves static files from /uploads)
+  const url = `${process.env.SERVER_URL || 'http://localhost:5000'}/uploads/${folder}/${filename}`;
+  
+  return {
+    url,
+    publicId: filename,
+    format: extension.substring(1),
+    size: file.size,
+  };
+};
 export const deleteFromCloudinary = async (publicId: string): Promise<void> => {
   try {
     await cloudinary.uploader.destroy(publicId);

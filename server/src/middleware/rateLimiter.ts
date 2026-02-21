@@ -7,7 +7,7 @@ const shouldBypassRateLimit =
   process.env.NODE_ENV === 'development';
 
 if (shouldBypassRateLimit) {
-  console.log('⚠️  Rate limiting is DISABLED for development/testing');
+  console.log('Rate limiting is DISABLED for development/testing');
 }
 
 // Get environment-specific limits
