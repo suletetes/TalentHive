@@ -43,14 +43,6 @@ export const LoginPage: React.FC = () => {
     },
   });
 
-  // Quick test data fill function
-  const fillTestData = () => {
-    formik.setValues({
-      email: 'freelancer@example.com',
-      password: 'Freelancer123',
-    });
-  };
-
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
@@ -75,19 +67,6 @@ export const LoginPage: React.FC = () => {
           <Typography color="text.secondary">
             Sign in to your TalentHive account
           </Typography>
-          
-          {/* Test Data Button - Only show in development */}
-          {import.meta.env.DEV && (
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={fillTestData}
-              sx={{ mt: 2 }}
-              color="secondary"
-            >
-              🧪 Fill Test Data
-            </Button>
-          )}
         </Box>
 
         <Box component="form" onSubmit={formik.handleSubmit} sx={{ mt: 3 }}>
