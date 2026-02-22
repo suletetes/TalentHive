@@ -60,9 +60,9 @@ import { SupportTicketsPage } from '@/pages/SupportTicketsPage';
 import { CreateTicketPage } from '@/pages/CreateTicketPage';
 import { TicketDetailPage } from '@/pages/TicketDetailPage';
 import { AdminSupportDashboard } from '@/pages/admin/AdminSupportDashboard';
-import { FreelancerOnboardingPage } from '@/pages/onboarding/FreelancerOnboardingPage';
-import { ClientOnboardingPage } from '@/pages/onboarding/ClientOnboardingPage';
-import { AdminOnboardingPage } from '@/pages/onboarding/AdminOnboardingPage';
+// import { FreelancerOnboardingPage } from '@/pages/onboarding/FreelancerOnboardingPage';
+// import { ClientOnboardingPage } from '@/pages/onboarding/ClientOnboardingPage';
+// import { AdminOnboardingPage } from '@/pages/onboarding/AdminOnboardingPage';
 import { ProfileAnalyticsPage } from '@/pages/ProfileAnalyticsPage';
 import { ClientDetailPage } from '@/pages/ClientDetailPage';
 import { RoleManagementPage } from '@/pages/admin/RoleManagementPage';
@@ -86,8 +86,8 @@ function App() {
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
           
-          {/* Onboarding routes - NO guard here */}
-          <Route 
+          {/* Onboarding routes - COMMENTED OUT */}
+          {/* <Route 
             path="onboarding/freelancer" 
             element={
               <ProtectedRoute>
@@ -110,7 +110,7 @@ function App() {
                 <AdminOnboardingPage />
               </ProtectedRoute>
             } 
-          />
+          /> */}
           
           {/* Static pages */}
           <Route path="help" element={<HelpCenterPage />} />
