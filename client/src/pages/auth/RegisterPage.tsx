@@ -45,24 +45,27 @@ export const RegisterPage: React.FC = () => {
   const { register, isRegisterLoading } = useAuth();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
-  // Navigate to onboarding after successful registration
+  // Navigate to dashboard after successful registration (onboarding disabled)
   React.useEffect(() => {
     if (isAuthenticated && user) {
-      const getOnboardingPath = (role: string): string => {
-        switch (role) {
-          case 'freelancer':
-            return '/onboarding/freelancer';
-          case 'client':
-            return '/onboarding/client';
-          case 'admin':
-            return '/onboarding/admin';
-          default:
-            return '/dashboard';
-        }
-      };
+      // const getOnboardingPath = (role: string): string => {
+      //   switch (role) {
+      //     case 'freelancer':
+      //       return '/onboarding/freelancer';
+      //     case 'client':
+      //       return '/onboarding/client';
+      //     case 'admin':
+      //       return '/onboarding/admin';
+      //     default:
+      //       return '/dashboard';
+      //   }
+      // };
       
-      const onboardingPath = getOnboardingPath(user.role);
-      navigate(onboardingPath, { replace: true });
+      // const onboardingPath = getOnboardingPath(user.role);
+      // navigate(onboardingPath, { replace: true });
+      
+      // Onboarding disabled - go directly to dashboard
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
 

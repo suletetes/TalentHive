@@ -20,7 +20,7 @@ import { adminService } from '@/services/api/admin.service';
 import { ProjectStats } from '@/types/project';
 import { ApiResponse } from '@/types/common';
 import { VerificationCard } from '@/components/verification/VerificationCard';
-import { onboardingService } from '@/services/api/onboarding.service';
+// import { onboardingService } from '@/services/api/onboarding.service';
 
 interface AdminStats {
   totalUsers: number;
@@ -42,11 +42,11 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Check onboarding status
-  const { data: onboardingStatus } = useQuery({
-    queryKey: ['onboardingStatus'],
-    queryFn: () => onboardingService.getOnboardingStatus(),
-    enabled: !!user,
-  });
+  // const { data: onboardingStatus } = useQuery({
+  //   queryKey: ['onboardingStatus'],
+  //   queryFn: () => onboardingService.getOnboardingStatus(),
+  //   enabled: !!user,
+  // });
 
   // Fetch stats based on role
   const { data: statsData, isLoading } = useQuery<AdminStats | UserProjectStats>({
@@ -96,24 +96,25 @@ export const DashboardPage: React.FC = () => {
 
   // Check if should show onboarding banner
   // API returns: { success: true, data: { onboardingCompleted, skippedAt } }
-  const statusData = onboardingStatus?.data || {};
-  const showOnboardingBanner = statusData.skippedAt && !statusData.onboardingCompleted;
+  // const statusData = onboardingStatus?.data || {};
+  // const showOnboardingBanner = statusData.skippedAt && !statusData.onboardingCompleted;
+  const showOnboardingBanner = false; // Onboarding disabled
 
-  console.log('[DASHBOARD] Onboarding status:', { statusData, showOnboardingBanner });
+  // console.log('[DASHBOARD] Onboarding status:', { statusData, showOnboardingBanner });
 
   // Helper function to get onboarding path
-  const getOnboardingPath = (role: string): string => {
-    switch (role) {
-      case 'freelancer':
-        return '/onboarding/freelancer';
-      case 'client':
-        return '/onboarding/client';
-      case 'admin':
-        return '/onboarding/admin';
-      default:
-        return '/dashboard';
-    }
-  };
+  // const getOnboardingPath = (role: string): string => {
+  //   switch (role) {
+  //     case 'freelancer':
+  //       return '/onboarding/freelancer';
+  //     case 'client':
+  //       return '/onboarding/client';
+  //     case 'admin':
+  //       return '/onboarding/admin';
+  //     default:
+  //       return '/dashboard';
+  //   }
+  // };
 
   // Log stats rendering - MUST be before any conditional returns to avoid hooks error
   React.useEffect(() => {

@@ -14,7 +14,7 @@ import authReducer from './slices/authSlice';
 import uiReducer from './slices/uiSlice';
 import userReducer from './slices/userSlice';
 import supportTicketReducer from './slices/supportTicketSlice';
-import onboardingReducer from './slices/onboardingSlice';
+// import onboardingReducer from './slices/onboardingSlice';
 import { rootPersistConfig, authPersistConfig, uiPersistConfig } from './persistConfig';
 
 // Create persisted reducers with individual configurations
@@ -26,7 +26,7 @@ const rootReducer = combineReducers({
   ui: persistedUiReducer,
   user: userReducer, // Not persisted - temporary session data
   supportTicket: supportTicketReducer, // Not persisted - temporary data
-  onboarding: onboardingReducer, // Not persisted - temporary flow data
+  // onboarding: onboardingReducer, // Not persisted - temporary flow data (DISABLED)
 });
 
 // Apply root persist configuration
