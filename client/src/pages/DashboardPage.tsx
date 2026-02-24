@@ -145,7 +145,7 @@ export const DashboardPage: React.FC = () => {
               </Button>
             }
           >
-            Complete your profile setup to get the most out of TalentHive!
+            {/* Complete your profile setup to get the most out of TalentHive! */}
           </Alert>
         )}
 
@@ -272,7 +272,7 @@ export const DashboardPage: React.FC = () => {
               </Button>
             }
           >
-            Complete your profile setup to get the most out of TalentHive!
+            {/* Complete your profile setup to get the most out of TalentHive! */}
           </Alert>
         )}
 
@@ -437,7 +437,7 @@ export const DashboardPage: React.FC = () => {
             </Button>
           }
         >
-          Complete your profile setup to get the most out of TalentHive!
+          {/* Complete your profile setup to get the most out of TalentHive! */}
         </Alert>
       )}
 

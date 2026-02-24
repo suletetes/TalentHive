@@ -207,6 +207,50 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     setActiveStep(step);
   };
 
+  // Fill test data function for development
+  const fillTestData = () => {
+    const sampleData = {
+      title: 'Full-Stack Task Management Application',
+      description: 'Develop a comprehensive task management web application with real-time collaboration features, user authentication, and project tracking capabilities. The application should support team collaboration, file attachments, comments, and notifications. We need a modern, responsive design that works seamlessly across desktop and mobile devices.',
+      category: '', // Will be filled from available categories
+      skills: ['React', 'Node.js', 'TypeScript', 'MongoDB', 'REST API'],
+      budget: {
+        type: 'fixed',
+        min: 7500,
+        max: 10000,
+      },
+      timeline: {
+        duration: 75,
+        unit: 'days',
+      },
+      requirements: [
+        'User authentication and authorization',
+        'Real-time updates using WebSockets',
+        'Task creation, assignment, and tracking',
+        'Team collaboration features',
+        'File upload and management',
+        'Email notifications',
+        'Responsive design for mobile and desktop',
+        'Admin dashboard with analytics',
+      ],
+      deliverables: [
+        'Complete source code with documentation',
+        'Deployed application on cloud platform',
+        'User manual and technical documentation',
+        'Unit and integration tests',
+      ],
+      tags: ['web-development', 'full-stack', 'react', 'nodejs'],
+      visibility: 'public',
+      isUrgent: false,
+      applicationDeadline: '',
+      status: 'open',
+      organization: '',
+    };
+
+    formik.setValues(sampleData);
+    toast.success('Test data filled! Remember to select a category.');
+  };
+
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
@@ -222,12 +266,37 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     }
   };  return (
     <Paper sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-      <Typography variant="h5" gutterBottom sx={{
-        fontSize: { xs: '1.25rem', sm: '1.5rem' },
-        textAlign: { xs: 'center', sm: 'left' }
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        flexDirection: { xs: 'column', sm: 'row' },
+        gap: 2,
+        mb: 2
       }}>
-        {isEditMode ? 'Edit Project' : 'Create New Project'}
-      </Typography>
+        <Typography variant="h5" sx={{
+          fontSize: { xs: '1.25rem', sm: '1.5rem' },
+          textAlign: { xs: 'center', sm: 'left' }
+        }}>
+          {isEditMode ? 'Edit Project' : 'Create New Project'}
+        </Typography>
+        
+        {/* Test Data Button - Only show in development and not in edit mode */}
+        {import.meta.env.DEV && !isEditMode && (
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={fillTestData}
+            color="secondary"
+            sx={{ 
+              minWidth: { xs: '100%', sm: 'auto' },
+              whiteSpace: 'nowrap'
+            }}
+          >
+             Fill Test Data
+          </Button>
+        )}
+      </Box>
 
       <Stepper 
         activeStep={activeStep} 

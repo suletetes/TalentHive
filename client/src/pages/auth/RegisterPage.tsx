@@ -170,7 +170,7 @@ export const RegisterPage: React.FC = () => {
               sx={{ mt: 2 }}
               color="secondary"
             >
-              🧪 Fill Test Data
+              Fill Test Data
             </Button>
           )}
         </Box>

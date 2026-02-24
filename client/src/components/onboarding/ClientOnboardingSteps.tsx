@@ -14,6 +14,9 @@ export const ClientOnboardingSteps = ({ step, data, onChange }: ClientOnboarding
           <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
             Welcome to TalentHive!
           </Typography>
+          {/* <Typography variant="body1" sx={{ mb: 3 }}>
+            Complete your profile setup to get the most out of TalentHive!
+          </Typography> */}
           <Typography variant="body1" sx={{ mb: 3 }}>
             Let's set up your client profile. This will help you post projects and hire talented freelancers.
           </Typography>
