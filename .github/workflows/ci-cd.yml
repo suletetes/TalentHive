@@ -40,7 +40,7 @@ jobs:
         cd server
         npm run build || echo "Build completed with warnings"
 
-    - name: Run basic backend tests (without database)
+    - name: Run basic backend tests
       run: |
         cd server
         npm run test:unit || echo "Unit tests completed"
