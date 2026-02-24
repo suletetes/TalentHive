@@ -37,6 +37,10 @@ export function getUserFriendlyErrorMessage(error: any): string {
       case 400:
         return 'Invalid request. Please check your input and try again.';
       case 401:
+        // Check if this is a login error
+        if (error.config?.url?.includes('/auth/login')) {
+          return 'Invalid email or password. Please try again.';
+        }
         return 'You need to log in to access this feature.';
       case 403:
         return 'You don\'t have permission to perform this action.';

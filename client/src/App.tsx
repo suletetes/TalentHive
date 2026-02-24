@@ -3,7 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import { Box } from '@mui/material';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { OnboardingGuard } from '@/components/guards/OnboardingGuard';
+// import { OnboardingGuard } from '@/components/guards/OnboardingGuard';
 import { Layout } from '@/components/layout/Layout';
 import { HomePage } from '@/pages/HomePage';
 import { LoginPage } from '@/pages/auth/LoginPage';
@@ -150,9 +150,9 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <OnboardingGuard>
+              {/* <OnboardingGuard> */}
                 <Layout />
-              </OnboardingGuard>
+              {/* </OnboardingGuard> */}
             </ProtectedRoute>
           }
         >
