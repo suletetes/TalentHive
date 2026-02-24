@@ -140,6 +140,17 @@ export class ApiCore {
         if (error.response?.status === 401) {
           console.log('  [API] 401 Error on:', requestUrl);
           
+          // For login/register endpoints, don't try to refresh - just return the error
+          const isAuthEndpoint = requestUrl.includes('/auth/login') || 
+                                 requestUrl.includes('/auth/register') ||
+                                 requestUrl.includes('/auth/refresh-token');
+          
+          if (isAuthEndpoint) {
+            console.log('  [API] Auth endpoint failed, returning error');
+            this.logError({ ...errorContext, message: 'Authentication failed' });
+            return Promise.reject(error);
+          }
+          
           // For silent fail endpoints, just reject without logout or refresh
           if (this.isSilentFailEndpoint(requestUrl)) {
             console.debug(`[API] Silent 401 for ${requestUrl}`);
