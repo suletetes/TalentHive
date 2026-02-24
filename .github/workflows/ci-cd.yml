@@ -14,6 +14,27 @@ jobs:
   backend-build:
     runs-on: ubuntu-latest
 
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -40,6 +61,30 @@ jobs:
         cd server
         npm run build || echo "Build completed with warnings"
 
+    - name: Seed test database
+      run: |
+        cd server
+        npm run seed || echo "Seeding completed"
+      env:
+        NODE_ENV: test
+        MONGODB_URI: mongodb://localhost:27017/talenthive_test
+        JWT_SECRET: test_jwt_secret_very_long_for_security_purposes
+        JWT_REFRESH_SECRET: test_refresh_secret_very_long_for_security_purposes
+        JWT_EXPIRES_IN: 24h
+        JWT_REFRESH_EXPIRES_IN: 7d
+        SENDGRID_API_KEY: SG.test-api-key-for-testing
+        FROM_EMAIL: test@talenthive.com
+        FROM_NAME: TalentHive Test
+        STRIPE_SECRET_KEY: sk_test_mock_key
+        STRIPE_PUBLISHABLE_KEY: pk_test_mock_key
+        STRIPE_WEBHOOK_SECRET: whsec_test_mock_secret
+        CLOUDINARY_CLOUD_NAME: test-cloud
+        CLOUDINARY_API_KEY: test-api-key
+        CLOUDINARY_API_SECRET: test-api-secret
+        REDIS_URL: redis://localhost:6379
+        CLIENT_URL: http://localhost:3000
+        PORT: 5000
+
     - name: Run basic backend tests
       continue-on-error: true
       run: |
@@ -47,8 +92,24 @@ jobs:
         npm test
       env:
         NODE_ENV: test
+        MONGODB_URI: mongodb://localhost:27017/talenthive_test
+        MONGODB_TEST_URI: mongodb://localhost:27017/talenthive_test
         JWT_SECRET: test_jwt_secret_very_long_for_security_purposes
         JWT_REFRESH_SECRET: test_refresh_secret_very_long_for_security_purposes
+        JWT_EXPIRES_IN: 24h
+        JWT_REFRESH_EXPIRES_IN: 7d
+        SENDGRID_API_KEY: SG.test-api-key-for-testing
+        FROM_EMAIL: test@talenthive.com
+        FROM_NAME: TalentHive Test
+        STRIPE_SECRET_KEY: sk_test_mock_key
+        STRIPE_PUBLISHABLE_KEY: pk_test_mock_key
+        STRIPE_WEBHOOK_SECRET: whsec_test_mock_secret
+        CLOUDINARY_CLOUD_NAME: test-cloud
+        CLOUDINARY_API_KEY: test-api-key
+        CLOUDINARY_API_SECRET: test-api-secret
+        REDIS_URL: redis://localhost:6379
+        CLIENT_URL: http://localhost:3000
+        PORT: 5000
 
   # Frontend Tests (keeping as is since it works)
   frontend-test:
