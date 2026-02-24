@@ -74,6 +74,36 @@ const conditionallyRequiredEnvVars = [
 ];
 
 export function validateEnvironmentVariables(): EnvConfig {
+  // Skip validation in test environment - tests set their own env vars
+  if (process.env.NODE_ENV === 'test') {
+    logger.info('  Skipping environment validation in test mode');
+    return {
+      MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/talenthive_test',
+      JWT_SECRET: process.env.JWT_SECRET || 'test-jwt-secret',
+      JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || 'test-jwt-refresh-secret',
+      JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN,
+      JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN,
+      STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || 'sk_test_mock',
+      STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+      SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
+      RESEND_API_KEY: process.env.RESEND_API_KEY,
+      CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+      CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+      CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+      REDIS_URL: process.env.REDIS_URL,
+      REDIS_HOST: process.env.REDIS_HOST,
+      REDIS_PORT: process.env.REDIS_PORT,
+      REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+      CORS_ORIGIN: process.env.CORS_ORIGIN,
+      CLIENT_URL: process.env.CLIENT_URL,
+      PORT: process.env.PORT,
+      NODE_ENV: process.env.NODE_ENV,
+      RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
+      RATE_LIMIT_MAX_REQUESTS: process.env.RATE_LIMIT_MAX_REQUESTS,
+      RATE_LIMIT_SKIP_SUCCESSFUL_REQUESTS: process.env.RATE_LIMIT_SKIP_SUCCESSFUL_REQUESTS,
+    };
+  }
+
   const errors: string[] = [];
   const warnings: string[] = [];
 
