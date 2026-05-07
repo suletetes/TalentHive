@@ -1,11 +1,39 @@
 import winston from 'winston';
 import path from 'path';
+import fs from 'fs';
 
 const logLevel = process.env.LOG_LEVEL || 'info';
 const logFile = process.env.LOG_FILE || 'logs/app.log';
 
 // Create logs directory if it doesn't exist
 const logDir = path.dirname(logFile);
+try {
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+} catch (err) {
+  // If we can't create the log directory, we'll just use console logging
+  console.warn(`Warning: Could not create log directory '${logDir}'. File logging disabled.`);
+}
+
+// Build transports array - only add file transports if directory exists
+const transports: winston.transport[] = [];
+
+try {
+  if (fs.existsSync(logDir)) {
+    transports.push(
+      new winston.transports.File({
+        filename: path.join(logDir, 'error.log'),
+        level: 'error',
+      }),
+      new winston.transports.File({
+        filename: logFile,
+      })
+    );
+  }
+} catch (err) {
+  // File transports failed, will use console only
+}
 
 const logger = winston.createLogger({
   level: logLevel,
@@ -17,17 +45,7 @@ const logger = winston.createLogger({
     winston.format.json()
   ),
   defaultMeta: { service: 'talenthive' },
-  transports: [
-    // Write all logs with importance level of `error` or less to `error.log`
-    new winston.transports.File({
-      filename: path.join(logDir, 'error.log'),
-      level: 'error',
-    }),
-    // Write all logs with importance level of `info` or less to `combined.log`
-    new winston.transports.File({
-      filename: logFile,
-    }),
-  ],
+  transports,
 });
 
 // If we're not in production, log to the console with a simple format

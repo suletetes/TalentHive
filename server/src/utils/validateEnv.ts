@@ -43,12 +43,11 @@ interface EnvConfig {
   RATE_LIMIT_SKIP_SUCCESSFUL_REQUESTS?: string;
 }
 
-const requiredEnvVars = [
-  'MONGODB_URI',
-  'JWT_SECRET',
-  'JWT_REFRESH_SECRET',
-  'STRIPE_SECRET_KEY',
-];
+// In development, only truly essential vars are required
+// In production, all are required
+const requiredEnvVars = process.env.NODE_ENV === 'production'
+  ? ['MONGODB_URI', 'JWT_SECRET', 'JWT_REFRESH_SECRET', 'STRIPE_SECRET_KEY']
+  : ['MONGODB_URI', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
 
 const conditionallyRequiredEnvVars = [
   {
@@ -57,16 +56,19 @@ const conditionallyRequiredEnvVars = [
     message: 'CORS_ORIGIN and CLIENT_URL are required in production'
   },
   {
-    condition: () => !process.env.SENDGRID_API_KEY && !process.env.RESEND_API_KEY,
+    condition: () => process.env.NODE_ENV === 'production' && !process.env.SENDGRID_API_KEY && !process.env.RESEND_API_KEY,
     vars: ['SENDGRID_API_KEY', 'RESEND_API_KEY'],
-    message: 'Either SENDGRID_API_KEY or RESEND_API_KEY is required for email functionality'
+    message: 'Either SENDGRID_API_KEY or RESEND_API_KEY is required for email functionality in production'
   },
   {
     condition: () => {
       const hasCloudinaryName = !!process.env.CLOUDINARY_CLOUD_NAME;
       const hasCloudinaryKey = !!process.env.CLOUDINARY_API_KEY;
       const hasCloudinarySecret = !!process.env.CLOUDINARY_API_SECRET;
-      return hasCloudinaryName || hasCloudinaryKey || hasCloudinarySecret;
+      // Only validate if at least one is set (partial config)
+      const hasAny = hasCloudinaryName || hasCloudinaryKey || hasCloudinarySecret;
+      const hasAll = hasCloudinaryName && hasCloudinaryKey && hasCloudinarySecret;
+      return hasAny && !hasAll;
     },
     vars: ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'],
     message: 'If using Cloudinary, all three variables (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) are required'
@@ -132,15 +134,30 @@ export function validateEnvironmentVariables(): EnvConfig {
   }
 
   if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
-    errors.push('JWT_SECRET must be at least 32 characters long');
+    // Downgrade to warning in development - don't crash the server
+    if (process.env.NODE_ENV === 'production') {
+      errors.push('JWT_SECRET must be at least 32 characters long');
+    } else {
+      warnings.push('JWT_SECRET should be at least 32 characters long for security');
+    }
   }
 
   if (process.env.JWT_REFRESH_SECRET && process.env.JWT_REFRESH_SECRET.length < 32) {
-    errors.push('JWT_REFRESH_SECRET must be at least 32 characters long');
+    // Downgrade to warning in development - don't crash the server
+    if (process.env.NODE_ENV === 'production') {
+      errors.push('JWT_REFRESH_SECRET must be at least 32 characters long');
+    } else {
+      warnings.push('JWT_REFRESH_SECRET should be at least 32 characters long for security');
+    }
   }
 
   if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.startsWith('sk_')) {
-    errors.push('STRIPE_SECRET_KEY must start with "sk_"');
+    // Downgrade to warning in development - allow dummy values
+    if (process.env.NODE_ENV === 'production') {
+      errors.push('STRIPE_SECRET_KEY must start with "sk_"');
+    } else {
+      warnings.push('STRIPE_SECRET_KEY should start with "sk_" for Stripe to work');
+    }
   }
 
   if (process.env.PORT && (isNaN(Number(process.env.PORT)) || Number(process.env.PORT) < 1 || Number(process.env.PORT) > 65535)) {

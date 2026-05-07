@@ -38,6 +38,14 @@
     "emitDecoratorMetadata": true,
     "types": ["jest", "node"]
   },
+  "ts-node": {
+    "transpileOnly": true,
+    "require": ["tsconfig-paths/register"],
+    "compilerOptions": {
+      "module": "commonjs",
+      "moduleResolution": "node"
+    }
+  },
   "include": ["src/**/*"],
   "exclude": [
     "node_modules",

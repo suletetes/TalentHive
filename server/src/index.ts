@@ -1,12 +1,27 @@
-// Load environment variables FIRST before any other imports
+// Register module aliases FIRST - required for production (compiled JS in dist/).
+// In development, tsconfig-paths/register handles @ path resolution via nodemon.
+// This MUST come before any @/ imports.
+import 'module-alias/register';
+
+// Load environment variables before any other imports
 import dotenv from 'dotenv';
 dotenv.config();
 
 // Validate environment variables before starting the application
 import { validateEnvironmentVariables } from '@/utils/validateEnv';
-validateEnvironmentVariables();
-
-import 'module-alias/register';
+try {
+  validateEnvironmentVariables();
+} catch (error: any) {
+  // In development, log the error but don't crash - allow server to start
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('\n⚠️  Environment validation warning:', error.message);
+    console.warn('⚠️  Server will start but some features may not work correctly.\n');
+  } else {
+    // In production, crash immediately - misconfiguration is critical
+    console.error('❌ Environment validation failed:', error.message);
+    process.exit(1);
+  }
+}
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
